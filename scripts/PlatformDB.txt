@@ -1,0 +1,28 @@
+Search Pattern,NUMA,MJN,Site,ScratchName,Batch System,MAccount,MQueue,PPN,Duration,Cluster,Notes 
+lu        lanl  2  8 /net/scratch4  MOAB      access    NA     16 10:00:00 luna
+ml        lanl  2  8 /net/scratch2  MOAB      access    NA     16 10:00:00 moonlight
+ci        lanl  4  4 /lscratch2     MOAB      lanl-exec NA     16 10:00:00 cielo
+ct        lanl  4  4 /lscratch1     MOAB      lanl-dev  NA     16 08:00:00 cielito
+ty        lanl  8  4 /net/scratch4  MOAB      access    NA     16 10:00:00 typhoon
+pi        lanl  2  8 /net/scratch3  MOAB      NA        NA     16 10:00:00 pinto
+mp        lanl  2  4 /net/scratch3  MOAB      NA        NA      8 10:00:00 mapache
+wf        lanl  2  8 /net/scratch2  MOAB      NA        NA     16 16:00:00 wolf
+tt        lanl  2 16 /scratch1      MOAB      lanl-dev  NA     32 10:00:00 trinitite
+tr        lanl  2 16 /UNKNOWN       MOAB      lanl-dev  NA     32 10:00:00 trinity
+zin       llnl  2  8 /p/lscratch3   MOAB      drlanl    pbatch 16 09:00:00 zin
+rzuseq    llnl NA NA /nfs/tmp2      slurm     lanl      pdebug 16 10:00:00 rz-sequoia
+vulcan    llnl NA NA /p/lscratchv   slurm     lanl      psmall 16 10:00:00 vulcan
+seq       llnl NA NA /nfs/tmp2      slurm     lanlexec  psmall 16 10:00:00 sequoia
+pecos     snl  NA NA /p/lscratch1   SBATCH    FY140373  trilab 16 10:00:00 pecos
+candycorn xdiv  1  8 /local/mcatk/users
+titegroup xdiv  2  8 /local/mcatk/users
+benchmark xdiv  2  8 /local/mcatk/users
+lilgun    xdiv  2  8 /local/mcatk/users
+barugon   xdiv  4 16 /local/mcatk/users
+varan     xdiv  4 16 /local/mcatk/users
+gappa     xdiv  4 16 /local/mcatk/users
+reigo     xdiv  4 16 /local/mcatk/users
+hodgdon   xdiv  2  8 /local/mcatk/users
+varget    xdiv  2  8 /local/mcatk/users
+retumbo   xdiv  2  8 /local/mcatk/users
+darwin    xdiv  2 14 /usr/projects/mcatk

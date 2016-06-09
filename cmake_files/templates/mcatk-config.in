@@ -1,0 +1,293 @@
+
+# Determine locations of the script
+
+script="$0"
+calldir=`pwd`
+loopcount=""
+
+while [ "x`readlink $script`" != "x" ];
+do
+	preloc=`dirname $script`
+	script=`readlink $script`
+	
+	if [ ${script##/} = ${script##~} ]; then
+		# relative symbolic link
+		script="$preloc/$script"
+	fi
+	loopcount="l$loopcount"
+	
+	if [ ${#loopcount} -gt 10 ]; then
+		echo "ERROR: Symbolic link has been redirected more than 10 times"
+		exit 1
+	fi
+done
+
+# If still relative path, then must be relative to the calling directory
+if [ ${script##/} = ${script##~} ]; then
+	script="$calldir/$script"
+fi
+
+scriptloc=`dirname $script`
+
+# Relative paths
+prefix=@MCATK_CONFIG_INSTALL_PREFIX@
+exec_prefix=@MCATK_CONFIG_INSTALL_EXECPREFIX@
+libdir=@MCATK_CONFIG_LIBDIR@
+includedirs="@MCATK_CONFIG_INCLUDE_DIRS@"
+
+# External packages
+external_libdir="@MCATK_CONFIG_EXTERNAL_LIBDIR@"
+external_includedirs="@MCATK_CONFIG_EXTERNAL_INCLUDE_DIRS@"
+external_libraries="@MCATK_CONFIG_EXTERNAL_LIBRARIES@"
+
+# Make paths absolute for cleanness
+prefix="`cd $prefix > /dev/null ; pwd`"
+libdir="`cd $libdir > /dev/null ; pwd`"
+includedirs="`cd $includedirs > /dev/null ; pwd`"
+
+# Description of code
+name=mcatk
+description="MCATK Toolkit is a component-based software library designed to build specialized applications and to provide new functionality for existing general purpose Monte Carlo radiation transport codes"
+version=@ToolkitVersion@
+
+# Flags
+cflags="@MCATK_CONFIG_FLAGS@ @MCATK_CONFIG_DEFINITIONS@"
+compile_defs="@MCATK_CONFIG_DEFINITIONS@"
+link_flags=@CMAKE_CXX_LINK_FLAGS@
+
+# Cross-section and link directories
+# If provided, add to cflags
+mcatk_xsec_dir=@xsdir_location@
+mcatk_link_dir=@lnk3dnt_location@
+
+if [ ${#mcatk_xsec_dir} -gt 0 ]; then
+	cflags="${cflags} -DMCATK_XSEC_DIR=${mcatk_xsec_dir}"
+fi
+
+if [ ${#mcatk_link_dir} -gt 0 ]; then
+	cflags="${cflags} -DMCATK_LINK_DIR=${mcatk_link_dir}"
+fi
+
+libnames=@MCATK_LIBRARY_LIST@
+libs="$link_flags"
+external_libs=""
+
+# Add the MCATK libraries
+for i in $libnames;
+do
+	_lib="-l$i"
+	if [ ${#libs} -eq 0 ]; then
+		libs="${_lib}"
+	else
+		libs="${libs} ${_lib}"
+	fi
+done
+
+# Add the external libraries
+for i in $external_libraries;
+do
+	_lib="-l$i"
+	if [ ${#libs} -eq 0 ]; then
+		external_libs="${_lib}"
+	else
+		external_libs="${external_libs} ${_lib}"
+	fi
+done
+
+# Add the MCATK library directory	
+if [ ${#libdir} -gt 0 ]; then
+	libs="-L${libdir} ${libs}"
+fi
+
+# Add the external library directories
+if [ ${#external_libdir} -gt 0 ]; then
+	for i in $external_libdir;
+	do
+		external_libs="-L${i} ${external_libs}"
+	done
+fi
+
+# Add the MCATK include directories to cflags
+for i in $includedirs;
+do
+	cflags="${cflags} -I${i}"
+done
+
+# Add the external include directories to cflags
+for i in $external_includedirs;
+do
+	external_cflags="${external_cflags} -I${i}"
+done
+
+# FEATURES
+#mcatk_uses_boost=@MCATK_BUILTWITH_Boost@
+#mcatk_uses_mpi=@MCATK_BUILTWITH_MPI@
+#mcatk_uses_loki=@MCATK_BUILTWITH_Loki@
+#mcatk_uses_ndatk=@MCATK_BUILTWITH_ndatk@
+#mcatk_uses_tbb=@MCATK_BUILTWITH_TBB@
+
+#feature_list="BOOST=${mcatk_uses_boost}"
+#feature_list="${feature_list} MPI=${mcatk_uses_mpi}"
+#feature_list="${feature_list} NDATK=${mcatk_uses_ndatk}"
+#feature_list="${feature_list} LOKI=${mcatk_uses_loki}"
+#feature_list="${feature_list} TBB=${mcatk_uses_tbb}"
+
+
+#==============================================================================#
+# Help function
+#
+help()
+{
+	cat<<EOF
+	
+	Usage: mcatk-config [OPTION...]
+        --prefix                Output the installation prefix
+        --version               Output the version for MCATK
+        --libs                  Output all linker flags
+        --cflags                Output all preprocessor and compiler flags
+        --has-feature FEATURE   Output yes if feature supported
+                                and no if not supported
+        --xsec-dir              Output the MCATK cross-section directory
+        --link-dir              Output the MCATK link directory
+        --external-libs         Output the linker flags for external libraries used by MCATK
+        --external-cflags       Output the preprocessor and compiler flags for 
+                                external libraries used by MCATK
+        --list-libs             Output the MCATK Component libraries
+        
+	Known features:
+EOF
+	for i in ${feature_list};
+	do
+		echo "		$i"
+	done
+	
+	cat<<EOF
+	
+	Help options:
+        -?, --help              Show this message
+        --usage                 Display brief usage message
+        
+EOF
+
+	exit 1
+}
+
+#==============================================================================#
+# Usage function
+#
+usage()
+{
+	cat<<EOF
+	Usage:	mcatk-config [-?,--help] [--prefix] [--version] [--libs] [--cflags]
+EOF
+	exit 1
+}
+
+#==============================================================================#
+# Process arguments
+#
+
+if test $# -eq 0; then
+	usage
+fi
+
+while test $# -gt 0;
+do
+	case "$1" in
+		-*=*)
+			optarg=`echo $1 | sed 's/[-_a-zA-Z0-0]*=//'`
+			;;
+		
+		*)
+			optarg=
+			;;
+	esac
+	
+	case "$1" in
+		--prefix)
+			echo ${prefix}
+			;;
+		
+		--version)
+			echo ${version}
+			;;
+			
+		--libs)
+			echo ${libs}
+			;;
+			
+		--cflags)
+			echo ${cflags}
+			;;
+			
+		--has-feature)
+			shift
+			
+			feature="$(echo $1 | awk '{print tolower($1)}')"
+			
+			case "$feature" in
+				mpi)
+					echo ${mcatk_uses_mpi}
+					;;
+				
+				boost)
+					echo ${mcatk_uses_boost}
+					;;
+				
+				ndatk)
+					echo ${mcatk_uses_ndatk}
+					;;
+				
+				loki)
+					echo ${mcatk_uses_loki}
+					;;
+				
+				tbb)
+					echo ${mcatk_uses_tbb}
+					;;
+				
+				*)
+					echo "no"
+					;;
+			esac
+			;;
+			
+		--xsec-dir)
+			echo ${mcatk_xsec_dir}
+			;;
+			
+		--link-dir)
+			echo ${mcatk_link_dir}
+			;;
+		
+		--external-libs)
+			echo ${external_libs}
+			;;
+			
+		--external-cflags)
+			echo ${external_cflags}
+			;;
+			
+		--list-libs)
+			echo ${libnames}
+			;;
+			
+		--help)
+			help
+			;;
+			
+		-?)
+			help
+			;;
+			
+		*)
+			usage
+			;;
+	esac
+	
+	shift
+done
+
+# Finished
+exit 0
+

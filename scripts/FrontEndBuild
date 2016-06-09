@@ -1,0 +1,56 @@
+#!/bin/tcsh
+
+if( $#argv < 3 ) then
+    echo "Usage:  $0 <Model> <toolset> <build type>"
+    exit 1
+else
+    set Verbose = $4
+endif
+
+if( $?SYS_TYPE ) then
+    set mcatk_root = /usr/gapps/mcatk
+else
+    set mcatk_root = /usr/projects/mcatk
+endif
+set script_dir = $mcatk_root/AutoBuilds/scripts
+set cmakePath  = $mcatk_root/packages/bin
+set host = `hostname -s`
+switch ($host)
+
+  case seqlac[0-9]:
+  case vulcanlac[0-9]:
+  case rzuseqlac[0-9]:
+    set hostdesc = "BlueGeneQ"
+    set cmakePath  = $mcatk_root/packages/BlueGeneQ/bin
+    breaksw
+
+  case ct-fe[0-9]:
+  case ci-fe[0-9]:
+    echo "This machines requires calling SubmitSplitBuild!\n"
+    exit 1
+    breaksw
+
+  default:
+    echo "System unrecognized or unavailable for building on compute node."
+    exit 1
+    breaksw
+endsw
+
+set arglist = ""
+set Verbosity = ""
+
+while( $# > 0 )
+    if( $1 == "Verbose" ) then
+        set Verbosity = -V
+    else if( $1 == "VeryVerbose" ) then
+        set Verbosity = -VV
+    else
+        set arglist = ( $arglist $1 )
+    endif
+    shift
+end
+
+
+$cmakePath/ctest $Verbosity -S $script_dir/ctestrun.cmake,"$arglist"
+
+exit 0

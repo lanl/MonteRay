@@ -1,0 +1,213 @@
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   sched_setaffinity(mask)
+   fun:syscall
+   ...
+   obj:/*/libmpi.so*
+}
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   sched_setaffinity(mask)
+   fun:syscall
+   ...
+   obj:/*/libopen-rte.so*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   writev(vector[...])
+   ...
+   obj:/*/libmpi.so*
+}
+{
+  <libopen-rte>
+  Memcheck:Leak
+  ...
+  obj:/*/libopen-rte*
+}
+{
+  <libopen-pal>
+  Memcheck:Leak
+  ...
+  obj:/*/libopen-pal*
+}
+{
+  <libmpi memory leaks should be ignored>
+  Memcheck:Leak
+  ...
+  obj:/*/libmpi.so*
+}
+{
+  <orterun memory leaks should be ignored>
+  Memcheck:Leak
+  ...
+  fun:orterun
+}
+
+#--------------------------------------------------------
+## Inserted for Luna
+
+{
+  <luna: bad /lib64/ld-2.12.so>
+  Memcheck:Cond
+  ...
+  obj:/*/ld-2.12.so*
+}
+{
+  <luna: bad infinipath>
+  Memcheck:Cond
+  ...
+  obj:/*/libinfinipath.so*
+}
+{
+  <luna: bad numa>
+  Memcheck:Cond
+  ...
+  obj:/*/libnuma.so*
+}
+#--------------------------------------------------------
+## Inserted for Yellowrail
+
+{
+  <yellowrail: syscall munmap>
+  Memcheck:Addr1
+  ...
+  obj:/*/libmpi.so*
+}
+{
+  <yellowrail: syscall munmap>
+  Memcheck:Addr1
+  ...
+  obj:/*/libopen-rte.so*
+}
+{
+  <yellowrail: syscall mempolicy>
+  Memcheck:Value1
+  ...
+  obj:/*/libmpi.so*
+}
+{
+  <yellowrail: syscall munmap>
+  Memcheck:Value1
+  ...
+  obj:/*/libopen-rte.so*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   obj:/*/libmthca-rdmav2.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   close(fd)
+   ...
+   obj:/*/libmpi.so*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   write(buf)
+   ...
+   obj:/*/libmpi.so*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   mbind(nodemask)
+   ...
+   obj:/*/libmpi.so*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   obj:/*/libmpi.so*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   set_mempolicy(nodemask)
+   ...
+   obj:/*/libmpi.so*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   obj:/*/libmpi.so*
+}
+#--------------------------------------------------------
+## Inserted for Turing
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   ...
+   obj:/lib64/ld-2.5.so
+}
+
+#--------------------------------------------------------
+## passing functional to MatActivity requires these changes (begin)
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:_ZN16MaterialActivity6reportER11MultiStreamd
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:_ZN16MaterialActivity13outputResultsEv
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN12_GLOBAL__N_115ContinuousSetup14runAlphaSphereEddjjjid
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   writev(vector[...])
+   fun:writev
+   ...
+   fun:_ZN16MaterialActivity6reportER11MultiStreamd
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_ZN16MaterialActivity6reportER11MultiStreamd
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__mpn_mul_1
+   ...
+   fun:_ZN16MaterialActivity13outputResultsEv
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   ...
+   fun:_ZN11MultiStreamD1Ev
+}
+## passing functional to MatActivity requires these changes (end)
+#--------------------------------------------------------
+#--------------------------------------------------------
+## NDATK Specific (begin)
+{
+   <NDATK needs to stop doing this>
+   Memcheck:Cond
+   fun:_ZN5ndatk16get_logical_lineERSiRSs
+}
+## NDATK Specific (end)
+#--------------------------------------------------------

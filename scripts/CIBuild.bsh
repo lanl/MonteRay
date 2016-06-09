@@ -1,0 +1,10 @@
+ctest -V -S /home/xshares/PROJECTS/mcatk/AutoBuilds/scripts/ctestrun.cmake,"Continuous GNU Release"
+ctest -V -S /home/xshares/PROJECTS/mcatk/AutoBuilds/scripts/ctestReport.cmake,"Continuous GNU Release"
+
+# ctest -V -S /home/xshares/PROJECTS/mcatk/AutoBuilds/scripts/ctestrun.cmake,"Arg1 Arg2 Arg3 Args4"
+# Arg1 selections: Continuous, Nightly, Experimental, ContinuousNightly
+# Arg2 selections: GNU INTEL
+# Arg3 selections: Release, Debug, RelWithDebInfo
+# Args4 (optional): branch=PhotoAtomic CXX=g++461 CC=gcc461
+#
+#Default behavior of no args is "Experimental GNU Release"

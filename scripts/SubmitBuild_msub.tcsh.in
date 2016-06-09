@@ -1,0 +1,25 @@
+#!/bin/tcsh
+
+##### These lines are for Moab
+#  predict the duration of the job
+#MSUB -l walltime=@JobDuration@
+#
+#  request resources:  a single node
+#MSUB -l nodes=@Nodes@:ppn=@ProcPerNode@
+#
+#  specify the pathname for output
+#MSUB -o @JobOutputFile@
+#
+#  join the stderr and stdout into one
+#MSUB -j oe
+#
+#MSUB -N @JobName@
+#
+#MSUB -A @JobAccount@
+#MSUB -q @JobQueue@
+#
+
+@CMAKE_CTEST_COMMAND@ @VerbosityFlags@ @ScriptDefines@ -S @CTestScriptName@,"@OPTS@"
+
+chmod g+rw @JobOutputFile@
+chgrp mcatk @JobOutputFile@

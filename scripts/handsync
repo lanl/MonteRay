@@ -1,0 +1,3 @@
+#!/bin/tcsh
+
+/home/xshares/PROJECTS/mcatk/packages/Linux/bin/ctest -S /home/xshares/PROJECTS/mcatk/AutoBuilds/scripts/HandSync.cmake

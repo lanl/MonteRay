@@ -1,0 +1,78 @@
+#!/bin/tcsh
+
+if( $#argv < 3 ) then
+    echo "Usage:  $0 <Model> <toolset> <build type>"
+    exit 1
+else
+    set Verbose = $4
+endif
+
+if( $?SYS_TYPE ) then
+    set mcatk_root = /usr/gapps/mcatk
+else
+    set mcatk_root = /usr/projects/mcatk
+endif
+set script_dir = $mcatk_root/AutoBuilds/scripts
+set cmakePath  = $mcatk_root/packages/bin
+set host = `hostname -s`
+switch ($host)
+
+  case lo-fe3:
+    set hostdesc = "Lobo"
+    breaksw
+
+  case ml-fey:
+  case ml-fey[0-9]:
+    set hostdesc = "Moonlight"
+    set cmakePath = $mcatk_root/packages/linux/bin
+    breaksw
+
+  case pi-fey:
+  case pi-fey[0-9]:
+    set hostdesc = "Pinto"
+    set cmakePath = $mcatk_root/packages/linux/bin
+    breaksw
+
+  case lu-fe[0-9]:
+    set hostdesc = "Luna"
+    set cmakePath  = $mcatk_root/packages/linux/bin/luna
+    breaksw
+
+  case ty-fe[0-9]:
+    set hostdesc = "Typhoon"
+    set cmakePath  = $mcatk_root/packages/linux/bin/typhoon
+    breaksw
+
+  case zin[0-9][0-9][0-9]:
+  case zin[0-9][0-9][0-9][0-9]:
+    set hostdesc = "Zin"
+    set cmakePath  = $mcatk_root/packages/linux/bin
+    breaksw
+
+  case seqlac[0-9]:
+  case vulcanlac[0-9]:
+  case rzuseqlac[0-9]:
+    set hostdesc = "BlueGeneQ"
+    set cmakePath  = $mcatk_root/packages/BlueGeneQ/bin
+    breaksw
+
+  case pecos-login[0-9]:
+    set hostdesc = "Pecos"
+    set cmakePath  = $mcatk_root/packages/linux/bin
+    breaksw
+
+  case ct-fe[0-9]:
+  case ci-fe[0-9]:
+    echo "This machines requires calling SubmitSplitBuild!\n"
+    exit 1
+    breaksw
+
+  default:
+    echo "System unrecognized or unavailable for building on compute node."
+    exit 1
+    breaksw
+endsw
+
+$cmakePath/cmake -DOPTS="$1 $2 $3 $4 $5 $6 $7 $8" -P $script_dir/SubmitBuild.cmake
+
+exit 0

@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 2.8.9.0)
+
+PROJECT( NDATK_Test CXX)
+SET(CMAKE_VERBOSE_MAKEFILE 1)
+#SET(CMAKE_CXX_FLAGS "  -std=c++0x  ${COMPILE_DEFINITIONS}")
+INCLUDE_DIRECTORIES( ${ndatk_ROOT}/include )
+SET(CMAKE_SUPPRESS_REGENERATION 1)
+LINK_DIRECTORIES( ${ndatk_ROOT}/lib )
+#SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "/local/mcatk/users/sdnolen/workspace/obj/gnu-ndatk/test_ndatk/CMakeFiles/CMakeTmp")
+ADD_EXECUTABLE( ndatk_tester compile_ndatk.cc )
+TARGET_LINK_LIBRARIES( ndatk_tester ndatk )

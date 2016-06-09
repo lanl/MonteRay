@@ -1,0 +1,40 @@
+#!/bin/tcsh
+
+if( $#argv < 3 ) then
+    echo "Usage:  $0 <Model> <toolset> <build type>"
+    exit 1
+endif
+
+set mcatk_root = /usr/projects/mcatk
+set script_dir = $mcatk_root/AutoBuilds/scripts
+set cmakePath  = $mcatk_root/packages/linux/bin
+set host = `hostname -s`
+switch ($host)
+
+  case ct-fe[0-9]:
+  case ci-fe[0-9]:
+    set hostdesc = "Cielo"
+    set path = ( $path /opt/MOAB/default/bin )
+    set cmakePath = $mcatk_root/packages/cray/bin
+    breaksw
+  case tt-fey[0-9]:
+  case ti-fe[0-9]:
+    set hostdesc = "Trinity"
+    set path = ( $path /opt/MOAB/bin )
+    set cmakePath = $mcatk_root/packages/cray/bin
+    breaksw
+
+  default:
+    echo "Unable to determine system for split build submission."
+    exit 1
+    breaksw
+endsw
+
+set outputName = $mcatk_root/AutoBuilds/Results/${hostdesc}_$1-$2-$3_UCB.out
+
+$cmakePath/ctest -V -S $script_dir/ToolkitBuild.cmake,"$1 $2 $3 $4" >& $outputName
+
+chmod g+rw $outputName
+chgrp mcatk $outputName
+
+exit 0

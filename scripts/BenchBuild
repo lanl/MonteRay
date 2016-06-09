@@ -1,0 +1,27 @@
+#!/bin/tcsh
+
+if( $#argv < 4 ) then
+    echo "Usage:  $0 <Model> <toolset> <build type> maxprocs=<N>"
+    exit 1
+endif
+
+if( $?SYS_TYPE ) then
+    set mcatk_root = /usr/gapps/mcatk
+else
+    # mcatk_proj_dir is set in module mcatk
+    set mcatk_root = $MCATK_ROOT
+endif
+
+set script_dir = $mcatk_root/AutoBuilds/scripts
+
+set ctest_command = `which ctest`
+if( $? != 0 ) then
+    echo "ERROR: ctest command not found!"
+    exit 1
+else
+    echo "CTest : [$ctest_command]"
+endif
+
+$ctest_command -S $script_dir/benchmarks.cmake,"$*"
+
+exit 0
