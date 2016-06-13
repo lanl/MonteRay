@@ -1,0 +1,906 @@
+SUITE( CatesianGrid_Tests) {
+    typedef Vector3D<double> Position_t;
+
+    class gridTestData {
+    public:
+        enum coord {X,Y,Z,DIM};
+        gridTestData(){
+            gridInfo[X].initialize( -10, 10, 20);
+            gridInfo[Y].initialize( -10, 10, 20);
+            gridInfo[Z].initialize( -10, 10, 20);
+        }
+        ~gridTestData(){}
+
+        std::array<GridBins,DIM> gridInfo;
+    };
+
+    typedef CartesianGrid::rayTraceList_t rayTrace_t;
+
+// ************************ rayTrace Testing ****************************
+
+
+   TEST( rayTrace_in_1D_PosXDir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        Position_t position ( -9.5, -9.5,  -9.5 );
+        Position_t direction(    1,   0,    0 );
+        double distance = 1.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  2, distances.size() );
+
+        CHECK_CLOSE(   0,  distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.5,  distances[0].second, 1e-11 );
+        CHECK_CLOSE(   1,  distances[1].first, 1e-11 );
+        CHECK_CLOSE( 0.5,  distances[1].second, 1e-11 );
+    }
+
+    TEST( rayTrace_in_1D_NegXDir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position ( -8.5, -9.5,  -9.5 );
+        Position_t direction(    -1,   0,    0 );
+        double distance = 1.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  2,  distances.size() );
+
+        CHECK_CLOSE(   1,  distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.5,  distances[0].second, 1e-11 );
+        CHECK_CLOSE(   0,  distances[1].first, 1e-11 );
+        CHECK_CLOSE( 0.5,  distances[1].second, 1e-11 );
+    }
+
+    TEST( rayTrace_Outside_negSide_negDir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position ( -10.5, 0.5,  0.5 );
+        Position_t direction(    -1,   0,    0 );
+        double distance = 2.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  0,  distances.size() );
+    }
+    TEST( rayTrace_Outside_posSide_posDir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position (  10.5, 0.5,  0.5 );
+        Position_t direction(    1,   0,    0 );
+        double distance = 2.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  0, distances.size() );
+    }
+    TEST( rayTrace_Outside_negSide_posDir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position ( -10.5, -9.5,  -9.5 );
+        Position_t direction(    1,   0,    0 );
+        double distance = 2.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  2, distances.size() );
+
+        CHECK_CLOSE(  0,   distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0 , distances[0].second, 1e-11 );
+        CHECK_CLOSE(  1,   distances[1].first, 1e-11 );
+        CHECK_CLOSE( 0.5 , distances[1].second, 1e-11 );
+    }
+    TEST( rayTrace_Outside_posSide_negDir ) {
+        // std::cout << "Debug: ---------------------------------------" << std::endl;
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position (  10.5, -9.5,  -9.5 );
+        Position_t direction(    -1,   0,    0 );
+        double distance = 2.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  2, distances.size() );
+        CHECK_CLOSE( 19,   distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0 , distances[0].second, 1e-11 );
+        CHECK_CLOSE( 18,   distances[1].first, 1e-11 );
+        CHECK_CLOSE( 0.5 , distances[1].second, 1e-11 );
+    }
+    TEST( rayTrace_Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position (  -10.5, -9.5,  -9.5 );
+        Position_t direction(    1,   0,    0 );
+        double distance = 21.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  20, distances.size() );
+        CHECK_CLOSE(  0,  distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[0].second, 1e-11 );
+        CHECK_CLOSE(  1,  distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[1].second, 1e-11 );
+        CHECK_CLOSE( 17,   distances[17].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[17].second, 1e-11 );
+        CHECK_CLOSE( 18,   distances[18].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[18].second, 1e-11 );
+        CHECK_CLOSE( 19,   distances[19].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[19].second, 1e-11 );
+    }
+    TEST( rayTrace_Inside_cross_out_negDir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position (  -8.5, -9.5,  -9.5 );
+        Position_t direction(    -1,   0,    0 );
+        double distance = 2.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  2, distances.size() );
+        CHECK_CLOSE(   1, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.5, distances[0].second, 1e-11 );
+        CHECK_CLOSE(   0, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[1].second, 1e-11 );
+    }
+    TEST( rayTrace_cross_out_posDir ) {
+        gridTestData data;
+        CartesianGrid cart(3,data.gridInfo);
+        cart.setRegular();
+
+        unsigned dim=data.DIM;
+        Position_t position (  8.5, -9.5, -9.5 );
+        Position_t direction(    1,   0,    0 );
+        double distance = 2.0;
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL(  2, distances.size() );
+        CHECK_CLOSE(  18, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.5, distances[0].second, 1e-11 );
+        CHECK_CLOSE(  19, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[1].second, 1e-11 );
+    }
+
+    TEST( rayTrace_2D_internal_to_external_posX_posY ) {
+        // std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  -0.5, -.25, -0.5 );
+        Position_t direction(    1,   1,    0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[1].first, 1e-11 );
+        CHECK_CLOSE( (0.25)*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 3, distances[2].first, 1e-11 );
+        CHECK_CLOSE( (0.75)*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_internal_to_external_negX_negY ) {
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  0.25, 0.5, -0.5 );
+        Position_t direction(  -1.0, -1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 3, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[1].first, 1e-11 );
+        CHECK_CLOSE( (0.25)*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 0, distances[2].first, 1e-11 );
+        CHECK_CLOSE( (0.75)*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_internal_to_internal_posX_posY ) {
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  -0.5, -.25, -0.5 );
+        Position_t direction(    1,   1,    0 );
+        direction.normalize();
+        double distance = (0.5+0.25+0.25)*std::sqrt(2.0);
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[1].first, 1e-11 );
+        CHECK_CLOSE( (0.25)*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 3, distances[2].first, 1e-11 );
+        CHECK_CLOSE( (0.5)*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_internal_to_internal_negX_negY ) {
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  0.25, 0.5, -0.5 );
+        Position_t direction(  -1.0, -1.0,  0.0 );
+        direction.normalize();
+        double distance = (0.5+0.25+0.25)*std::sqrt(2.0);
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 3, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[1].first, 1e-11 );
+        CHECK_CLOSE( (0.25)*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 0, distances[2].first, 1e-11 );
+        CHECK_CLOSE( (0.5)*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+
+    TEST( rayTrace_2D_external_to_external_posX_posY ) {
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  -1.5, -1.25, -0.5 );
+        Position_t direction(  1.0, 1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+        CHECK_CLOSE( (0.75)*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[1].first, 1e-11 );
+        CHECK_CLOSE( (0.25)*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 3, distances[2].first, 1e-11 );
+        CHECK_CLOSE( (0.75)*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_external_to_external_negX_negY ) {
+        // std::cout << "Debug: ---------------------------------------" << std::endl;
+
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  1.25, 1.50, -0.5 );
+        Position_t direction(  -1.0, -1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 3, distances[0].first, 1e-11 );
+        CHECK_CLOSE( (0.75)*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[1].first, 1e-11 );
+        CHECK_CLOSE( (0.25)*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 0, distances[2].first, 1e-11 );
+        CHECK_CLOSE( (0.75)*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+
+    TEST( rayTrace_2D_external_miss_posXDir ) {
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  -1.5, -.5, -1.5 );
+        Position_t direction(  1.0,  0.0,  0.0 );
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 0, distances.size() );
+    }
+    TEST( rayTrace_2D_external_miss_negXDir ) {
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  1.5, -.5, -1.5 );
+        Position_t direction(  1.0,  0.0,  0.0 );
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 0, distances.size() );
+    }
+    TEST( rayTrace_2D_internal_hit_corner_posXDir_posYDir ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( -1, 1, 2);
+         gridInfo[Y].initialize( -1, 1, 2);
+         gridInfo[Z].initialize( -1, 1, 2);
+
+         Position_t position (  -.5, -.5, -.5 );
+         Position_t direction(  1.0,  1.0,  0.0 );
+         direction.normalize();
+         double distance = 1.0*std::sqrt(2.0);
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 2, distances.size() );
+         CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+         CHECK_CLOSE( (0.5)*std::sqrt(2.0), distances[0].second, 1e-11 );
+         CHECK_CLOSE( 3, distances[1].first, 1e-11 );
+         CHECK_CLOSE( (0.5)*std::sqrt(2.0), distances[1].second, 1e-11 );
+     }
+    TEST( rayTrace_2D_internal_hit_corner_negXDir_negYDir ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( -1, 1, 2);
+         gridInfo[Y].initialize( -1, 1, 2);
+         gridInfo[Z].initialize( -1, 1, 2);
+
+         Position_t position (  .5, .5, -.5 );
+         Position_t direction(  -1.0,  -1.0,  0.0 );
+         direction.normalize();
+         double distance = 1.0*std::sqrt(2.0);
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 2, distances.size() );
+         CHECK_CLOSE( 3, distances[0].first, 1e-11 );
+         CHECK_CLOSE( (0.5)*std::sqrt(2.0), distances[0].second, 1e-11 );
+         CHECK_CLOSE( 0, distances[1].first, 1e-11 );
+         CHECK_CLOSE( (0.5)*std::sqrt(2.0), distances[1].second, 1e-11 );
+     }
+    TEST( rayTrace_2D_posX_start_on_internal_gridline ) {
+//        std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (   0.0, -.5, -.5 );
+        Position_t direction(   1.0,  0.0,  0.0 );
+        direction.normalize();
+        double distance = 1.5;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 1, distances.size() );
+        CHECK_CLOSE( 1, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[0].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_negX_start_on_internal_gridline ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( -1, 1, 2);
+         gridInfo[Y].initialize( -1, 1, 2);
+         gridInfo[Z].initialize( -1, 1, 2);
+
+         Position_t position (   0.0, -.5, -.5 );
+         Position_t direction(  -1.0,  0.0,  0.0 );
+         direction.normalize();
+         double distance = 1.5;
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 1, distances.size() );
+         CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+         CHECK_CLOSE( 1.0, distances[0].second, 1e-11 );
+     }
+    TEST( rayTrace_2D_posX_start_on_external_boundary_gridline ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( -1, 1, 2);
+         gridInfo[Y].initialize( -1, 1, 2);
+         gridInfo[Z].initialize( -1, 1, 2);
+
+         Position_t position ( -1.0, -.5, -.5 );
+         Position_t direction(  1.0,  0.0,  0.0 );
+         direction.normalize();
+         double distance = 1.5;
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 2, distances.size() );
+         CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+         CHECK_CLOSE( 1.0, distances[0].second, 1e-11 );
+         CHECK_CLOSE( 1, distances[1].first, 1e-11 );
+         CHECK_CLOSE( 0.5, distances[1].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_negX_start_on_external_boundary_gridline ) {
+        //         std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( -1, 1, 2);
+        gridInfo[Y].initialize( -1, 1, 2);
+        gridInfo[Z].initialize( -1, 1, 2);
+
+        Position_t position (  1.0, -.5, -.5 );
+        Position_t direction( -1.0,  0.0,  0.0 );
+        direction.normalize();
+        double distance = 1.5;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_CLOSE( 1, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0, distances[0].second, 1e-11 );
+        CHECK_CLOSE( 0, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 0.5, distances[1].second, 1e-11 );
+    }
+
+    TEST( rayTrace_2D_start_on_an_internal_corner_posX_posY ) {
+        //         std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (  1.0, 1.0, 0.5 );
+        Position_t direction(  1.0, 1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_CLOSE( 4, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 8, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_start_on_an_internal_corner_negX_negY ) {
+         //         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( 0, 3, 3);
+         gridInfo[Y].initialize( 0, 3, 3);
+         gridInfo[Z].initialize( 0, 3, 3);
+
+         Position_t position (  2.0, 2.0, 0.5 );
+         Position_t direction(  -1.0, -1.0,  0.0 );
+         direction.normalize();
+         double distance = 10.0;
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 2, distances.size() );
+         CHECK_CLOSE( 4, distances[0].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+         CHECK_CLOSE( 0, distances[1].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_start_on_an_internal_corner_posX_negY ) {
+        //         std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (   1.0, 2.0, 0.5 );
+        Position_t direction(   1.0, -1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_CLOSE( 4, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_start_on_an_internal_corner_negX_posY ) {
+        //         std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (   2.0, 1.0, 0.5 );
+        Position_t direction(  -1.0, 1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_CLOSE( 4, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 6, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+    }
+
+    TEST( rayTrace_2D_start_on_an_external_corner_posX_posY ) {
+//        std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (   0.0, 0.0, 0.5 );
+        Position_t direction(   1.0, 1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 8, distances[2].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_start_on_an_external_corner_negX_negY ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( 0, 3, 3);
+         gridInfo[Y].initialize( 0, 3, 3);
+         gridInfo[Z].initialize( 0, 3, 3);
+
+         Position_t position (   3.0,  3.0, 0.5 );
+         Position_t direction(  -1.0, -1.0,  0.0 );
+         direction.normalize();
+         double distance = 10.0;
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 3, distances.size() );
+         CHECK_CLOSE( 8, distances[0].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+         CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+         CHECK_CLOSE( 0, distances[2].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+     }
+    TEST( rayTrace_2D_start_on_an_external_corner_negX_posY ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( 0, 3, 3);
+         gridInfo[Y].initialize( 0, 3, 3);
+         gridInfo[Z].initialize( 0, 3, 3);
+
+         Position_t position (   3.0,  0.0, 0.5 );
+         Position_t direction(  -1.0,  1.0,  0.0 );
+         direction.normalize();
+         double distance = 10.0;
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 3, distances.size() );
+         CHECK_CLOSE( 2, distances[0].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+         CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+         CHECK_CLOSE( 6, distances[2].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+     }
+    TEST( rayTrace_2D_start_on_an_external_corner_posX_negY ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( 0, 3, 3);
+         gridInfo[Y].initialize( 0, 3, 3);
+         gridInfo[Z].initialize( 0, 3, 3);
+
+         Position_t position (   0.0,  3.0, 0.5 );
+         Position_t direction(   1.0, -1.0,  0.0 );
+         direction.normalize();
+         double distance = 10.0;
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 3, distances.size() );
+         CHECK_CLOSE( 6, distances[0].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+         CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+         CHECK_CLOSE( 2, distances[2].first, 1e-11 );
+         CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+     }
+    TEST( rayTrace_3D_start_on_an_external_corner_posX_posY_posZ ) {
+//         std::cout << "Debug: ---------------------------------------" << std::endl;
+         enum coord {X,Y,Z,DIM};
+         std::array<GridBins,3> gridInfo;
+         gridInfo[X].initialize( 0, 3, 3);
+         gridInfo[Y].initialize( 0, 3, 3);
+         gridInfo[Z].initialize( 0, 3, 3);
+
+         Position_t position (   0.0, 0.0, 0.0 );
+         Position_t direction(   1.0, 1.0, 1.0 );
+         direction.normalize();
+         double distance = 10.0;
+
+         CartesianGrid cart(3,gridInfo);
+         cart.setRegular();
+
+         rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+         CHECK_EQUAL( 3, distances.size() );
+         CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+         CHECK_CLOSE( std::sqrt(1.0+2.0), distances[0].second, 1e-11 );
+         CHECK_CLOSE( 13, distances[1].first, 1e-11 );
+         CHECK_CLOSE( std::sqrt(1.0+2.0), distances[1].second, 1e-11 );
+         CHECK_CLOSE( 26, distances[2].first, 1e-11 );
+         CHECK_CLOSE( std::sqrt(1.0+2.0), distances[2].second, 1e-11 );
+     }
+    TEST( rayTrace_2D_start_outside_an_external_corner_posX_posY ) {
+//        std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (  -1.0, -1.0, 0.5 );
+        Position_t direction(   1.0, 1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 8, distances[2].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+
+    TEST( rayTrace_2D_start_outside_an_external_corner_posX_negY ) {
+//        std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (  -1.0, 4.0, 0.5 );
+        Position_t direction(   1.0,-1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 6, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 2, distances[2].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+    TEST( rayTrace_2D_start_outside_an_external_corner_negX_posY ) {
+//        std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (   4.0,-1.0, 0.5 );
+        Position_t direction(  -1.0, 1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 2, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 6, distances[2].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+
+    TEST( rayTrace_2D_start_outside_an_external_corner_negX_negY ) {
+//        std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (   4.0,  4.0, 0.5 );
+        Position_t direction(  -1.0, -1.0,  0.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 8, distances[0].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 4, distances[1].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 0, distances[2].first, 1e-11 );
+        CHECK_CLOSE( 1.0*std::sqrt(2.0), distances[2].second, 1e-11 );
+    }
+
+    TEST( rayTrace_3D_start_outside_an_external_corner_posX_posY_posZ ) {
+        // std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (  -1.0, -1.0, -1.0 );
+        Position_t direction(   1.0, 1.0, 1.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 0, distances[0].first, 1e-11 );
+        CHECK_CLOSE( std::sqrt(1.0+2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 13, distances[1].first, 1e-11 );
+        CHECK_CLOSE( std::sqrt(1.0+2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 26, distances[2].first, 1e-11 );
+        CHECK_CLOSE( std::sqrt(1.0+2.0), distances[2].second, 1e-11 );
+    }
+
+    TEST( rayTrace_3D_start_outside_an_external_corner_negX_negY_negZ ) {
+        // std::cout << "Debug: ---------------------------------------" << std::endl;
+        enum coord {X,Y,Z,DIM};
+        std::array<GridBins,3> gridInfo;
+        gridInfo[X].initialize( 0, 3, 3);
+        gridInfo[Y].initialize( 0, 3, 3);
+        gridInfo[Z].initialize( 0, 3, 3);
+
+        Position_t position (    4.0,  4.0,  4.0 );
+        Position_t direction(   -1.0, -1.0, -1.0 );
+        direction.normalize();
+        double distance = 10.0;
+
+        CartesianGrid cart(3,gridInfo);
+        cart.setRegular();
+
+        rayTrace_t distances = cart.rayTrace( position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_CLOSE( 26, distances[0].first, 1e-11 );
+        CHECK_CLOSE( std::sqrt(1.0+2.0), distances[0].second, 1e-11 );
+        CHECK_CLOSE( 13, distances[1].first, 1e-11 );
+        CHECK_CLOSE( std::sqrt(1.0+2.0), distances[1].second, 1e-11 );
+        CHECK_CLOSE( 0, distances[2].first, 1e-11 );
+        CHECK_CLOSE( std::sqrt(1.0+2.0), distances[2].second, 1e-11 );
+    }

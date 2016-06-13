@@ -25,13 +25,15 @@ endif()
 set( cmake_dir "${CMAKE_SOURCE_DIR}/cmake_files" )
 list( APPEND CMAKE_MODULE_PATH ${cmake_dir} )
 
-include(config_nvcc )
 
 # This directory has a more robust script for identifying host platform
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts )
 
 message( STATUS "-- Loading main.cmake")
 include( main )
+
+message( STATUS "-- Loading config_nvcc.cmake")
+include(config_nvcc )
 
 set( SubProjectName "MonteRayLib" )
 

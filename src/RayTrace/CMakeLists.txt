@@ -1,4 +1,4 @@
-file(GLOB CUDA_SRCS "*.hh" "*.cu")
+file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu")
 
 FIND_PACKAGE(CUDA REQUIRED)
 
