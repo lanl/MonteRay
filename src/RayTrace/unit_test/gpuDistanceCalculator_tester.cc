@@ -7,6 +7,8 @@
 #include "gpuGlobal.h"
 #include "gpuDistanceCalculator_test_helper.hh"
 
+using namespace MonteRay;
+
 SUITE( DistanceCalculatorGPU_Tester ) {
 
 	class DistanceCalculatorGPUTest	{
@@ -43,9 +45,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		unsigned numCells;
 	};
 
+	TEST( setup ) {
+		gpuCheck();
+	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest, distance_to_centers ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 		Position_t originalPos(5.0, 5.0, 5.0);
 
@@ -64,7 +68,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest, rayTrace_outside_to_inside_posDir_one_crossing ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 		Position_t pos( -0.5, 0.5, 0.5 );
 		Direction_t dir( 1.0, 0.0, 0.0);
@@ -86,7 +89,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest, rayTrace_outside_to_inside_posDir_outsideDistances ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 		Position_t pos( -0.5, 0.5, 0.5 );
 		Direction_t dir( 1.0, 0.0, 0.0);
@@ -110,7 +112,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest, rayTrace_inside_to_outside_posDir_one_crossing ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 		Position_t pos(  8.5, 0.5, 0.5 );
 		Direction_t dir( 1.0, 0.0, 0.0);
@@ -165,7 +166,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	};
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_in_1D_PosXDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position ( -9.5, -9.5,  -9.5 );
@@ -188,7 +188,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_in_1D_NegXDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
 		Position_t position ( -8.5, -9.5,  -9.5 );
@@ -211,7 +210,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_Outside_negSide_negDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position ( -10.5, 0.5,  0.5 );
@@ -230,7 +228,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_Outside_posSide_posDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  10.5, 0.5,  0.5 );
@@ -248,7 +245,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		CHECK_EQUAL( 0, numCrossings);
 	}
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_Outside_negSide_posDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position ( -10.5, -9.5,  -9.5 );
@@ -271,7 +267,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_Outside_posSide_negDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  10.5, -9.5,  -9.5 );
@@ -294,7 +289,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -10.5, -9.5,  -9.5 );
@@ -323,7 +317,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_Inside_cross_out_negDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -8.5, -9.5,  -9.5 );
@@ -346,7 +339,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_cross_out_posDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  8.5, -9.5, -9.5 );
@@ -402,7 +394,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	};
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_to_external_posX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -0.5, -.25, -0.5 );
@@ -428,7 +419,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_to_external_negX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  0.25, 0.5, -0.5 );
@@ -454,7 +444,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_to_internal_posX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -0.5, -.25, -0.5 );
@@ -480,7 +469,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_to_internal_negX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  0.25, 0.5, -0.5 );
@@ -506,7 +494,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_external_to_external_posX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -1.5, -1.25, -0.5 );
@@ -532,7 +519,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_external_to_external_negX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  1.25, 1.50, -0.5 );
@@ -558,7 +544,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_external_miss_posXDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -1.5, -.5, -1.5 );
@@ -577,7 +562,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_external_miss_negXDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  1.5, -.5, -1.5 );
@@ -596,7 +580,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_hit_corner_posXDir_posYDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -.5, -.5, -.5 );
@@ -620,7 +603,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_hit_corner_negXDir_negYDir ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  .5, .5, -.5 );
@@ -644,7 +626,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_posX_start_on_internal_gridline ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   0.0, -.5, -.5 );
@@ -665,7 +646,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		CHECK_CLOSE( 1.0f, distances[0], 1e-7 );
 	}
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_negX_start_on_internal_gridline ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   0.0, -.5, -.5 );
@@ -686,7 +666,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		CHECK_CLOSE( 1.0f, distances[0], 1e-7 );
 	}
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_posX_start_on_external_boundary_gridline ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position ( -1.0, -.5, -.5 );
@@ -709,7 +688,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		CHECK_CLOSE( 0.5f, distances[1], 1e-7 );
 	}
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_negX_start_on_external_boundary_gridline ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  1.0, -.5, -.5 );
@@ -766,7 +744,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	};
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_posX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  1.0, 1.0, 0.5 );
@@ -790,7 +767,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_negX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  2.0,  2.0,  0.5 );
@@ -814,7 +790,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_posX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   1.0, 2.0, 0.5 );
@@ -838,7 +813,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_negX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   2.0, 1.0, 0.5 );
@@ -862,7 +836,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_posX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   0.0, 0.0, 0.5 );
@@ -888,7 +861,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_negX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   3.0,  3.0, 0.5 );
@@ -914,7 +886,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_negX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   3.0,  0.0, 0.5 );
@@ -940,7 +911,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_posX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   0.0,  3.0, 0.5 );
@@ -966,7 +936,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_3D_start_on_an_external_corner_posX_posY_posZ ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   0.0, 0.0, 0.0 );
@@ -992,7 +961,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_posX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -1.0, -1.0, 0.5 );
@@ -1018,7 +986,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_posX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -1.0, 4.0, 0.5 );
@@ -1044,7 +1011,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_negX_posY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
 		Position_t position (   4.0,-1.0, 0.5 );
@@ -1070,7 +1036,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_negX_negY ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (   4.0,  4.0, 0.5 );
@@ -1096,7 +1061,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_3D_start_outside_an_external_corner_posX_posY_posZ ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (  -1.0, -1.0, -1.0 );
@@ -1122,7 +1086,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_3D_start_outside_an_external_corner_negX_negY_negZ ) {
-		cudaReset();
 		gpuDistanceCalculatorTestHelper tester;
 
         Position_t position (    4.0,  4.0,  4.0 );
@@ -1145,5 +1108,67 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[1], 1e-6 );
 		CHECK_EQUAL( 0, cells[2]);
 		CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[2], 1e-6 );
+	}
+
+	class DistanceCalculatorGPUTest5	{
+	public:
+		typedef global::float_t float_t;
+
+		DistanceCalculatorGPUTest5(){
+			distances = NULL;
+			cells = NULL;
+
+			grid_host = (GridBins*) malloc( sizeof(GridBins) );
+			ctor( grid_host );
+			setVertices(grid_host, 0, -5.0, 5.0, 10);
+			setVertices(grid_host, 1, -5.0, 5.0, 10);
+			setVertices(grid_host, 2, -5.0, 5.0, 10);
+			finalize(grid_host);
+
+			numCells = getNumCells(grid_host);
+			distances = (float_t*) malloc( sizeof(float_t) * numCells );
+			cells = (int*) malloc( sizeof(int) * numCells );
+		}
+
+		~DistanceCalculatorGPUTest5(){
+			free( grid_host );
+			free( distances );
+			free( cells );
+		}
+
+		GridBins* grid_host;
+
+		float_t* distances;
+		int* cells;
+		unsigned numCells;
+	};
+
+	TEST_FIXTURE(DistanceCalculatorGPUTest5, rayTrace_3D_start_in_middle ) {
+		gpuDistanceCalculatorTestHelper tester;
+
+        Position_t position (    0.5,  0.5,  0.5 );
+        Position_t direction(    1.0,  0.0,  0.0 );
+        direction.normalize();
+        double distance = 1000.0;
+
+		tester.copyGridtoGPU(grid_host);
+		tester.setupTimers();
+		tester.launchRayTrace(position,direction,distance,false);
+		tester.stopTimers();
+		tester.copyDistancesFromGPU(distances);
+		tester.copyCellsFromCPU( cells );
+		unsigned numCrossings = tester.getNumCrossingsFromGPU();
+
+		CHECK_EQUAL( 5, numCrossings);
+		CHECK_EQUAL( 555, cells[0]);
+		CHECK_CLOSE( 0.5, distances[0], 1e-6 );
+		CHECK_EQUAL( 556, cells[1]);
+		CHECK_CLOSE( 1.0, distances[1], 1e-6 );
+		CHECK_EQUAL( 557, cells[2]);
+		CHECK_CLOSE( 1.0, distances[2], 1e-6 );
+		CHECK_EQUAL( 558, cells[3]);
+		CHECK_CLOSE( 1.0, distances[3], 1e-6 );
+		CHECK_EQUAL( 559, cells[4]);
+		CHECK_CLOSE( 1.0, distances[4], 1e-6 );
 	}
 }

@@ -11,6 +11,8 @@
 #include "global.h"
 #include "Vector3D.h"
 
+namespace MonteRay{
+
 typedef global::float_t float_t;
 typedef Vector3D Position_t;
 typedef Vector3D Direction_t;
@@ -72,4 +74,29 @@ float_t getDistance( Position_t& pos1, Position_t& pos2);
 
 void getDistancesToAllCenters(const GridBins* const grid, Position_t& pos, float_t* distances);
 
+
+class GridBinsHost {
+public:
+	GridBinsHost( float_t negX, float_t posX, unsigned nX,
+			      float_t negY, float_t posY, unsigned nY,
+			      float_t negZ, float_t posZ, unsigned nZ);
+
+    ~GridBinsHost();
+
+    unsigned getNumCells(void) const { return MonteRay::getNumCells(ptr); }
+    unsigned getIndex(float_t x, float_t y, float_t z) const;
+
+    void copyToGPU(void);
+
+private:
+    GridBins* ptr;
+    GridBins* temp;
+    bool cudaCopyMade;
+
+public:
+    GridBins* ptr_device;
+
+};
+
+}
 #endif /* GRIDBINS_H_ */

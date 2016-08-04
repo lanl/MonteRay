@@ -2,6 +2,8 @@
 
 #include "binaryIO.h"
 
+namespace MonteRay{
+
 void ctor(SimpleMaterialList* ptr, unsigned num ) {
     if( num <=0 ) { num = 1; }
     ptr->numMaterials = num;
@@ -287,3 +289,4 @@ void SimpleMaterialListHost::read(std::istream& infile) {
     }
 }
 
+}

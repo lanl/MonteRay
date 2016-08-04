@@ -6,6 +6,8 @@
 #include <limits.h>
 #include "CartesianGrid.h"
 
+namespace MonteRay{
+
 unsigned CrossingDistance::calc(const float_t* const vertices, unsigned nVertices, int* cells, float_t* distances, float_t pos, float_t dir, float_t distance, int index ){
 	unsigned nDistances = 0;
 
@@ -190,4 +192,5 @@ unsigned CrossingDistance::orderCrossings(const CartesianGrid* const grid, int* 
     }
 
     return numRayCrossings;
+}
 }

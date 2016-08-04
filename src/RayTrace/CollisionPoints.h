@@ -4,6 +4,8 @@
 #include "gpuGlobal.h"
 #include <fstream>
 
+namespace MonteRay{
+
 typedef unsigned CollisionPointsSize_t;
 
 struct CollisionPosition_t {
@@ -105,11 +107,11 @@ public:
     void CopyToGPU(void);
     void copyToGPU(void);
 
-    CollisionPointsSize_t capacity(void) const { return ::capacity(ptrPoints); }
-    CollisionPointsSize_t size(void) const { return ::size(ptrPoints); }
+    CollisionPointsSize_t capacity(void) const { return MonteRay::capacity(ptrPoints); }
+    CollisionPointsSize_t size(void) const { return MonteRay::size(ptrPoints); }
 
-    CollisionPosition_t getPosition( unsigned i) const { return ::getPosition( ptrPoints, i); }
-    CollisionDirection_t getDirection( unsigned i) const { return ::getDirection( ptrPoints, i); }
+    CollisionPosition_t getPosition( unsigned i) const { return MonteRay::getPosition( ptrPoints, i); }
+    CollisionDirection_t getDirection( unsigned i) const { return MonteRay::getDirection( ptrPoints, i); }
 
     gpuFloatType_t getX(unsigned i) const { return getPosition(i).x; }
     gpuFloatType_t getY(unsigned i) const { return getPosition(i).y; }
@@ -117,10 +119,10 @@ public:
     gpuFloatType_t getU(unsigned i) const { return getDirection(i).u; }
     gpuFloatType_t getV(unsigned i) const { return getDirection(i).v; }
     gpuFloatType_t getW(unsigned i) const { return getDirection(i).w; }
-    gpuFloatType_t getEnergy(unsigned i) const { return ::getEnergy( ptrPoints, i); }
-    gpuFloatType_t getWeight(unsigned i) const { return ::getWeight( ptrPoints, i); }
-    gpuFloatType_t getIndex(unsigned i) const { return ::getIndex( ptrPoints, i); }
-    gpuParticle_t getParticle(unsigned i) { return ::getParticle( ptrPoints, i); }
+    gpuFloatType_t getEnergy(unsigned i) const { return MonteRay::getEnergy( ptrPoints, i); }
+    gpuFloatType_t getWeight(unsigned i) const { return MonteRay::getWeight( ptrPoints, i); }
+    gpuFloatType_t getIndex(unsigned i) const { return MonteRay::getIndex( ptrPoints, i); }
+    gpuParticle_t getParticle(unsigned i) { return MonteRay::getParticle( ptrPoints, i); }
 
 
     void add( gpuParticle_t );
@@ -129,9 +131,9 @@ public:
               gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
               gpuFloatType_t energy, gpuFloatType_t weight, unsigned index);
 
-    void clear(void) { ::clear( ptrPoints ); }
+    void clear(void) { MonteRay::clear( ptrPoints ); }
 
-    gpuParticle_t pop(void) { return ::pop( ptrPoints ); }
+    gpuParticle_t pop(void) { return MonteRay::pop( ptrPoints ); }
 
     std::string filename;
     std::string iomode;
@@ -158,6 +160,7 @@ public:
     void  read(std::fstream& infile);
 
     void readToMemory( const std::string& file );
+    bool readToBank( const std::string& file, unsigned start );
 
     unsigned getNumCollisionsOnFile(void) const { return numCollisionOnFile; }
     unsigned getVersion(void) const { return currentVersion; }
@@ -176,13 +179,7 @@ private:
 public:
     CollisionPoints* ptrPoints_device;
 
-#ifdef CUDA
-public:
-
-
-private:
-
-#endif
 };
 
+}
 #endif /* COLLISIONPOINTS_HH_ */

@@ -4,6 +4,9 @@
 
 #include "GridBins.h"
 
+namespace MonteRay{
+
+#ifdef CUDA
 typedef float1 float1_t;
 typedef float3 float3_t;
 
@@ -46,4 +49,6 @@ __device__ bool cudaIsOutside(const GridBins* const grid, int* indices );
 
 
 __device__ unsigned cudaGetIndex(const GridBins* const grid, const float3_t& pos);
+#endif
 
+}

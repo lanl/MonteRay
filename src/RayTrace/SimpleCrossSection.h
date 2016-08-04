@@ -2,8 +2,12 @@
 #define SIMPLECROSSSECTION_HH_
 
 #include <iostream>
+#include <vector>
+#include <stdexcept>
 
 #include "gpuGlobal.h"
+
+namespace MonteRay{
 
 struct SimpleCrossSection {
     unsigned numPoints;
@@ -62,22 +66,25 @@ public:
     void copyToGPU(void);
 
     unsigned size(void) const { return xs->numPoints; }
-    gpuFloatType_t getEnergy(unsigned i) const { return ::getEnergy(xs, i); }
-    gpuFloatType_t getTotalXSByIndex(unsigned i) const { return ::getTotalXSByIndex(xs, i); }
+    gpuFloatType_t getEnergy(unsigned i) const { return MonteRay::getEnergy(xs, i); }
+    gpuFloatType_t getTotalXSByIndex(unsigned i) const { return MonteRay::getTotalXSByIndex(xs, i); }
 
-    gpuFloatType_t getTotalXS( gpuFloatType_t E ) const { return ::getTotalXS(xs, E); }
+    gpuFloatType_t getTotalXS( gpuFloatType_t E ) const { return MonteRay::getTotalXS(xs, E); }
 
     void setEnergy(unsigned i, gpuFloatType_t e) { xs->energies[i] = e; }
-    unsigned getIndex( gpuFloatType_t e ) const { return ::getIndex( xs, e); }
+    unsigned getIndex( gpuFloatType_t e ) const { return MonteRay::getIndex( xs, e); }
 
     void setTotalXS(unsigned i, gpuFloatType_t value) { xs->totalXS[i] = value; }
 
     void setTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t value) {
+    	if( i >= size() ) {
+    		throw std::runtime_error( "Error: SimpleCrossSectionHost::setTotalXS, invalid index");
+    	}
         xs->energies[i] = E;
         xs->totalXS[i] = value;
     }
 
-    gpuFloatType_t getAWR(void) const {return ::getAWR(xs); }
+    gpuFloatType_t getAWR(void) const {return MonteRay::getAWR(xs); }
     void setAWR(gpuFloatType_t value) { xs->AWR = value; }
 
     void write(std::ostream& outfile) const;
@@ -96,6 +103,24 @@ public:
 
     void load(struct SimpleCrossSection* ptrXS );
 
+    template<typename T>
+    void load(const T& CrossSection ) {
+    	typedef std::vector<double> xsec_t;
+
+        unsigned num = CrossSection.getNumPoints();
+        dtor( xs );
+        ctor( xs, num );
+
+        setAWR( CrossSection.getAWR() );
+
+        xsec_t energies = CrossSection.getEnergyValues();
+        xsec_t totalXS = CrossSection.getTotalValues();
+        for( unsigned i=0; i<num; ++i ){
+            xs->energies[i] = energies[i];
+            xs->totalXS[i] = totalXS[i];
+        }
+    }
+
 private:
     struct SimpleCrossSection* xs;
     SimpleCrossSection* temp;
@@ -105,6 +130,11 @@ public:
     SimpleCrossSection* xs_device;
 
 };
+
+gpuFloatType_t launchGetTotalXS( SimpleCrossSectionHost* pXS, gpuFloatType_t energy);
+
+
+}
 
 
 #endif /* SIMPLECROSSSECTION_HH_ */

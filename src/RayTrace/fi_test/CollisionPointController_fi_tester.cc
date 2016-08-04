@@ -1,0 +1,205 @@
+#include <UnitTest++.h>
+
+#include <iostream>
+#include <functional>
+
+#include "gpuTally.h"
+#include "ExpectedPathLength.h"
+#include "cpuTimer.h"
+#include "CollisionPointController.h"
+#include "GridBins.h"
+#include "SimpleMaterialList.h"
+#include "SimpleMaterialProperties.h"
+#include "gpuTally.h"
+#include "CollisionPoints.h"
+
+namespace {
+
+using namespace MonteRay;
+
+SUITE( Collision_fi_bank_controller_tester ) {
+
+	class ControllerSetup {
+	public:
+		ControllerSetup(){
+
+	    	cudaReset();
+	    	gpuCheck();
+			pGrid = new GridBinsHost(-33.5, 33.5, 100,
+			          -33.5, 33.5, 100,
+			          -33.5, 33.5, 100);
+
+
+	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
+
+	    	pMatProps = new SimpleMaterialPropertiesHost(2);
+
+	    	u234s = new SimpleCrossSectionHost(1);
+	    	u235s = new SimpleCrossSectionHost(1);
+	    	u238s = new SimpleCrossSectionHost(1);
+	    	h1s = new SimpleCrossSectionHost(1);
+	    	o16s = new SimpleCrossSectionHost(1);
+
+	        metal = new SimpleMaterialHost(3);
+	        water = new SimpleMaterialHost(2);
+
+	        pMatList = new SimpleMaterialListHost(2);
+
+		}
+
+		void setup(){
+
+
+	    	pGrid->copyToGPU();
+
+	    	pTally->copyToGPU();
+
+	    	pMatProps->read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
+	    	pMatProps->copyToGPU();
+
+	        u234s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
+	        u235s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
+	        u238s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
+	        h1s->read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
+	        o16s->read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+
+	        u234s->copyToGPU();
+	        u235s->copyToGPU();
+	        u238s->copyToGPU();
+	        h1s->copyToGPU();
+	        o16s->copyToGPU();
+
+	        metal->add(0, *u234s, 0.01);
+	        metal->add(1, *u235s, 0.98);
+	        metal->add(2, *u238s, 0.01);
+	        metal->copyToGPU();
+
+	        water->add(0, *h1s, 0.667 );
+	        water->add(0, *o16s, 0.333 );
+	        water->copyToGPU();
+
+	        pMatList->add( 0, *metal, 0 );
+	        pMatList->add( 1, *water, 1 );
+	        pMatList->copyToGPU();
+		}
+
+		~ControllerSetup(){
+			delete pGrid;
+			delete pMatList;
+			delete pMatProps;
+			delete pTally;
+			delete u234s;
+			delete u235s;
+			delete u238s;
+			delete h1s;
+			delete o16s;
+			delete metal;
+			delete water;
+		}
+
+		GridBinsHost* pGrid;
+		SimpleMaterialListHost* pMatList;
+		SimpleMaterialPropertiesHost* pMatProps;
+		gpuTallyHost* pTally;
+
+    	SimpleCrossSectionHost* u234s;
+        SimpleCrossSectionHost* u235s;
+        SimpleCrossSectionHost* u238s;
+        SimpleCrossSectionHost* h1s;
+        SimpleCrossSectionHost* o16s;
+
+        SimpleMaterialHost* metal;
+        SimpleMaterialHost* water;
+
+	};
+
+	TEST( setup ) {
+		gpuCheck();
+	}
+
+    TEST_FIXTURE(ControllerSetup, ctor ){
+        CollisionPointController controller( 1024,
+ 				                             1024,
+ 				                             pGrid,
+ 				                             pMatList,
+ 				                             pMatProps,
+ 				                             pTally );
+
+        CHECK_EQUAL(1000000, controller.capacity());
+        CHECK_EQUAL(0, controller.size());
+    }
+
+    TEST_FIXTURE(ControllerSetup, setCapacity ){
+        CollisionPointController controller( 1024,
+ 				                             1024,
+ 				                             pGrid,
+ 				                             pMatList,
+ 				                             pMatProps,
+ 				                             pTally );
+
+        CHECK_EQUAL(1000000, controller.capacity());
+        controller.setCapacity(10);
+        CHECK_EQUAL(10, controller.capacity());
+    }
+
+    TEST_FIXTURE(ControllerSetup, add_a_particle ){
+        CollisionPointController controller( 1024,
+ 				                             1024,
+ 				                             pGrid,
+ 				                             pMatList,
+ 				                             pMatProps,
+ 				                             pTally );
+
+        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
+        controller.add( 0.0, 0.0, 0.0,
+        		        1.0, 0.0, 0.0,
+        		        1.0, 1.0, i);
+
+        CHECK_EQUAL(1, controller.size());
+    }
+
+#if( false )
+    TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
+    	CollisionPointController controller( 1024,
+    			1024,
+    			pGrid,
+    			pMatList,
+    			pMatProps,
+    			pTally );
+
+    	setup();
+
+    	CollisionPointsHost bank1(500000);
+    	bool end = false;
+    	unsigned offset = 0;
+
+    	while( ! end ) {
+    		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+    		offset += bank1.size();
+
+    		for( unsigned i=0; i<bank1.size(); ++i ) {
+
+    			controller.add(
+    				bank1.getPosition(i).x, bank1.getPosition(i).y, bank1.getPosition(i).z,
+    				bank1.getDirection(i).u, bank1.getDirection(i).v, bank1.getDirection(i).w,
+    				bank1.getEnergy(i), bank1.getWeight(i), bank1.getIndex(i)
+    			);
+    		}
+
+    		if( end ) {
+    			controller.flush(true);
+    		}
+
+    	}
+
+    	pTally->copyToCPU();
+
+    	CHECK_CLOSE( 9.43997, pTally->getTally(0), 1e-5 );
+    	CHECK_CLOSE( 16.5143, pTally->getTally(50+100*100), 1e-4 );
+
+    }
+#endif
+
+}
+
+}

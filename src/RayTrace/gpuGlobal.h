@@ -8,13 +8,39 @@
 #ifdef CUDA
 #include <cuda.h>
 #endif
+#include "/projects/opt/centos7/cuda/7.5/include/driver_types.h"
 
+namespace MonteRay{
 typedef float gpuFloatType_t;
+typedef float gpuTallyType_t;
+
 const gpuFloatType_t gpu_neutron_molar_mass = 1.00866491597f;
 const gpuFloatType_t gpu_AvogadroBarn = .602214179f;
-
+typedef long long clock64_t;
 
 void cudaReset(void);
+
+void gpuCheck();
+
+#ifdef CUDA
+// From: https://www.sharcnet.ca/help/index.php/CUDA_tips_and_tricks
+__device__ inline void atomicAddDouble (double *address, double value){
+  unsigned long long oldval, newval, readback;
+
+  oldval = __double_as_longlong(*address);
+  newval = __double_as_longlong(__longlong_as_double(oldval) + value);
+  while ((readback=atomicCAS((unsigned long long *)address, oldval, newval)) != oldval)
+    {
+     oldval = readback;
+     newval = __double_as_longlong(__longlong_as_double(oldval) + value);
+    }
+}
+#endif
+
+void setCudaPrintBufferSize( size_t size);
+
+
+}
 
 #ifdef CUDA
 /**
@@ -39,5 +65,18 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 #endif
+
+namespace MonteRay{
+class gpuSync {
+public:
+	gpuSync();
+	~gpuSync();
+
+	void sync();
+private:
+private:
+	cudaEvent_t sync_event;
+};
+}
 
 #endif /* GPUGLOBAL_HH_ */

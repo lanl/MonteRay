@@ -6,22 +6,15 @@
 #include "ExpectedPathLength.h"
 
 FIGenericGPUTestHelper::FIGenericGPUTestHelper(unsigned num){
-	int deviceCount;
 	nCells = num;
+	tally = NULL;
 	grid_device = NULL;
-
-	cuInit(0);
-	cuDeviceGetCount(&deviceCount);
-	if (deviceCount == 0) {
-		printf("No CUDA-compatible devices found\n");
-		exit(1);
-	}
-	printf("Number of CUDA devices=%d\n",deviceCount);
-	gpuErrchk( cudaPeekAtLastError() );
 }
 
 FIGenericGPUTestHelper::~FIGenericGPUTestHelper(){
-	free( tally );
+	if( tally != NULL ) {
+		free( tally );
+	}
 	if( grid_device != NULL ) {
 		cudaFree( grid_device );
 	}
@@ -48,7 +41,7 @@ void FIGenericGPUTestHelper::stopTimers(){
 }
 
 #ifdef CUDA
-__global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleCrossSection* pXS, gpuFloatType_t* results){
+__global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleCrossSection* pXS, gpuTallyType_t* results){
 
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	int N = pCP->size;
@@ -62,10 +55,10 @@ __global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleCrossSection* 
 #endif
 
 void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleCrossSectionHost* pXS ){
-	gpuFloatType_t* tally_device;
+	gpuTallyType_t* tally_device;
 
-	unsigned long long allocSize = sizeof(gpuFloatType_t)*nCells;
-	tally = (gpuFloatType_t*) malloc ( allocSize );
+	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
+	tally = (gpuTallyType_t*) malloc ( allocSize );
 	CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
 	CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
 	gpuErrchk( cudaPeekAtLastError() );
@@ -84,7 +77,7 @@ void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned 
 }
 
 #ifdef CUDA
-__global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleMaterialList* pMatList, unsigned matIndex, gpuFloatType_t density, gpuFloatType_t* results){
+__global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleMaterialList* pMatList, unsigned matIndex, gpuFloatType_t density, gpuTallyType_t* results){
 
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	int N = pCP->size;
@@ -98,10 +91,10 @@ __global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleMaterialList* 
 #endif
 
 void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, unsigned matIndex, gpuFloatType_t density ){
-	gpuFloatType_t* tally_device;
+	gpuTallyType_t* tally_device;
 
-	unsigned long long allocSize = sizeof(gpuFloatType_t)*nCells;
-	tally = (gpuFloatType_t*) malloc ( allocSize );
+	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
+	tally = (gpuTallyType_t*) malloc ( allocSize );
 	CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
 	CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
 	gpuErrchk( cudaPeekAtLastError() );
@@ -147,7 +140,7 @@ gpuFloatType_t FIGenericGPUTestHelper::getTotalXSByMatProp(SimpleMaterialPropert
 }
 
 #ifdef CUDA
-__global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, gpuFloatType_t* results){
+__global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, gpuTallyType_t* results){
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
 	unsigned N = pCP->size;
@@ -164,7 +157,7 @@ __global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMat
 #endif
 
 #ifdef CUDA
-__global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, gpuFloatType_t* results){
+__global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, gpuTallyType_t* results){
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
 	unsigned N = pCP->size;
@@ -173,8 +166,9 @@ __global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, Sim
 		gpuFloatType_t E = getEnergy(pCP, tid);
 		unsigned cell = getIndex( pCP, tid);
 
-		gpuFloatType_t value = getTotalXSByMatProp(pMatProps, pMatList, cell, E);
+		gpuTallyType_t value = getTotalXSByMatProp(pMatProps, pMatList, cell, E);
 		atomicAdd( &results[cell], value);
+		//atomicAddDouble( &results[cell], value);
 		tid += blockDim.x*gridDim.x;
 	}
 	return;
@@ -182,10 +176,10 @@ __global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, Sim
 #endif
 
 void FIGenericGPUTestHelper::launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps ){
-	gpuFloatType_t* tally_device;
+	gpuTallyType_t* tally_device;
 
-	unsigned long long allocSize = sizeof(gpuFloatType_t)*nCells;
-	tally = (gpuFloatType_t*) malloc ( allocSize );
+	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
+	tally = (gpuTallyType_t*) malloc ( allocSize );
 	CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
 	CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
 	gpuErrchk( cudaPeekAtLastError() );
@@ -204,10 +198,10 @@ void FIGenericGPUTestHelper::launchTallyCrossSectionAtCollision(unsigned nBlocks
 }
 
 void FIGenericGPUTestHelper::launchSumCrossSectionAtCollisionLocation(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps ){
-	gpuFloatType_t* tally_device;
+	gpuTallyType_t* tally_device;
 
-	unsigned long long allocSize = sizeof(gpuFloatType_t)*nCells;
-	tally = (gpuFloatType_t*) malloc ( allocSize );
+	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
+	tally = (gpuTallyType_t*) malloc ( allocSize );
 	CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
 	CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
 	gpuErrchk( cudaPeekAtLastError() );
@@ -226,9 +220,9 @@ void FIGenericGPUTestHelper::launchSumCrossSectionAtCollisionLocation(unsigned n
 }
 
 void FIGenericGPUTestHelper::launchRayTraceTally(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps ){
-	gpuFloatType_t* tally_device;
-	unsigned long long allocSize = sizeof(gpuFloatType_t)*nCells;
-	tally = (gpuFloatType_t*) malloc ( allocSize );
+	gpuTallyType_t* tally_device;
+	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
+	tally = (gpuTallyType_t*) malloc ( allocSize );
 	CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
 	CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
 	gpuErrchk( cudaPeekAtLastError() );

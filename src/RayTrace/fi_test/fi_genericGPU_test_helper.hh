@@ -14,6 +14,8 @@
 #include "SimpleMaterialProperties.h"
 #include "GridBins.h"
 
+using namespace MonteRay;
+
 class FIGenericGPUTestHelper
 {
 public:
@@ -42,7 +44,7 @@ private:
 	cudaEvent_t start, stop;
 	unsigned nCells;
 
-	gpuFloatType_t* tally;
+	gpuTallyType_t* tally;
 	GridBins* grid_device;
 
 };

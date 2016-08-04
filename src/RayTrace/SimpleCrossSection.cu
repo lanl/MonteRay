@@ -6,6 +6,8 @@
 
 #include "binaryIO.h"
 
+namespace MonteRay{
+
 void ctor(struct SimpleCrossSection* pXS, unsigned num) {
     if( num <=0 ) { num = 1; }
 
@@ -158,6 +160,32 @@ __global__ void kernelGetTotalXS(struct SimpleCrossSection* pXS, gpuFloatType_t 
 }
 #endif
 
+gpuFloatType_t
+launchGetTotalXS( SimpleCrossSectionHost* pXS, gpuFloatType_t energy){
+#ifdef CUDA
+	gpuFloatType_t* result_device;
+	gpuFloatType_t result[1];
+	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
+	gpuErrchk( cudaPeekAtLastError() );
+
+	cudaEvent_t sync;
+	cudaEventCreate(&sync);
+	kernelGetTotalXS<<<1,1>>>( pXS->xs_device, energy, result_device);
+	cudaEventRecord(sync, 0);
+	cudaEventSynchronize(sync);
+
+    gpuErrchk( cudaPeekAtLastError() );
+
+	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
+	gpuErrchk( cudaPeekAtLastError() );
+
+	cudaFree( result_device );
+	return result[0];
+#else
+	return -100.0;
+#endif
+}
+
 
 #if !defined( CUDA )
 #include "ContinuousNeutron.hh"
@@ -212,12 +240,9 @@ SimpleCrossSectionHost::~SimpleCrossSectionHost(){
 void SimpleCrossSectionHost::copyToGPU(void) {
 #ifdef CUDA
 	gpuErrchk( cudaPeekAtLastError() );
-
     cudaCopyMade = true;
     temp = new SimpleCrossSection;
-
     cudaCtor(temp, xs );
-
     CUDA_CHECK_RETURN( cudaMemcpy(xs_device, temp, sizeof( SimpleCrossSection ), cudaMemcpyHostToDevice));
     gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -295,4 +320,6 @@ void SimpleCrossSectionHost::read( const std::string& filename ) {
     infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
     read(infile);
     infile.close();
+}
+
 }

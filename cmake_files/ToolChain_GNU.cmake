@@ -1,6 +1,6 @@
 # set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x" )
 # remove -std=c++0x for CUDA
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11" )
 
 execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
     OUTPUT_VARIABLE CXX_VERSION

@@ -4,6 +4,8 @@
 
 #include "cudaGridBins.h"
 
+namespace MonteRay{
+
 __device__ unsigned cudaCalcIndex(const GridBins* const grid, uint3& indices) {
     return indices.x + indices.y*grid->num[0] + indices.z*(grid->numXY);
 }
@@ -179,3 +181,4 @@ __device__ unsigned cudaGetIndex(const GridBins* const grid, const float3_t& pos
     return cudaCalcIndex(grid, indices );
 }
 
+}

@@ -5,39 +5,29 @@
 #include "SimpleCrossSection_test_helper.hh"
 
 
-SimpleCrossSectionTestHelper::float_t
-SimpleCrossSectionTestHelper::launchGetTotalXS( SimpleCrossSectionHost* pXS, float_t energy){
-	float_t* result_device;
-	float_t result[1];
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( float_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
-
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelGetTotalXS<<<1,1>>>( pXS->xs_device, energy, result_device);
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
-
-    gpuErrchk( cudaPeekAtLastError() );
-
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(float_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
-
-	cudaFree( result_device );
-	return result[0];
-}
+//SimpleCrossSectionTestHelper::float_t
+//SimpleCrossSectionTestHelper::launchGetTotalXS( SimpleCrossSectionHost* pXS, float_t energy){
+//	float_t* result_device;
+//	float_t result[1];
+//	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( float_t) * 1 ));
+//	gpuErrchk( cudaPeekAtLastError() );
+//
+//	cudaEvent_t sync;
+//	cudaEventCreate(&sync);
+//	kernelGetTotalXS<<<1,1>>>( pXS->xs_device, energy, result_device);
+//	cudaEventRecord(sync, 0);
+//	cudaEventSynchronize(sync);
+//
+//    gpuErrchk( cudaPeekAtLastError() );
+//
+//	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(float_t)*1, cudaMemcpyDeviceToHost));
+//	gpuErrchk( cudaPeekAtLastError() );
+//
+//	cudaFree( result_device );
+//	return result[0];
+//}
 
 SimpleCrossSectionTestHelper::SimpleCrossSectionTestHelper(){
-	int deviceCount;
-
-	cuInit(0);
-	cuDeviceGetCount(&deviceCount);
-	if (deviceCount == 0) {
-		printf("No CUDA-compatible devices found\n");
-		exit(1);
-	}
-	printf("Number of CUDA devices=%d\n",deviceCount);
-	gpuErrchk( cudaPeekAtLastError() );
 }
 
 SimpleCrossSectionTestHelper::~SimpleCrossSectionTestHelper(){

@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <cassert>
 
+namespace MonteRay{
+
 namespace binaryIO{
 
 // Determine if a type is a pointer
@@ -126,6 +128,8 @@ read( S& inFile, std::string& value)
 	char* buffer = 0;
 	read( inFile, buffer );
 	value = buffer;
+}
+
 }
 
 }

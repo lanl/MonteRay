@@ -2,6 +2,8 @@
 
 #include "binaryIO.h"
 
+namespace MonteRay{
+
 void ctor(struct SimpleMaterial* ptr, unsigned num) {
     if( num <=0 ) { num = 1; }
     ptr->numIsotopes = num;
@@ -329,4 +331,6 @@ void SimpleMaterialHost::read(std::istream& infile) {
 
 void SimpleMaterialHost::load(struct SimpleMaterial* ptrMat ) {
     copy( pMat, ptrMat);
+}
+
 }

@@ -2,6 +2,8 @@
 #define CPUCROSSINGDISTANCE_H_
 #include "global.h"
 
+namespace MonteRay{
+
 class CartesianGrid;
 class CrossingDistance {
 public:
@@ -18,5 +20,7 @@ public:
 private:
 
 };
+
+}
 
 #endif /* CPUCROSSINGDISTANCE_H_ */

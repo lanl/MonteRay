@@ -4,6 +4,8 @@
 #include "global.h"
 #include <math.h>
 
+namespace MonteRay{
+
 class Vector3D {
 public:
 	typedef global::float_t float_t;
@@ -168,6 +170,6 @@ typedef Vector3D Direction_t;
 //bool operator!=( const Vector3D& rhs, const Vector3D& lhs) { return !(rhs==lhs); }
 //
 
-
+}
 
 #endif /* VECTOR3D_H_ */

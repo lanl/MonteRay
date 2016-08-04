@@ -1,6 +1,8 @@
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
 
+namespace MonteRay{
+
 typedef float float_t;
 
 class global {
@@ -15,6 +17,6 @@ public:
 private:
 };
 
-
+}
 
 #endif /* GLOBAL_H_ */

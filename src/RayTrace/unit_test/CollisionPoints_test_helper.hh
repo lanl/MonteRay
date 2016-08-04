@@ -8,6 +8,8 @@
 #include <cuda.h>
 #endif
 
+using namespace MonteRay;
+
 class CollisionPointsTester
 {
 public:

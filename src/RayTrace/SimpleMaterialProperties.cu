@@ -6,6 +6,8 @@
 
 #include "binaryIO.h"
 
+namespace MonteRay{
+
 void copy(SimpleCellProperties& theCopy, const SimpleCellProperties& theOrig) {
 //	theCopy.numMats = theOrig.numMats;
 //	for( unsigned i=0; i < theOrig.numMats; ++i ) {
@@ -363,3 +365,4 @@ void SimpleMaterialPropertiesHost::read( const std::string& filename ) {
     infile.close();
 }
 
+}

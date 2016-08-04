@@ -10,6 +10,8 @@
 #include <cuda.h>
 #endif
 
+using namespace MonteRay;
+
 class SimpleCrossSectionTestHelper
 {
 public:
@@ -23,7 +25,7 @@ public:
 
 	void stopTimers();
 
-	float_t launchGetTotalXS( SimpleCrossSectionHost* pXS, float_t energy);
+	//float_t launchGetTotalXS( SimpleCrossSectionHost* pXS, float_t energy);
 
 private:
 	cudaEvent_t start, stop;

@@ -4,6 +4,9 @@
 #include "SimpleCrossSection_test_helper.hh"
 
 SUITE( SimpleCrossSection_tester ) {
+	TEST( setup ) {
+		gpuCheck();
+	}
     TEST( ctor ) {
         SimpleCrossSectionHost xs(10);
         CHECK_EQUAL(10, xs.size() );
@@ -42,9 +45,9 @@ SUITE( SimpleCrossSection_tester ) {
 
     	xs->copyToGPU();
 
-    	setupTimers();
+    	gpuSync sync;
     	gpuFloatType_t totalXS = launchGetTotalXS( xs, energy);
-    	stopTimers();
+    	sync.sync();
 
     	CHECK_CLOSE( 7.17639378000f, totalXS, 1e-7 );
 

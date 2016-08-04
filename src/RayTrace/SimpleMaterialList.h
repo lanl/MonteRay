@@ -5,6 +5,8 @@
 
 #include "SimpleMaterial.h"
 
+namespace MonteRay{
+
 struct SimpleMaterialList {
     unsigned numMaterials;
     unsigned* materialID;
@@ -55,25 +57,25 @@ public:
     void copyToGPU(void);
 
     unsigned getNumberMaterials(void) const {
-        return ::getNumberMaterials( pMatList );
+        return MonteRay::getNumberMaterials( pMatList );
     }
 
     unsigned getMaterialID(unsigned i) const {
-        return ::getMaterialID( pMatList, i );
+        return MonteRay::getMaterialID( pMatList, i );
     }
 
     SimpleMaterial* getMaterial(unsigned i) const {
-        return ::getMaterial( pMatList, i );
+        return MonteRay::getMaterial( pMatList, i );
     }
 
     gpuFloatType_t getTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const {
-        return ::getTotalXS( pMatList, i, E, density);
+        return MonteRay::getTotalXS( pMatList, i, E, density);
     }
 
     gpuFloatType_t launchGetTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const;
 
     unsigned materialIDtoIndex(unsigned id) const {
-        return ::materialIDtoIndex( pMatList, id);
+        return MonteRay::materialIDtoIndex( pMatList, id);
     }
 
     void add( unsigned i, SimpleMaterialHost& mat, unsigned id);
@@ -81,20 +83,22 @@ public:
     void add( unsigned i, SimpleMaterial* mat, unsigned id);
 #endif
 
-    SimpleMaterialList* getPtr(void) const { return pMatList; }
+    MonteRay::SimpleMaterialList* getPtr(void) const { return pMatList; }
 
     void write(std::ostream& outfile) const;
     void  read(std::istream& infile);
 
 private:
-    SimpleMaterialList* pMatList;
-    SimpleMaterialList* temp;
+    MonteRay::SimpleMaterialList* pMatList;
+    MonteRay::SimpleMaterialList* temp;
     bool cudaCopyMade;
 
 public:
-    SimpleMaterialList* ptr_device;
-    SimpleMaterial** material_device_ptr_list;
+    MonteRay::SimpleMaterialList* ptr_device;
+    MonteRay::SimpleMaterial** material_device_ptr_list;
 
 };
+
+}
 
 #endif /* SIMPLEMATERIALLIST_HH_ */

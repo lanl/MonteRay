@@ -68,16 +68,6 @@ CollisionPointsTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads,
 }
 
 CollisionPointsTester::CollisionPointsTester(){
-	int deviceCount;
-
-	cuInit(0);
-	cuDeviceGetCount(&deviceCount);
-	if (deviceCount == 0) {
-		printf("No CUDA-compatible devices found\n");
-		exit(1);
-	}
-	printf("Number of CUDA devices=%d\n",deviceCount);
-	gpuErrchk( cudaPeekAtLastError() );
 }
 
 CollisionPointsTester::~CollisionPointsTester(){

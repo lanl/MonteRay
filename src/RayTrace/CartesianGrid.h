@@ -11,6 +11,8 @@
 #include "Vector3D.h"
 #include "cpuCrossingDistance.h"
 
+namespace MonteRay{
+
 #define MAXNUMVERTICES 1001
 
 #define X 0
@@ -186,5 +188,7 @@ public:
 	float_t delta[3];
 
 };
+
+}
 
 #endif /* CARTESIANGRID_H_ */

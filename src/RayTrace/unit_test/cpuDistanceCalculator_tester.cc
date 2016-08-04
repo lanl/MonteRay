@@ -4,6 +4,8 @@
 #include "GridBins.h"
 #include "cpuRayTrace.h"
 
+using namespace MonteRay;
+
 SUITE( DistanceCalculatorCPUTest ) {
 
 	class DistanceCalculatorCPUTest {

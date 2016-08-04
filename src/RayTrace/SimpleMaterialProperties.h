@@ -3,6 +3,8 @@
 
 #include "gpuGlobal.h"
 
+namespace MonteRay{
+
 #define NMAX_MATERIALS 3
 
 struct SimpleCellProperties {
@@ -68,14 +70,14 @@ public:
     void copyToGPU(void);
 
     unsigned getNumCells(void) const {
-        return ::getNumCells( ptr );
+        return MonteRay::getNumCells( ptr );
     }
 
     unsigned launchGetNumCells(void) const;
     unsigned launchSumMatDensity(unsigned matID) const;
 
     unsigned getNumMats(unsigned i) const {
-        return ::getNumMats( ptr, i);
+        return MonteRay::getNumMats( ptr, i);
     }
 
     unsigned getMaxNumMats(void) const {
@@ -83,23 +85,49 @@ public:
     }
 
     gpuFloatType_t getDensity(unsigned cell, unsigned matNum) const {
-        return ::getDensity( ptr, cell, matNum );
+        return MonteRay::getDensity( ptr, cell, matNum );
     }
 
     unsigned getMatID(unsigned cell, unsigned matNum) const {
-         return ::getMatID( ptr, cell, matNum );
+         return MonteRay::getMatID( ptr, cell, matNum );
      }
 
 #ifndef CUDA
     void loadFromLnk3dnt(const std::string& filename );
 #endif
 
+    template<typename T>
+    void loadFromReadLnk3dnt(const T& reader ){
+        unsigned numCells = reader.getNumTotalCells();
+
+        dtor( ptr );
+        ctor( ptr, numCells );
+
+        unsigned numMats = reader.MaxMaterialsPerCell();
+        //std::cout << "Debug: numMats=" << numMats << std::endl;
+
+        for( unsigned cell=0; cell < numCells; ++cell) {
+            for( unsigned matNum=0; matNum < numMats; ++matNum ) {
+                gpuFloatType_t density = reader.getDensity(cell, matNum);
+                int matID = reader.getMatID(cell, matNum);
+
+                matID -= 2;  // decrement partisn id numbers as they start with 1, and 1 is the ghost mat
+                if( matID < 0 ) {
+                    // partisn ghost id
+                    continue;
+                }
+
+                addDensityAndID(cell, density, matID);
+            }
+        }
+    }
+
     gpuFloatType_t sumMatDensity( unsigned matIndex) const;
 
     struct SimpleMaterialProperties* getPtr(void) { return ptr; }
 
     void addDensityAndID(unsigned cellNum, gpuFloatType_t density, unsigned matID ) {
-        ::addDensityAndID(ptr, cellNum, density, matID );
+    	MonteRay::addDensityAndID(ptr, cellNum, density, matID );
     }
 
     void write(std::ostream& outfile) const;
@@ -120,5 +148,7 @@ public:
     SimpleMaterialProperties* ptr_device;
 
 };
+
+}
 
 #endif /* SIMPLEMATERIALPROPERTIES_HH_ */

@@ -4,6 +4,8 @@
 #include "gpuGlobal.h"
 #include "SimpleCrossSection.h"
 
+namespace MonteRay{
+
 struct SimpleMaterial {
     unsigned numIsotopes;
 
@@ -77,21 +79,21 @@ public:
     void copyToGPU(void);
 
     unsigned getNumIsotopes(void) const {
-        return ::getNumIsotopes( pMat );
+        return MonteRay::getNumIsotopes( pMat );
     }
 
     unsigned launchGetNumIsotopes(void);
 
     gpuFloatType_t getFraction(unsigned i) const {
-        return ::getFraction(pMat, i);
+        return MonteRay::getFraction(pMat, i);
     }
 
     gpuFloatType_t getMicroTotalXS(gpuFloatType_t E ){
-        return ::getMicroTotalXS(pMat, E);
+        return MonteRay::getMicroTotalXS(pMat, E);
     }
 
     gpuFloatType_t getTotalXS(gpuFloatType_t E, gpuFloatType_t density ){
-         return ::getTotalXS(pMat, E, density);
+         return MonteRay::getTotalXS(pMat, E, density);
      }
 
     void add(unsigned index, SimpleCrossSectionHost& xs, gpuFloatType_t frac );
@@ -99,10 +101,10 @@ public:
     void add(unsigned index, struct SimpleCrossSection* xs, gpuFloatType_t frac );
 #endif
 
-    void normalizeFractions(void) { ::normalizeFractions(pMat); }
-    void calcAWR(void){ ::calcAtomicWeight(pMat); }
+    void normalizeFractions(void) { MonteRay::normalizeFractions(pMat); }
+    void calcAWR(void){ MonteRay::calcAtomicWeight(pMat); }
 
-    gpuFloatType_t getAtomicWeight(void) const { return ::getAtomicWeight(pMat); }
+    gpuFloatType_t getAtomicWeight(void) const { return MonteRay::getAtomicWeight(pMat); }
 
     void write(std::ostream& outfile) const;
     void  read(std::istream& infile);
@@ -121,5 +123,7 @@ public:
     SimpleCrossSection** isotope_device_ptr_list;
 
 };
+
+}
 
 #endif /* SIMPLEMATERIAL_HH_ */

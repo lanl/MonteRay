@@ -5,6 +5,8 @@
 #include "gpuDistanceCalculator_test_helper.hh"
 #include "cudaGridBins.h"
 
+namespace MonteRay{
+
 void
 gpuDistanceCalculatorTestHelper::launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos) {
 	float_t x = pos[0];
@@ -47,7 +49,9 @@ gpuDistanceCalculatorTestHelper::gpuDistanceCalculatorTestHelper(){
 	numCrossings_device = NULL;
 
 	nCells = 0;
+}
 
+void gpuDistanceCalculatorTestHelper::gpuCheck() {
 	int deviceCount;
 
 	cuInit(0);
@@ -138,4 +142,4 @@ void gpuDistanceCalculatorTestHelper::stopTimers(){
 
 }
 
-
+}

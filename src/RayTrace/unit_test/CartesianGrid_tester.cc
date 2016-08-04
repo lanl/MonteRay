@@ -3,6 +3,8 @@
 #include "global.h"
 #include "CartesianGrid.h"
 
+using namespace MonteRay;
+
 SUITE( CartesianGrid_tests ) {
     TEST( ctor ) {
     	CartesianGrid grid;

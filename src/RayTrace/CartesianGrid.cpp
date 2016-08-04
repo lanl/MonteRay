@@ -7,4 +7,6 @@
 
 #include "CartesianGrid.h"
 
+namespace MonteRay{
 
+}

@@ -3,6 +3,8 @@
 #include "GridBins.h"
 #include "cpuRayTrace.h"
 
+using namespace MonteRay;
+
 SUITE( GridBins_Tester ) {
 
 	class GridBinsTest {
@@ -257,6 +259,45 @@ SUITE( GridBins_Tester ) {
 		CHECK_CLOSE( 1.0f, distances[0], 1e-11 );
 		CHECK_EQUAL( 1U, cells[1]);
 		CHECK_CLOSE( 0.5f, distances[1], 1e-11 );
+	}
+
+	class GridBinsRayTraceTest2{
+	public:
+		typedef global::float_t float_t;
+
+		GridBinsRayTraceTest2(){
+			grid = (GridBins*) malloc( sizeof(GridBins) );
+			ctor( grid );
+			setVertices(grid, 0, -5.0, 5.0, 10);
+			setVertices(grid, 1, -5.0, 5.0, 10);
+			setVertices(grid, 2, -5.0, 5.0, 10);
+			finalize(grid);
+		}
+
+		~GridBinsRayTraceTest2(){
+			free( grid );
+		}
+
+		GridBins* grid;
+	};
+
+	TEST_FIXTURE(GridBinsRayTraceTest2, Distance1)
+	{
+		Vector3D pos( 0.5, 0.5, 0.5 );
+		Vector3D dir( 1, 0, 0);
+		float_t distance = 1.0;
+
+		int cells[1000];
+		float_t distances[1000];
+
+		unsigned nDistances = rayTrace(grid, cells, distances, pos, dir, distance, false );
+
+		unsigned i = MonteRay::getIndex( grid, pos );
+		CHECK_EQUAL( 555, i);
+
+		CHECK_EQUAL( 2, nDistances);
+		CHECK_EQUAL( 555U, cells[0]);
+		CHECK_CLOSE( 0.5f, distances[0], 1e-11 );
 	}
 
 }

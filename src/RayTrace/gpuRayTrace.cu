@@ -6,6 +6,8 @@
 #include "cudaGridBins.h"
 #include "gpuRayTrace.h"
 
+namespace MonteRay{
+
 __device__ unsigned cudaCalcCrossings(const float_t* const vertices, unsigned nVertices, int* cells, float_t* distances, float_t pos, float_t dir, float_t distance, int index ){
 	const bool debug = false;
 
@@ -404,3 +406,4 @@ __global__ void kernelCudaRayTraceToAllCenters(
 	}
 }
 
+}

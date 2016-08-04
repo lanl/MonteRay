@@ -1,7 +1,6 @@
 #ifndef GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 #define GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 
-
 #include "global.h"
 #include "/projects/opt/centos7/cuda/7.5/include/driver_types.h"
 
@@ -12,6 +11,8 @@
 #include "gpuRayTrace.h"
 #endif
 
+namespace MonteRay{
+
 class gpuDistanceCalculatorTestHelper
 {
 public:
@@ -20,6 +21,8 @@ public:
 	gpuDistanceCalculatorTestHelper();
 
 	~gpuDistanceCalculatorTestHelper();
+
+	void gpuCheck();
 
 	void setupTimers();
 
@@ -44,5 +47,7 @@ private:
 	cudaEvent_t start, stop;
 
 };
+
+}
 #endif /* GPUDISTANCECALCULATOR_TEST_HELPER_HH_ */
 

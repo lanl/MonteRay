@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "binaryIO.h"
+namespace MonteRay{
 
 void copy(CollisionPosition_t* pCopy, const CollisionPosition_t* const pOrig ){
     pCopy->x = pOrig->x;
@@ -254,34 +255,38 @@ void CollisionPointsHost::copyToGPU(void) {
 #ifdef CUDA
         gpuErrchk( cudaPeekAtLastError() );
 
-        cudaCopyMade = true;
+        if( !cudaCopyMade ) {
+        	// first pass allocate memory
 
-        unsigned num = sizeof( gpuFloatType_t ) * capacity();
+        	cudaCopyMade = true;
 
-        temp = new CollisionPoints;
-        temp->capacity = ptrPoints->capacity;
-        temp->size = ptrPoints->size;
+        	unsigned num = sizeof( gpuFloatType_t ) * capacity();
 
-        // allocate target struct
+        	temp = new CollisionPoints;
+        	temp->capacity = ptrPoints->capacity;
+        	temp->size = ptrPoints->size;
 
-        CUDA_CHECK_RETURN( cudaMalloc(&ptrPoints_device, sizeof( CollisionPoints) ));
-        gpuErrchk( cudaPeekAtLastError() );
+        	// allocate target struct
 
-        // allocate target dynamic memory
-        CUDA_CHECK_RETURN( cudaMalloc(&temp->pos, sizeof( CollisionPosition_t ) * capacity() ));
-        gpuErrchk( cudaPeekAtLastError() );
+        	CUDA_CHECK_RETURN( cudaMalloc(&ptrPoints_device, sizeof( CollisionPoints) ));
+        	gpuErrchk( cudaPeekAtLastError() );
 
-        CUDA_CHECK_RETURN( cudaMalloc(&temp->dir, sizeof( CollisionDirection_t ) * capacity() ));
-        gpuErrchk( cudaPeekAtLastError() );
+        	// allocate target dynamic memory
+        	CUDA_CHECK_RETURN( cudaMalloc(&temp->pos, sizeof( CollisionPosition_t ) * capacity() ));
+        	gpuErrchk( cudaPeekAtLastError() );
 
-        CUDA_CHECK_RETURN( cudaMalloc(&temp->energy, sizeof( gpuFloatType_t ) * capacity() ));
-        gpuErrchk( cudaPeekAtLastError() );
+        	CUDA_CHECK_RETURN( cudaMalloc(&temp->dir, sizeof( CollisionDirection_t ) * capacity() ));
+        	gpuErrchk( cudaPeekAtLastError() );
 
-        CUDA_CHECK_RETURN( cudaMalloc(&temp->weight, sizeof( gpuFloatType_t ) * capacity() ));
-        gpuErrchk( cudaPeekAtLastError() );
+        	CUDA_CHECK_RETURN( cudaMalloc(&temp->energy, sizeof( gpuFloatType_t ) * capacity() ));
+        	gpuErrchk( cudaPeekAtLastError() );
 
-        CUDA_CHECK_RETURN( cudaMalloc(&temp->index, sizeof( unsigned ) * capacity() ));
-        gpuErrchk( cudaPeekAtLastError() );
+        	CUDA_CHECK_RETURN( cudaMalloc(&temp->weight, sizeof( gpuFloatType_t ) * capacity() ));
+        	gpuErrchk( cudaPeekAtLastError() );
+
+        	CUDA_CHECK_RETURN( cudaMalloc(&temp->index, sizeof( unsigned ) * capacity() ));
+        	gpuErrchk( cudaPeekAtLastError() );
+        }
 
         // copy data
         CUDA_CHECK_RETURN( cudaMemcpy(ptrPoints_device, temp, sizeof( CollisionPoints ), cudaMemcpyHostToDevice));
@@ -454,4 +459,30 @@ void CollisionPointsHost::readToMemory( const std::string& file ){
     for( unsigned i=0; i< getNumCollisionsOnFile(); ++i ) {
         add( readParticle() );
     }
+    closeInput();
+}
+
+
+bool CollisionPointsHost::readToBank( const std::string& file, unsigned start ){
+    openInput( file );
+    unsigned offset = start * ( sizeof(gpuFloatType_t)*8+sizeof(unsigned));
+    io.seekg( offset, std::ios::cur); // reposition to start of file
+
+    clear();
+    unsigned nRead = 0;
+    for( unsigned i=0; i< capacity(); ++i ) {
+        add( readParticle() );
+        ++nRead;
+        if( numCollisionOnFile == nRead + start) {
+        	break;
+        }
+    }
+    closeInput();
+
+    if( nRead < capacity() ) {
+    	return true; // return end = true
+    }
+    return false; // return end = false
+}
+
 }

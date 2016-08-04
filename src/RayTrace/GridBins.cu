@@ -1,4 +1,7 @@
 #include "GridBins.h"
+#include "gpuGlobal.h"
+
+namespace MonteRay{
 
 void ctor(GridBins* grid){
 	grid->offset[0] = 0;
@@ -53,7 +56,7 @@ void setVertices( GridBins* grid, unsigned dim, global::float_t min, float max, 
 
 	grid->vertices[ grid->offset[dim] ] = min;
 
-	global::float_t location;
+	//global::float_t location;
 	for( unsigned i = 1; i<numBins+1; ++i) {
 		grid->vertices[ i+ grid->offset[dim]] = grid->vertices[i-1 + grid->offset[dim]] + grid->delta[dim];
 	}
@@ -195,4 +198,44 @@ void getDistancesToAllCenters(const GridBins* const grid, Position_t& pos, float
 	}
 }
 
+GridBinsHost::GridBinsHost( float_t negX, float_t posX, unsigned nX,
+	                        float_t negY, float_t posY, unsigned nY,
+	                        float_t negZ, float_t posZ, unsigned nZ){
+	ptr = (GridBins*) malloc( sizeof(GridBins) );
+	ctor(ptr);
+	setVertices(ptr, 0, negX, posX, nX);
+	setVertices(ptr, 1, negY, posY, nY);
+	setVertices(ptr, 2, negZ, posZ, nZ);
+	finalize(ptr);
+	ptr_device = NULL;
+	temp = NULL;
+	cudaCopyMade = false;
+}
+
+GridBinsHost::~GridBinsHost(){
+	free( ptr );
+#ifdef CUDA
+	if( cudaCopyMade ) {
+		if( ptr_device != NULL ) {
+			cudaFree( ptr_device );
+		}
+	}
+#endif
+}
+
+void GridBinsHost::copyToGPU(void) {
+#ifdef CUDA
+	cudaCopyMade = true;
+	CUDA_CHECK_RETURN( cudaMalloc( &ptr_device, sizeof(GridBins) ));
+	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof(GridBins), cudaMemcpyHostToDevice ));
+#endif
+}
+
+
+unsigned GridBinsHost::getIndex(float_t x, float_t y, float_t z) const {
+	Position_t pos(x,y,z);
+	return MonteRay::getIndex( ptr, pos);
+}
+
+}
 

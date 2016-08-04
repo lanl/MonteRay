@@ -1,13 +1,21 @@
 #include <UnitTest++.h>
 
 #include <iostream>
+#include <functional>
 
 #include "fi_genericGPU_test_helper.hh"
+#include "gpuTally.h"
+#include "ExpectedPathLength.h"
+#include "cpuTimer.h"
 
+#if( false )
 SUITE( Collision_fi_tester ) {
 
+	TEST( setup ) {
+		gpuCheck();
+	}
+
     TEST(get_total_xs_from_gpu ) {
-    	cudaReset();
     	CollisionPointsHost* points = new CollisionPointsHost(2);
     	points->readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin"  );
     	FIGenericGPUTestHelper helper(points->size());
@@ -32,7 +40,6 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST(load_godiva_metal_from_file_small_file ) {
-    	cudaReset();
     	CollisionPointsHost points(2);
     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin"  );
     	FIGenericGPUTestHelper helper(points.size());
@@ -84,8 +91,6 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST( load_godivaR_materials_godivaR_geom_and_collisions_tally_collision ) {
-    	cudaReset();
-
     	CollisionPointsHost points(2);
     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin"  );
         FIGenericGPUTestHelper helper(points.size());
@@ -144,7 +149,6 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST( sum_crossSection_by_startingCell )  {
-    	cudaReset();
         SimpleMaterialPropertiesHost mp(2);
         mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
         FIGenericGPUTestHelper helper( mp.getNumCells() );
@@ -213,7 +217,6 @@ SUITE( Collision_fi_tester ) {
 
     TEST( rayTraceTally_GodivaR )
     {
-    	cudaReset();
     	GridBins* grid_host;
     	grid_host = (GridBins*) malloc( sizeof(GridBins) );
     	ctor( grid_host );
@@ -265,6 +268,7 @@ SUITE( Collision_fi_tester ) {
     	CollisionPointsHost points(2);
     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin"  );
     	points.copyToGPU();
+    	CHECK_EQUAL(32786806, points.size());
 
     	gpuFloatType_t energy = points.getEnergy(0);
     	unsigned cell = points.getIndex(0);
@@ -279,6 +283,141 @@ SUITE( Collision_fi_tester ) {
 
     	CHECK_CLOSE( 9.43997, helper.getTally(0), 1e-5 );
     	CHECK_CLOSE( 16.5143, helper.getTally(50+100*100), 1e-4 );
+    	free(grid_host);
+    }
+}
+
+SUITE( Collision_fi_looping_tester ) {
+
+	TEST( setup ) {
+		gpuCheck();
+	}
+
+    TEST( rayTraceTally_GodivaR_wGlobalLauncher )
+    {
+    	FIGenericGPUTestHelper helper(  1 );
+
+    	cudaReset();
+    	GridBinsHost grid(-33.5, 33.5, 100,
+    			          -33.5, 33.5, 100,
+    			          -33.5, 33.5, 100);
+    	grid.copyToGPU();
+
+    	gpuTallyHost tally( grid.getNumCells() );
+    	tally.copyToGPU();
+
+        SimpleMaterialPropertiesHost mp(2);
+        mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
+        mp.copyToGPU();
+
+    	SimpleCrossSectionHost u234s(1);
+        SimpleCrossSectionHost u235s(1);
+        SimpleCrossSectionHost u238s(1);
+        SimpleCrossSectionHost h1s(1);
+        SimpleCrossSectionHost o16s(1);
+
+        u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
+        u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
+        u238s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
+        h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
+        o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+
+        u234s.copyToGPU();
+        u235s.copyToGPU();
+        u238s.copyToGPU();
+        h1s.copyToGPU();
+        o16s.copyToGPU();
+
+        SimpleMaterialHost metal(3);
+        metal.add(0, u234s, 0.01);
+        metal.add(1, u235s, 0.98);
+        metal.add(2, u238s, 0.01);
+        metal.copyToGPU();
+
+        SimpleMaterialHost water(2);
+        water.add(0, h1s, 0.667 );
+        water.add(0, o16s, 0.333 );
+        water.copyToGPU();
+
+        SimpleMaterialListHost matList(2);
+        matList.add( 0, metal, 0 );
+        matList.add( 1, water, 1 );
+        matList.copyToGPU();
+
+    	CollisionPointsHost bank1(1000000);
+    	bool end = false;
+    	unsigned offset = 0;
+		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+
+    	gpuFloatType_t energy = bank1.getEnergy(0);
+    	unsigned cell = bank1.getIndex(0);
+    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), cell, energy );
+    	CHECK_CLOSE( 0.804852, energy, 1e-6);
+    	CHECK_EQUAL( 435859, cell);
+    	CHECK_CLOSE( 0.102606, expected, 1e-6);
+
+		offset += bank1.size();
+
+    	CollisionPointsHost bank2(1000000);
+
+    	auto cpuWork1 = [&] (void) -> void {
+    		if( !end ) {
+    			end = bank2.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+    			offset += bank2.size();
+    		}
+    	};
+    	auto cpuWork2 = [&] (void) -> void {
+    		if( !end ) {
+    			end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+    			offset += bank1.size();
+    		}
+    	};
+
+     	helper.setupTimers();
+
+     	bool last = false;
+     	while(true){
+     		bank1.copyToGPU();
+     		if( end ) { last = true; }
+     		MonteRay::tripleTime time = launchRayTraceTally(cpuWork1,
+     				1024,
+     				1024,
+     				&grid,
+     				&bank1,
+     				&matList,
+     				&mp,
+     				&tally);
+
+        	std::cout << "Debug: Time in GPU raytrace kernel=" << time.gpuTime << " secs.\n";
+        	std::cout << "Debug: Time in CPU work =" << time.cpuTime << " secs.\n";
+        	std::cout << "Debug: Time total time =" << time.totalTime << " secs.\n\n";
+        	if( last ) { break; }
+
+          	bank2.copyToGPU();
+        	if( end ) { last = true; }
+     		time = launchRayTraceTally(cpuWork2,
+     				1024,
+     				1024,
+     				&grid,
+     				&bank2,
+     				&matList,
+     				&mp,
+     				&tally);
+
+        	std::cout << "Debug: Time in GPU raytrace kernel=" << time.gpuTime << " secs.\n";
+        	std::cout << "Debug: Time in CPU work =" << time.cpuTime << " secs.\n";
+        	std::cout << "Debug: Time total time =" << time.totalTime << " secs.\n\n";
+        	if( last ) { break; }
+
+     	};
+
+    	helper.stopTimers();
+
+    	tally.copyToCPU();
+
+    	CHECK_CLOSE( 9.43997, tally.getTally(0), 1e-5 );
+    	CHECK_CLOSE( 16.5143, tally.getTally(50+100*100), 1e-4 );
     }
 
 }
+#endif

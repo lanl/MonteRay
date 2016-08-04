@@ -3,6 +3,8 @@
 #include "global.h"
 #include "cpuCrossingDistance.h"
 
+using namespace MonteRay;
+
 SUITE( cpuCrossingDistanceTest ) {
 	typedef global::float_t float_t;
 

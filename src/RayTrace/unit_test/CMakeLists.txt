@@ -5,7 +5,7 @@ include( template_select )
 
 list( APPEND ${UnitName}_packages )
 
-set( ToolkitLibs gpuTestHelper Utilities cuda )
+set( ToolkitLibs gpuTestHelper Utilities cuda rt )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

@@ -5,7 +5,7 @@ FIND_PACKAGE(CUDA REQUIRED)
 INCLUDE(FindCUDA)
 
 SET(CUDA_SEPARABLE_COMPILATION ON)
-SET(CUDA_NVCC_FLAGS -DCUDA; -arch=sm_52;-Xcompiler -fPIC; --relocatable-device-code=true;--cudart static)
+SET(CUDA_NVCC_FLAGS -DCUDA; -arch=sm_52;-O3; --use_fast_math; -Xcompiler -fPIC; --relocatable-device-code=true;--cudart static)
 
 #CUDA_COMPILE( CUDA_GEN_FILES ${CUDA_SRCS} ${CPP_SRCS} )
 #CUDA_COMPILE_PTX( CUDA_PTXGEN_FILES ${CUDA_SRCS} ${CPP_SRCS} )

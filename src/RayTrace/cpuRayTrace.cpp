@@ -4,6 +4,8 @@
 #include "cpuRayTrace.h"
 #include "GridBins.h"
 
+namespace MonteRay{
+
 unsigned rayTrace(const GridBins* const grid, int* global_indices, float_t* distances, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) {
 	const bool debug = false;
 
@@ -246,4 +248,6 @@ unsigned orderCrossings(const GridBins* const grid, int* global_indices, float_t
     }
 
     return numRayCrossings;
+}
+
 }
