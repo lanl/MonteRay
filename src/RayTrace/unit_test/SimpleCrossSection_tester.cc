@@ -11,6 +11,23 @@ SUITE( SimpleCrossSection_tester ) {
         SimpleCrossSectionHost xs(10);
         CHECK_EQUAL(10, xs.size() );
     }
+    TEST_FIXTURE(SimpleCrossSectionTestHelper, get_id ) {
+    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(4);
+    	xs->setTotalXS(0, 0.0, 4.0 );
+    	xs->setTotalXS(1, 1.0, 3.0 );
+    	xs->setTotalXS(2, 2.0, 2.0 );
+    	xs->setTotalXS(3, 3.0, 1.0 );
+
+    	CHECK_EQUAL(-1, xs->getID() );
+    	xs->setID(3);
+    	CHECK_EQUAL(3, xs->getID() );
+
+    	// can't set twice
+    	xs->setID(4);
+    	CHECK_EQUAL(3, xs->getID() );
+
+    	delete xs;
+    }
     TEST_FIXTURE(SimpleCrossSectionTestHelper, get_total_xs_from_gpu ) {
     	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(4);
     	xs->setTotalXS(0, 0.0, 4.0 );

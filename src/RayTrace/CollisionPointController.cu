@@ -93,6 +93,10 @@ CollisionPointController::add(
 
 void
 CollisionPointController::flush(bool final){
+	if( currentBank->size() == 0 ) {
+		return;
+	}
+
 	if( nFlushs > 0 ) {
 		std::cout << "Debug: flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n";
 		stopTimers();
@@ -108,7 +112,7 @@ CollisionPointController::flush(bool final){
 	cudaEventSynchronize(*currentCopySync);
 
 	// launch kernel
-	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device, currentBank->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, pTally->ptr_device);
+	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device, currentBank->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
 	cudaEventRecord(stopGPU,stream1);
 	cudaStreamWaitEvent(stream1, stopGPU, 0);
 

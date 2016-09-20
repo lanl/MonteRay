@@ -15,8 +15,10 @@ SUITE( SimpleMaterial_tester ) {
 
         gpuFloatType_t fraction = 0.95;
         mat.add( 0, xs, fraction);
+        mat.setID( 0, 3);
 
         CHECK_CLOSE( 0.95, mat.getFraction(0), 1e-7 );
+        CHECK_EQUAL( 3, xs.getID() );
         CHECK_EQUAL( 1, mat.getNumIsotopes() );
     }
 
@@ -30,12 +32,11 @@ SUITE( SimpleMaterial_tester ) {
         xs.setTotalXS(2, 2.0, 2.0 );
         xs.setTotalXS(3, 3.0, 1.0 );
 
-        xs.copyToGPU();
-
         gpuFloatType_t fraction = 0.95;
         mat.add( 0, xs, fraction);
 
         mat.copyToGPU();
+        xs.copyToGPU();
 
         setupTimers();
         unsigned numIsotopes = mat.launchGetNumIsotopes();

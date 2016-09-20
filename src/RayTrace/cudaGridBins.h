@@ -38,6 +38,8 @@ __device__ unsigned cudaGetNumBins(const GridBins* const grid, unsigned dim);
 
 __device__ unsigned cudaGetNumBins(const GridBins* const grid, unsigned dim, unsigned index);
 
+__device__ unsigned cudaGetIndexBinaryFloat(const float_t* const values, unsigned count, float_t value );
+
 __device__ int cudaGetDimIndex(const GridBins* const grid, unsigned dim, float_t pos );
 
 __device__ bool cudaIsIndexOutside(const GridBins* const grid, unsigned dim, int i);

@@ -56,12 +56,32 @@ gpuFloatType_t getAtomicWeight(struct SimpleMaterial* ptr );
 #ifdef CUDA
 __device__ __host__
 #endif
+gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E);
+
+#ifdef CUDA
+__device__ __host__
+#endif
 gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E);
 
 #ifdef CUDA
 __device__ __host__
 #endif
+gpuFloatType_t getTotalXS(struct SimpleMaterial* ptr, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density);
+
+#ifdef CUDA
+__device__ __host__
+#endif
 gpuFloatType_t getTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E, gpuFloatType_t density);
+
+#ifdef CUDA
+__device__ __host__
+#endif
+void setID(struct SimpleMaterial* ptr, unsigned index, unsigned id );
+
+#ifdef CUDA
+__device__ __host__
+#endif
+int getID(struct SimpleMaterial* ptr, unsigned index );
 
 #ifdef CUDA
 __device__ __host__
@@ -88,18 +108,23 @@ public:
         return MonteRay::getFraction(pMat, i);
     }
 
-    gpuFloatType_t getMicroTotalXS(gpuFloatType_t E ){
-        return MonteRay::getMicroTotalXS(pMat, E);
+    gpuFloatType_t getMicroTotalXS(HashLookup* pHash, gpuFloatType_t E ){
+    	unsigned HashBin = getHashBin(pHash, E);
+        return MonteRay::getMicroTotalXS(pMat, pHash, HashBin, E);
     }
 
-    gpuFloatType_t getTotalXS(gpuFloatType_t E, gpuFloatType_t density ){
-         return MonteRay::getTotalXS(pMat, E, density);
+    gpuFloatType_t getTotalXS(HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density ){
+    	 unsigned HashBin = getHashBin(pHash, E);
+         return MonteRay::getTotalXS(pMat, pHash, HashBin, E, density);
      }
 
     void add(unsigned index, SimpleCrossSectionHost& xs, gpuFloatType_t frac );
 #ifndef CUDA
     void add(unsigned index, struct SimpleCrossSection* xs, gpuFloatType_t frac );
 #endif
+
+    void setID( unsigned index, unsigned id);
+    int getID( unsigned index );
 
     void normalizeFractions(void) { MonteRay::normalizeFractions(pMat); }
     void calcAWR(void){ MonteRay::calcAtomicWeight(pMat); }

@@ -34,7 +34,10 @@ public:
 	void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleCrossSectionHost* pXS );
 	void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, unsigned matIndex, gpuFloatType_t density );
 	void launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps );
+
+	gpuFloatType_t getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t E);
 	gpuFloatType_t getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E);
+
 	void launchSumCrossSectionAtCollisionLocation(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps );
 	void launchRayTraceTally(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps );
 

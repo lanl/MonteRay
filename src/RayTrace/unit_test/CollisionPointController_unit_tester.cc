@@ -59,10 +59,10 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
 	    	pMatProps->copyToGPU();
 
-	    	xs->setTotalXS(0, 0.0, 1.0 );
+	    	xs->setTotalXS(0, 0.00001, 1.0 );
 	    	xs->setTotalXS(1, 100.0, 1.0 );
 	    	xs->setAWR( 1.0 );
-	        xs->copyToGPU();
+
 
 	        metal->add(0, *xs, 1.0);
 	        metal->copyToGPU();
@@ -70,6 +70,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 	        // add metal as mat number 0
 	        pMatList->add( 0, *metal, 0 );
 	        pMatList->copyToGPU();
+	        xs->copyToGPU();
 		}
 
 		~UnitControllerSetup(){
@@ -96,6 +97,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 	}
 
     TEST_FIXTURE(UnitControllerSetup, ctor ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- ctor\n";
         CollisionPointController controller( 1024,
  				                             1024,
  				                             pGrid,
@@ -108,6 +110,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
     }
 
     TEST_FIXTURE(UnitControllerSetup, setCapacity ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- setCapacity\n";
         CollisionPointController controller( 1024,
  				                             1024,
  				                             pGrid,
@@ -121,6 +124,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
     }
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle\n";
         CollisionPointController controller( 1024,
  				                             1024,
  				                             pGrid,
@@ -137,6 +141,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
     }
 
     TEST_FIXTURE(UnitControllerSetup, single_ray ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- single_ray\n";
     	CollisionPointController controller( 1,
     			1,
     			pGrid,
@@ -149,7 +154,8 @@ SUITE( Collision_unit_bank_controller_tester ) {
      	unsigned int matID=0;
      	gpuFloatType_t energy = 1.0;
      	gpuFloatType_t density = 1.0;
-     	double testXS = MonteRay::getTotalXS( pMatList->getPtr(), matID, energy, density);
+     	unsigned HashBin = getHashBin( pMatList->getHashPtr()->getPtr(), energy);
+     	double testXS = MonteRay::getTotalXS( pMatList->getPtr(), matID, pMatList->getHashPtr()->getPtr(), HashBin, energy, density);
      	CHECK_CLOSE(.602214179f/1.00866491597f, testXS, 1e-6);
 
     	gpuFloatType_t x = 0.5;
@@ -163,13 +169,15 @@ SUITE( Collision_unit_bank_controller_tester ) {
         		        1.0, 0.0, 0.0,
         		        1.0, 1.0, i);
 
+        std::cout << "Debug: CollisionPointController_unit_tester -- single_ray - flushing controller \n";
         controller.flush(true);
 
+        std::cout << "Debug: CollisionPointController_unit_tester -- single_ray - copyToCPU \n";
     	pTally->copyToCPU();
 
     	float distance = 0.5f;
     	CHECK_CLOSE( (1.0f-std::exp(-testXS*distance))/testXS, pTally->getTally(i), 1e-5 );
-
+    	std::cout << "Debug: CollisionPointController_unit_tester -- finished- single_ray\n";
     }
 
 //    TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){

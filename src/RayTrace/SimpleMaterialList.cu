@@ -66,12 +66,14 @@ void cudaDtor(SimpleMaterialList* ptr) {
 }
 #endif
 
-SimpleMaterialListHost::SimpleMaterialListHost(unsigned num) {
+SimpleMaterialListHost::SimpleMaterialListHost(unsigned num, unsigned maxNumIsotopes, unsigned nBins) {
      pMatList = new SimpleMaterialList;
      ctor( pMatList, num);
      temp = NULL;
      ptr_device = NULL;
      cudaCopyMade = false;
+
+     pHash = new HashLookupHost( maxNumIsotopes, nBins);
 
 #ifdef CUDA
      material_device_ptr_list = (SimpleMaterial**) malloc( sizeof(SimpleMaterial* )*num );
@@ -84,7 +86,7 @@ SimpleMaterialListHost::SimpleMaterialListHost(unsigned num) {
 SimpleMaterialListHost::~SimpleMaterialListHost() {
      dtor( pMatList );
      delete pMatList;
-
+     delete pHash;
 #ifdef CUDA
      if( cudaCopyMade ) {
        	cudaDtor( temp );
@@ -97,6 +99,7 @@ SimpleMaterialListHost::~SimpleMaterialListHost() {
 
 void SimpleMaterialListHost::copyToGPU(void) {
 #ifdef CUDA
+	pHash->copyToGPU();
 	cudaCopyMade = true;
     temp = new SimpleMaterialList;
     copy(temp, pMatList);
@@ -167,6 +170,13 @@ SimpleMaterial* getMaterial(SimpleMaterialList* ptr, unsigned i ){
 #ifdef CUDA
 __device__ __host__
 #endif
+gpuFloatType_t getTotalXS(SimpleMaterialList* ptr, unsigned i, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density) {
+    return getTotalXS( ptr->materials[i], pHash, HashBin, E, density );
+}
+
+#ifdef CUDA
+__device__ __host__
+#endif
 gpuFloatType_t getTotalXS(SimpleMaterialList* ptr, unsigned i, gpuFloatType_t E, gpuFloatType_t density) {
     return getTotalXS( ptr->materials[i], E, density );
 }
@@ -187,8 +197,8 @@ unsigned materialIDtoIndex(SimpleMaterialList* ptr, unsigned id ) {
 }
 
 #ifdef CUDA
-__global__ void kernelGetTotalXS(struct SimpleMaterialList* pMatList, unsigned matIndex, gpuFloatType_t E, gpuFloatType_t density, gpuFloatType_t* results){
-    results[0] = getTotalXS(pMatList, matIndex, E, density);
+__global__ void kernelGetTotalXS(struct SimpleMaterialList* pMatList, unsigned matIndex, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density, gpuFloatType_t* results){
+    results[0] = getTotalXS(pMatList, matIndex, pHash, HashBin, E, density);
     return;
 }
 #endif
@@ -202,9 +212,11 @@ gpuFloatType_t SimpleMaterialListHost::launchGetTotalXS(unsigned i, gpuFloatType
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
 	gpuErrchk( cudaPeekAtLastError() );
 
+	unsigned HashBin = getHashBin( pHash->getPtr(), E);
+
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-	kernelGetTotalXS<<<1,1>>>(ptr_device, i, E, density, result_device);
+	kernelGetTotalXS<<<1,1>>>(ptr_device, i, pHash->getPtrDevice(), HashBin, E, density, result_device);
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
@@ -231,6 +243,14 @@ void SimpleMaterialListHost::add( unsigned index, SimpleMaterialHost& mat, unsig
 #ifdef CUDA
     material_device_ptr_list[index] = mat.ptr_device;
 #endif
+    for( unsigned i = 0; i < mat.getNumIsotopes(); ++i ){
+//    	std::cout << "Debug: SimpleMaterialListHost::add -- i=" << i << "\n";
+    	int currentID = mat.getID(i);
+//    	std::cout << "Debug: SimpleMaterialListHost::add -- currentID=" << currentID << "\n";
+    	if( currentID < 0 ) {
+    		pHash->addIsotope( mat.getPtr()->xs[i] );
+    	}
+    }
 }
 
 #ifndef CUDA
@@ -242,6 +262,13 @@ void SimpleMaterialListHost::add( unsigned index, SimpleMaterial* mat, unsigned 
 
     pMatList->materialID[index] = id;
     pMatList->materials[index] = mat;
+
+    for( i = 0; i < getNumIsotopes(mat); ++i ){
+    	int currentID = getID(mat, i);
+    	if( currentID < 0 ) {
+    		pHash->addIsotope( mat->xs[i] );
+    	}
+    }
 }
 #endif
 

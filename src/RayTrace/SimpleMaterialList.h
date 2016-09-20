@@ -4,6 +4,7 @@
 #include "gpuGlobal.h"
 
 #include "SimpleMaterial.h"
+#include "HashLookup.h"
 
 namespace MonteRay{
 
@@ -41,6 +42,11 @@ SimpleMaterial* getMaterial(SimpleMaterialList* ptr, unsigned i );
 #ifdef CUDA
 __device__ __host__
 #endif
+gpuFloatType_t getTotalXS(SimpleMaterialList* ptr, unsigned i, HashLookup* pHash, unsigned hashBin, gpuFloatType_t E, gpuFloatType_t density);
+
+#ifdef CUDA
+__device__ __host__
+#endif
 gpuFloatType_t getTotalXS(SimpleMaterialList* ptr, unsigned i, gpuFloatType_t E, gpuFloatType_t density);
 
 #ifdef CUDA
@@ -50,7 +56,7 @@ unsigned materialIDtoIndex(SimpleMaterialList* ptr, unsigned id );
 
 class SimpleMaterialListHost {
 public:
-    SimpleMaterialListHost(unsigned num);
+    SimpleMaterialListHost(unsigned numMaterials, unsigned maxNumIsotopes=20, unsigned nBins=8192);
 
     ~SimpleMaterialListHost();
 
@@ -69,7 +75,8 @@ public:
     }
 
     gpuFloatType_t getTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const {
-        return MonteRay::getTotalXS( pMatList, i, E, density);
+    	unsigned index = pHash->getHashBin(E);
+        return MonteRay::getTotalXS( pMatList, i, pHash->getPtr(), index, E, density);
     }
 
     gpuFloatType_t launchGetTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const;
@@ -84,6 +91,7 @@ public:
 #endif
 
     MonteRay::SimpleMaterialList* getPtr(void) const { return pMatList; }
+    MonteRay::HashLookupHost* getHashPtr(void) const { return pHash; }
 
     void write(std::ostream& outfile) const;
     void  read(std::istream& infile);
@@ -92,6 +100,8 @@ private:
     MonteRay::SimpleMaterialList* pMatList;
     MonteRay::SimpleMaterialList* temp;
     bool cudaCopyMade;
+
+    HashLookupHost* pHash;
 
 public:
     MonteRay::SimpleMaterialList* ptr_device;

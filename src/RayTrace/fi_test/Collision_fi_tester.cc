@@ -8,7 +8,7 @@
 #include "ExpectedPathLength.h"
 #include "cpuTimer.h"
 
-#if( false )
+#if( true )
 SUITE( Collision_fi_tester ) {
 
 	TEST( setup ) {
@@ -57,12 +57,6 @@ SUITE( Collision_fi_tester ) {
         h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
         o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
 
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
-
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
@@ -71,16 +65,23 @@ SUITE( Collision_fi_tester ) {
 
         SimpleMaterialHost water(2);
         water.add(0, h1s, 0.667 );
-        water.add(0, o16s, 0.333 );
+        water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2);
+        SimpleMaterialListHost matList(2,5);
         matList.add( 0, metal, 0 );
         matList.add( 1, water, 1 );
         matList.copyToGPU();
 
+        u234s.copyToGPU();
+        u235s.copyToGPU();
+        u238s.copyToGPU();
+        h1s.copyToGPU();
+        o16s.copyToGPU();
+
     	gpuFloatType_t energy = points.getEnergy(0);
-    	gpuFloatType_t expected = getTotalXS(matList.getPtr(), 0, energy, 18.0 );
+    	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
+    	gpuFloatType_t expected = getTotalXS(matList.getPtr(), 0, matList.getHashPtr()->getPtr(), HashBin, energy, 18.0 );
     	CHECK_CLOSE(  0.318065, expected, 1e-6);
 
     	helper.setupTimers();
@@ -112,12 +113,6 @@ SUITE( Collision_fi_tester ) {
         h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
         o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
 
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
-
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
@@ -126,26 +121,35 @@ SUITE( Collision_fi_tester ) {
 
         SimpleMaterialHost water(2);
         water.add(0, h1s, 0.667 );
-        water.add(0, o16s, 0.333 );
+        water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2);
+        SimpleMaterialListHost matList(2,5);
         matList.add( 0, metal, 0 );
         matList.add( 1, water, 1 );
         matList.copyToGPU();
 
+        u234s.copyToGPU();
+        u235s.copyToGPU();
+        u238s.copyToGPU();
+        h1s.copyToGPU();
+        o16s.copyToGPU();
+
     	gpuFloatType_t energy = points.getEnergy(0);
     	unsigned cell = points.getIndex(0);
-    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), cell, energy );
+    	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
+    	gpuFloatType_t expected1 = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+    	gpuFloatType_t expected2 = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), cell, energy );
     	CHECK_CLOSE( 0.804852, energy, 1e-6);
     	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.102606, expected, 1e-6);
+    	CHECK_CLOSE( 0.410871, expected1, 1e-6);
+    	CHECK_CLOSE( expected2, expected1, 1e-6);
 
     	helper.setupTimers();
     	helper.launchTallyCrossSectionAtCollision(1024, 1024, &points, &matList, &mp );
     	helper.stopTimers();
 
-    	CHECK_CLOSE( expected, helper.getTally(0), 1e-7 );
+    	CHECK_CLOSE( expected1, helper.getTally(0), 1e-7 );
     }
 
     TEST( sum_crossSection_by_startingCell )  {
@@ -170,12 +174,6 @@ SUITE( Collision_fi_tester ) {
         h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
         o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
 
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
-
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
@@ -184,35 +182,43 @@ SUITE( Collision_fi_tester ) {
 
         SimpleMaterialHost water(2);
         water.add(0, h1s, 0.667 );
-        water.add(0, o16s, 0.333 );
+        water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2);
+        SimpleMaterialListHost matList(2,5);
         matList.add( 0, metal, 0 );
         matList.add( 1, water, 1 );
         matList.copyToGPU();
 
+        u234s.copyToGPU();
+        u235s.copyToGPU();
+        u238s.copyToGPU();
+        h1s.copyToGPU();
+        o16s.copyToGPU();
+
     	gpuFloatType_t energy = points.getEnergy(0);
     	unsigned cell = points.getIndex(0);
-    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), cell, energy );
+    	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
+    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
     	CHECK_CLOSE( 0.804852, energy, 1e-6);
     	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.102606, expected, 1e-6);
+    	CHECK_CLOSE( 0.410871, expected, 1e-6);
 
     	expected=0.0;
     	for( unsigned i=0; i<points.size(); ++i){
     		if( points.getIndex(i) == cell ) {
     			energy = points.getEnergy(i);
-    			expected += helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), cell, energy );
+    			HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
+    			expected += helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
     		}
     	}
-    	CHECK_CLOSE( 75.2092, expected, 1e-4);
+    	CHECK_CLOSE( 942.722, expected, 1e-3);
 
     	helper.setupTimers();
     	helper.launchSumCrossSectionAtCollisionLocation(1024, 1024, &points, &matList, &mp );
     	helper.stopTimers();
 
-    	CHECK_CLOSE( expected, helper.getTally(cell), 1e-4 );
+    	CHECK_CLOSE( expected, helper.getTally(cell), 1e-3 );
     }
 
     TEST( rayTraceTally_GodivaR )
@@ -243,12 +249,6 @@ SUITE( Collision_fi_tester ) {
         h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
         o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
 
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
-
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
@@ -257,13 +257,19 @@ SUITE( Collision_fi_tester ) {
 
         SimpleMaterialHost water(2);
         water.add(0, h1s, 0.667 );
-        water.add(0, o16s, 0.333 );
+        water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2);
+        SimpleMaterialListHost matList(2,5);
         matList.add( 0, metal, 0 );
         matList.add( 1, water, 1 );
         matList.copyToGPU();
+
+        u234s.copyToGPU();
+        u235s.copyToGPU();
+        u238s.copyToGPU();
+        h1s.copyToGPU();
+        o16s.copyToGPU();
 
     	CollisionPointsHost points(2);
     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin"  );
@@ -272,17 +278,18 @@ SUITE( Collision_fi_tester ) {
 
     	gpuFloatType_t energy = points.getEnergy(0);
     	unsigned cell = points.getIndex(0);
-    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), cell, energy );
+    	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
+    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
     	CHECK_CLOSE( 0.804852, energy, 1e-6);
     	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.102606, expected, 1e-6);
+    	CHECK_CLOSE( 0.410871, expected, 1e-6);
 
      	helper.setupTimers();
     	helper.launchRayTraceTally(1024, 1024, &points, &matList, &mp );
     	helper.stopTimers();
 
-    	CHECK_CLOSE( 9.43997, helper.getTally(0), 1e-5 );
-    	CHECK_CLOSE( 16.5143, helper.getTally(50+100*100), 1e-4 );
+    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
+    	CHECK_CLOSE( 0.186005, helper.getTally(50+100*100), 1e-4 );
     	free(grid_host);
     }
 }
@@ -322,12 +329,6 @@ SUITE( Collision_fi_looping_tester ) {
         h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
         o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
 
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
-
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
@@ -336,13 +337,19 @@ SUITE( Collision_fi_looping_tester ) {
 
         SimpleMaterialHost water(2);
         water.add(0, h1s, 0.667 );
-        water.add(0, o16s, 0.333 );
+        water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2);
+        SimpleMaterialListHost matList(2,5);
         matList.add( 0, metal, 0 );
         matList.add( 1, water, 1 );
         matList.copyToGPU();
+
+        u234s.copyToGPU();
+        u235s.copyToGPU();
+        u238s.copyToGPU();
+        h1s.copyToGPU();
+        o16s.copyToGPU();
 
     	CollisionPointsHost bank1(1000000);
     	bool end = false;
@@ -351,10 +358,11 @@ SUITE( Collision_fi_looping_tester ) {
 
     	gpuFloatType_t energy = bank1.getEnergy(0);
     	unsigned cell = bank1.getIndex(0);
-    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), cell, energy );
-    	CHECK_CLOSE( 0.804852, energy, 1e-6);
+    	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
+    	gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.getPtr(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+     	CHECK_CLOSE( 0.804852, energy, 1e-6);
     	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.102606, expected, 1e-6);
+    	CHECK_CLOSE( 0.410871, expected, 1e-6);
 
 		offset += bank1.size();
 
@@ -415,8 +423,8 @@ SUITE( Collision_fi_looping_tester ) {
 
     	tally.copyToCPU();
 
-    	CHECK_CLOSE( 9.43997, tally.getTally(0), 1e-5 );
-    	CHECK_CLOSE( 16.5143, tally.getTally(50+100*100), 1e-4 );
+    	CHECK_CLOSE( 0.0803215, tally.getTally(0), 1e-5 );
+    	CHECK_CLOSE( 0.186005, tally.getTally(50+100*100), 1e-4 );
     }
 
 }

@@ -43,7 +43,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
 	        metal = new SimpleMaterialHost(3);
 	        water = new SimpleMaterialHost(2);
 
-	        pMatList = new SimpleMaterialListHost(2);
+	        pMatList = new SimpleMaterialListHost(2,5);
 
 		}
 
@@ -63,24 +63,24 @@ SUITE( Collision_fi_bank_controller_tester ) {
 	        h1s->read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
 	        o16s->read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
 
-	        u234s->copyToGPU();
-	        u235s->copyToGPU();
-	        u238s->copyToGPU();
-	        h1s->copyToGPU();
-	        o16s->copyToGPU();
-
 	        metal->add(0, *u234s, 0.01);
 	        metal->add(1, *u235s, 0.98);
 	        metal->add(2, *u238s, 0.01);
 	        metal->copyToGPU();
 
-	        water->add(0, *h1s, 0.667 );
-	        water->add(0, *o16s, 0.333 );
+	        water->add(0, *h1s, 2.0f/3.0f );
+	        water->add(1, *o16s, 1.0f/3.0f );
 	        water->copyToGPU();
 
 	        pMatList->add( 0, *metal, 0 );
 	        pMatList->add( 1, *water, 1 );
 	        pMatList->copyToGPU();
+
+	        u234s->copyToGPU();
+	        u235s->copyToGPU();
+	        u238s->copyToGPU();
+	        h1s->copyToGPU();
+	        o16s->copyToGPU();
 		}
 
 		~ControllerSetup(){
@@ -113,6 +113,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
 	};
 
+#if false
 	TEST( setup ) {
 		gpuCheck();
 	}
@@ -156,6 +157,52 @@ SUITE( Collision_fi_bank_controller_tester ) {
         		        1.0, 1.0, i);
 
         CHECK_EQUAL(1, controller.size());
+    }
+#endif
+
+    TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
+    	// exact numbers from expected path length tally in mcatk
+
+    	CollisionPointController controller( 1024,
+    			1024,
+    			pGrid,
+    			pMatList,
+    			pMatProps,
+    			pTally );
+
+    	setup();
+
+    	CollisionPointsHost bank1(500000);
+    	bool end = false;
+    	unsigned offset = 0;
+
+    	double x = 0.0001;
+    	double y = 0.0001;
+    	double z = 0.0001;
+    	double u = 1.0;
+    	double v = 0.0;
+    	double w = 0.0;
+    	double energy = 1.0;
+    	double weight = 1.0;
+    	double index = 505050;
+
+    	unsigned nI = 2;
+    	unsigned nJ = 1;
+    	for( unsigned i = 0; i < nI; ++i ) {
+    	    for( unsigned j = 0; j < nJ; ++j ) {
+    	        controller.add( x, y, z, u, v, w, energy, weight, index );
+    	    }
+    	    CHECK_EQUAL( nJ, controller.size() );
+    	    controller.flush(false);
+    	}
+    	CHECK_EQUAL( 0, controller.size() );
+    	controller.flush(true);
+
+    	pTally->copyToCPU();
+
+    	CHECK_CLOSE( 0.601248*nI*nJ, pTally->getTally(index), 1e-6*nI*nJ );
+    	CHECK_CLOSE( 0.482442*nI*nJ, pTally->getTally(index+1), 1e-6*nI*nJ );
+
     }
 
 #if( false )

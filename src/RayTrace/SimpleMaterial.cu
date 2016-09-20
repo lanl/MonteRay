@@ -205,6 +205,19 @@ gpuFloatType_t getAtomicWeight(struct SimpleMaterial* ptr ) {
 #ifdef CUDA
 __device__ __host__
 #endif
+gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E){
+    gpuFloatType_t total = 0.0f;
+    for( unsigned i=0; i<ptr->numIsotopes; ++i){
+        if( ptr->xs[i] != 0 ) {
+            total += getTotalXS( ptr->xs[i], pHash, HashBin, E) * ptr->fraction[i];
+        }
+    }
+    return total;
+}
+
+#ifdef CUDA
+__device__ __host__
+#endif
 gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E){
     gpuFloatType_t total = 0.0f;
     for( unsigned i=0; i<ptr->numIsotopes; ++i){
@@ -213,6 +226,13 @@ gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E){
         }
     }
     return total;
+}
+
+#ifdef CUDA
+__device__ __host__
+#endif
+gpuFloatType_t getTotalXS(struct SimpleMaterial* ptr, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density){
+    return getMicroTotalXS(ptr, pHash, HashBin, E ) * density * gpu_AvogadroBarn / ptr->AtomicWeight;
 }
 
 #ifdef CUDA
@@ -227,6 +247,28 @@ __device__ __host__
 #endif
 void cudaAdd(struct SimpleMaterial* ptr, struct SimpleCrossSection* xs, unsigned index ) {
 	ptr->xs[ index ] = xs;
+}
+
+#ifdef CUDA
+__device__ __host__
+#endif
+void setID(struct SimpleMaterial* ptr, unsigned index, unsigned id ) {
+	MonteRay::setID(ptr->xs[index], id );
+}
+
+#ifdef CUDA
+__device__ __host__
+#endif
+int getID(struct SimpleMaterial* ptr, unsigned index ) {
+	return MonteRay::getID( ptr->xs[index] );
+}
+
+void SimpleMaterialHost::setID( unsigned index, unsigned id) {
+	MonteRay::setID(pMat, index, id );
+}
+
+int SimpleMaterialHost::getID( unsigned index ) {
+	return MonteRay::getID(pMat, index );
 }
 
 void SimpleMaterialHost::add(unsigned index,struct SimpleCrossSectionHost& xs, gpuFloatType_t frac ) {

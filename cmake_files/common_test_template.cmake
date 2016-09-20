@@ -323,6 +323,7 @@ else()
         set( CmdTagSuccess "${CmdTag} PASS" )
         add_custom_command( 
             TARGET ${appName} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy ${appName} ${appName}.copy
             COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --blue --bold ${CmdTag} 
             COMMAND ${CMAKE_COMMAND} -DAPP=${appName} -DTAG=${CmdTag} -P ${cmake_dir}/AnalyzeRun.cmake
 #            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --no-label-summary

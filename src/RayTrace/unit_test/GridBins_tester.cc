@@ -53,6 +53,11 @@ SUITE( GridBins_Tester ) {
 		CHECK_CLOSE( 40.0, getVertex(grid, 2,  0), 1e-11 );
 		CHECK_CLOSE( 41.0, getVertex(grid, 2,  1), 1e-11 );
 		CHECK_CLOSE( 50.0, getVertex(grid, 2, 10), 1e-11 );
+
+		CHECK_EQUAL( true, isRegular(grid,0) );
+		CHECK_EQUAL( true, isRegular(grid,1) );
+		CHECK_EQUAL( true, isRegular(grid,2) );
+
 	}
 
 	TEST_FIXTURE( GridBinsTest, finalize ) {
@@ -158,6 +163,118 @@ SUITE( GridBins_Tester ) {
 
 	}
 
+    TEST_FIXTURE(GridBinsTest, is_getRegular ) {
+    	std::vector<double> vertices {-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+     			                        0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
+
+        setVertices(grid, 0, vertices );
+
+        CHECK_EQUAL( false, isRegular(grid,0) );
+    }
+
+    TEST_FIXTURE(GridBinsTest, regular_getDimIndex ) {
+
+        setVertices(grid, 0, -10, 10, 20 );
+
+        CHECK_EQUAL( -1, getDimIndex( grid, 0, -10.5) );
+        CHECK_EQUAL( 0, getDimIndex( grid, 0, -9.5) );
+        CHECK_EQUAL( 1, getDimIndex( grid, 0, -8.5) );
+        CHECK_EQUAL( 18, getDimIndex( grid, 0,  8.5) );
+        CHECK_EQUAL( 19, getDimIndex( grid, 0,  9.5) );
+        CHECK_EQUAL( 20, getDimIndex( grid, 0,  10.5) );
+    }
+
+    TEST_FIXTURE(GridBinsTest, regular_but_force_irregular_getDimIndex_1D ) {
+
+        setVertices(grid, 0, -10, 10, 20 );
+        grid->isRegular[0] = false;
+
+        CHECK_EQUAL( -1, getDimIndex( grid, 0, -10.5) );
+        CHECK_EQUAL( 0, getDimIndex( grid, 0, -9.5) );
+        CHECK_EQUAL( 1, getDimIndex( grid, 0, -8.5) );
+        CHECK_EQUAL( 18, getDimIndex( grid, 0,  8.5) );
+        CHECK_EQUAL( 19, getDimIndex( grid, 0,  9.5) );
+        CHECK_EQUAL( 20, getDimIndex( grid, 0,  10.5) );
+    }
+
+    TEST_FIXTURE(GridBinsTest, regular_but_force_irregular_getDimIndex_3D ) {
+
+        setVertices(grid, 0, -10, 10, 10 );
+        setVertices(grid, 1, -100, 100, 10 );
+        setVertices(grid, 2, -20, 20, 10 );
+        finalize(grid);
+
+        CHECK_CLOSE( -10.0, grid->vertices[0], 1e-5 );
+        CHECK_CLOSE(  -8.0, grid->vertices[1], 1e-5 );
+        CHECK_CLOSE(  -6.0, grid->vertices[2], 1e-5 );
+        CHECK_CLOSE(  -4.0, grid->vertices[3], 1e-5 );
+        CHECK_CLOSE(  -2.0, grid->vertices[4], 1e-5 );
+        CHECK_CLOSE(   0.0, grid->vertices[5], 1e-5 );
+        CHECK_CLOSE(   2.0, grid->vertices[6], 1e-5 );
+        CHECK_CLOSE(   4.0, grid->vertices[7], 1e-5 );
+        CHECK_CLOSE(   6.0, grid->vertices[8], 1e-5 );
+        CHECK_CLOSE(   8.0, grid->vertices[9], 1e-5 );
+        CHECK_CLOSE(  10.0, grid->vertices[10], 1e-5 );
+        CHECK_CLOSE(-100.0, grid->vertices[11], 1e-5 );
+        CHECK_CLOSE( -80.0, grid->vertices[12], 1e-5 );
+        CHECK_CLOSE( -60.0, grid->vertices[13], 1e-5 );
+        CHECK_CLOSE( -40.0, grid->vertices[14], 1e-5 );
+        CHECK_CLOSE( -20.0, grid->vertices[15], 1e-5 );
+        CHECK_CLOSE(   0.0, grid->vertices[16], 1e-5 );
+        CHECK_CLOSE(  20.0, grid->vertices[17], 1e-5 );
+        CHECK_CLOSE(  40.0, grid->vertices[18], 1e-5 );
+        CHECK_CLOSE(  60.0, grid->vertices[19], 1e-5 );
+        CHECK_CLOSE(  80.0, grid->vertices[20], 1e-5 );
+        CHECK_CLOSE( 100.0, grid->vertices[21], 1e-5 );
+        CHECK_CLOSE( -20.0, grid->vertices[22], 1e-5 );
+        CHECK_CLOSE( -16.0, grid->vertices[23], 1e-5 );
+        CHECK_CLOSE( -12.0, grid->vertices[24], 1e-5 );
+        CHECK_CLOSE(  -8.0, grid->vertices[25], 1e-5 );
+        CHECK_CLOSE(  -4.0, grid->vertices[26], 1e-5 );
+        CHECK_CLOSE(   0.0, grid->vertices[27], 1e-5 );
+        CHECK_CLOSE(   4.0, grid->vertices[28], 1e-5 );
+        CHECK_CLOSE(   8.0, grid->vertices[29], 1e-5 );
+        CHECK_CLOSE(  12.0, grid->vertices[30], 1e-5 );
+        CHECK_CLOSE(  16.0, grid->vertices[31], 1e-5 );
+        CHECK_CLOSE(  20.0, grid->vertices[32], 1e-5 );
+
+        CHECK_EQUAL( 0, grid->offset[0]);
+        CHECK_EQUAL( 11, grid->offset[1]);
+        CHECK_EQUAL( 22, grid->offset[2]);
+
+        grid->isRegular[0] = false;
+        grid->isRegular[1] = false;
+        grid->isRegular[2] = false;
+
+        CHECK_EQUAL( -1, getDimIndex( grid, 0, -10.5) );
+        CHECK_EQUAL( 0, getDimIndex( grid, 0, -9.5) );
+        CHECK_EQUAL( 1, getDimIndex( grid, 0, -7.5) );
+        CHECK_EQUAL( 8, getDimIndex( grid, 0,  7.5) );
+        CHECK_EQUAL( 9, getDimIndex( grid, 0,  9.5) );
+        CHECK_EQUAL( 10, getDimIndex( grid, 0,  10.5) );
+
+        CHECK_EQUAL( -1, getDimIndex( grid, 1,-105.0) );
+        CHECK_EQUAL(  0, getDimIndex( grid, 1, -95.0) );
+        CHECK_EQUAL(  1, getDimIndex( grid, 1, -75.0) );
+        CHECK_EQUAL(  8, getDimIndex( grid, 1,  75.0) );
+        CHECK_EQUAL(  9, getDimIndex( grid, 1,  95.0) );
+        CHECK_EQUAL( 10, getDimIndex( grid, 1, 105.0) );
+
+    }
+
+    TEST_FIXTURE(GridBinsTest, irregular_getDimIndex ) {
+    	std::vector<double> vertices {-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+     			                        0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
+
+        setVertices(grid, 0, vertices );
+
+        CHECK_EQUAL( -1, getDimIndex( grid, 0, -10.5) );
+        CHECK_EQUAL( 0, getDimIndex( grid, 0, -9.5) );
+        CHECK_EQUAL( 1, getDimIndex( grid, 0, -8.5) );
+        CHECK_EQUAL( 18, getDimIndex( grid, 0,  8.5) );
+        CHECK_EQUAL( 19, getDimIndex( grid, 0,  9.5) );
+        CHECK_EQUAL( 20, getDimIndex( grid, 0,  10.5) );
+    }
 
 	class GridBinsRayTraceTest{
 	public:

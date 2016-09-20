@@ -118,6 +118,25 @@ __device__ unsigned cudaGetNumBins(const GridBins* const grid, unsigned dim, uns
 	return grid->num[dim];
 }
 
+__device__ unsigned cudaGetIndexBinaryFloat(const float_t* const values, unsigned count, float_t value ) {
+    // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
+    unsigned it, step;
+    unsigned first = 0U;
+
+    while (count > 0U) {
+        it = first;
+        step = count / 2U;
+        it += step;
+        if(!(value < values[it])) {
+            first = ++it;
+            count -= step + 1;
+        } else {
+            count = step;
+        }
+    }
+    if( first > 0U ) { --first; }
+    return first;
+}
 
 __device__ int cudaGetDimIndex(const GridBins* const grid, unsigned dim, float_t pos ) {
      // returns -1 for one neg side of mesh
@@ -126,14 +145,19 @@ __device__ int cudaGetDimIndex(const GridBins* const grid, unsigned dim, float_t
      // index is in the mesh
 
 	int dim_index;
-	float_t min = cudaMin(grid, dim);
+	float_t minimum = cudaMin(grid, dim);
+	unsigned numBins = grid->num[dim];
 
-	if( pos <= min ) {
+	if( pos <= minimum ) {
 		dim_index = -1;
 	} else if( pos >= cudaMax(grid, dim)  ) {
-		dim_index = grid->num[dim];
+		dim_index = numBins;
 	} else {
-		dim_index = ( pos -  min ) / grid->delta[dim];
+		if( grid->isRegular[dim] ) {
+			dim_index = ( pos -  minimum ) / grid->delta[dim];
+		} else {
+			dim_index = cudaGetIndexBinaryFloat( grid->vertices + grid->offset[dim], numBins+1, pos  );
+		}
 	}
 	return dim_index;
 }

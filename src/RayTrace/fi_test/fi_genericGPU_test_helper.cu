@@ -77,13 +77,14 @@ void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned 
 }
 
 #ifdef CUDA
-__global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleMaterialList* pMatList, unsigned matIndex, gpuFloatType_t density, gpuTallyType_t* results){
+__global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleMaterialList* pMatList, unsigned matIndex, HashLookup* pHash, gpuFloatType_t density, gpuTallyType_t* results){
 
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	int N = pCP->size;
 	while( tid < N ) {
 		gpuFloatType_t E = getEnergy(pCP, tid);
-		results[tid] = getTotalXS(pMatList, matIndex, E, density);
+		unsigned HashBin = getHashBin( pHash, E);
+		results[tid] = getTotalXS(pMatList, matIndex, pHash, HashBin, E, density);
 		tid += blockDim.x*gridDim.x;
 	}
 	return;
@@ -101,7 +102,7 @@ void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned 
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-	testTallyCrossSection<<<nBlocks,nThreads>>>(pCP->ptrPoints_device, pMatList->ptr_device, matIndex, density, tally_device);
+	testTallyCrossSection<<<nBlocks,nThreads>>>(pCP->ptrPoints_device, pMatList->ptr_device, matIndex, pMatList->getHashPtr()->getPtrDevice(), density, tally_device);
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 	gpuErrchk( cudaPeekAtLastError() );
@@ -114,16 +115,26 @@ void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned 
 
 #ifdef CUDA
 __device__ __host__
-gpuFloatType_t getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E) {
+gpuFloatType_t getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t E) {
 	gpuFloatType_t total = 0.0f;
 	for( unsigned i=0; i< matProps->props[cell].numMats; ++i) {
 		gpuFloatType_t density = matProps->props[cell].density[i];
 		unsigned matID = matProps->props[cell].matID[i];
-		total += getTotalXS(pMatList, matID, E, density);
+		total += getTotalXS(pMatList, matID, pHash, HashBin, E, density);
 	}
 	return total;
 }
 #endif
+
+gpuFloatType_t nonCudaGetTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t E) {
+	gpuFloatType_t total = 0.0f;
+	for( unsigned i=0; i< matProps->props[cell].numMats; ++i) {
+		gpuFloatType_t density = matProps->props[cell].density[i];
+		unsigned matID = matProps->props[cell].matID[i];
+		total += getTotalXS(pMatList, matID, pHash, HashBin, E, density);
+	}
+	return total;
+}
 
 gpuFloatType_t nonCudaGetTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E) {
 	gpuFloatType_t total = 0.0f;
@@ -135,21 +146,26 @@ gpuFloatType_t nonCudaGetTotalXSByMatProp(SimpleMaterialProperties* matProps, Si
 	return total;
 }
 
+gpuFloatType_t FIGenericGPUTestHelper::getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t E) {
+	return nonCudaGetTotalXSByMatProp( matProps, pMatList, pHash, HashBin, cell, E);
+}
+
 gpuFloatType_t FIGenericGPUTestHelper::getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E) {
 	return nonCudaGetTotalXSByMatProp( matProps, pMatList, cell, E);
 }
 
 #ifdef CUDA
-__global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, gpuTallyType_t* results){
+__global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, HashLookup* pHash, gpuTallyType_t* results){
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
 	unsigned N = pCP->size;
 
 	while( tid < N ) {
 		gpuFloatType_t E = getEnergy(pCP, tid);
+		unsigned HashBin = getHashBin( pHash, E);
 		unsigned cell = getIndex( pCP, tid);
 
-		results[tid] = getTotalXSByMatProp(pMatProps, pMatList, cell, E);
+		results[tid] = getTotalXSByMatProp(pMatProps, pMatList, pHash, HashBin, cell, E);
 		tid += blockDim.x*gridDim.x;
 	}
 	return;
@@ -157,18 +173,20 @@ __global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMat
 #endif
 
 #ifdef CUDA
-__global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, gpuTallyType_t* results){
+__global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, HashLookup* pHash, gpuTallyType_t* results){
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
 	unsigned N = pCP->size;
 
 	while( tid < N ) {
 		gpuFloatType_t E = getEnergy(pCP, tid);
+		unsigned HashBin = getHashBin( pHash, E);
 		unsigned cell = getIndex( pCP, tid);
 
-		gpuTallyType_t value = getTotalXSByMatProp(pMatProps, pMatList, cell, E);
-		atomicAdd( &results[cell], value);
-		//atomicAddDouble( &results[cell], value);
+		gpuTallyType_t value = getTotalXSByMatProp(pMatProps, pMatList, pHash, HashBin, cell, E);
+
+		//atomicAdd( &results[cell], value);
+		atomicAddDouble( &results[cell], value);
 		tid += blockDim.x*gridDim.x;
 	}
 	return;
@@ -186,7 +204,7 @@ void FIGenericGPUTestHelper::launchTallyCrossSectionAtCollision(unsigned nBlocks
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-	testTallyCrossSectionAtCollision<<<nBlocks,nThreads>>>(pCP->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, tally_device);
+	testTallyCrossSectionAtCollision<<<nBlocks,nThreads>>>(pCP->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, pMatList->getHashPtr()->getPtrDevice(), tally_device);
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 	gpuErrchk( cudaPeekAtLastError() );
@@ -208,7 +226,7 @@ void FIGenericGPUTestHelper::launchSumCrossSectionAtCollisionLocation(unsigned n
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-	testSumCrossSectionAtCollisionLocation<<<nBlocks,nThreads>>>(pCP->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, tally_device);
+	testSumCrossSectionAtCollisionLocation<<<nBlocks,nThreads>>>(pCP->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, pMatList->getHashPtr()->getPtrDevice(), tally_device);
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 	gpuErrchk( cudaPeekAtLastError() );
@@ -229,7 +247,7 @@ void FIGenericGPUTestHelper::launchRayTraceTally(unsigned nBlocks, unsigned nThr
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-	rayTraceTally<<<nBlocks,nThreads>>>(grid_device, pCP->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, tally_device);
+	rayTraceTally<<<nBlocks,nThreads>>>(grid_device, pCP->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, pMatList->getHashPtr()->getPtrDevice(), tally_device);
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 	gpuErrchk( cudaPeekAtLastError() );

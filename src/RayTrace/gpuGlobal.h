@@ -12,7 +12,9 @@
 
 namespace MonteRay{
 typedef float gpuFloatType_t;
-typedef float gpuTallyType_t;
+
+typedef double gpuTallyType_t;
+//typedef float gpuTallyType_t;
 
 const gpuFloatType_t gpu_neutron_molar_mass = 1.00866491597f;
 const gpuFloatType_t gpu_AvogadroBarn = .602214179f;

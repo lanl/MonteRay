@@ -63,9 +63,9 @@ void dtor(CollisionPoints* ptr){
 void copy(CollisionPoints* pCopy, const CollisionPoints* const pOrig ){
     CollisionPointsSize_t num = pOrig->capacity;
     if( num <=0 ) { num = 1; }
-    pCopy->size = pOrig->size;
 
     ctor( pCopy, num);
+    pCopy->size = pOrig->size;
     for( CollisionPointsSize_t i=0; i<pCopy->size; ++i ){
         copy( pCopy->pos[i], pOrig->pos[i] );
         copy( pCopy->dir[i], pOrig->dir[i] );
@@ -264,7 +264,6 @@ void CollisionPointsHost::copyToGPU(void) {
 
         	temp = new CollisionPoints;
         	temp->capacity = ptrPoints->capacity;
-        	temp->size = ptrPoints->size;
 
         	// allocate target struct
 
@@ -287,6 +286,7 @@ void CollisionPointsHost::copyToGPU(void) {
         	CUDA_CHECK_RETURN( cudaMalloc(&temp->index, sizeof( unsigned ) * capacity() ));
         	gpuErrchk( cudaPeekAtLastError() );
         }
+       	temp->size = ptrPoints->size;
 
         // copy data
         CUDA_CHECK_RETURN( cudaMemcpy(ptrPoints_device, temp, sizeof( CollisionPoints ), cudaMemcpyHostToDevice));
