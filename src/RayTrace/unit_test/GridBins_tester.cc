@@ -264,7 +264,7 @@ SUITE( GridBins_Tester ) {
 
     TEST_FIXTURE(GridBinsTest, irregular_getDimIndex ) {
     	std::vector<double> vertices {-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-     			                        0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
+     			                        0,  1,  2,  3.1,  4,  5,  6,  7,  8,  9,  10};
 
         setVertices(grid, 0, vertices );
 
@@ -275,6 +275,36 @@ SUITE( GridBins_Tester ) {
         CHECK_EQUAL( 19, getDimIndex( grid, 0,  9.5) );
         CHECK_EQUAL( 20, getDimIndex( grid, 0,  10.5) );
     }
+
+    TEST_FIXTURE(GridBinsTest, pwr_vertices_getDimIndex ) {
+        //     0      1       2        3      4       5        6       7       8      9
+        std::vector<double> vertices  {
+          -40.26, -20.26, -10.26, -10.08,  -9.90,  -9.84,  -9.06,  -9.00,  -8.64,  -8.58,
+           -7.80,  -7.74,  -7.38,  -7.32,  -6.54,  -6.48,  -6.12,  -6.06,  -5.28,  -5.22,
+           -4.86,  -4.80,  -4.02,  -3.96,  -3.60,  -3.54,  -2.76,  -2.70,  -2.34,  -2.28,
+           -1.50,  -1.44,  -1.08,  -1.02,  -0.24,  -0.18,   0.18,   0.24,   1.02,   1.08,
+            1.44,   1.50,   2.28,   2.34,   2.70,   2.76,   3.54,   3.60,   3.96,   4.02,
+            4.80,   4.86,   5.22,   5.28,   6.06,   6.12,   6.48,   6.54,   7.32,   7.38,
+            7.74,   7.80,   8.58,   8.64,   9.00,   9.06,   9.84,   9.90,  10.08,  10.26,
+           20.26,  40.26};
+
+        std::vector<double> zvertices { -80, -60, -50, 50, 60, 80 };
+        setVertices(grid, 0, vertices );
+        setVertices(grid, 1, vertices );
+        setVertices(grid, 2, zvertices );
+
+        CHECK_EQUAL( 72, vertices.size() );
+        CHECK_EQUAL(  0, getDimIndex( grid, 0, -25)  );
+        CHECK_EQUAL(  1, getDimIndex( grid, 0, -20)  );
+        CHECK_EQUAL(  10, getDimIndex( grid, 0, -7.75)  );
+        CHECK_EQUAL(  60, getDimIndex( grid, 0,  7.75)  );
+        CHECK_EQUAL(  70, getDimIndex( grid, 0,  21.0)  );
+        CHECK_EQUAL(  69, getDimIndex( grid, 0, 11.21220650 )  );
+        CHECK_EQUAL(  51, getDimIndex( grid, 0,  5.200257 )  );
+
+        CHECK_EQUAL( 2, getDimIndex( grid, 2, -16.975525) );
+
+     }
 
 	class GridBinsRayTraceTest{
 	public:
@@ -415,6 +445,32 @@ SUITE( GridBins_Tester ) {
 		CHECK_EQUAL( 2, nDistances);
 		CHECK_EQUAL( 555U, cells[0]);
 		CHECK_CLOSE( 0.5f, distances[0], 1e-11 );
+	}
+
+	TEST( gridbins_host_pwr_vertices_isRegular ) {
+	        //     0      1       2        3      4       5        6       7       8      9
+		std::vector<double> vertices  {
+	          -40.26, -20.26, -10.26, -10.08,  -9.90,  -9.84,  -9.06,  -9.00,  -8.64,  -8.58,
+	           -7.80,  -7.74,  -7.38,  -7.32,  -6.54,  -6.48,  -6.12,  -6.06,  -5.28,  -5.22,
+	           -4.86,  -4.80,  -4.02,  -3.96,  -3.60,  -3.54,  -2.76,  -2.70,  -2.34,  -2.28,
+	           -1.50,  -1.44,  -1.08,  -1.02,  -0.24,  -0.18,   0.18,   0.24,   1.02,   1.08,
+	            1.44,   1.50,   2.28,   2.34,   2.70,   2.76,   3.54,   3.60,   3.96,   4.02,
+	            4.80,   4.86,   5.22,   5.28,   6.06,   6.12,   6.48,   6.54,   7.32,   7.38,
+	            7.74,   7.80,   8.58,   8.64,   9.00,   9.06,   9.84,   9.90,  10.08,  10.26,
+	           20.26,  40.26};
+
+		std::vector<double> zvertices { -80, -60, -50, 50, 60, 80 };
+
+		GridBinsHost grid;
+		grid.setVertices(0, vertices);
+		grid.setVertices(1, vertices);
+		grid.setVertices(2, zvertices);
+
+		CHECK_EQUAL( false, isRegular(grid.getPtr(),0) );
+		CHECK_EQUAL( false, isRegular(grid.getPtr(),1) );
+		CHECK_EQUAL( false, isRegular(grid.getPtr(),2) );
+
+
 	}
 
 }

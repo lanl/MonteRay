@@ -185,8 +185,8 @@ __global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, Sim
 
 		gpuTallyType_t value = getTotalXSByMatProp(pMatProps, pMatList, pHash, HashBin, cell, E);
 
-		//atomicAdd( &results[cell], value);
-		atomicAddDouble( &results[cell], value);
+		atomicAdd( &results[cell], value);
+		//atomicAddDouble( &results[cell], value);
 		tid += blockDim.x*gridDim.x;
 	}
 	return;

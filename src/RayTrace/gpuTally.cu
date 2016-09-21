@@ -65,9 +65,8 @@ void copy(struct gpuTally* pCopy, struct gpuTally* pOrig) {
 __device__
 #endif
 void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value ) {
-	//atomicAdd( &(ptr->tally[cell]), value);
-
-	atomicAddDouble( &(ptr->tally[cell]), value );
+	atomicAdd( &(ptr->tally[cell]), value);
+	//atomicAddDouble( &(ptr->tally[cell]), value );
 }
 
 gpuTallyHost::gpuTallyHost(unsigned num) {

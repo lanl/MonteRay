@@ -455,15 +455,13 @@ void GridBinsHost::setVertices(unsigned dim, std::vector<double> vertices ){
   	double delta = 0.0;
   	double lastDelta = 99.0;
   	bool uniform = true;
-  	for( unsigned i = 0; i< vertices.size(); ++i){
-  		double vertex = vertices.at(i);
-  		if( i > 0 ) {
-  			delta = vertices.at(i) - vertices.at(i-1);
-  		}
+  	for( unsigned i = 1; i< vertices.size(); ++i){
+  		delta = vertices.at(i) - vertices.at(i-1);
   		if( i > 1 ) {
-  			double epsilon = 10.0*std::nextafter( lastDelta,  std::numeric_limits<double>::infinity() );
+//  			std::cout << "Debug:: i = " << i << " delta = " << delta << " lastdelta = " << lastDelta << "\n";
+  			double epsilon = 10.0*(std::nextafter( lastDelta,  std::numeric_limits<double>::infinity() ) - lastDelta);
   			if( std::abs(delta-lastDelta) > epsilon ) {
-//    				std::cout << "Debug:: delta - lastDelta > epsilon -- diff = " << std::abs(delta-lastDelta) << " epsilon = " << epsilon << "\n";
+//   				std::cout << "Debug:: delta - lastDelta > epsilon -- diff = " << std::abs(delta-lastDelta) << " epsilon = " << epsilon << "\n";
   				uniform = false;
   				break;
   			}

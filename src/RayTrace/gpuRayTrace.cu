@@ -125,6 +125,7 @@ __device__ unsigned cudaOrderCrossings(const GridBins* const grid, int* global_i
 
 	if( debug ) {
 		printf("cudaRayTrace:: Starting cudaOrderCrossings %%%%%%%%%%%%%%%%%%%%%%\n");
+		printf("cudaRayTrace:: cudaindices.x = %d, cudaindices.y = %d, cudaindices.z = %d,\n", cudaindices.x, cudaindices.y, cudaindices.z);
 	}
 
 

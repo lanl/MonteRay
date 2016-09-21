@@ -99,7 +99,7 @@ void SimpleMaterialPropertiesHost::copyToGPU(void) {
 #ifdef CUDA
 	cudaCopyMade = true;
 	temp = new SimpleMaterialProperties;
-    copy(temp, ptr);
+	temp->numCells = ptr->numCells;
 
 	unsigned num = ptr->numCells;
 

@@ -15,6 +15,13 @@ __device__ unsigned cudaCalcIndex(const GridBins* const grid, unsigned* indices)
 }
 
 __device__ unsigned cudaCalcIndex(const GridBins* const grid, int* indices) {
+	const bool debug = false;
+
+	if( debug ) {
+		printf("cudaCalcIndex:: indices[0] = %d, indices[1] = %d, indices[2] = %d\n", indices[0], indices[1], indices[2]);
+		printf("cudaCalcIndex:: grid->num[0] = %d, grid->numXY = %d\n", grid->num[0], grid->numXY );
+	}
+
     return indices[0] + indices[1]*grid->num[0] + indices[2]*(grid->numXY);
 }
 
@@ -143,6 +150,14 @@ __device__ int cudaGetDimIndex(const GridBins* const grid, unsigned dim, float_t
      // and number of bins on the pos side of the mesh
      // need to call isIndexOutside(dim, grid, index) to check if the
      // index is in the mesh
+	const bool debug = false;
+
+	if( debug ) {
+		printf("cudaGetDimIndex:: Starting cudaGetDimIndex, dim = %d\n", dim);
+		printf("cudaGetDimIndex:: min = %f\n", cudaMin(grid, dim));
+		printf("cudaGetDimIndex:: max = %f\n", cudaMax(grid, dim));
+		printf("cudaGetDimIndex:: isRegular = %d\n", grid->isRegular[dim]);
+	}
 
 	int dim_index;
 	float_t minimum = cudaMin(grid, dim);
