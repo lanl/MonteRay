@@ -140,6 +140,96 @@ SUITE( Collision_unit_bank_controller_tester ) {
         CHECK_EQUAL(1, controller.size());
     }
 
+    TEST_FIXTURE(UnitControllerSetup, add_a_particle_via_ptr ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr\n";
+        CollisionPointController controller( 1024,
+ 				                             1024,
+ 				                             pGrid,
+ 				                             pMatList,
+ 				                             pMatProps,
+ 				                             pTally );
+
+        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
+
+        gpuParticle_t particle;
+        particle.pos[0] = 0.0;
+        particle.pos[1] = 0.0;
+        particle.pos[2] = 0.0;
+        particle.dir[0] = 1.0;
+        particle.dir[1] = 0.0;
+        particle.dir[2] = 0.0;
+        particle.energy = 1.0;
+        particle.weight = 1.0;
+        particle.index = i;
+
+        controller.add( &particle );
+        CHECK_EQUAL(1, controller.size());
+    }
+
+    TEST_FIXTURE(UnitControllerSetup, add_two_particles_via_ptr ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr\n";
+        CollisionPointController controller( 1024,
+ 				                             1024,
+ 				                             pGrid,
+ 				                             pMatList,
+ 				                             pMatProps,
+ 				                             pTally );
+
+        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
+
+        gpuParticle_t particle[2];
+        particle[0].pos[0] = 1.0;
+        particle[0].pos[1] = 2.0;
+        particle[0].pos[2] = 3.0;
+        particle[0].dir[0] = 4.0;
+        particle[0].dir[1] = 5.0;
+        particle[0].dir[2] = 6.0;
+        particle[0].energy = 7.0;
+        particle[0].weight = 8.0;
+        particle[0].index = 9;
+
+        particle[1].pos[0] = 11.0;
+        particle[1].pos[1] = 12.0;
+        particle[1].pos[2] = 13.0;
+        particle[1].dir[0] = 14.0;
+        particle[1].dir[1] = 15.0;
+        particle[1].dir[2] = 16.0;
+        particle[1].energy = 17.0;
+        particle[1].weight = 18.0;
+        particle[1].index = 19;
+
+        controller.add( particle, 2 );
+        CHECK_EQUAL(2, controller.size());
+    }
+
+    TEST_FIXTURE(UnitControllerSetup, add_ten_particles_via_ptr ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr\n";
+        CollisionPointController controller( 1024,
+ 				                             1024,
+ 				                             pGrid,
+ 				                             pMatList,
+ 				                             pMatProps,
+ 				                             pTally );
+        setup();
+
+        gpuParticle_t particle[10];
+        for( auto i = 0; i < 10; ++i ){
+        	particle[i].pos[0] = 1.0;
+        	particle[i].pos[1] = 2.0;
+        	particle[i].pos[2] = 3.0;
+        	particle[i].dir[0] = 4.0;
+        	particle[i].dir[1] = 5.0;
+        	particle[i].dir[2] = 6.0;
+        	particle[i].energy = 7.0;
+        	particle[i].weight = 8.0;
+        	particle[i].index = i;
+        }
+        controller.setCapacity(3);
+        controller.add( particle, 10 );
+        CHECK_EQUAL(1, controller.size());
+        CHECK_EQUAL(3, controller.getNFlushes());
+    }
+
     TEST_FIXTURE(UnitControllerSetup, single_ray ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- single_ray\n";
     	CollisionPointController controller( 1,

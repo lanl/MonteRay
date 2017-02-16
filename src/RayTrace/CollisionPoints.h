@@ -8,26 +8,12 @@ namespace MonteRay{
 
 typedef unsigned CollisionPointsSize_t;
 
-struct CollisionPosition_t {
-    gpuFloatType_t x;
-    gpuFloatType_t y;
-    gpuFloatType_t z;
-};
-void copy(CollisionPosition_t* pCopy, const CollisionPosition_t* const pOrig );
-void copy(CollisionPosition_t Copy, const CollisionPosition_t& Orig );
-
-struct CollisionDirection_t {
-    gpuFloatType_t u;
-    gpuFloatType_t v;
-    gpuFloatType_t w;
-};
-void copy(CollisionDirection_t* pCopy, const CollisionDirection_t* const pOrig );
-void copy(CollisionDirection_t Copy, const CollisionDirection_t& Orig );
-
+typedef float* CollisionPosition_t;
+typedef float* CollisionDirection_t;
 
 struct gpuParticle_t {
-    CollisionPosition_t pos;
-    CollisionDirection_t dir;
+	gpuFloatType_t pos[3];
+	gpuFloatType_t dir[3];
     gpuFloatType_t energy;
     gpuFloatType_t weight;
     unsigned index;
@@ -36,11 +22,7 @@ struct gpuParticle_t {
 struct CollisionPoints {
     CollisionPointsSize_t capacity;
     CollisionPointsSize_t size;
-    CollisionPosition_t* pos;
-    CollisionDirection_t* dir;
-    gpuFloatType_t* energy;
-    gpuFloatType_t* weight;
-    unsigned* index;
+    gpuParticle_t* points;
 };
 
 void ctor(CollisionPoints* ptr, CollisionPointsSize_t num);
@@ -113,19 +95,21 @@ public:
     CollisionPosition_t getPosition( unsigned i) const { return MonteRay::getPosition( ptrPoints, i); }
     CollisionDirection_t getDirection( unsigned i) const { return MonteRay::getDirection( ptrPoints, i); }
 
-    gpuFloatType_t getX(unsigned i) const { return getPosition(i).x; }
-    gpuFloatType_t getY(unsigned i) const { return getPosition(i).y; }
-    gpuFloatType_t getZ(unsigned i) const { return getPosition(i).z; }
-    gpuFloatType_t getU(unsigned i) const { return getDirection(i).u; }
-    gpuFloatType_t getV(unsigned i) const { return getDirection(i).v; }
-    gpuFloatType_t getW(unsigned i) const { return getDirection(i).w; }
+    gpuFloatType_t getX(unsigned i) const { return getPosition(i)[0]; }
+    gpuFloatType_t getY(unsigned i) const { return getPosition(i)[1]; }
+    gpuFloatType_t getZ(unsigned i) const { return getPosition(i)[2]; }
+    gpuFloatType_t getU(unsigned i) const { return getDirection(i)[0]; }
+    gpuFloatType_t getV(unsigned i) const { return getDirection(i)[1]; }
+    gpuFloatType_t getW(unsigned i) const { return getDirection(i)[2]; }
     gpuFloatType_t getEnergy(unsigned i) const { return MonteRay::getEnergy( ptrPoints, i); }
     gpuFloatType_t getWeight(unsigned i) const { return MonteRay::getWeight( ptrPoints, i); }
     gpuFloatType_t getIndex(unsigned i) const { return MonteRay::getIndex( ptrPoints, i); }
     gpuParticle_t getParticle(unsigned i) { return MonteRay::getParticle( ptrPoints, i); }
 
 
-    void add( gpuParticle_t );
+    void add( const gpuParticle_t& );
+    void add( const gpuParticle_t*, unsigned N=1 );
+    void add( const void*, unsigned N=1 );
 
     void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
               gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,

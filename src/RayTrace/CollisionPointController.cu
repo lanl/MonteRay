@@ -1,5 +1,7 @@
 #include "CollisionPointController.h"
 
+#include <algorithm>
+
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
 #include "SimpleMaterialProperties.h"
@@ -65,6 +67,7 @@ CollisionPointController::setCapacity(unsigned n) {
 	delete bank2;
 	bank1 = new CollisionPointsHost(n);
 	bank2 = new CollisionPointsHost(n);
+	currentBank = bank1;
 }
 
 void
@@ -89,6 +92,36 @@ CollisionPointController::add(
 		std::cout << "Debug: bank full, flushing.\n";
 		flush();
 	}
+}
+
+void
+CollisionPointController::add( const gpuParticle_t& particle){
+	currentBank->add( particle );
+	if( size() == capacity() ) {
+		std::cout << "Debug: bank full, flushing.\n";
+		flush();
+	}
+}
+
+void
+CollisionPointController::add( const gpuParticle_t* particle, unsigned N){
+	int NSpaces = capacity() - size();
+
+	int NAdding = std::min(NSpaces, int(N));
+	int NRemaining = N - NAdding;
+	currentBank->add( particle, NAdding );
+	if( size() == capacity() ) {
+		std::cout << "Debug: bank full, flushing.\n";
+		flush();
+	}
+	if( NRemaining > 0 ) {
+		add( particle + NAdding, NRemaining );
+	}
+}
+
+void
+CollisionPointController::add( const void* particle, unsigned N){
+	add(  (const gpuParticle_t*) particle, N  );
 }
 
 void

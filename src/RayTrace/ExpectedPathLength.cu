@@ -24,8 +24,8 @@ namespace MonteRay{
 
 	 unsigned numberOfCells;
 
-	 float3_t pos = make_float3( p->pos.x, p->pos.y, p->pos.z);
-	 float3_t dir = make_float3( p->dir.u, p->dir.v, p->dir.w);
+	 float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
+	 float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
 
 	 numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
 
@@ -84,8 +84,8 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Si
 
 	unsigned numberOfCells;
 
-	float3_t pos = make_float3( p->pos.x, p->pos.y, p->pos.z);
-	float3_t dir = make_float3( p->dir.u, p->dir.v, p->dir.w);
+	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
+	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
 
 	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
 
@@ -162,12 +162,12 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Si
 		printf("--------------------------------------------------------------------------------------------------------\n");
 		printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, w=%f, weight=%f, index=%d \n",
 				tid+1,
-				p->pos.x,
-				p->pos.y,
-				p->pos.z,
-				p->dir.u,
-				p->dir.v,
-				p->dir.w,
+				p->pos[0],
+				p->pos[1],
+				p->pos[2],
+				p->dir[0],
+				p->dir[1],
+				p->dir[2],
 				p->weight,
 				p->index
 		);
@@ -189,8 +189,8 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Si
 
 	unsigned numberOfCells;
 
-	float3_t pos = make_float3( p->pos.x, p->pos.y, p->pos.z);
-	float3_t dir = make_float3( p->dir.u, p->dir.v, p->dir.w);
+	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
+	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
 
 	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
 
@@ -280,17 +280,16 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
 		if( debug ) {
 		    printf("--------------------------------------------------------------------------------------------------------\n");
             printf("GPU::rayTraceTally:: tid=%d\n", tid );
-            printf("GPU::rayTraceTally:: x=%f\n", p.pos.x );
-            printf("GPU::rayTraceTally:: y=%f\n", p.pos.y );
-            printf("GPU::rayTraceTally:: z=%f\n", p.pos.z );
-            printf("GPU::rayTraceTally:: u=%f\n", p.dir.u );
-            printf("GPU::rayTraceTally:: v=%f\n", p.dir.v );
-            printf("GPU::rayTraceTally:: w=%f\n", p.dir.w );
+            printf("GPU::rayTraceTally:: x=%f\n", p.pos[0] );
+            printf("GPU::rayTraceTally:: y=%f\n", p.pos[1] );
+            printf("GPU::rayTraceTally:: z=%f\n", p.pos[2] );
+            printf("GPU::rayTraceTally:: u=%f\n", p.dir[0] );
+            printf("GPU::rayTraceTally:: v=%f\n", p.dir[1] );
+            printf("GPU::rayTraceTally:: w=%f\n", p.dir[2] );
             printf("GPU::rayTraceTally:: energy=%f\n", p.energy );
             printf("GPU::rayTraceTally:: weight=%f\n", p.weight );
             printf("GPU::rayTraceTally:: index=%d\n", p.index );
 		}
-
 
 		tallyCollision(pGrid, pMatList, pMatProps, pHash, &p, pTally, tid);
 

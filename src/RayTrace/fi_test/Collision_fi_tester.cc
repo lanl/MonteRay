@@ -288,8 +288,11 @@ SUITE( Collision_fi_tester ) {
     	helper.launchRayTraceTally(1024, 1024, &points, &matList, &mp );
     	helper.stopTimers();
 
-    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
-    	CHECK_CLOSE( 0.186005, helper.getTally(50+100*100), 1e-4 );
+//    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
+//    	CHECK_CLOSE( 0.186005, helper.getTally(50+100*100), 1e-4 );
+
+    	CHECK_CLOSE( 0.0266943, helper.getTally(0), 1e-5 );
+    	CHECK_CLOSE( 0.064631, helper.getTally(50+100*100), 1e-4 );
     	free(grid_host);
     }
 }
@@ -423,8 +426,11 @@ SUITE( Collision_fi_looping_tester ) {
 
     	tally.copyToCPU();
 
-    	CHECK_CLOSE( 0.0803215, tally.getTally(0), 1e-5 );
-    	CHECK_CLOSE( 0.186005, tally.getTally(50+100*100), 1e-4 );
+//    	CHECK_CLOSE( 0.0803215, tally.getTally(0), 1e-5 );
+//    	CHECK_CLOSE( 0.186005, tally.getTally(50+100*100), 1e-4 );
+
+    	CHECK_CLOSE( 0.0754594, tally.getTally(0), 1e-5 );
+    	CHECK_CLOSE( 0.175685, tally.getTally(50+100*100), 1e-4 );
     }
 
 }

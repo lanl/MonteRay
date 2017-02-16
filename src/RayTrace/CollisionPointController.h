@@ -12,6 +12,8 @@ class SimpleMaterialPropertiesHost;
 class gpuTallyHost;
 class CollisionPointsHost;
 
+struct gpuParticle_t;
+
 class CollisionPointController {
 public:
 	CollisionPointController(unsigned nBlocks,
@@ -35,6 +37,10 @@ public:
               gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
               gpuFloatType_t energy, gpuFloatType_t weight, unsigned index);
 
+    void add( const gpuParticle_t& );
+    void add( const gpuParticle_t* particle, unsigned N=1 );
+    void add( const void* particle, unsigned N=1 );
+
     void flush(bool final=false);
     void finalFlush(void);
     void stopTimers(void);
@@ -45,6 +51,7 @@ public:
 
     double getCPUTime(void) const { return cpuTime; }
     double getGPUTime(void) const { return gpuTime; }
+    unsigned getNFlushes(void) const { return nFlushs; }
 
     void sync(void);
 

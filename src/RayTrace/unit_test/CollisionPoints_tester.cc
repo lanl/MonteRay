@@ -16,6 +16,111 @@ SUITE( CollisionPoints_simple_tests ) {
     	CHECK_EQUAL(0, points.size() );
     }
 
+    TEST( add_two_particle_via_components ) {
+    	CollisionPointsHost points(2);
+
+    	points.add( 1.0, 2.0, 3.0,
+    			4.0, 5.0, 6.0,
+    			14.0, 0.9, 99);
+    	points.add( 1.0, 2.0, 3.0,
+    			4.0, 5.0, 6.0,
+    			14.0, 0.9, 99);
+    	CHECK_EQUAL(2, points.size() );
+    }
+
+    TEST( add_two_particle_via_particle ) {
+    	CollisionPointsHost points(2);
+    	gpuParticle_t particle;
+    	particle.pos[0] = 1.0;
+    	particle.pos[1] = 2.0;
+    	particle.pos[2] = 3.0;
+    	particle.dir[0] = 4.0;
+    	particle.dir[1] = 5.0;
+    	particle.dir[2] = 6.0;
+    	particle.energy = 7.0;
+    	particle.weight = 8.0;
+    	particle.index = 9;
+
+    	points.add( particle );
+    	CHECK_EQUAL(1, points.size() );
+    	particle.index = 19;
+    	points.add( particle );
+    	CHECK_EQUAL(2, points.size() );
+
+    	gpuParticle_t particle2 = points.getParticle(0);
+    	CHECK_EQUAL(9, particle2.index );
+    	particle2 = points.getParticle(1);
+    	CHECK_EQUAL(19, particle2.index );
+
+    }
+
+    TEST( add_two_particles_via_array ) {
+      	CollisionPointsHost points(2);
+      	gpuParticle_t particle[2];
+      	particle[0].pos[0] = 1.0;
+      	particle[0].pos[1] = 2.0;
+      	particle[0].pos[2] = 3.0;
+      	particle[0].dir[0] = 4.0;
+      	particle[0].dir[1] = 5.0;
+      	particle[0].dir[2] = 6.0;
+      	particle[0].energy = 7.0;
+      	particle[0].weight = 8.0;
+      	particle[0].index = 9;
+
+      	particle[1].pos[0] = 11.0;
+      	particle[1].pos[1] = 12.0;
+      	particle[1].pos[2] = 13.0;
+      	particle[1].dir[0] = 14.0;
+      	particle[1].dir[1] = 15.0;
+      	particle[1].dir[2] = 16.0;
+      	particle[1].energy = 17.0;
+      	particle[1].weight = 18.0;
+      	particle[1].index = 19;
+
+      	points.add( particle, 2 );
+      	CHECK_EQUAL(2, points.size() );
+
+      	gpuParticle_t particle2 = points.getParticle(0);
+      	CHECK_EQUAL(9, particle2.index );
+      	particle2 = points.getParticle(1);
+      	CHECK_EQUAL(19, particle2.index );
+
+      }
+
+    TEST( add_two_particles_via_voidPtr ) {
+       	CollisionPointsHost points(2);
+       	gpuParticle_t particle[2];
+       	particle[0].pos[0] = 1.0;
+       	particle[0].pos[1] = 2.0;
+       	particle[0].pos[2] = 3.0;
+       	particle[0].dir[0] = 4.0;
+       	particle[0].dir[1] = 5.0;
+       	particle[0].dir[2] = 6.0;
+       	particle[0].energy = 7.0;
+       	particle[0].weight = 8.0;
+       	particle[0].index = 9;
+
+       	particle[1].pos[0] = 11.0;
+       	particle[1].pos[1] = 12.0;
+       	particle[1].pos[2] = 13.0;
+       	particle[1].dir[0] = 14.0;
+       	particle[1].dir[1] = 15.0;
+       	particle[1].dir[2] = 16.0;
+       	particle[1].energy = 17.0;
+       	particle[1].weight = 18.0;
+       	particle[1].index = 19;
+
+       	void* voidPtr = static_cast<void*>( particle );
+       	points.add( voidPtr, 2 );
+       	CHECK_EQUAL(2, points.size() );
+
+       	gpuParticle_t particle2 = points.getParticle(0);
+       	CHECK_EQUAL(9, particle2.index );
+       	particle2 = points.getParticle(1);
+       	CHECK_EQUAL(19, particle2.index );
+
+       }
+
     TEST( send_to_gpu_getCapacity) {
     	CollisionPointsTester tester;
 
