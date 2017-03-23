@@ -1,5 +1,9 @@
 #include <cuda.h>
-#include "global.h"
+
+#include <iostream>
+
+#include "MonteRayDefinitions.hh"
+#include "GPUErrorCheck.hh"
 #include "CollisionPoints.h"
 
 #include "CollisionPoints_test_helper.hh"
@@ -15,23 +19,23 @@ __global__ void testGetCapacity(CollisionPoints* pXS, CollisionPointsSize_t* res
 CollisionPointsSize_t
 CollisionPointsTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, CollisionPointsHost& CPs) {
 	CollisionPointsSize_t* result_device;
-	CollisionPointsSize_t result[1];
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( CollisionPointsSize_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
+	CollisionPointsSize_t* result;
+	size_t allocSize = sizeof( CollisionPointsSize_t) * 1;
+	CUDA_CHECK_RETURN( cudaMalloc( &result_device, allocSize ));
+	result = (CollisionPointsSize_t*) malloc( allocSize );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
     testGetCapacity<<<nBlocks,nThreads>>>(CPs.ptrPoints_device, result_device);
+    gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-    gpuErrchk( cudaPeekAtLastError() );
-
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(CollisionPointsSize_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	CollisionPointsSize_t value = *result;
+	free(result);
 	return value;
 }
 
@@ -51,17 +55,15 @@ CollisionPointsTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads,
 	gpuFloatType_t* result_device;
 	gpuFloatType_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	testSumEnergy<<<nBlocks,nThreads>>>(CPs.ptrPoints_device, result_device);
+	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
-	gpuErrchk( cudaPeekAtLastError() );
 
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	return result[0];
@@ -85,13 +87,10 @@ void CollisionPointsTester::stopTimers(){
 	cudaEventSynchronize(stop);
 
 	float elapsedTime;
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEventElapsedTime(&elapsedTime, start, stop );
 
 	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
-
-	gpuErrchk( cudaPeekAtLastError() );
 
 }
 

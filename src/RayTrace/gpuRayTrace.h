@@ -1,7 +1,7 @@
 #include <cuda.h>
 
 #include "cudaGridBins.h"
-#include "global.h"
+#include "MonteRayConstants.hh"
 
 namespace MonteRay{
 

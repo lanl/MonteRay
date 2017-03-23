@@ -1,8 +1,7 @@
 #ifndef CPURAYTRACE_H_
 #define CPURAYTRACE_H_
 
-#include "global.h"
-#include "Vector3D.h"
+#include "MonteRayConstants.hh"
 
 #include "GridBins.h"
 

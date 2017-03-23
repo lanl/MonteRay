@@ -1,6 +1,8 @@
 #include <cuda.h>
-#include "global.h"
-#include "gpuGlobal.h"
+
+#include "MonteRayDefinitions.hh"
+#include "GPUErrorCheck.hh"
+#include "GPUUtilityFunctions.hh"
 
 #include "gpuDistanceCalculator_test_helper.hh"
 #include "cudaGridBins.h"
@@ -16,9 +18,10 @@ gpuDistanceCalculatorTestHelper::launchGetDistancesToAllCenters( unsigned nBlock
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelGetDistancesToAllCenters<<<nBlocks,nThreads>>>(grid_device, distances_device, x, y, z);
+	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
-	gpuErrchk( cudaPeekAtLastError() );
+
 	return;
 }
 
@@ -35,10 +38,11 @@ gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Di
 			                                 dir[0], dir[1], dir[2],
 			                                 distance,
 			                                 outsideDistances );
+	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
-	gpuErrchk( cudaPeekAtLastError() );
+
 	return;
 }
 
@@ -52,16 +56,7 @@ gpuDistanceCalculatorTestHelper::gpuDistanceCalculatorTestHelper(){
 }
 
 void gpuDistanceCalculatorTestHelper::gpuCheck() {
-	int deviceCount;
-
-	cuInit(0);
-	cuDeviceGetCount(&deviceCount);
-	if (deviceCount == 0) {
-		printf("No CUDA-compatible devices found\n");
-		exit(1);
-	}
-	printf("Number of CUDA devices=%d\n",deviceCount);
-	gpuErrchk( cudaPeekAtLastError() );
+	MonteRay::gpuCheck();
 }
 
 gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){
@@ -69,20 +64,16 @@ gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){
 //	std::cout << "Debug: starting ~gpuDistanceCalculatorTestHelper()" << std::endl;
 
 	if( grid_device != NULL ) {
-		cudaFree( grid_device );
-		gpuErrchk( cudaPeekAtLastError() );
+		CUDA_CHECK_RETURN( cudaFree( grid_device ));
 	}
 	if( distances_device != NULL ) {
-		cudaFree( distances_device );
-		gpuErrchk( cudaPeekAtLastError() );
+		CUDA_CHECK_RETURN( cudaFree( distances_device ));
 	}
 	if( cells_device != NULL ) {
-		cudaFree( cells_device );
-		gpuErrchk( cudaPeekAtLastError() );
+		CUDA_CHECK_RETURN( cudaFree( cells_device ) );
 	}
 	if( numCrossings_device != NULL ) {
-		cudaFree( numCrossings_device );
-		gpuErrchk( cudaPeekAtLastError() );
+		CUDA_CHECK_RETURN( cudaFree( numCrossings_device ) );
 	}
 //	std::cout << "Debug: exitting ~gpuDistanceCalculatorTestHelper()" << std::endl;
 }
@@ -132,14 +123,10 @@ void gpuDistanceCalculatorTestHelper::stopTimers(){
 	cudaEventSynchronize(stop);
 
 	float elapsedTime;
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEventElapsedTime(&elapsedTime, start, stop );
 
 	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
-
-	gpuErrchk( cudaPeekAtLastError() );
-
 }
 
 }

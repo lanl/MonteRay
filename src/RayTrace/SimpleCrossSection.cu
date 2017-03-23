@@ -4,7 +4,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "binaryIO.h"
+#include "GPUErrorCheck.hh"
+#include "MonteRayBinaryIO.hh"
 
 namespace MonteRay{
 
@@ -41,16 +42,13 @@ void dtor(struct SimpleCrossSection* pXS) {
 
 #ifdef CUDA
 void cudaCtor(SimpleCrossSection* ptr, unsigned num) {
-     gpuErrchk( cudaPeekAtLastError() );
 
 	 ptr->numPoints = num;
      unsigned allocSize = sizeof( gpuFloatType_t ) * num;
 
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->energies, allocSize ));
-     gpuErrchk( cudaPeekAtLastError() );
 
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->totalXS, allocSize ));
-     gpuErrchk( cudaPeekAtLastError() );
 }
 
 void cudaCtor(SimpleCrossSection* pCopy, SimpleCrossSection* pOrig) {
@@ -63,10 +61,8 @@ void cudaCtor(SimpleCrossSection* pCopy, SimpleCrossSection* pOrig) {
 	unsigned allocSize = sizeof( gpuFloatType_t ) * pOrig->numPoints;
 
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->energies, pOrig->energies, allocSize, cudaMemcpyHostToDevice));
-    gpuErrchk( cudaPeekAtLastError() );
 
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->totalXS, pOrig->totalXS, allocSize, cudaMemcpyHostToDevice));
-    gpuErrchk( cudaPeekAtLastError() );
 }
 
 void cudaDtor(SimpleCrossSection* ptr) {
@@ -256,18 +252,15 @@ launchGetTotalXS( SimpleCrossSectionHost* pXS, gpuFloatType_t energy){
 	gpuFloatType_t* result_device;
 	gpuFloatType_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelGetTotalXS<<<1,1>>>( pXS->xs_device, energy, result_device);
+	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-    gpuErrchk( cudaPeekAtLastError() );
-
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	return result[0];
@@ -306,7 +299,6 @@ SimpleCrossSectionHost::SimpleCrossSectionHost(unsigned num){
 
 #ifdef CUDA
     CUDA_CHECK_RETURN( cudaMalloc(&xs_device, sizeof( SimpleCrossSection) ));
-    gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 
@@ -342,12 +334,10 @@ unsigned SimpleCrossSectionHost::getIndex( HashLookupHost* pHost, unsigned hashB
 
 void SimpleCrossSectionHost::copyToGPU(void) {
 #ifdef CUDA
-	gpuErrchk( cudaPeekAtLastError() );
     cudaCopyMade = true;
     temp = new SimpleCrossSection;
     cudaCtor(temp, xs );
     CUDA_CHECK_RETURN( cudaMemcpy(xs_device, temp, sizeof( SimpleCrossSection ), cudaMemcpyHostToDevice));
-    gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 

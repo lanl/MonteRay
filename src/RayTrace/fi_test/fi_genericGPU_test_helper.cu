@@ -1,9 +1,12 @@
 #include <cuda.h>
-#include "global.h"
-#include "gpuGlobal.h"
+
+#include "MonteRayDefinitions.hh"
+#include "GPUErrorCheck.hh"
+#include "GPUAtomicAdd.hh"
+#include "ExpectedPathLength.h"
 
 #include "fi_genericGPU_test_helper.hh"
-#include "ExpectedPathLength.h"
+
 
 FIGenericGPUTestHelper::FIGenericGPUTestHelper(unsigned num){
 	nCells = num;
@@ -185,8 +188,7 @@ __global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, Sim
 
 		gpuTallyType_t value = getTotalXSByMatProp(pMatProps, pMatList, pHash, HashBin, cell, E);
 
-		atomicAdd( &results[cell], value);
-		//atomicAddDouble( &results[cell], value);
+		gpu_atomicAdd( &results[cell], value);
 		tid += blockDim.x*gridDim.x;
 	}
 	return;

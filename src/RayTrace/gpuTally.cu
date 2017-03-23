@@ -1,5 +1,9 @@
 #include "gpuTally.h"
+
 #include <stdexcept>
+
+#include "GPUErrorCheck.hh"
+#include "GPUAtomicAdd.hh"
 
 namespace MonteRay{
 
@@ -26,13 +30,11 @@ void dtor(struct gpuTally* ptr){
 
 #ifdef CUDA
 void cudaCtor(gpuTally* ptr, unsigned num) {
-     gpuErrchk( cudaPeekAtLastError() );
 
      ptr->size = num;
      unsigned allocSize = sizeof( gpuTallyType_t ) * num;
 
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->tally, allocSize ));
-     gpuErrchk( cudaPeekAtLastError() );
 }
 
 void cudaCtor(gpuTally* pCopy, gpuTally* pOrig) {
@@ -42,7 +44,6 @@ void cudaCtor(gpuTally* pCopy, gpuTally* pOrig) {
 	unsigned allocSize = sizeof( gpuTallyType_t ) * num;
 
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->tally, pOrig->tally, allocSize, cudaMemcpyHostToDevice));
-    gpuErrchk( cudaPeekAtLastError() );
 }
 
 void cudaDtor(gpuTally* ptr) {
@@ -65,8 +66,7 @@ void copy(struct gpuTally* pCopy, struct gpuTally* pOrig) {
 __device__
 #endif
 void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value ) {
-	atomicAdd( &(ptr->tally[cell]), value);
-	//atomicAddDouble( &(ptr->tally[cell]), value );
+	gpu_atomicAdd( &(ptr->tally[cell]), value);
 }
 
 gpuTallyHost::gpuTallyHost(unsigned num) {
@@ -103,14 +103,12 @@ void gpuTallyHost::clear(void) {
 
 	// copy data
     CUDA_CHECK_RETURN( cudaMemcpy(temp->tally, ptr->tally, allocSize, cudaMemcpyHostToDevice));
-    gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 
 void gpuTallyHost::copyToGPU(void) {
 #ifdef CUDA
     CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( gpuTally) ));
-    gpuErrchk( cudaPeekAtLastError() );
 
 	cudaCopyMade = true;
 
@@ -119,7 +117,6 @@ void gpuTallyHost::copyToGPU(void) {
 
 	// copy data
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( gpuTally ), cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 
@@ -134,7 +131,6 @@ void gpuTallyHost::copyToCPU(void) {
 
 	// copy data
     CUDA_CHECK_RETURN( cudaMemcpy(ptr->tally, temp->tally, allocSize, cudaMemcpyDeviceToHost));
-    gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 

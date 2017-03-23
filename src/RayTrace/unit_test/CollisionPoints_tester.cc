@@ -2,9 +2,11 @@
 
 #include <iostream>
 
+#include "MonteRayDefinitions.hh"
+#include "GPUUtilityFunctions.hh"
+
 #include "CollisionPoints.h"
 #include "CollisionPoints_test_helper.hh"
-#include "gpuGlobal.h"
 
 SUITE( CollisionPoints_simple_tests ) {
 	TEST( test_setup ) {
@@ -122,6 +124,8 @@ SUITE( CollisionPoints_simple_tests ) {
        }
 
     TEST( send_to_gpu_getCapacity) {
+    	std::cout << "Debug: CollisionPoints_tester -- send_to_gpu_getCapacity \n";
+    	MonteRay::gpuInfo();
     	CollisionPointsTester tester;
 
     	CollisionPointsHost points(2);
@@ -133,8 +137,11 @@ SUITE( CollisionPoints_simple_tests ) {
     			4.0, 5.0, 6.0,
     			14.0, 0.9, 99);
         CHECK_EQUAL(2, points.size() );
+        CHECK_EQUAL(2, points.capacity() );
 
-        points.CopyToGPU();
+        CHECK_EQUAL( false, points.isCudaCopyMade() );
+        points.copyToGPU();
+        CHECK_EQUAL( true, points.isCudaCopyMade() );
         tester.setupTimers();
         CollisionPointsSize_t result = tester.launchGetCapacity(1,1,points);
         tester.stopTimers();
@@ -162,6 +169,7 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( read_file_getCapacity ) {
+    	std::cout << "Debug: CollisionPoints_tester -- read_file_getCapacity \n";
      	CollisionPointsTester tester;
 
      	CollisionPointsHost points(2);

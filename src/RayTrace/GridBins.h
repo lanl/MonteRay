@@ -9,14 +9,14 @@
 
 #define MAXNUMVERTICES 1001
 
-#include "gpuGlobal.h"
-#include "Vector3D.h"
+#include "MonteRayDefinitions.hh"
+#include "MonteRayVector3D.hh"
 
 namespace MonteRay{
 
 typedef gpuFloatType_t float_t;
-typedef Vector3D Position_t;
-typedef Vector3D Direction_t;
+typedef Vector3D<double> Position_t;
+typedef Vector3D<double> Direction_t;
 
 struct GridBins {
 	float_t vertices[MAXNUMVERTICES*3];

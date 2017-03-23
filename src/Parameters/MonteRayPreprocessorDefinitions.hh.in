@@ -1,0 +1,13 @@
+#ifndef MONTERAYPREPROCESSORDEFINITIONS_HH
+#define MONTERAYPREPROCESSORDEFINITIONS_HH
+
+/**  
+ *  This file is for CMake managed definitions only.
+ */
+
+/* CUDA_INCLUDE_DRIVER_TYPES_PATH -- hardwire path to driver_types.h  */
+#cmakedefine CUDA_INCLUDE_DRIVER_TYPES_PATH "@CUDA_INCLUDE_DRIVER_TYPES_PATH@"
+
+#include CUDA_INCLUDE_DRIVER_TYPES_PATH // cuda driver types
+
+#endif /* MONTERAYPREPROCESSORDEFINITIONS_HH */

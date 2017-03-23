@@ -1,0 +1,5 @@
+#include "MonteRayVersion.hh"
+
+const char* ToolkitVersion = "MonteRay @ToolkitVersion@";
+const char* RevisionNumber = "@RevisionName@";
+const char* CompilationDate = "@CompilationDate@";

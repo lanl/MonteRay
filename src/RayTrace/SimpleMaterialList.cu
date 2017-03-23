@@ -1,6 +1,7 @@
 #include "SimpleMaterialList.h"
 
-#include "binaryIO.h"
+#include "GPUErrorCheck.hh"
+#include "MonteRayBinaryIO.hh"
 
 namespace MonteRay{
 
@@ -32,12 +33,10 @@ void cudaCtor(SimpleMaterialList* pCopy, unsigned num) {
 	// materialID
 	unsigned allocSize = sizeof(unsigned)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->materialID, allocSize ));
-	gpuErrchk( cudaPeekAtLastError() );
 
     // materials
 	allocSize = sizeof(SimpleMaterial*)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->materials, allocSize ));
-	gpuErrchk( cudaPeekAtLastError() );
 }
 
 void cudaCtor(struct SimpleMaterialList* pCopy, struct SimpleMaterialList* pOrig){
@@ -110,22 +109,18 @@ void SimpleMaterialListHost::copyToGPU(void) {
 
 	// allocate target struct
 	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( SimpleMaterialList ) ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// allocate target dynamic memory
 	cudaCtor( temp, pMatList);
 
 	unsigned allocSize = sizeof(unsigned)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->materialID, pMatList->materialID, allocSize, cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	allocSize = sizeof(SimpleCrossSection*)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->materials, material_device_ptr_list, allocSize, cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// copy data
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( SimpleMaterialList ), cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 
@@ -192,7 +187,7 @@ unsigned materialIDtoIndex(SimpleMaterialList* ptr, unsigned id ) {
     }
 
     printf("Error: materialIDtoIndex -- id=%d not found.  %s %d\n", id, __FILE__, __LINE__);
-    abort;
+    ABORT( "materialIDtoIndex" );
     return 0;
 }
 
@@ -210,20 +205,17 @@ gpuFloatType_t SimpleMaterialListHost::launchGetTotalXS(unsigned i, gpuFloatType
 	type_t* result_device;
 	type_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	unsigned HashBin = getHashBin( pHash->getPtr(), E);
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelGetTotalXS<<<1,1>>>(ptr_device, i, pHash->getPtrDevice(), HashBin, E, density, result_device);
+	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-    gpuErrchk( cudaPeekAtLastError() );
-
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	return result[0];

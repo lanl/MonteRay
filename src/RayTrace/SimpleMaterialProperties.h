@@ -1,7 +1,11 @@
 #ifndef SIMPLEMATERIALPROPERTIES_HH_
 #define SIMPLEMATERIALPROPERTIES_HH_
 
-#include "gpuGlobal.h"
+#include <ostream>
+#include <istream>
+#include <string>
+
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay{
 

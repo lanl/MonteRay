@@ -131,10 +131,10 @@ endif()
 ########################################
 #  Toolkit libraries that need to linked in
 
-# Always try to add parent directories library
-if( DEFINED libname )
-    target_link_libraries( ${appName} ${libname} )
-endif()
+# Try to add parent directories library - removed in MonteRay
+#if( DEFINED libname )
+#    target_link_libraries( ${appName} ${libname} )
+#endif()
 
 # Add any additional
 foreach( curLib ${ToolkitLibs} ) 

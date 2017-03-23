@@ -68,7 +68,6 @@ function( generate_doc_rule doc_name file.in directory )
                         COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile
                         COMMAND chmod -R a+rX  ${DOXYFILE_OUTPUT_DIR}
                         COMMAND chmod -R g+w   ${DOXYFILE_OUTPUT_DIR}
-                        COMMAND chgrp -R mcatk ${DOXYFILE_OUTPUT_DIR}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                       )
     add_custom_target( createDocs DEPENDS ${CMAKE_BINARY_DIR}/docs/html/index.html )
@@ -81,8 +80,8 @@ function( generate_doc_rule doc_name file.in directory )
                  ADDITIONAL_MAKE_CLEAN_FILES "${DOXYFILE_OUTPUT_DIR}/${DOXYFILE_HTML_DIR}")
 
     # Turn off latex output unless we can find the needed programs
-    set(DOXYFILE_LATEX "NO")
-    set(DOXYFILE_PDFLATEX "NO")
+    set(DOXYFILE_LATEX "YES")
+    set(DOXYFILE_PDFLATEX "YES")
     
     set(DOXYFILE_DOT "NO")
     if( DOXYGEN_DOT_FOUND )
@@ -90,7 +89,7 @@ function( generate_doc_rule doc_name file.in directory )
     endif()
 
      # FindLATEX.cmake is pretty rudimentary -- we're going to do our own for now
-#    find_package(LATEX)
+ #    find_package(LATEX)
     set( LatexBinPaths /usr/lanl/bin ${package_dir}/bin /usr/bin )
     find_program( LATEX_COMPILER
                   NAMES latex
@@ -107,7 +106,7 @@ function( generate_doc_rule doc_name file.in directory )
                   PATHS ${LatexBinPaths} NO_DEFAULT_PATH
      )
  
-    if(LATEX_COMPILER AND MAKEINDEX_COMPILER AND FALSE)
+    if(LATEX_COMPILER AND MAKEINDEX_COMPILER )
         set(DOXYFILE_LATEX "YES")
         set(DOXYFILE_LATEX_DIR "latex")
 
@@ -123,16 +122,16 @@ function( generate_doc_rule doc_name file.in directory )
         endif()
 
         # Add ability to invoke doxygen's make system for building latex/pdf stuff
-        set( PDFManual ${CMAKE_BINARY_DIR}/docs/latex/refman.pdf )
+        set( PDFManual ${CMAKE_BINARY_DIR}/Docs/latex/refman.pdf )
         add_custom_command( OUTPUT ${PDFManual}
                             COMMAND ${CMAKE_MAKE_PROGRAM} PATH=${LatexPath}:$ENV{PATH}
                             COMMAND chmod -R a+rX  ${DOXYFILE_OUTPUT_DIR}
                             COMMAND chmod -R g+w   ${DOXYFILE_OUTPUT_DIR}
-                            COMMAND chgrp -R mcatk ${DOXYFILE_OUTPUT_DIR}
                             DEPENDS ${DocumentDepends}
                             WORKING_DIRECTORY "${DOXYFILE_OUTPUT_DIR}/${DOXYFILE_LATEX_DIR}"
-                           )
-        add_dependencies( createDocs ${PDFManual} )
+                          )
+        add_custom_target( manual_generator DEPENDS ${PDFManual} )                  
+        add_dependencies( createDocs manual_generator )
         set( DocumentDepends ${DocumentDepends} ${PDFManual} )
 
     endif()

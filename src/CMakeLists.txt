@@ -5,8 +5,10 @@
 #ADD_SUBDIRECTORY(DeviceProperties)
 #ADD_SUBDIRECTORY(Utilities)
 
+
 ############################################
 #  Toolkit Version Creation
+#message( STATUS "%%%%%%%%%%DEBUG: Starting src/CmakeLists.txt")
 includeAllHeaders( ${TestDirNames} )
 
 set( ExportName "Toolkit" )
@@ -64,3 +66,11 @@ install( TARGETS ${mcatkLibName} EXPORT ${ExportName} DESTINATION ${library_inst
 
 install( EXPORT ${ExportName} FILE toolkit.cmake DESTINATION cmake_files )
 install( FILES ${CMAKE_SOURCE_DIR}/cmake_files/templates/FindMCATK.cmake DESTINATION cmake_files )
+
+#################################################################################
+# Create MonteRay CUDA library
+set( AllCudaFiles "")
+globCudaFiles( "${TestDirNames}" AllCudaFiles)
+cuda_add_library(MonteRay STATIC ${AllCudaFiles} )
+install( TARGETS MonteRay EXPORT MonteRay DESTINATION ${library_install_prefix} )
+#################################################################################

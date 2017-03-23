@@ -1,13 +1,13 @@
 #ifndef GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 #define GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 
-#include "global.h"
-#include "/projects/opt/centos7/cuda/7.5/include/driver_types.h"
+#include "MonteRayConstants.hh"
 
 #include "HashLookup.h"
 
 #ifdef CUDA
 #include <cuda.h>
+#include "driver_types.h" // cuda driver types
 #endif
 
 using namespace MonteRay;
@@ -15,7 +15,6 @@ using namespace MonteRay;
 class HashLookupTestHelper
 {
 public:
-	typedef global::float_t float_t;
 
 	HashLookupTestHelper();
 

@@ -3,8 +3,7 @@
 
 #include <vector>
 
-#include "gpuGlobal.h"
-
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay{
 

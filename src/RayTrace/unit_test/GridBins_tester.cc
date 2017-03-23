@@ -9,7 +9,6 @@ SUITE( GridBins_Tester ) {
 
 	class GridBinsTest {
 	public:
-		typedef global::float_t float_t;
 
 		GridBinsTest(){
 			grid = (GridBins*) malloc( sizeof(GridBins) );
@@ -134,13 +133,13 @@ SUITE( GridBins_Tester ) {
 		setVertices(grid, 2, 0.0, 10.0, 10);
 		finalize(grid);
 
-		Vector3D pos1( 0.5, 0.5, 0.5);
+		Vector3D<double> pos1( 0.5, 0.5, 0.5);
 		CHECK_EQUAL(  0, getIndex(grid,  pos1 ) );
 
-		Vector3D pos2( 0.5, 1.5, 0.5);
+		Vector3D<double> pos2( 0.5, 1.5, 0.5);
 		CHECK_EQUAL(  10, getIndex(grid,  pos2 ) );
 
-		Vector3D pos3( 0.5, 0.5, 1.5);
+		Vector3D<double> pos3( 0.5, 0.5, 1.5);
 		CHECK_EQUAL(  100, getIndex(grid,  pos3 ) );
 	}
 
@@ -308,7 +307,6 @@ SUITE( GridBins_Tester ) {
 
 	class GridBinsRayTraceTest{
 	public:
-		typedef global::float_t float_t;
 
 		GridBinsRayTraceTest(){
 			grid = (GridBins*) malloc( sizeof(GridBins) );
@@ -376,8 +374,8 @@ SUITE( GridBins_Tester ) {
 
 	TEST_FIXTURE(GridBinsRayTraceTest, crossingInside_to_outside_posDir_one_crossing)
 	{
-		Vector3D pos( -0.5, 0.5, 0.5 );
-		Vector3D dir( 1, 0, 0);
+		Vector3D<double> pos( -0.5, 0.5, 0.5 );
+		Vector3D<double> dir( 1, 0, 0);
 		float_t distance = 1.0;
 
 		int cells[1000];
@@ -392,8 +390,8 @@ SUITE( GridBins_Tester ) {
 
 	TEST_FIXTURE(GridBinsRayTraceTest, crossingInside_to_outside_posDir_two_crossings)
 	{
-		Vector3D pos( -0.5, 0.5, 0.5 );
-		Vector3D dir( 1, 0, 0);
+		Vector3D<double> pos( -0.5, 0.5, 0.5 );
+		Vector3D<double> dir( 1, 0, 0);
 		float_t distance = 2.0;
 
 		int cells[1000];
@@ -410,7 +408,6 @@ SUITE( GridBins_Tester ) {
 
 	class GridBinsRayTraceTest2{
 	public:
-		typedef global::float_t float_t;
 
 		GridBinsRayTraceTest2(){
 			grid = (GridBins*) malloc( sizeof(GridBins) );
@@ -430,8 +427,8 @@ SUITE( GridBins_Tester ) {
 
 	TEST_FIXTURE(GridBinsRayTraceTest2, Distance1)
 	{
-		Vector3D pos( 0.5, 0.5, 0.5 );
-		Vector3D dir( 1, 0, 0);
+		Vector3D<double> pos( 0.5, 0.5, 0.5 );
+		Vector3D<double> dir( 1, 0, 0);
 		float_t distance = 1.0;
 
 		int cells[1000];

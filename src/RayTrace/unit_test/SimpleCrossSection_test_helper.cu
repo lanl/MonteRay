@@ -1,6 +1,5 @@
 #include <cuda.h>
-#include "global.h"
-#include "gpuGlobal.h"
+#include "MonteRayDefinitions.hh"
 
 #include "SimpleCrossSection_test_helper.hh"
 
@@ -10,18 +9,15 @@
 //	float_t* result_device;
 //	float_t result[1];
 //	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( float_t) * 1 ));
-//	gpuErrchk( cudaPeekAtLastError() );
 //
 //	cudaEvent_t sync;
 //	cudaEventCreate(&sync);
 //	kernelGetTotalXS<<<1,1>>>( pXS->xs_device, energy, result_device);
+//  gpuErrchk( cudaPeekAtLastError() );
 //	cudaEventRecord(sync, 0);
 //	cudaEventSynchronize(sync);
 //
-//    gpuErrchk( cudaPeekAtLastError() );
-//
 //	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(float_t)*1, cudaMemcpyDeviceToHost));
-//	gpuErrchk( cudaPeekAtLastError() );
 //
 //	cudaFree( result_device );
 //	return result[0];
@@ -47,14 +43,10 @@ void SimpleCrossSectionTestHelper::stopTimers(){
 	cudaEventSynchronize(stop);
 
 	float elapsedTime;
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEventElapsedTime(&elapsedTime, start, stop );
 
 	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
-
-	gpuErrchk( cudaPeekAtLastError() );
-
 }
 
 

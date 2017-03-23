@@ -1,8 +1,9 @@
 #ifndef COLLISIONPOINTS_HH_
 #define COLLISIONPOINTS_HH_
 
-#include "gpuGlobal.h"
 #include <fstream>
+
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay{
 
@@ -148,6 +149,8 @@ public:
 
     unsigned getNumCollisionsOnFile(void) const { return numCollisionOnFile; }
     unsigned getVersion(void) const { return currentVersion; }
+
+    bool isCudaCopyMade(void) const { return cudaCopyMade; }
 
 private:
     CollisionPoints* ptrPoints;

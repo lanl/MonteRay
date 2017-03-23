@@ -4,7 +4,8 @@
 #include <fstream>
 #include <ostream>
 
-#include "binaryIO.h"
+#include "GPUErrorCheck.hh"
+#include "MonteRayBinaryIO.hh"
 
 namespace MonteRay{
 
@@ -48,7 +49,6 @@ void cudaCtor(SimpleMaterialProperties* pCopy, unsigned num) {
 	// props
 	unsigned long long allocSize = sizeof(SimpleCellProperties)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->props, allocSize ));
-	gpuErrchk( cudaPeekAtLastError() );
 }
 
 void cudaCtor(struct SimpleMaterialProperties* pCopy, struct SimpleMaterialProperties* pOrig){
@@ -105,18 +105,15 @@ void SimpleMaterialPropertiesHost::copyToGPU(void) {
 
 	// allocate target struct
 	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( SimpleMaterialProperties) ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// allocate target dynamic memory
 	cudaCtor( temp, ptr);
 
 	unsigned long long allocSize = sizeof(SimpleCellProperties)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->props, ptr->props, allocSize, cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// copy data
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( SimpleMaterialProperties ), cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 
 #endif
 }
@@ -235,18 +232,15 @@ unsigned SimpleMaterialPropertiesHost::launchGetNumCells(void) const{
 	type_t* result_device;
 	type_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelGetNumCells<<<1,1>>>(ptr_device, result_device);
+    gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-    gpuErrchk( cudaPeekAtLastError() );
-
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	return result[0];
@@ -260,18 +254,15 @@ unsigned SimpleMaterialPropertiesHost::launchSumMatDensity(unsigned matID) const
 	type_t* result_device;
 	type_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelSumMatDensity<<<1,1>>>(ptr_device, matID, result_device);
+    gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-    gpuErrchk( cudaPeekAtLastError() );
-
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	return result[0];

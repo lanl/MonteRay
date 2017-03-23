@@ -1,6 +1,7 @@
 #ifndef GPUTALLY_H_
 #define GPUTALLY_H_
-#include "gpuGlobal.h"
+
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay{
 

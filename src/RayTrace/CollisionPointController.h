@@ -1,7 +1,7 @@
 #ifndef COLLISIONPOINTCONTROLLER_H_
 #define COLLISIONPOINTCONTROLLER_H_
 
-#include "gpuGlobal.h"
+#include "MonteRayDefinitions.hh"
 #include "cpuTimer.h"
 
 namespace MonteRay {

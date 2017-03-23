@@ -3,7 +3,7 @@
 
 namespace MonteRay {
 
-int getNumberOfGPUS(void);
+
 
 }
 

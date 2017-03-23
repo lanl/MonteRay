@@ -1,6 +1,9 @@
 #include <UnitTest++.h>
 
+#include "GPUSync.hh"
+#include "GPUUtilityFunctions.hh"
 #include "SimpleCrossSection.h"
+
 #include "SimpleCrossSection_test_helper.hh"
 
 SUITE( SimpleCrossSection_tester ) {
@@ -62,7 +65,7 @@ SUITE( SimpleCrossSection_tester ) {
 
     	xs->copyToGPU();
 
-    	gpuSync sync;
+    	GPUSync sync;
     	gpuFloatType_t totalXS = launchGetTotalXS( xs, energy);
     	sync.sync();
 

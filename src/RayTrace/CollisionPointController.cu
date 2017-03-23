@@ -8,6 +8,8 @@
 #include "gpuTally.h"
 #include "CollisionPoints.h"
 #include "ExpectedPathLength.h"
+#include "GPUErrorCheck.hh"
+#include "GPUSync.hh"
 
 namespace MonteRay {
 
@@ -135,22 +137,25 @@ CollisionPointController::flush(bool final){
 		stopTimers();
 	}
 	std::cout << "Debug: flush nFlushs =" <<nFlushs << " -- starting timers\n";
-	gpuErrchk( cudaPeekAtLastError() );
+
 	startTimers();
 
 	++nFlushs;
-    gpuErrchk( cudaPeekAtLastError() );
 	currentBank->copyToGPU();
-	cudaEventRecord(*currentCopySync, 0);
-	cudaEventSynchronize(*currentCopySync);
+	gpuErrchk( cudaEventRecord(*currentCopySync, 0) );
+	gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 
 	// launch kernel
 	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device, currentBank->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
-	cudaEventRecord(stopGPU,stream1);
-	cudaStreamWaitEvent(stream1, stopGPU, 0);
+
+	// only uncomment for testing, forces the cpu and gpu to sync
+//	gpuErrchk( cudaPeekAtLastError() );
+
+	gpuErrchk( cudaEventRecord(stopGPU,stream1) );
+	gpuErrchk( cudaStreamWaitEvent(stream1, stopGPU, 0) );
 
 	if( final ) {
-		std::cout << "Debug: flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n";
+		std::cout << "Debug: final flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n";
 		stopTimers();
 		printTotalTime();
 		return;
@@ -163,10 +168,8 @@ void
 CollisionPointController::startTimers(){
 	// start timers
 	timer.start();
-	cudaEventRecord(start,0);
-	gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(startGPU,stream1);
-	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaEventRecord(start,0) );
+	gpuErrchk( cudaEventRecord(startGPU,stream1) );
 }
 
 void
@@ -177,12 +180,12 @@ CollisionPointController::stopTimers(){
 	float_t cpuCycleTime = timer.getTime();
 	cpuTime += cpuCycleTime;
 
-	cudaStreamSynchronize( stream1 );
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
+	gpuErrchk( cudaStreamSynchronize( stream1 ) );
+	gpuErrchk( cudaEventRecord(stop, 0) );
+	gpuErrchk( cudaEventSynchronize(stop) );
 
 	float_t gpuCycleTime;
-	cudaEventElapsedTime(&gpuCycleTime, startGPU, stopGPU );
+	gpuErrchk( cudaEventElapsedTime(&gpuCycleTime, startGPU, stopGPU ) );
 	gpuCycleTime /= 1000.0;
 	if( gpuCycleTime < 0.0 ) {
 		gpuCycleTime = 0.0;
@@ -190,7 +193,7 @@ CollisionPointController::stopTimers(){
 	gpuTime += gpuCycleTime;
 
 	float totalCycleTime;
-	cudaEventElapsedTime(&totalCycleTime, start, stop );
+	gpuErrchk( cudaEventElapsedTime(&totalCycleTime, start, stop ) );
 	totalCycleTime /= 1000.0;
 	wallTime += totalCycleTime;
 
@@ -213,7 +216,7 @@ CollisionPointController::swapBanks(){
 }
 
 void CollisionPointController::sync(void){
-	gpuSync sync;
+	GPUSync sync;
 	sync.sync();
 }
 
@@ -233,7 +236,7 @@ CollisionPointController::clearTally(void) {
 //	cudaEventRecord(stopGPU,stream1);
 //	cudaStreamWaitEvent(stream1, stopGPU, 0);
 
-	gpuSync sync;
+	GPUSync sync;
 	pTally->clear();
 	bank1->clear();
 	bank2->clear();

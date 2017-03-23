@@ -5,7 +5,10 @@
 #include <iomanip>
 #include <time.h>
 
+#include "GPUTiming.hh"
 #include "cpuTimer.h"
+
+using namespace MonteRay;
 
 GPUTimingTestHelper::GPUTimingTestHelper(){
 }
@@ -23,13 +26,14 @@ __global__ void kernelGPUSleep(clock64_t nCycles, gpuTiming* timer) {
     timer->stop = clock64();
 }
 
-void GPUTimingTestHelper::launchGPUSleep( clock64_t nCycles, gpuTimingHost* timer) {
+void GPUTimingTestHelper::launchGPUSleep( clock64_t nCycles, MonteRay::gpuTimingHost* timer) {
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelGPUSleep<<<1,1>>>(nCycles, timer->ptr_device);
+	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
-	gpuErrchk( cudaPeekAtLastError() );
+
 	return;
 }
 

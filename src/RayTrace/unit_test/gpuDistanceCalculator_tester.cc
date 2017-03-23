@@ -2,9 +2,11 @@
 
 #include <iostream>
 #include <cmath>
+#include <iomanip>
 
-#include "global.h"
-#include "gpuGlobal.h"
+#include "MonteRayDefinitions.hh"
+#include "GPUUtilityFunctions.hh"
+
 #include "gpuDistanceCalculator_test_helper.hh"
 
 using namespace MonteRay;
@@ -13,7 +15,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 	class DistanceCalculatorGPUTest	{
 	public:
-		typedef global::float_t float_t;
 
 		DistanceCalculatorGPUTest(){
 			distances = NULL;
@@ -60,11 +61,13 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		tester.stopTimers();
 		tester.copyDistancesFromGPU(distances);
 
-		float_t distance0 = sqrt( 4.5f*4.5f*3 );
-		CHECK_CLOSE( distance0, distances[0], 1e-7 );
+		float_t distance0 = sqrt( 4.5f*4.5f*3.0f );
+//		std::cout << "Debug: distances[0]=" << std::setprecision(10) << distances[0] << "\n";
+//		std::cout << "Debug: distances0=" << std::setprecision(10) << distance0 << "\n";
+		CHECK_CLOSE( distance0, distances[0], 1e-6 );
 
 		float_t distance1 = sqrt( 4.5f*4.5f*3 );
-		CHECK_CLOSE( distance1, distances[numCells-1], 1e-7 );
+		CHECK_CLOSE( distance1, distances[numCells-1], 1e-6 );
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest, rayTrace_outside_to_inside_posDir_one_crossing ) {
@@ -134,7 +137,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 	class DistanceCalculatorGPUTest2	{
 	public:
-		typedef global::float_t float_t;
 
 		DistanceCalculatorGPUTest2(){
 			distances = NULL;
@@ -362,7 +364,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 	class DistanceCalculatorGPUTest3	{
 	public:
-		typedef global::float_t float_t;
 
 		DistanceCalculatorGPUTest3(){
 			distances = NULL;
@@ -712,7 +713,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 	class DistanceCalculatorGPUTest4	{
 	public:
-		typedef global::float_t float_t;
 
 		DistanceCalculatorGPUTest4(){
 			distances = NULL;
@@ -1112,7 +1112,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 	class DistanceCalculatorGPUTest5	{
 	public:
-		typedef global::float_t float_t;
 
 		DistanceCalculatorGPUTest5(){
 			distances = NULL;

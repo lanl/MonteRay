@@ -1,6 +1,9 @@
 #include <cuda.h>
-#include "global.h"
-#include "gpuGlobal.h"
+
+#include <iostream>
+
+#include "MonteRayDefinitions.hh"
+#include "GPUErrorCheck.hh"
 
 #include "HashLookup_test_helper.hh"
 
@@ -17,18 +20,15 @@ HashLookupTestHelper::launchGetLowerBoundbyIndex( HashLookupHost* pHash, unsigne
 	unsigned* result_device;
 	unsigned result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( unsigned) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelGetLowerBoundbyIndex<<<1,1>>>( pHash->ptr_device, isotope, bin, result_device);
+	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-    gpuErrchk( cudaPeekAtLastError() );
-
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(unsigned)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	return result[0];
@@ -54,14 +54,10 @@ void HashLookupTestHelper::stopTimers(){
 	cudaEventSynchronize(stop);
 
 	float elapsedTime;
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEventElapsedTime(&elapsedTime, start, stop );
 
 	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
-
-	gpuErrchk( cudaPeekAtLastError() );
-
 }
 
 

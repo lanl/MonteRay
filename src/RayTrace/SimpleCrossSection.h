@@ -5,7 +5,7 @@
 #include <vector>
 #include <stdexcept>
 
-#include "gpuGlobal.h"
+#include "MonteRayDefinitions.hh"
 #include "HashLookup.h"
 
 namespace MonteRay{

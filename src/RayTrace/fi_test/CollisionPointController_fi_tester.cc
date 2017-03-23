@@ -3,6 +3,8 @@
 #include <iostream>
 #include <functional>
 
+#include "GPUUtilityFunctions.hh"
+
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
 #include "cpuTimer.h"

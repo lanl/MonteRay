@@ -13,7 +13,7 @@ set( testname ${libname} )
 ########################################
 #  Gather sources
 
-file( GLOB ${libname}_srcs "*.cpp" "*.cc" )
+file( GLOB ${libname}_srcs "*.cpp" "*.cc" "*.cu" )
 file( GLOB ${libname}_headers "*.h" "*.hh" )
 
 foreach( configsrc ${config_srcs} )
@@ -49,7 +49,7 @@ if( NSrcs GREATER 0 )
     # Set any flags since this will be placed in a dynamic library
 #    set( CMAKE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} ${CMAKE_CXX_FLAGS} -g -pg" )  #gprof
     set( CMAKE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}" )
-    add_library( ${libname} ${${libname}_srcs} ${${libname}_headers} )
+    cuda_add_library( ${libname} ${${libname}_srcs} ${${libname}_headers} )
     install( TARGETS ${libname} EXPORT ${ExportName} DESTINATION ${library_install_prefix} )
     # Add this library to the toolkit's main library (libmcatk.so)
     # If this is a rebuild, the name may already be registered, so check first

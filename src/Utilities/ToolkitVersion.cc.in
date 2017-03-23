@@ -1,5 +1,0 @@
-#include "ToolkitVersion.hh"
-
-const char* ToolkitVersion = "MCATK @ToolkitVersion@";
-const char* RevisionNumber = "@RevisionName@";
-const char* CompilationDate = "@CompilationDate@";

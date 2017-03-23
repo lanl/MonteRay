@@ -5,7 +5,9 @@
 #include <fstream>
 #include <cstring>
 
-#include "binaryIO.h"
+#include "GPUErrorCheck.hh"
+#include "MonteRayBinaryIO.hh"
+
 namespace MonteRay{
 
 void ctor(CollisionPoints* ptr, CollisionPointsSize_t num){
@@ -15,7 +17,6 @@ void ctor(CollisionPoints* ptr, CollisionPointsSize_t num){
 
     CollisionPointsSize_t allocSize = sizeof(gpuParticle_t)*num;
     ptr->points = (gpuParticle_t*) malloc( allocSize );
-
 }
 
 void dtor(CollisionPoints* ptr){
@@ -95,7 +96,7 @@ gpuParticle_t pop(CollisionPoints* ptr ) {
 #if !defined( RELEASE )
     if( ptr->size == 0 ) {
         printf("pop(CollisionPoints*) -- no points.  %s %d\n", __FILE__, __LINE__);
-        abort;
+        ABORT( "CollisionPoints.cu -- pop" );
     }
 #endif
 
@@ -110,7 +111,7 @@ gpuParticle_t getParticle(CollisionPoints* ptr, CollisionPointsSize_t i){
 #if !defined( RELEASE )
     if( i >= ptr->size ) {
         printf("pop(CollisionPoints*) -- index exceeds size.  %s %d\n", __FILE__, __LINE__);
-        abort;
+        ABORT( "CollisionPoints.cu -- getParticle" );
     }
 #endif
     return ptr->points[i];
@@ -211,36 +212,38 @@ void CollisionPointsHost::CopyToGPU(void) {
 
 void CollisionPointsHost::copyToGPU(void) {
 #ifdef CUDA
-        gpuErrchk( cudaPeekAtLastError() );
 
         if( !cudaCopyMade ) {
         	// first pass allocate memory
 
         	cudaCopyMade = true;
 
-        	unsigned num = sizeof( gpuFloatType_t ) * capacity();
-
         	temp = new CollisionPoints;
-        	temp->capacity = ptrPoints->capacity;
 
         	// allocate target struct
-
         	CUDA_CHECK_RETURN( cudaMalloc(&ptrPoints_device, sizeof( CollisionPoints) ));
-        	gpuErrchk( cudaPeekAtLastError() );
 
         	// allocate target dynamic memory
-        	CUDA_CHECK_RETURN( cudaMalloc(&temp->points, sizeof( gpuParticle_t ) * capacity() ));
-        	gpuErrchk( cudaPeekAtLastError() );
+        	CUDA_CHECK_RETURN( cudaMalloc(&(temp->points), sizeof( gpuParticle_t ) * capacity() ));
 
+        }  else {
+        	if( ptrPoints->capacity != temp->capacity ) {
+        		// resize
+
+        		cudaFree( temp->points );
+        		// allocate target dynamic memory
+        		CUDA_CHECK_RETURN( cudaMalloc(&(temp->points), sizeof( gpuParticle_t ) * capacity() ));
+        	}
         }
-       	temp->size = ptrPoints->size;
 
-        // copy data
+    	temp->capacity = ptrPoints->capacity;
+    	temp->size = ptrPoints->size;
+
+        // copy struct data
         CUDA_CHECK_RETURN( cudaMemcpy(ptrPoints_device, temp, sizeof( CollisionPoints ), cudaMemcpyHostToDevice));
-        gpuErrchk( cudaPeekAtLastError() );
 
+        // copy points data into allocated memory
         CUDA_CHECK_RETURN( cudaMemcpy(temp->points, ptrPoints->points, sizeof( gpuParticle_t ) * capacity(), cudaMemcpyHostToDevice));
-        gpuErrchk( cudaPeekAtLastError() );
 #endif
     }
 

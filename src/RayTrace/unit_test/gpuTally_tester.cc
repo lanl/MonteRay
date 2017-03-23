@@ -3,10 +3,13 @@
 #include <iostream>
 #include <iomanip>
 
+#include "MonteRayDefinitions.hh"
+#include "GPUUtilityFunctions.hh"
 #include "gpuTally.h"
+
 #include "genericGPU_test_helper.hh"
 #include "gpuTally_test_helper.hh"
-#include "gpuGlobal.h"
+
 
 SUITE( gpuTally_tester ) {
 	TEST( setup ) {

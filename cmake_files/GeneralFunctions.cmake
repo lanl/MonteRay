@@ -88,6 +88,7 @@ endfunction()
 # Look for all the directories below the current one for header files and add them to
 # the list of included directories 
 function( includeAllHeaders )
+	#message( STATUS "%%%%%%%%%%DEBUG: Starting cmake_Files/GeneralFunctions :: includeAllHeaders ")
     file( GLOB_RECURSE AllHeaders "*.hh" "*.h")
     string( REPLACE ";" "|" SkipDirs "${ARGV}" )
     set( SkipDirs "(${SkipDirs})" )
@@ -101,7 +102,52 @@ function( includeAllHeaders )
         endif()
     endforeach()
     
+    file( GLOB_RECURSE AllGeneratedHeaders RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.hh.in" "*.h.in")
+#    message( STATUS "%%%%%%%%%%DEBUG: cmake_Files/GeneralFunctions :: AllGeneratedHeaders=${AllGeneratedHeaders} ")
+    string( REPLACE ";" "|" SkipDirs "${ARGV}" )
+    set( SkipDirs "(${SkipDirs})" )
+    foreach( hdr ${AllGeneratedHeaders} )
+#    	message( STATUS "%%%%%%%%%%DEBUG: cmake_Files/GeneralFunctions :: includeAllHeaders :: generated header=${hdr} ")
+        string( REGEX MATCH ${SkipDirs} shouldSkip ${hdr} )
+        if( shouldSkip )
+#            message( "Skipping : ${hdr}" )
+        else()
+            get_filename_component( temp ${hdr} PATH )
+            set( fulltemppath "${CMAKE_CURRENT_BINARY_DIR}/${hdr}" )
+            STRING(REPLACE ".in" "" modfulltemppath ${fulltemppath} )
+            set( temppath "${CMAKE_CURRENT_BINARY_DIR}/${temp}" )
+#            message( STATUS "including directory: ${temppath}" )
+            include_directories( ${temppath} )
+            install( FILES ${modfulltemppath} DESTINATION include/mcatk )
+        endif()
+    endforeach()
+    
 endfunction()
+
+function( globCudaFiles AllSkipDirs AllCudaFiles )
+#    message( STATUS "%%%%%%%%%%DEBUG: Starting cmake_Files/GeneralFunctions :: globCudaFiles ")
+    file( GLOB_RECURSE AllPossibleCudaFiles "*.hh" "*.h" "*.cc" "*.c" "*.cu" "*.cpp" )
+    string( REPLACE ";" "|" SkipDirs "${AllSkipDirs}" )
+#    message( STATUS "%%%%%%%%%%DEBUG: AllSkipDirs=${AllSkipDirs} " )
+#    message( STATUS "%%%%%%%%%%DEBUG: SkipDirs=${SkipDirs} " )
+    set( SkipDirs "(${SkipDirs})" )
+    foreach( cudaFile ${AllPossibleCudaFiles} )
+        string( REGEX MATCH ${SkipDirs} shouldSkip ${cudaFile} )
+        if( shouldSkip )
+#            message( "Skipping : ${cudaFile}" )
+        else()
+#            message( STATUS "%%%%%%%%%%DEBUG: Starting cmake_Files/GeneralFunctions :: globCudaFiles - adding ${cudaFile} ")
+            get_filename_component( temp ${cudaFile} PATH )
+            list(APPEND CudaFileList ${cudaFile})
+        endif()
+    endforeach()
+    
+#    foreach( cudaFile ${CudaFileList} )
+#       message( STATUS "%%%%%%%%%%DEBUG: Starting cmake_Files/GeneralFunctions :: globCudaFiles - adding ${cudaFile} ")
+#    endforeach()
+    set(${AllCudaFiles} ${CudaFileList} PARENT_SCOPE)
+endfunction()
+
 #--------------------------------------------------------------------------------
 
 #================================================================================
@@ -154,6 +200,7 @@ function( UseMCATK )
     ############################################
     #  List the directory names that only contain testing source
     set( TestDirNames unit_test punit_test pnightly nightly fi_test pfi_test PARENT_SCOPE )
+    
 
     include_directories( ${ToolkitInstallPath}/include )
     include_directories( ${ToolkitInstallPath}/include/mcatk )

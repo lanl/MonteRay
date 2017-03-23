@@ -1,10 +1,13 @@
 #include "HashLookup.h"
 
-#include "math.h"
+#include <math.h>
 
-#include "binaryIO.h"
+#include "GPUErrorCheck.hh"
+#include "MonteRayDefinitions.hh"
+#include "MonteRayConstants.hh"
+
+#include "MonteRayBinaryIO.hh"
 #include "SimpleCrossSection.h"
-#include "global.h"
 
 
 namespace MonteRay{
@@ -14,7 +17,7 @@ void ctor(HashLookup* ptr, unsigned num, unsigned nBins ) {
     ptr->maxNumIsotopes = num;
     ptr->numIsotopes = 0;
     ptr->eMax = 0.0f;
-    ptr->eMin = global::inf;
+    ptr->eMin = MonteRay::inf;
     ptr->N = nBins;
 
     unsigned allocSize = sizeof(unsigned)*nBins*num;
@@ -36,8 +39,6 @@ void cudaCtor(HashLookup* pCopy, unsigned num, unsigned nBins) {
 	// binBounds
 	unsigned allocSize = sizeof(unsigned)*num*nBins;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->binBounds, allocSize ));
-	gpuErrchk( cudaPeekAtLastError() );
-
 }
 
 void cudaCtor(struct HashLookup* pCopy, struct HashLookup* pOrig){
@@ -97,18 +98,15 @@ void HashLookupHost::copyToGPU(void) {
 
 	// allocate target struct
 	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( HashLookup ) ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// allocate target dynamic memory
 	cudaCtor( temp, ptr);
 
 	unsigned allocSize = sizeof(unsigned)*num*ptr->N;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->binBounds, ptr->binBounds, allocSize, cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// copy data
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( HashLookup ), cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 
@@ -213,18 +211,18 @@ __device__ __host__
 unsigned getBinBoundIndex(HashLookup* ptr, unsigned isotope, unsigned index ){
 	if( isotope > ptr->numIsotopes) {
 		printf("Error: HasLookup::getBinBoundIndex -- isotope ( = %d )  > numIsotopes (= %d), %s %d\n", isotope, ptr->numIsotopes, __FILE__, __LINE__);
-		abort;
+		ABORT( "HashLookup.cu -- getBinBoundIndex" );
 	}
 	if( index > ptr->N) {
 		printf("Error: HasLookup::getBinBoundIndex -- index ( = %d )  > numBins (= %d), %s %d\n", index, ptr->N, __FILE__, __LINE__);
-		abort;
+		ABORT( "HashLookup.cu -- getBinBoundIndex" );
 	}
 	unsigned i = isotope + index*ptr->maxNumIsotopes;
 	if( i >= ptr->maxNumIsotopes*ptr->N ){
 		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. isotope = %d, index=%d, %s %d\n", isotope, index, __FILE__, __LINE__);
 		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. i = %d, N*maxNumIsotopes=%d,\n", i, ptr->maxNumIsotopes*ptr->N  );
 		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. N = %d, maxNumIsotopes=%d,\n", ptr->N, ptr->maxNumIsotopes  );
-		abort;
+		ABORT( "HashLookup.cu -- getBinBoundIndex" );
 	}
 	return i;
 }

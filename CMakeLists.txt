@@ -4,20 +4,6 @@ PROJECT(MonteRayProject)
 
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-#set( cmake_dir "${CMAKE_SOURCE_DIR}/cmake_files" )
-#list( APPEND CMAKE_MODULE_PATH ${cmake_dir} )
-#set( cmake_dir "${CMAKE_SOURCE_DIR}/scripts" )
-#list( APPEND CMAKE_MODULE_PATH ${cmake_dir} )
-
-#message( STATUS "-- Invoking LocatePackagesDir")
-#include( LocatePackagesDir )
-#message( STATUS "-- Invoking concatenateInstallSubdirs()")
-#include( GeneralFunctions )
-#concatenateInstallSubdirs()
-
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/external )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
-
 if( POLICY CMP0022 )
     cmake_policy( SET CMP0022 OLD )
 endif()

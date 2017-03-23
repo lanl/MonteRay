@@ -4,6 +4,7 @@
 #include <functional>
 #include <cmath>
 
+#include "GPUUtilityFunctions.hh"
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
 #include "cpuTimer.h"
@@ -141,7 +142,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
     }
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle_via_ptr ){
-    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr\n";
+    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr1\n";
         CollisionPointController controller( 1024,
  				                             1024,
  				                             pGrid,
@@ -167,7 +168,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
     }
 
     TEST_FIXTURE(UnitControllerSetup, add_two_particles_via_ptr ){
-    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr\n";
+    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr2\n";
         CollisionPointController controller( 1024,
  				                             1024,
  				                             pGrid,
@@ -203,7 +204,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
     }
 
     TEST_FIXTURE(UnitControllerSetup, add_ten_particles_via_ptr ){
-    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr\n";
+    	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr3\n";
         CollisionPointController controller( 1024,
  				                             1024,
  				                             pGrid,

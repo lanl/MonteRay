@@ -1,6 +1,8 @@
 #include "SimpleMaterial.h"
 
-#include "binaryIO.h"
+#include "GPUErrorCheck.hh"
+#include "MonteRayConstants.hh"
+#include "MonteRayBinaryIO.hh"
 
 namespace MonteRay{
 
@@ -34,12 +36,10 @@ void cudaCtor(SimpleMaterial* pCopy, unsigned num) {
 	// fractions
 	unsigned allocSize = sizeof(gpuFloatType_t)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->fraction, allocSize ));
-	gpuErrchk( cudaPeekAtLastError() );
 
     // SimpleCrossSections
 	allocSize = sizeof(SimpleCrossSection*)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->xs, allocSize ));
-	gpuErrchk( cudaPeekAtLastError() );
 }
 
 void cudaCtor(struct SimpleMaterial* pCopy, struct SimpleMaterial* pOrig){
@@ -112,22 +112,18 @@ void SimpleMaterialHost::copyToGPU(void) {
 
 	// allocate target struct
 	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( SimpleMaterial) ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// allocate target dynamic memory
 	cudaCtor( temp, pMat);
 
 	unsigned allocSize = sizeof(gpuFloatType_t)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->fraction, pMat->fraction, allocSize, cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	allocSize = sizeof(SimpleCrossSection*)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->xs, isotope_device_ptr_list, allocSize, cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	// copy data
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( SimpleMaterial ), cudaMemcpyHostToDevice));
-	gpuErrchk( cudaPeekAtLastError() );
 #endif
 }
 
@@ -293,18 +289,15 @@ unsigned SimpleMaterialHost::launchGetNumIsotopes(void) {
 	type_t* result_device;
 	type_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelGetNumIsotopes<<<1,1>>>(ptr_device, result_device);
+    gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-    gpuErrchk( cudaPeekAtLastError() );
-
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
-	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaFree( result_device );
 	return result[0];

@@ -1,19 +1,22 @@
 #ifndef UNIT_TEST_GPUTIMING_TEST_HELPER_HH_
 #define UNIT_TEST_GPUTIMING_TEST_HELPER_HH_
 
-#include "gpuTiming.h"
+#include "MonteRayDefinitions.hh"
 
-using namespace MonteRay;
+namespace MonteRay{
+class gpuTimingHost;
+}
 
 class GPUTimingTestHelper
 {
 public:
+
 	GPUTimingTestHelper();
 
 	~GPUTimingTestHelper();
 
-	void launchGPUSleep( clock64_t nCycles, gpuTimingHost* );
-	double launchGPUStreamSleep(unsigned nBlocks, unsigned nThreads, clock64_t nCycles, unsigned milliseconds);
+	void launchGPUSleep( MonteRay::clock64_t nCycles, MonteRay::gpuTimingHost* );
+	double launchGPUStreamSleep(unsigned nBlocks, unsigned nThreads, MonteRay::clock64_t nCycles, unsigned milliseconds);
 
 };
 

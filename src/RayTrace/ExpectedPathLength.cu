@@ -1,8 +1,11 @@
 #include "ExpectedPathLength.h"
-#include "GridBins.h"
-#include "gpuTiming.h"
-#include "gpuGlobal.h"
+
 #include <math.h>
+
+#include "GridBins.h"
+#include "GPUTiming.hh"
+#include "MonteRayDefinitions.hh"
+#include "GPUAtomicAdd.hh"
 
 namespace MonteRay{
 
@@ -134,8 +137,7 @@ tallyCellSegment(SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatPro
 	}
 	score *= exp( -opticalPathLength ) * weight;
 
-	atomicAdd( &tally[cell], score);
-	//atomicAddDouble( &tally[cell], score);
+	gpu_atomicAdd( &tally[cell], score);
 
 	return cellOpticalPathLength;
 }
@@ -143,8 +145,12 @@ tallyCellSegment(SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatPro
 __global__
 void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pMatList, SimpleMaterialProperties* pMatProps, HashLookup* pHash, gpuTallyType_t* tally){
 
+	const bool debug = false;
+
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
 	unsigned N = pCP->size;
+
+	if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
 
 	while( tid < N ) {
 		gpuParticle_t p = getParticle( pCP, tid);
@@ -272,7 +278,10 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
 	const bool debug = false;
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
+
 	unsigned N = pCP->size;
+
+	if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
 
 	while( tid < N ) {
 		gpuParticle_t p = getParticle( pCP, tid);

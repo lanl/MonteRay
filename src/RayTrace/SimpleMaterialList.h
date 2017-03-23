@@ -1,7 +1,7 @@
 #ifndef SIMPLEMATERIALLIST_HH_
 #define SIMPLEMATERIALLIST_HH_
 
-#include "gpuGlobal.h"
+#include "MonteRayDefinitions.hh"
 
 #include "SimpleMaterial.h"
 #include "HashLookup.h"

@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 
-#include "global.h"
+#include "MonteRayConstants.hh"
 #include "GridBins.h"
 #include "cpuRayTrace.h"
 
@@ -10,7 +10,6 @@ SUITE( DistanceCalculatorCPUTest ) {
 
 	class DistanceCalculatorCPUTest {
 	public:
-		typedef global::float_t float_t;
 
 		DistanceCalculatorCPUTest(){
 			grid = (GridBins*) malloc( sizeof(GridBins) );

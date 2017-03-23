@@ -88,7 +88,7 @@ function( addCMakeDirs )
     
     foreach( subCMake ${SubCMakes} )
         get_filename_component( dirName ${subCMake} PATH )
-        add_subdirectory( ${dirName} )
+        add_subdirectory( ${dirName} )       
     endforeach()
 
 endfunction()

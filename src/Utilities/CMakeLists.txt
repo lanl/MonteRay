@@ -1,6 +1,6 @@
 include( template_select )
 
-set( config_srcs ToolkitVersion.cc )
+set( config_srcs MonteRayVersion.cc )
 
 list( APPEND ${UnitName}_packages UnitTest )
 

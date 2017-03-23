@@ -1,7 +1,7 @@
 #ifndef SIMPLEMATERIAL_HH_
 #define SIMPLEMATERIAL_HH_
 
-#include "gpuGlobal.h"
+#include "MonteRayDefinitions.hh"
 #include "SimpleCrossSection.h"
 
 namespace MonteRay{

@@ -4,6 +4,8 @@
 #include <functional>
 
 #include "fi_genericGPU_test_helper.hh"
+
+#include "GPUUtilityFunctions.hh"
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
 #include "cpuTimer.h"

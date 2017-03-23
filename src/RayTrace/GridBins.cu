@@ -1,13 +1,13 @@
 #include "GridBins.h"
-#include "gpuGlobal.h"
 
 #include <iostream>
 #include <fstream>
 #include <ostream>
 #include <limits>
 
-#include "binaryIO.h"
-
+#include "GPUErrorCheck.hh"
+#include "MonteRayDefinitions.hh"
+#include "MonteRayBinaryIO.hh"
 
 #ifndef CUDA
 #include "ReadLnk3dnt.hh"

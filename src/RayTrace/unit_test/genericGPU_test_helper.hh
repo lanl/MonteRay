@@ -1,8 +1,8 @@
 #ifndef UNIT_TEST_GENERICGPU_TEST_HELPER_HH_
 #define UNIT_TEST_GENERICGPU_TEST_HELPER_HH_
 
-#include "global.h"
-#include "/projects/opt/centos7/cuda/7.5/include/driver_types.h"
+#include "MonteRayConstants.hh"
+#include "driver_types.h" // cuda driver types
 
 #ifdef CUDA
 #include <cuda.h>
@@ -13,7 +13,6 @@ using namespace MonteRay;
 class GenericGPUTestHelper
 {
 public:
-	typedef global::float_t float_t;
 
 	GenericGPUTestHelper();
 

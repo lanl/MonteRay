@@ -57,7 +57,7 @@ unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* c
 		std::cout << "calcCrossings -- dir=" << dir << "\n";
 	}
 
-    if( abs(dir) <= global::epsilon ) {
+    if( abs(dir) <= MonteRay::epsilon ) {
     	return nDistances;
     }
 
@@ -177,7 +177,7 @@ unsigned orderCrossings(const GridBins* const grid, int* global_indices, float_t
     for( unsigned i=0; i<maxNumCrossings; ++i){
 
     	unsigned minDim;
-    	float_t minimumDistance = global::inf;
+    	float_t minimumDistance = MonteRay::inf;
         for( unsigned j = 0; j<3; ++j) {
             if( start[j] < end[j] ) {
             	minDistances[j] = *((crossingDistances+j*num)+start[j]);
@@ -186,7 +186,7 @@ unsigned orderCrossings(const GridBins* const grid, int* global_indices, float_t
             		minDim = j;
             	}
             } else {
-                minDistances[j] = global::inf;
+                minDistances[j] = MonteRay::inf;
             }
         }
 
