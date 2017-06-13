@@ -1,7 +1,7 @@
 #include <UnitTest++.h>
 
 #include "HashLookup.h"
-#include "SimpleCrossSection.h"
+#include "MonteRayCrossSection.hh"
 #include "HashLookup_test_helper.hh"
 
 SUITE( HashLookup_tester ) {
@@ -16,7 +16,7 @@ SUITE( HashLookup_tester ) {
         CHECK_EQUAL(8192, hash.getNBins() );
     }
     TEST( add_an_isotope_checkMinAndMax ){
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(4);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(4);
     	xs->setTotalXS(0, 0.1, 4.0 );
     	xs->setTotalXS(1, 1.0, 3.0 );
     	xs->setTotalXS(2, 2.0, 2.0 );
@@ -31,13 +31,13 @@ SUITE( HashLookup_tester ) {
     }
 
     TEST( add_two_isotopes_checkMinAndMax ){
-    	SimpleCrossSectionHost* xs1 = new SimpleCrossSectionHost(4);
+    	MonteRayCrossSectionHost* xs1 = new MonteRayCrossSectionHost(4);
     	xs1->setTotalXS(0, 0.5, 4.0 );
     	xs1->setTotalXS(1, 1.0, 3.0 );
     	xs1->setTotalXS(2, 2.0, 2.0 );
     	xs1->setTotalXS(3, 3.0, 1.0 );
 
-    	SimpleCrossSectionHost* xs2 = new SimpleCrossSectionHost(4);
+    	MonteRayCrossSectionHost* xs2 = new MonteRayCrossSectionHost(4);
     	xs2->setTotalXS(0, 0.25, 4.0 );
     	xs2->setTotalXS(1, 1.0, 3.0 );
     	xs2->setTotalXS(2, 2.0, 2.0 );
@@ -58,19 +58,19 @@ SUITE( HashLookup_tester ) {
     	delete xs2;
     }
     TEST( add_thre_isotopes_checkMinAndMax ){
-    	SimpleCrossSectionHost* xs1 = new SimpleCrossSectionHost(4);
+    	MonteRayCrossSectionHost* xs1 = new MonteRayCrossSectionHost(4);
     	xs1->setTotalXS(0, 0.5, 4.0 );
     	xs1->setTotalXS(1, 1.0, 3.0 );
     	xs1->setTotalXS(2, 2.0, 2.0 );
     	xs1->setTotalXS(3, 3.0, 1.0 );
 
-    	SimpleCrossSectionHost* xs2 = new SimpleCrossSectionHost(4);
+    	MonteRayCrossSectionHost* xs2 = new MonteRayCrossSectionHost(4);
     	xs2->setTotalXS(0, 0.25, 4.0 );
     	xs2->setTotalXS(1, 1.0, 3.0 );
     	xs2->setTotalXS(2, 2.0, 2.0 );
     	xs2->setTotalXS(3, 3.5, 1.0 );
 
-    	SimpleCrossSectionHost* xs3 = new SimpleCrossSectionHost(4);
+    	MonteRayCrossSectionHost* xs3 = new MonteRayCrossSectionHost(4);
     	xs3->setTotalXS(0, 0.75, 4.0 );
     	xs3->setTotalXS(1, 1.0, 3.0 );
     	xs3->setTotalXS(2, 2.0, 2.0 );
@@ -88,7 +88,7 @@ SUITE( HashLookup_tester ) {
     	delete xs3;
     }
     TEST( get_hash_bin_index_by_energy ){
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(2);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(2);
     	xs->setTotalXS(0, 1.0, 4.0 );
     	xs->setTotalXS(1, 10.0, 3.0 );
 
@@ -109,7 +109,7 @@ SUITE( HashLookup_tester ) {
     }
     TEST( fill_lower_bin_array ){
     	std::cout << "Debug: starting fill_lower_bin_array\n";
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(10);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 4.0 );
     	xs->setTotalXS(1, 1.25, 4.0 );
     	xs->setTotalXS(2, 2.0, 4.0 );
@@ -164,7 +164,7 @@ SUITE( HashLookup_tester ) {
 
     TEST( getTotalXS_via_hash ){
     	std::cout << "Debug: starting getTotalXS_via_hash\n";
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(10);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 1.0 );
     	xs->setTotalXS(1, 1.25, 4.0 );
     	xs->setTotalXS(2, 2.0, 3.0 );
@@ -231,7 +231,7 @@ SUITE( HashLookup_tester ) {
     }
 
     TEST( fill_lower_bin_array_two_xs ){
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(10);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 4.0 );
     	xs->setTotalXS(1, 1.3, 4.0 );
     	xs->setTotalXS(2, 1.9, 4.0 );
@@ -243,7 +243,7 @@ SUITE( HashLookup_tester ) {
     	xs->setTotalXS(8, 9.0, 4.0 );
     	xs->setTotalXS(9, 10.0, 3.0 );
 
-    	SimpleCrossSectionHost* xs2 = new SimpleCrossSectionHost(10);
+    	MonteRayCrossSectionHost* xs2 = new MonteRayCrossSectionHost(10);
     	xs2->setTotalXS(0, 1.0, 4.0 );
     	xs2->setTotalXS(1, 1.25, 4.0 );
     	xs2->setTotalXS(2, 2.0, 4.0 );
@@ -296,7 +296,7 @@ SUITE( HashLookup_tester ) {
     	delete xs2;
     }
     TEST_FIXTURE(HashLookupTestHelper, getLowerBoundonGPU ){
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(10);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 4.0 );
     	xs->setTotalXS(1, 1.25, 4.0 );
     	xs->setTotalXS(2, 2.0, 4.0 );
@@ -325,7 +325,7 @@ SUITE( HashLookup_tester ) {
     }
 
     TEST( getTotalXS_via_hash_two_isotopes_different_min_max ){
-     	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(10);
+     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
      	xs->setTotalXS(0, 1.0, 1.0 );
      	xs->setTotalXS(1, 1.25, 2.0 );
      	xs->setTotalXS(2, 2.0, 3.0 );
@@ -337,7 +337,7 @@ SUITE( HashLookup_tester ) {
      	xs->setTotalXS(8, 9.0, 9.0 );
      	xs->setTotalXS(9, 10.0, 10.0 );
 
-     	SimpleCrossSectionHost* xs2 = new SimpleCrossSectionHost(10);
+     	MonteRayCrossSectionHost* xs2 = new MonteRayCrossSectionHost(10);
      	xs2->setTotalXS(0, 0.1, 1.0 );
      	xs2->setTotalXS(1, 0.125, 2.0 );
      	xs2->setTotalXS(2, 0.2, 3.0 );
@@ -366,7 +366,7 @@ SUITE( HashLookup_tester ) {
 
     TEST( load_u235_from_file)
       {
-      	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(1);
+      	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
       	xs->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin");
 
       	gpuFloatType_t energy = 2.0;
@@ -385,8 +385,8 @@ SUITE( HashLookup_tester ) {
       	delete xs;
       	delete hash;
       }
-//    TEST_FIXTURE(SimpleCrossSectionTestHelper, get_total_xs_from_gpu ) {
-//    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(4);
+//    TEST_FIXTURE(MonteRayCrossSectionTestHelper, get_total_xs_from_gpu ) {
+//    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(4);
 //    	xs->setTotalXS(0, 0.0, 4.0 );
 //    	xs->setTotalXS(1, 1.0, 3.0 );
 //    	xs->setTotalXS(2, 2.0, 2.0 );
@@ -405,9 +405,9 @@ SUITE( HashLookup_tester ) {
 //    	delete xs;
 //    }
 //
-//    TEST_FIXTURE(SimpleCrossSectionTestHelper, load_u235_from_file)
+//    TEST_FIXTURE(MonteRayCrossSectionTestHelper, load_u235_from_file)
 //    {
-//    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(1);
+//    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
 //    	xs->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin");
 //
 //    	gpuFloatType_t energy = 2.0;

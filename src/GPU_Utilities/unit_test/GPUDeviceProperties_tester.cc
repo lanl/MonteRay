@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 
-#include "gpuDeviceProperties.hh"
+#include "GPUUtilityFunctions.hh"
 #include "gpuAddTwoDoubles.hh"
 #include "GPUUtilityFunctions.hh"
 

@@ -3,7 +3,7 @@
 
 #include "MonteRayConstants.hh"
 
-#include "SimpleCrossSection.h"
+#include "MonteRayCrossSection.hh"
 
 #ifdef CUDA
 #include <cuda.h>
@@ -12,19 +12,19 @@
 
 using namespace MonteRay;
 
-class SimpleCrossSectionTestHelper
+class MonteRayCrossSectionTestHelper
 {
 public:
 
-	SimpleCrossSectionTestHelper();
+	MonteRayCrossSectionTestHelper();
 
-	~SimpleCrossSectionTestHelper();
+	~MonteRayCrossSectionTestHelper();
 
 	void setupTimers();
 
 	void stopTimers();
 
-	//float_t launchGetTotalXS( SimpleCrossSectionHost* pXS, float_t energy);
+	//float_t launchGetTotalXS( MonteRayCrossSectionHost* pXS, float_t energy);
 
 private:
 	cudaEvent_t start, stop;

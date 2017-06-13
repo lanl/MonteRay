@@ -2,7 +2,7 @@
 
 #include "GPUErrorCheck.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayBinaryIO.hh"
+#include "MonteRay_binaryIO.hh"
 
 namespace MonteRay{
 
@@ -16,8 +16,8 @@ void ctor(struct SimpleMaterial* ptr, unsigned num) {
     ptr->fraction  = (gpuFloatType_t*) malloc( allocSize);
     if(ptr->fraction == 0) abort ();
 
-    allocSize = sizeof(struct SimpleCrossSection*)*num;
-    ptr->xs = (struct SimpleCrossSection**) malloc( allocSize );
+    allocSize = sizeof(struct MonteRayCrossSection*)*num;
+    ptr->xs = (struct MonteRayCrossSection**) malloc( allocSize );
     if(ptr->xs == 0) abort ();
 
     for( unsigned i=0; i<num; ++i ){
@@ -37,8 +37,8 @@ void cudaCtor(SimpleMaterial* pCopy, unsigned num) {
 	unsigned allocSize = sizeof(gpuFloatType_t)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->fraction, allocSize ));
 
-    // SimpleCrossSections
-	allocSize = sizeof(SimpleCrossSection*)*num;
+    // MonteRayCrossSections
+	allocSize = sizeof(MonteRayCrossSection*)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->xs, allocSize ));
 }
 
@@ -75,7 +75,7 @@ SimpleMaterialHost::SimpleMaterialHost(unsigned numIsotopes) {
     ptr_device = NULL;
     temp = NULL;
 
-    isotope_device_ptr_list = (SimpleCrossSection**) malloc( sizeof(SimpleCrossSection* )*numIsotopes );
+    isotope_device_ptr_list = (MonteRayCrossSection**) malloc( sizeof(MonteRayCrossSection* )*numIsotopes );
     for( unsigned i=0; i< numIsotopes; ++i ){
     	isotope_device_ptr_list[i] = 0;
     }
@@ -119,7 +119,7 @@ void SimpleMaterialHost::copyToGPU(void) {
 	unsigned allocSize = sizeof(gpuFloatType_t)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->fraction, pMat->fraction, allocSize, cudaMemcpyHostToDevice));
 
-	allocSize = sizeof(SimpleCrossSection*)*num;
+	allocSize = sizeof(MonteRayCrossSection*)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->xs, isotope_device_ptr_list, allocSize, cudaMemcpyHostToDevice));
 
 	// copy data
@@ -138,7 +138,7 @@ void copy(struct SimpleMaterial* pCopy, struct SimpleMaterial* pOrig) {
         pCopy->fraction[i] = pOrig->fraction[i];
         if( pOrig->xs[i] != 0 ) {
             if( pCopy->xs[i] == 0  ) {
-                pCopy->xs[i] = new SimpleCrossSection;  // TODO: memory leak in this case -- need shared ptr
+                pCopy->xs[i] = new MonteRayCrossSection;  // TODO: memory leak in this case -- need shared ptr
             }
             copy( pCopy->xs[i], pOrig->xs[i] );
         }
@@ -241,7 +241,7 @@ gpuFloatType_t getTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E, gpuFloat
 #ifdef CUDA
 __device__ __host__
 #endif
-void cudaAdd(struct SimpleMaterial* ptr, struct SimpleCrossSection* xs, unsigned index ) {
+void cudaAdd(struct SimpleMaterial* ptr, struct MonteRayCrossSection* xs, unsigned index ) {
 	ptr->xs[ index ] = xs;
 }
 
@@ -267,7 +267,7 @@ int SimpleMaterialHost::getID( unsigned index ) {
 	return MonteRay::getID(pMat, index );
 }
 
-void SimpleMaterialHost::add(unsigned index,struct SimpleCrossSectionHost& xs, gpuFloatType_t frac ) {
+void SimpleMaterialHost::add(unsigned index,struct MonteRayCrossSectionHost& xs, gpuFloatType_t frac ) {
     if( index > getNumIsotopes() ) {
         fprintf(stderr, "SimpleMaterialHost::add -- index > number of allocated isotopes.  %s %d\n", __FILE__, __LINE__);
         exit(1);
@@ -305,7 +305,7 @@ unsigned SimpleMaterialHost::launchGetNumIsotopes(void) {
 
 
 #ifndef CUDA
-void SimpleMaterialHost::add(unsigned index,struct SimpleCrossSection* xs, gpuFloatType_t frac ) {
+void SimpleMaterialHost::add(unsigned index,struct MonteRayCrossSection* xs, gpuFloatType_t frac ) {
     if( index > getNumIsotopes() ) {
         fprintf(stderr, "SimpleMaterialHost::add -- index > number of allocated isotopes.  %s %d\n", __FILE__, __LINE__);
         exit(1);
@@ -337,7 +337,7 @@ void SimpleMaterialHost::write(std::ostream& outf) const{
     }
     for( unsigned i=0; i<getNumIsotopes(); ++i ){
         if( pMat->xs[i] != 0 ) {
-            SimpleCrossSectionHost xs(1);
+            MonteRayCrossSectionHost xs(1);
             xs.load( pMat->xs[i] );
             xs.write(outf);
         }
@@ -358,7 +358,7 @@ void SimpleMaterialHost::read(std::istream& infile) {
     }
 
     for( unsigned i=0; i<num; ++i ){
-        SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(1); // TODO: need shared ptr here
+        MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1); // TODO: need shared ptr here
         xs->read( infile );
         add(i, *xs, pMat->fraction[i]);
     }

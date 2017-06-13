@@ -68,7 +68,7 @@ set( appName ${TestType}${testname} )
 ########################################
 #  Gather sources
 
-file( GLOB ${appName}_srcs "*.cpp" "*.cc" )
+file( GLOB ${appName}_srcs "*.cpp" "*.cc" "*.cu" )
 
 foreach( src ${ExcludeSource} )
     list( REMOVE_ITEM ${appName}_srcs ${CMAKE_CURRENT_SOURCE_DIR}/${src} )

@@ -39,8 +39,8 @@ HashLookupTestHelper::HashLookupTestHelper(){
 
 HashLookupTestHelper::~HashLookupTestHelper(){
 
-//	std::cout << "Debug: starting ~SimpleCrossSectionTestHelper()" << std::endl;
-//	std::cout << "Debug: exitting ~SimpleCrossSectionTestHelper()" << std::endl;
+//	std::cout << "Debug: starting ~MonteRayCrossSectionTestHelper()" << std::endl;
+//	std::cout << "Debug: exitting ~MonteRayCrossSectionTestHelper()" << std::endl;
 }
 
 void HashLookupTestHelper::setupTimers(){

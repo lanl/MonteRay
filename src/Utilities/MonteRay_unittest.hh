@@ -6,7 +6,7 @@
 //The following headers used in the main.cc
 #include <TestReporterStdout.h>
 
-#include "MonteRayTestReporterOstream.hh"
+#include "MonteRay_TestReporterOstream.hh"
 
 
 int

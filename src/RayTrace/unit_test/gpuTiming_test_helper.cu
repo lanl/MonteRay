@@ -6,7 +6,7 @@
 #include <time.h>
 
 #include "GPUTiming.hh"
-#include "cpuTimer.h"
+#include "MonteRay_timer.hh"
 
 using namespace MonteRay;
 

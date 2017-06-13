@@ -9,7 +9,7 @@ endif()
 #set( CMAKE_CXX_COMPILER "g++" )
 #set( CMAKE_Fortran_COMPILER "gfortran" )
 
-project( mcatk CXX )
+#project( MonteRay CXX )
 
 include( VersionInfo )
 

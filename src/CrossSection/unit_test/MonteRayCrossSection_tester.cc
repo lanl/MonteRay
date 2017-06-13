@@ -2,20 +2,20 @@
 
 #include "GPUSync.hh"
 #include "GPUUtilityFunctions.hh"
-#include "SimpleCrossSection.h"
+#include "MonteRayCrossSection.hh"
 
-#include "SimpleCrossSection_test_helper.hh"
+#include "MonteRayCrossSection_test_helper.hh"
 
-SUITE( SimpleCrossSection_tester ) {
+SUITE( MonteRayCrossSection_tester ) {
 	TEST( setup ) {
 		gpuCheck();
 	}
     TEST( ctor ) {
-        SimpleCrossSectionHost xs(10);
+        MonteRayCrossSectionHost xs(10);
         CHECK_EQUAL(10, xs.size() );
     }
-    TEST_FIXTURE(SimpleCrossSectionTestHelper, get_id ) {
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(4);
+    TEST_FIXTURE(MonteRayCrossSectionTestHelper, get_id ) {
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(4);
     	xs->setTotalXS(0, 0.0, 4.0 );
     	xs->setTotalXS(1, 1.0, 3.0 );
     	xs->setTotalXS(2, 2.0, 2.0 );
@@ -31,8 +31,8 @@ SUITE( SimpleCrossSection_tester ) {
 
     	delete xs;
     }
-    TEST_FIXTURE(SimpleCrossSectionTestHelper, get_total_xs_from_gpu ) {
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(4);
+    TEST_FIXTURE(MonteRayCrossSectionTestHelper, get_total_xs_from_gpu ) {
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(4);
     	xs->setTotalXS(0, 0.0, 4.0 );
     	xs->setTotalXS(1, 1.0, 3.0 );
     	xs->setTotalXS(2, 2.0, 2.0 );
@@ -51,9 +51,9 @@ SUITE( SimpleCrossSection_tester ) {
     	delete xs;
     }
 
-    TEST_FIXTURE(SimpleCrossSectionTestHelper, load_u235_from_file)
+    TEST_FIXTURE(MonteRayCrossSectionTestHelper, load_u235_from_file)
     {
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(1);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
     	xs->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin");
 
     	gpuFloatType_t energy = 2.0;

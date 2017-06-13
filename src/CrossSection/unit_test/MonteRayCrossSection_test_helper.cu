@@ -1,11 +1,11 @@
 #include <cuda.h>
 #include "MonteRayDefinitions.hh"
 
-#include "SimpleCrossSection_test_helper.hh"
+#include "MonteRayCrossSection_test_helper.hh"
 
 
-//SimpleCrossSectionTestHelper::float_t
-//SimpleCrossSectionTestHelper::launchGetTotalXS( SimpleCrossSectionHost* pXS, float_t energy){
+//MonteRayCrossSectionTestHelper::float_t
+//MonteRayCrossSectionTestHelper::launchGetTotalXS( MonteRayCrossSectionHost* pXS, float_t energy){
 //	float_t* result_device;
 //	float_t result[1];
 //	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( float_t) * 1 ));
@@ -23,22 +23,22 @@
 //	return result[0];
 //}
 
-SimpleCrossSectionTestHelper::SimpleCrossSectionTestHelper(){
+MonteRayCrossSectionTestHelper::MonteRayCrossSectionTestHelper(){
 }
 
-SimpleCrossSectionTestHelper::~SimpleCrossSectionTestHelper(){
+MonteRayCrossSectionTestHelper::~MonteRayCrossSectionTestHelper(){
 
-//	std::cout << "Debug: starting ~SimpleCrossSectionTestHelper()" << std::endl;
-//	std::cout << "Debug: exitting ~SimpleCrossSectionTestHelper()" << std::endl;
+//	std::cout << "Debug: starting ~MonteRayCrossSectionTestHelper()" << std::endl;
+//	std::cout << "Debug: exitting ~MonteRayCrossSectionTestHelper()" << std::endl;
 }
 
-void SimpleCrossSectionTestHelper::setupTimers(){
+void MonteRayCrossSectionTestHelper::setupTimers(){
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
 }
 
-void SimpleCrossSectionTestHelper::stopTimers(){
+void MonteRayCrossSectionTestHelper::stopTimers(){
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
 

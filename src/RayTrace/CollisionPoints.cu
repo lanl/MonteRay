@@ -6,7 +6,7 @@
 #include <cstring>
 
 #include "GPUErrorCheck.hh"
-#include "MonteRayBinaryIO.hh"
+#include "MonteRay_binaryIO.hh"
 
 namespace MonteRay{
 

@@ -9,9 +9,9 @@
 #endif
 
 #include "CollisionPoints.h"
-#include "SimpleCrossSection.h"
+#include "MonteRayCrossSection.hh"
 #include "SimpleMaterialList.h"
-#include "SimpleMaterialProperties.h"
+#include "MonteRay_CellProperties.hh"
 #include "GridBins.h"
 
 using namespace MonteRay;
@@ -30,15 +30,15 @@ public:
 
 	void copyGridtoGPU( GridBins* );
 
-	void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleCrossSectionHost* pXS );
+	void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, MonteRayCrossSectionHost* pXS );
 	void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, unsigned matIndex, gpuFloatType_t density );
-	void launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps );
+	void launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, CellPropertiesHost* pMatProps );
 
-	gpuFloatType_t getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t E);
-	gpuFloatType_t getTotalXSByMatProp(SimpleMaterialProperties* matProps, SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E);
+	gpuFloatType_t getTotalXSByMatProp(CellProperties* matProps, SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t E);
+	gpuFloatType_t getTotalXSByMatProp(CellProperties* matProps, SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E);
 
-	void launchSumCrossSectionAtCollisionLocation(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps );
-	void launchRayTraceTally(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, SimpleMaterialPropertiesHost* pMatProps );
+	void launchSumCrossSectionAtCollisionLocation(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, CellPropertiesHost* pMatProps );
+	void launchRayTraceTally(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, CellPropertiesHost* pMatProps );
 
 	gpuFloatType_t getTally(unsigned i) const { return tally[i]; }
 

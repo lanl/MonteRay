@@ -14,8 +14,13 @@ public:
 
 class cpuTimer {
 public:
-	cpuTimer();
-	~cpuTimer();
+	cpuTimer() :
+		startTime( timespec() ),
+		stopTime(  timespec() )
+	{}
+
+
+	~cpuTimer(){};
 
 	//static double ElapsedTime(timespec start, timespec end);
 	static double ElapsedTime(timespec start, timespec end)	{

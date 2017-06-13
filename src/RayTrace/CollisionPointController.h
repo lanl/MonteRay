@@ -2,13 +2,13 @@
 #define COLLISIONPOINTCONTROLLER_H_
 
 #include "MonteRayDefinitions.hh"
-#include "cpuTimer.h"
+#include "MonteRay_timer.hh"
 
 namespace MonteRay {
 
 class GridBinsHost;
 class SimpleMaterialListHost;
-class SimpleMaterialPropertiesHost;
+class CellPropertiesHost;
 class gpuTallyHost;
 class CollisionPointsHost;
 
@@ -20,7 +20,7 @@ public:
 			                 unsigned nThreads,
 			                 GridBinsHost*,
 			                 SimpleMaterialListHost*,
-			                 SimpleMaterialPropertiesHost*,
+			                 CellPropertiesHost*,
 			                 gpuTallyHost* );
 
 	virtual ~CollisionPointController();
@@ -61,7 +61,7 @@ private:
 	unsigned nThreads;
 	GridBinsHost* pGrid;
 	SimpleMaterialListHost* pMatList;
-	SimpleMaterialPropertiesHost* pMatProps;
+	CellPropertiesHost* pMatProps;
 	gpuTallyHost* pTally;
 
 	CollisionPointsHost* currentBank;

@@ -1,15 +1,15 @@
-#include "SimpleCrossSection.h"
+#include "MonteRayCrossSection.hh"
 
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
 
 #include "GPUErrorCheck.hh"
-#include "MonteRayBinaryIO.hh"
+#include "MonteRay_binaryIO.hh"
 
 namespace MonteRay{
 
-void ctor(struct SimpleCrossSection* pXS, unsigned num) {
+void ctor(struct MonteRayCrossSection* pXS, unsigned num) {
     if( num <=0 ) { num = 1; }
 
     pXS->id = -1;
@@ -29,7 +29,7 @@ void ctor(struct SimpleCrossSection* pXS, unsigned num) {
     }
 }
 
-void dtor(struct SimpleCrossSection* pXS) {
+void dtor(struct MonteRayCrossSection* pXS) {
     if( pXS->energies != 0 ) {
         free(pXS->energies);
         pXS->energies = 0;
@@ -41,7 +41,7 @@ void dtor(struct SimpleCrossSection* pXS) {
 }
 
 #ifdef CUDA
-void cudaCtor(SimpleCrossSection* ptr, unsigned num) {
+void cudaCtor(MonteRayCrossSection* ptr, unsigned num) {
 
 	 ptr->numPoints = num;
      unsigned allocSize = sizeof( gpuFloatType_t ) * num;
@@ -51,7 +51,7 @@ void cudaCtor(SimpleCrossSection* ptr, unsigned num) {
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->totalXS, allocSize ));
 }
 
-void cudaCtor(SimpleCrossSection* pCopy, SimpleCrossSection* pOrig) {
+void cudaCtor(MonteRayCrossSection* pCopy, MonteRayCrossSection* pOrig) {
 	unsigned num = pOrig->numPoints;
 	cudaCtor( pCopy, num);
 
@@ -65,13 +65,13 @@ void cudaCtor(SimpleCrossSection* pCopy, SimpleCrossSection* pOrig) {
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->totalXS, pOrig->totalXS, allocSize, cudaMemcpyHostToDevice));
 }
 
-void cudaDtor(SimpleCrossSection* ptr) {
+void cudaDtor(MonteRayCrossSection* ptr) {
     cudaFree( ptr->energies );
     cudaFree( ptr->totalXS );
 }
 #endif
 
-void copy(struct SimpleCrossSection* pCopy, struct SimpleCrossSection* pOrig ) {
+void copy(struct MonteRayCrossSection* pCopy, struct MonteRayCrossSection* pOrig ) {
     unsigned num = pOrig->numPoints;
     if( num <=0 ) { num = 1; }
 
@@ -87,14 +87,14 @@ void copy(struct SimpleCrossSection* pCopy, struct SimpleCrossSection* pOrig ) {
 #ifdef CUDA
 __device__ __host__
 #endif
-int getID(struct SimpleCrossSection* pXS) {
+int getID(struct MonteRayCrossSection* pXS) {
 	return pXS->id;
 }
 
 #ifdef CUDA
 __device__ __host__
 #endif
-void setID(struct SimpleCrossSection* pXS, unsigned i) {
+void setID(struct MonteRayCrossSection* pXS, unsigned i) {
 	if( pXS->id < 0 ) {
 		pXS->id = i;
 	}
@@ -103,7 +103,7 @@ void setID(struct SimpleCrossSection* pXS, unsigned i) {
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getEnergy(struct SimpleCrossSection* pXS, unsigned i ) {
+gpuFloatType_t getEnergy(struct MonteRayCrossSection* pXS, unsigned i ) {
     return pXS->energies[i];
 }
 
@@ -111,14 +111,14 @@ gpuFloatType_t getEnergy(struct SimpleCrossSection* pXS, unsigned i ) {
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXSByIndex(struct SimpleCrossSection* pXS, unsigned i ){
+gpuFloatType_t getTotalXSByIndex(struct MonteRayCrossSection* pXS, unsigned i ){
     return pXS->totalXS[i];
 }
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndex(struct SimpleCrossSection* pXS, gpuFloatType_t value ){
+unsigned getIndex(struct MonteRayCrossSection* pXS, gpuFloatType_t value ){
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
 	return getIndexBinary( pXS, 0, pXS->numPoints-1, value);
 }
@@ -126,7 +126,7 @@ unsigned getIndex(struct SimpleCrossSection* pXS, gpuFloatType_t value ){
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndexBinary(struct SimpleCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
+unsigned getIndexBinary(struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
     unsigned it, step;
     unsigned first = lower;
@@ -150,7 +150,7 @@ unsigned getIndexBinary(struct SimpleCrossSection* pXS, unsigned lower, unsigned
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndexLinear(struct SimpleCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
+unsigned getIndexLinear(struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
 
     for( unsigned i=lower+1; i < upper+1; ++i ){
     	if( value < pXS->energies[ i ] ) {
@@ -164,7 +164,7 @@ unsigned getIndexLinear(struct SimpleCrossSection* pXS, unsigned lower, unsigned
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndex(struct SimpleCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ){
+unsigned getIndex(struct MonteRayCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ){
 	unsigned isotope = MonteRay::getID(pXS);
 	unsigned lowerBin = MonteRay::getLowerBoundbyIndex(pHash, isotope, hashBin);
 	unsigned upperBin = MonteRay::getUpperBoundbyIndex(pHash, isotope, hashBin);
@@ -181,14 +181,14 @@ unsigned getIndex(struct SimpleCrossSection* pXS, struct HashLookup* pHash, unsi
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getAWR(struct SimpleCrossSection* pXS) {
+gpuFloatType_t getAWR(struct MonteRayCrossSection* pXS) {
     return pXS->AWR;
 }
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXSByIndex(struct SimpleCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
+gpuFloatType_t getTotalXSByIndex(struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
 
     gpuFloatType_t lower =  pXS->totalXS[i];
     gpuFloatType_t upper =  pXS->totalXS[i+1];
@@ -201,7 +201,7 @@ gpuFloatType_t getTotalXSByIndex(struct SimpleCrossSection* pXS, unsigned i, gpu
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXS(struct SimpleCrossSection* pXS, gpuFloatType_t E ) {
+gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, gpuFloatType_t E ) {
 
     if( E > pXS->energies[ pXS->numPoints-1] ) {
         return pXS->totalXS[ pXS->numPoints-1];
@@ -218,7 +218,7 @@ gpuFloatType_t getTotalXS(struct SimpleCrossSection* pXS, gpuFloatType_t E ) {
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXS(struct SimpleCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) {
+gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) {
 
     if( E > pXS->energies[ pXS->numPoints-1] ) {
         return pXS->totalXS[ pXS->numPoints-1];
@@ -233,21 +233,21 @@ gpuFloatType_t getTotalXS(struct SimpleCrossSection* pXS, struct HashLookup* pHa
 }
 
 #ifdef CUDA
-__global__ void kernelGetTotalXS(struct SimpleCrossSection* pXS, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
+__global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, pHash, HashBin, E);
     return;
 }
 #endif
 
 #ifdef CUDA
-__global__ void kernelGetTotalXS(struct SimpleCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
+__global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, E);
     return;
 }
 #endif
 
 gpuFloatType_t
-launchGetTotalXS( SimpleCrossSectionHost* pXS, gpuFloatType_t energy){
+launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
 #ifdef CUDA
 	gpuFloatType_t* result_device;
 	gpuFloatType_t result[1];
@@ -272,7 +272,7 @@ launchGetTotalXS( SimpleCrossSectionHost* pXS, gpuFloatType_t energy){
 
 #if !defined( CUDA )
 #include "ContinuousNeutron.hh"
-void SimpleCrossSectionHost::load( const ContinuousNeutron& cn){
+void MonteRayCrossSectionHost::load( const ContinuousNeutron& cn){
     unsigned num = cn.getEnergyGrid().GridSize();
     dtor( xs );
     ctor( xs, num );
@@ -290,19 +290,19 @@ void SimpleCrossSectionHost::load( const ContinuousNeutron& cn){
 }
 #endif
 
-SimpleCrossSectionHost::SimpleCrossSectionHost(unsigned num){
-    xs = (struct SimpleCrossSection*) malloc( sizeof(struct SimpleCrossSection) );
+MonteRayCrossSectionHost::MonteRayCrossSectionHost(unsigned num){
+    xs = (struct MonteRayCrossSection*) malloc( sizeof(struct MonteRayCrossSection) );
     ctor(xs,num);
 
     cudaCopyMade = false;
     temp = NULL;
 
 #ifdef CUDA
-    CUDA_CHECK_RETURN( cudaMalloc(&xs_device, sizeof( SimpleCrossSection) ));
+    CUDA_CHECK_RETURN( cudaMalloc(&xs_device, sizeof( MonteRayCrossSection) ));
 #endif
 }
 
-SimpleCrossSectionHost::~SimpleCrossSectionHost(){
+MonteRayCrossSectionHost::~MonteRayCrossSectionHost(){
     dtor(xs);
 
     if( xs != 0 ) {
@@ -319,29 +319,29 @@ SimpleCrossSectionHost::~SimpleCrossSectionHost(){
 #endif
 }
 
-gpuFloatType_t SimpleCrossSectionHost::getTotalXS( struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) const {
+gpuFloatType_t MonteRayCrossSectionHost::getTotalXS( struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) const {
 	return MonteRay::getTotalXS(xs, pHash, hashBin, E);
 }
 
-gpuFloatType_t SimpleCrossSectionHost::getTotalXSByHashIndex(struct HashLookup* pHash, unsigned i, gpuFloatType_t E) const {
+gpuFloatType_t MonteRayCrossSectionHost::getTotalXSByHashIndex(struct HashLookup* pHash, unsigned i, gpuFloatType_t E) const {
 	return MonteRay::getTotalXS(xs, pHash, i, E);
 }
 
-unsigned SimpleCrossSectionHost::getIndex( HashLookupHost* pHost, unsigned hashBin, gpuFloatType_t e ) const {
+unsigned MonteRayCrossSectionHost::getIndex( HashLookupHost* pHost, unsigned hashBin, gpuFloatType_t e ) const {
 	return MonteRay::getIndex( xs, pHost->getPtr(), hashBin, e);
 }
 
 
-void SimpleCrossSectionHost::copyToGPU(void) {
+void MonteRayCrossSectionHost::copyToGPU(void) {
 #ifdef CUDA
     cudaCopyMade = true;
-    temp = new SimpleCrossSection;
+    temp = new MonteRayCrossSection;
     cudaCtor(temp, xs );
-    CUDA_CHECK_RETURN( cudaMemcpy(xs_device, temp, sizeof( SimpleCrossSection ), cudaMemcpyHostToDevice));
+    CUDA_CHECK_RETURN( cudaMemcpy(xs_device, temp, sizeof( MonteRayCrossSection ), cudaMemcpyHostToDevice));
 #endif
 }
 
-void SimpleCrossSectionHost::load(struct SimpleCrossSection* ptrXS ) {
+void MonteRayCrossSectionHost::load(struct MonteRayCrossSection* ptrXS ) {
     unsigned num = ptrXS->numPoints;
     dtor( xs );
     ctor( xs, num );
@@ -356,7 +356,7 @@ void SimpleCrossSectionHost::load(struct SimpleCrossSection* ptrXS ) {
     }
 }
 
-void SimpleCrossSectionHost::write(std::ostream& outf) const{
+void MonteRayCrossSectionHost::write(std::ostream& outf) const{
     binaryIO::write(outf, xs->numPoints );
     binaryIO::write(outf, xs->AWR );
     for( unsigned i=0; i<xs->numPoints; ++i ){
@@ -367,7 +367,7 @@ void SimpleCrossSectionHost::write(std::ostream& outf) const{
     }
 }
 
-void SimpleCrossSectionHost::read(std::istream& infile) {
+void MonteRayCrossSectionHost::read(std::istream& infile) {
     unsigned num;
     binaryIO::read(infile, num);
     dtor( xs );
@@ -384,12 +384,12 @@ void SimpleCrossSectionHost::read(std::istream& infile) {
 }
 
 
-void SimpleCrossSectionHost::write( const std::string& filename ) {
+void MonteRayCrossSectionHost::write( const std::string& filename ) {
     std::ofstream outfile;
 
     outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
     if( ! outfile.is_open() ) {
-        fprintf(stderr, "SimpleCrossSectionHost::write -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "MonteRayCrossSectionHost::write -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     assert( outfile.good() );
@@ -398,7 +398,7 @@ void SimpleCrossSectionHost::write( const std::string& filename ) {
     outfile.close();
 }
 
-void SimpleCrossSectionHost::read( const std::string& filename ) {
+void MonteRayCrossSectionHost::read( const std::string& filename ) {
     std::ifstream infile;
     if( infile.is_open() ) {
         infile.close();
@@ -406,7 +406,7 @@ void SimpleCrossSectionHost::read( const std::string& filename ) {
     infile.open( filename.c_str(), std::ios::binary | std::ios::in);
 
     if( ! infile.is_open() ) {
-        fprintf(stderr, "SimpleCrossSectionHost::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "MonteRayCrossSectionHost::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     assert( infile.good() );

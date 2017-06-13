@@ -4,7 +4,7 @@
 
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
-#include "SimpleMaterialProperties.h"
+#include "MonteRay_CellProperties.hh"
 #include "gpuTally.h"
 #include "CollisionPoints.h"
 #include "ExpectedPathLength.h"
@@ -18,7 +18,7 @@ CollisionPointController::CollisionPointController(
         unsigned threads,
         GridBinsHost* pGB,
         SimpleMaterialListHost* pML,
-        SimpleMaterialPropertiesHost* pMP,
+        CellPropertiesHost* pMP,
         gpuTallyHost* pT ) :
         nBlocks(blocks),
         nThreads(threads),

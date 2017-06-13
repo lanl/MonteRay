@@ -1,7 +1,7 @@
 #include "SimpleMaterialList.h"
 
 #include "GPUErrorCheck.hh"
-#include "MonteRayBinaryIO.hh"
+#include "MonteRay_binaryIO.hh"
 
 namespace MonteRay{
 
@@ -116,7 +116,7 @@ void SimpleMaterialListHost::copyToGPU(void) {
 	unsigned allocSize = sizeof(unsigned)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->materialID, pMatList->materialID, allocSize, cudaMemcpyHostToDevice));
 
-	allocSize = sizeof(SimpleCrossSection*)*num;
+	allocSize = sizeof(MonteRayCrossSection*)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->materials, material_device_ptr_list, allocSize, cudaMemcpyHostToDevice));
 
 	// copy data

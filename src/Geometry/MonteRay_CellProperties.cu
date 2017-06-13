@@ -1,15 +1,15 @@
-#include "SimpleMaterialProperties.h"
+#include "MonteRay_CellProperties.hh"
 
 #include <iostream>
 #include <fstream>
 #include <ostream>
 
 #include "GPUErrorCheck.hh"
-#include "MonteRayBinaryIO.hh"
+#include "MonteRay_binaryIO.hh"
 
 namespace MonteRay{
 
-void copy(SimpleCellProperties& theCopy, const SimpleCellProperties& theOrig) {
+void copy(IndividualCellProperties& theCopy, const IndividualCellProperties& theOrig) {
 //	theCopy.numMats = theOrig.numMats;
 //	for( unsigned i=0; i < theOrig.numMats; ++i ) {
 //		theCopy.matID[i] = theOrig.matID[i];
@@ -18,19 +18,19 @@ void copy(SimpleCellProperties& theCopy, const SimpleCellProperties& theOrig) {
 	theCopy = theOrig;
 }
 
-void copy(SimpleCellProperties* pCopy, const SimpleCellProperties* pOrig) {
+void copy(IndividualCellProperties* pCopy, const IndividualCellProperties* pOrig) {
 	copy( *pCopy, *pOrig);
 }
 
-void ctor(SimpleMaterialProperties* ptr, unsigned num ) {
+void ctor(CellProperties* ptr, unsigned num ) {
     if( num <=0 ) { num = 1; }
     ptr->numCells = num;
 
-    unsigned long long allocSize = sizeof(struct SimpleCellProperties)*num;
-    ptr->props = (SimpleCellProperties*) malloc( allocSize);
+    unsigned long long allocSize = sizeof(struct IndividualCellProperties)*num;
+    ptr->props = (IndividualCellProperties*) malloc( allocSize);
     if(ptr->props == 0) abort ();
 
-    SimpleCellProperties defaultCellProps;
+    IndividualCellProperties defaultCellProps;
     defaultCellProps.numMats = 0;
     for( unsigned i=0; i<NMAX_MATERIALS; ++i) {
         defaultCellProps.density[i] = 0.0;
@@ -43,21 +43,21 @@ void ctor(SimpleMaterialProperties* ptr, unsigned num ) {
 }
 
 #ifdef CUDA
-void cudaCtor(SimpleMaterialProperties* pCopy, unsigned num) {
+void cudaCtor(CellProperties* pCopy, unsigned num) {
 	pCopy->numCells = num;
 
 	// props
-	unsigned long long allocSize = sizeof(SimpleCellProperties)*num;
+	unsigned long long allocSize = sizeof(IndividualCellProperties)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->props, allocSize ));
 }
 
-void cudaCtor(struct SimpleMaterialProperties* pCopy, struct SimpleMaterialProperties* pOrig){
+void cudaCtor(struct CellProperties* pCopy, struct CellProperties* pOrig){
 	unsigned num = pOrig->numCells;
 	cudaCtor( pCopy, num);
 }
 #endif
 
-void dtor(struct SimpleMaterialProperties* ptr){
+void dtor(struct CellProperties* ptr){
     if( ptr->props != 0 ) {
         free(ptr->props);
         ptr->props = 0;
@@ -65,20 +65,20 @@ void dtor(struct SimpleMaterialProperties* ptr){
 }
 
 #ifdef CUDA
-void cudaDtor(SimpleMaterialProperties* ptr) {
+void cudaDtor(CellProperties* ptr) {
 	cudaFree( ptr->props );
 }
 #endif
 
-SimpleMaterialPropertiesHost::SimpleMaterialPropertiesHost(unsigned numCells) {
-     ptr = new SimpleMaterialProperties;
+CellPropertiesHost::CellPropertiesHost(unsigned numCells) {
+     ptr = new CellProperties;
      ctor( ptr, numCells );
      ptr_device = NULL;
      temp = NULL;
      cudaCopyMade = false;
 }
 
-SimpleMaterialPropertiesHost::~SimpleMaterialPropertiesHost() {
+CellPropertiesHost::~CellPropertiesHost() {
     if( ptr != 0 ) {
         dtor( ptr );
         delete ptr;
@@ -95,30 +95,30 @@ SimpleMaterialPropertiesHost::~SimpleMaterialPropertiesHost() {
 }
 
 
-void SimpleMaterialPropertiesHost::copyToGPU(void) {
+void CellPropertiesHost::copyToGPU(void) {
 #ifdef CUDA
 	cudaCopyMade = true;
-	temp = new SimpleMaterialProperties;
+	temp = new CellProperties;
 	temp->numCells = ptr->numCells;
 
 	unsigned num = ptr->numCells;
 
 	// allocate target struct
-	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( SimpleMaterialProperties) ));
+	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( CellProperties) ));
 
 	// allocate target dynamic memory
 	cudaCtor( temp, ptr);
 
-	unsigned long long allocSize = sizeof(SimpleCellProperties)*num;
+	unsigned long long allocSize = sizeof(IndividualCellProperties)*num;
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->props, ptr->props, allocSize, cudaMemcpyHostToDevice));
 
 	// copy data
-	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( SimpleMaterialProperties ), cudaMemcpyHostToDevice));
+	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( CellProperties ), cudaMemcpyHostToDevice));
 
 #endif
 }
 
-void copy(struct SimpleMaterialProperties* pCopy, struct SimpleMaterialProperties* pOrig) {
+void copy(struct CellProperties* pCopy, struct CellProperties* pOrig) {
 	unsigned num = pOrig->numCells;
     if( num <=0 ) { num = 1; }
 
@@ -132,39 +132,39 @@ void copy(struct SimpleMaterialProperties* pCopy, struct SimpleMaterialPropertie
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getNumCells(struct SimpleMaterialProperties* ptr ) {
+unsigned getNumCells(struct CellProperties* ptr ) {
     return ptr->numCells;
 }
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getNumMats(struct SimpleMaterialProperties* ptr, unsigned i ){
+unsigned getNumMats(struct CellProperties* ptr, unsigned i ){
     return ptr->props[i].numMats;
 }
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getDensity(struct SimpleMaterialProperties* ptr, unsigned cellNum, unsigned matNum ){
+gpuFloatType_t getDensity(struct CellProperties* ptr, unsigned cellNum, unsigned matNum ){
     return ptr->props[cellNum].density[matNum];
 }
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getMatID(struct SimpleMaterialProperties* ptr, unsigned cellNum, unsigned matNum ){
+gpuFloatType_t getMatID(struct CellProperties* ptr, unsigned cellNum, unsigned matNum ){
     return ptr->props[cellNum].matID[matNum];
 }
 
 #ifdef CUDA
-__global__ void kernelGetNumCells(SimpleMaterialProperties* mp, unsigned* results ) {
+__global__ void kernelGetNumCells(CellProperties* mp, unsigned* results ) {
      results[0] = getNumCells(mp);
 }
 #endif
 
 #ifdef CUDA
-__global__ void kernelSumMatDensity(SimpleMaterialProperties* mp, unsigned matIndex, gpuFloatType_t* results ) {
+__global__ void kernelSumMatDensity(CellProperties* mp, unsigned matIndex, gpuFloatType_t* results ) {
     gpuFloatType_t sum = 0.0f;
     for( unsigned cell=0; cell < getNumCells(mp); ++cell) {
          for( unsigned matNum=0; matNum < getNumMats(mp, cell); ++matNum ) {
@@ -181,12 +181,12 @@ __global__ void kernelSumMatDensity(SimpleMaterialProperties* mp, unsigned matIn
 }
 #endif
 
-void addDensityAndID(struct SimpleMaterialProperties* ptr, unsigned cellNum, gpuFloatType_t density, unsigned matID ) {
+void addDensityAndID(struct CellProperties* ptr, unsigned cellNum, gpuFloatType_t density, unsigned matID ) {
     if( density <= 0.0 ) return;
 
     unsigned matNum = ptr->props[cellNum].numMats;
     if( matNum > NMAX_MATERIALS ) {
-        fprintf(stderr, "addDensityAndID( SimpleMaterialProperties* ) -- cell has exceeded cell properties size.  %s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "addDensityAndID( CellProperties* ) -- cell has exceeded cell properties size.  %s %d\n", __FILE__, __LINE__);
         exit(1);
     }
     ptr->props[cellNum].density[matNum] = density;
@@ -197,7 +197,7 @@ void addDensityAndID(struct SimpleMaterialProperties* ptr, unsigned cellNum, gpu
 
 #ifndef CUDA
 #include "ReadLnk3dnt.hh"
-void SimpleMaterialPropertiesHost::loadFromLnk3dnt(const std::string& filename ) {
+void CellPropertiesHost::loadFromLnk3dnt(const std::string& filename ) {
     ReadLnk3dnt file( filename);
     file.ReadMatData( );
     unsigned numCells = file.getNumTotalCells();
@@ -225,7 +225,7 @@ void SimpleMaterialPropertiesHost::loadFromLnk3dnt(const std::string& filename )
 }
 #endif
 
-unsigned SimpleMaterialPropertiesHost::launchGetNumCells(void) const{
+unsigned CellPropertiesHost::launchGetNumCells(void) const{
 #ifdef CUDA
 	typedef unsigned type_t;
 
@@ -247,7 +247,7 @@ unsigned SimpleMaterialPropertiesHost::launchGetNumCells(void) const{
 #endif
 }
 
-unsigned SimpleMaterialPropertiesHost::launchSumMatDensity(unsigned matID) const{
+unsigned CellPropertiesHost::launchSumMatDensity(unsigned matID) const{
 #ifdef CUDA
 	typedef gpuFloatType_t type_t;
 
@@ -270,7 +270,7 @@ unsigned SimpleMaterialPropertiesHost::launchSumMatDensity(unsigned matID) const
 }
 
 
-gpuFloatType_t SimpleMaterialPropertiesHost::sumMatDensity( unsigned matIndex) const {
+gpuFloatType_t CellPropertiesHost::sumMatDensity( unsigned matIndex) const {
     gpuFloatType_t sum = 0.0f;
     for( unsigned cell=0; cell < getNumCells(); ++cell) {
          for( unsigned matNum=0; matNum < getNumMats(cell); ++matNum ) {
@@ -286,7 +286,7 @@ gpuFloatType_t SimpleMaterialPropertiesHost::sumMatDensity( unsigned matIndex) c
      return sum;
 }
 
-void SimpleMaterialPropertiesHost::write(std::ostream& outf, const SimpleCellProperties& cellProp) const {
+void CellPropertiesHost::write(std::ostream& outf, const IndividualCellProperties& cellProp) const {
     binaryIO::write(outf, cellProp.numMats );
     for( unsigned i=0; i< cellProp.numMats; ++i ) {
         binaryIO::write(outf, cellProp.matID[i] ) ;
@@ -296,7 +296,7 @@ void SimpleMaterialPropertiesHost::write(std::ostream& outf, const SimpleCellPro
     }
 }
 
-void SimpleMaterialPropertiesHost::read(std::istream& outf, SimpleCellProperties& cellProp) {
+void CellPropertiesHost::read(std::istream& outf, IndividualCellProperties& cellProp) {
     binaryIO::read(outf, cellProp.numMats );
     for( unsigned i=0; i< cellProp.numMats; ++i ) {
         binaryIO::read(outf, cellProp.matID[i] ) ;
@@ -306,14 +306,14 @@ void SimpleMaterialPropertiesHost::read(std::istream& outf, SimpleCellProperties
     }
 }
 
-void SimpleMaterialPropertiesHost::write(std::ostream& outf) const{
+void CellPropertiesHost::write(std::ostream& outf) const{
     binaryIO::write(outf, ptr->numCells );
     for( unsigned i=0; i< ptr->numCells; ++i ) {
         write( outf, ptr->props[i] );
     }
 }
 
-void SimpleMaterialPropertiesHost::read(std::istream& infile) {
+void CellPropertiesHost::read(std::istream& infile) {
 	unsigned num = 0;
     binaryIO::read(infile, num);
     dtor( ptr );
@@ -325,12 +325,12 @@ void SimpleMaterialPropertiesHost::read(std::istream& infile) {
 }
 
 
-void SimpleMaterialPropertiesHost::write( const std::string& filename ) const {
+void CellPropertiesHost::write( const std::string& filename ) const {
     std::ofstream outfile;
 
     outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
     if( ! outfile.is_open() ) {
-        fprintf(stderr, "SimpleMaterialPropertiesHost::write -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "CellPropertiesHost::write -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     assert( outfile.good() );
@@ -339,7 +339,7 @@ void SimpleMaterialPropertiesHost::write( const std::string& filename ) const {
     outfile.close();
 }
 
-void SimpleMaterialPropertiesHost::read( const std::string& filename ) {
+void CellPropertiesHost::read( const std::string& filename ) {
     std::ifstream infile;
     if( infile.is_open() ) {
         infile.close();
@@ -347,7 +347,7 @@ void SimpleMaterialPropertiesHost::read( const std::string& filename ) {
     infile.open( filename.c_str(), std::ios::binary | std::ios::in);
 
     if( ! infile.is_open() ) {
-        fprintf(stderr, "SimpleMaterialPropertiesHost::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "CellPropertiesHost::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     assert( infile.good() );

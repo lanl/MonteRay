@@ -7,7 +7,7 @@ SUITE( SimpleMaterial_tester ) {
     TEST( ctor ) {
         SimpleMaterialHost mat(1);
 
-        SimpleCrossSectionHost xs(4);
+        MonteRayCrossSectionHost xs(4);
         xs.setTotalXS(0, 0.0, 4.0 );
         xs.setTotalXS(1, 1.0, 3.0 );
         xs.setTotalXS(2, 2.0, 2.0 );
@@ -26,7 +26,7 @@ SUITE( SimpleMaterial_tester ) {
     {
         SimpleMaterialHost mat(1);
 
-        SimpleCrossSectionHost xs(4);
+        MonteRayCrossSectionHost xs(4);
         xs.setTotalXS(0, 0.0, 4.0 );
         xs.setTotalXS(1, 1.0, 3.0 );
         xs.setTotalXS(2, 2.0, 2.0 );

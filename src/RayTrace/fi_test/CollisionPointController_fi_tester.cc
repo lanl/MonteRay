@@ -7,11 +7,11 @@
 
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
-#include "cpuTimer.h"
+#include "MonteRay_timer.hh"
 #include "CollisionPointController.h"
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
-#include "SimpleMaterialProperties.h"
+#include "MonteRay_CellProperties.hh"
 #include "gpuTally.h"
 #include "CollisionPoints.h"
 
@@ -34,13 +34,13 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 
-	    	pMatProps = new SimpleMaterialPropertiesHost(2);
+	    	pMatProps = new CellPropertiesHost(2);
 
-	    	u234s = new SimpleCrossSectionHost(1);
-	    	u235s = new SimpleCrossSectionHost(1);
-	    	u238s = new SimpleCrossSectionHost(1);
-	    	h1s = new SimpleCrossSectionHost(1);
-	    	o16s = new SimpleCrossSectionHost(1);
+	    	u234s = new MonteRayCrossSectionHost(1);
+	    	u235s = new MonteRayCrossSectionHost(1);
+	    	u238s = new MonteRayCrossSectionHost(1);
+	    	h1s = new MonteRayCrossSectionHost(1);
+	    	o16s = new MonteRayCrossSectionHost(1);
 
 	        metal = new SimpleMaterialHost(3);
 	        water = new SimpleMaterialHost(2);
@@ -101,14 +101,14 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
 		GridBinsHost* pGrid;
 		SimpleMaterialListHost* pMatList;
-		SimpleMaterialPropertiesHost* pMatProps;
+		CellPropertiesHost* pMatProps;
 		gpuTallyHost* pTally;
 
-    	SimpleCrossSectionHost* u234s;
-        SimpleCrossSectionHost* u235s;
-        SimpleCrossSectionHost* u238s;
-        SimpleCrossSectionHost* h1s;
-        SimpleCrossSectionHost* o16s;
+    	MonteRayCrossSectionHost* u234s;
+        MonteRayCrossSectionHost* u235s;
+        MonteRayCrossSectionHost* u238s;
+        MonteRayCrossSectionHost* h1s;
+        MonteRayCrossSectionHost* o16s;
 
         SimpleMaterialHost* metal;
         SimpleMaterialHost* water;

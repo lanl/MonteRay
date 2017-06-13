@@ -6,9 +6,8 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
 
-#include "MonteRayBinaryIO.hh"
-#include "SimpleCrossSection.h"
-
+#include "MonteRay_binaryIO.hh"
+#include "MonteRayCrossSection.hh"
 
 namespace MonteRay{
 
@@ -168,7 +167,7 @@ unsigned HashLookupHost::getNBins(void) {
 #ifdef CUDA
 __device__ __host__
 #endif
-bool setHashMinMax(HashLookup* ptr, SimpleCrossSection* xs ) {
+bool setHashMinMax(HashLookup* ptr, MonteRayCrossSection* xs ) {
 	setID(xs, ptr->numIsotopes );
 
 	ptr->numIsotopes++;
@@ -197,7 +196,7 @@ bool setHashMinMax(HashLookup* ptr, SimpleCrossSection* xs ) {
 #ifdef CUDA
 __device__ __host__
 #endif
-void setHashBinBounds(HashLookup* ptr, SimpleCrossSection* xs, unsigned j ) {
+void setHashBinBounds(HashLookup* ptr, MonteRayCrossSection* xs, unsigned j ) {
 	for( unsigned i = 0; i < ptr->N; ++i ){
 		unsigned index = getBinBoundIndex(ptr, j, i);
 		gpuFloatType_t hashEnergy = std::exp( ptr->eMin + i*ptr->delta);
@@ -228,11 +227,11 @@ unsigned getBinBoundIndex(HashLookup* ptr, unsigned isotope, unsigned index ){
 }
 
 
-void HashLookupHost::addIsotope( SimpleCrossSectionHost* xs ) {
+void HashLookupHost::addIsotope( MonteRayCrossSectionHost* xs ) {
 	addIsotope( xs->getXSPtr() );
 }
 
-void HashLookupHost::addIsotope( SimpleCrossSection* xs ) {
+void HashLookupHost::addIsotope( MonteRayCrossSection* xs ) {
 	xsList.push_back(xs);
 	if( xs->id < 0 ) {
 		bool err = MonteRay::setHashMinMax(ptr, xs );

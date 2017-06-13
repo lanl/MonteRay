@@ -1,4 +1,7 @@
-file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
+SET(CUDA_SEPARABLE_COMPILATION ON)
+#file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
+#cuda_add_library(RayTrace SHARED ${CUDA_TEST_SRCS} ${AllCudaFiles} )
+
 
 #FIND_PACKAGE(CUDA REQUIRED)
 
@@ -18,6 +21,7 @@ include( template_select )
 list( APPEND ${UnitName}_packages Utilities )
 
 set( ToolkitLibs )
+set( ToolkitLibs Utilities cuda rt)
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )
@@ -27,3 +31,4 @@ endif()
 
 #configure_file(gpuGlobal.h.in gpuGlobal.h @ONLY)
 #include_directories(${CMAKE_CURRENT_BINARY_DIR})
+

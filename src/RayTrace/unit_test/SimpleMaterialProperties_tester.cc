@@ -2,12 +2,12 @@
 
 #include <cmath>
 
-#include "SimpleMaterialProperties.h"
+#include "MonteRay_CellProperties.hh"
 #include "genericGPU_test_helper.hh"
 
-SUITE( SimpleMaterialProperties_tester ) {
-	TEST( SimpleMaterialProperties_read_lnk3dnt ) {
-		SimpleMaterialPropertiesHost mp(2);
+SUITE( CellProperties_tester ) {
+	TEST( CellProperties_read_lnk3dnt ) {
+		CellPropertiesHost mp(2);
 		mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
 
 		CHECK_EQUAL( 100*100*100, mp.getNumCells());
@@ -19,9 +19,9 @@ SUITE( SimpleMaterialProperties_tester ) {
 		CHECK_CLOSE( 1.55890E+05, mass, 1);
 	}
 
-	TEST_FIXTURE(GenericGPUTestHelper, SimpleMaterialProperties_getNumCells_on_gpu)
+	TEST_FIXTURE(GenericGPUTestHelper, CellProperties_getNumCells_on_gpu)
 	{
-	    SimpleMaterialPropertiesHost mp(2);
+	    CellPropertiesHost mp(2);
 	    mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
 	    mp.copyToGPU();
 
@@ -32,9 +32,9 @@ SUITE( SimpleMaterialProperties_tester ) {
 		CHECK_CLOSE( 100*100*100, numCells, 1e-1);
 	}
 
-	TEST_FIXTURE(GenericGPUTestHelper, SimpleMaterialProperties_sum_on_gpu)
+	TEST_FIXTURE(GenericGPUTestHelper, CellProperties_sum_on_gpu)
 	{
-	    SimpleMaterialPropertiesHost mp(2);
+	    CellPropertiesHost mp(2);
 	    mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
 	    mp.copyToGPU();
 

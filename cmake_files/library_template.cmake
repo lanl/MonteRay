@@ -49,16 +49,16 @@ if( NSrcs GREATER 0 )
     # Set any flags since this will be placed in a dynamic library
 #    set( CMAKE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} ${CMAKE_CXX_FLAGS} -g -pg" )  #gprof
     set( CMAKE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}" )
-    cuda_add_library( ${libname} ${${libname}_srcs} ${${libname}_headers} )
-    install( TARGETS ${libname} EXPORT ${ExportName} DESTINATION ${library_install_prefix} )
+    #cuda_add_library( ${libname} ${${libname}_srcs} ${${libname}_headers} )
+    #install( TARGETS ${libname} EXPORT ${ExportName} DESTINATION ${library_install_prefix} )
     # Add this library to the toolkit's main library (libmcatk.so)
     # If this is a rebuild, the name may already be registered, so check first
-    string( REGEX MATCH "${libname}" alreadyKnown "${Toolkit_libs}" )
-    if( NOT alreadyKnown AND NOT Excluding_${UnitName} )
-        set( Toolkit_libs ${Toolkit_libs} ${libname} CACHE INTERNAL "" )
-    endif()
+    #string( REGEX MATCH "${libname}" alreadyKnown "${Toolkit_libs}" )
+    #if( NOT alreadyKnown AND NOT Excluding_${UnitName} )
+    #    set( Toolkit_libs ${Toolkit_libs} ${libname} CACHE INTERNAL "" )
+    #endif()
     
-    set_property( TARGET ${libname} APPEND PROPERTY LABELS ${SubProjectName} )
+    #set_property( TARGET ${libname} APPEND PROPERTY LABELS ${SubProjectName} )
 
 else()
     unset( libname )

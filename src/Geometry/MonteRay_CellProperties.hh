@@ -1,5 +1,5 @@
-#ifndef SIMPLEMATERIALPROPERTIES_HH_
-#define SIMPLEMATERIALPROPERTIES_HH_
+#ifndef MONTERAY_CELLPROPERTIES_HH_
+#define MONTERAY_CELLPROPERTIES_HH_
 
 #include <ostream>
 #include <istream>
@@ -11,65 +11,65 @@ namespace MonteRay{
 
 #define NMAX_MATERIALS 3
 
-struct SimpleCellProperties {
+struct IndividualCellProperties {
     unsigned numMats;
     gpuFloatType_t density[NMAX_MATERIALS];
     unsigned matID[NMAX_MATERIALS];
 };
 
-struct SimpleMaterialProperties {
+struct CellProperties {
     unsigned numCells;
-    struct SimpleCellProperties* props;
+    struct IndividualCellProperties* props;
 };
 
-void ctor(SimpleMaterialProperties*, unsigned num );
-void dtor(SimpleMaterialProperties* );
-void copy(struct SimpleMaterialProperties* pCopy, struct SimpleMaterialProperties* pOrig);
-void copy(SimpleCellProperties& theCopy, const SimpleCellProperties& theOrig);
-void copy(SimpleCellProperties* pCopy, const SimpleCellProperties* pOrig);
+void ctor(CellProperties*, unsigned num );
+void dtor(CellProperties* );
+void copy(struct CellProperties* pCopy, struct CellProperties* pOrig);
+void copy(IndividualCellProperties& theCopy, const IndividualCellProperties& theOrig);
+void copy(IndividualCellProperties* pCopy, const IndividualCellProperties* pOrig);
 
 
 #ifdef CUDA
-void cudaCtor(struct SimpleMaterialProperties*,struct SimpleMaterialProperties*);
-void cudaDtor(struct SimpleMaterialProperties*);
+void cudaCtor(struct CellProperties*,struct CellProperties*);
+void cudaDtor(struct CellProperties*);
 #endif
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getNumCells(struct SimpleMaterialProperties* ptr );
+unsigned getNumCells(struct CellProperties* ptr );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getNumMats(struct SimpleMaterialProperties* ptr, unsigned i );
+unsigned getNumMats(struct CellProperties* ptr, unsigned i );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getDensity(struct SimpleMaterialProperties* ptr, unsigned cellNum, unsigned matNum );
+gpuFloatType_t getDensity(struct CellProperties* ptr, unsigned cellNum, unsigned matNum );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getMatID(struct SimpleMaterialProperties* ptr, unsigned cellNum, unsigned matNum );
+gpuFloatType_t getMatID(struct CellProperties* ptr, unsigned cellNum, unsigned matNum );
 
 #ifdef CUDA
-__global__ void kernelGetNumCells(SimpleMaterialProperties* mp, unsigned* results );
+__global__ void kernelGetNumCells(CellProperties* mp, unsigned* results );
 #endif
 
 #ifdef CUDA
-__global__ void kernelSumMatDensity(SimpleMaterialProperties* mp, unsigned matIndex, gpuFloatType_t* results );
+__global__ void kernelSumMatDensity(CellProperties* mp, unsigned matIndex, gpuFloatType_t* results );
 #endif
 
-void addDensityAndID(struct SimpleMaterialProperties* ptr, unsigned cellNum, gpuFloatType_t density, unsigned matID );
+void addDensityAndID(struct CellProperties* ptr, unsigned cellNum, gpuFloatType_t density, unsigned matID );
 
-class SimpleMaterialPropertiesHost {
+class CellPropertiesHost {
 public:
 
-    SimpleMaterialPropertiesHost(unsigned numCells);
+    CellPropertiesHost(unsigned numCells);
 
-    ~SimpleMaterialPropertiesHost();
+    ~CellPropertiesHost();
 
     void copyToGPU(void);
 
@@ -128,7 +128,7 @@ public:
 
     gpuFloatType_t sumMatDensity( unsigned matIndex) const;
 
-    struct SimpleMaterialProperties* getPtr(void) { return ptr; }
+    struct CellProperties* getPtr(void) { return ptr; }
 
     void addDensityAndID(unsigned cellNum, gpuFloatType_t density, unsigned matID ) {
     	MonteRay::addDensityAndID(ptr, cellNum, density, matID );
@@ -140,19 +140,19 @@ public:
     void write( const std::string& filename ) const;
     void read( const std::string& filename );
 
-    void write(std::ostream& outfile, const SimpleCellProperties& cellProp) const;
-    void read(std::istream& outfile, SimpleCellProperties& cellProp);
+    void write(std::ostream& outfile, const IndividualCellProperties& cellProp) const;
+    void read(std::istream& outfile, IndividualCellProperties& cellProp);
 
 private:
-    SimpleMaterialProperties* ptr;
-    SimpleMaterialProperties* temp;
+    CellProperties* ptr;
+    CellProperties* temp;
     bool cudaCopyMade;
 
 public:
-    SimpleMaterialProperties* ptr_device;
+    CellProperties* ptr_device;
 
 };
 
 }
 
-#endif /* SIMPLEMATERIALPROPERTIES_HH_ */
+#endif /* MONTERAY_CELLPROPERTIES_HH_ */

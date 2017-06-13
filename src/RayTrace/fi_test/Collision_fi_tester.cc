@@ -8,7 +8,7 @@
 #include "GPUUtilityFunctions.hh"
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
-#include "cpuTimer.h"
+#include "MonteRay_timer.hh"
 
 #if( true )
 SUITE( Collision_fi_tester ) {
@@ -23,7 +23,7 @@ SUITE( Collision_fi_tester ) {
     	FIGenericGPUTestHelper helper(points->size());
     	points->copyToGPU();
 
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(1);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
     	xs->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin");
     	xs->copyToGPU();
 
@@ -47,11 +47,11 @@ SUITE( Collision_fi_tester ) {
     	FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
 
-    	SimpleCrossSectionHost u234s(1);
-        SimpleCrossSectionHost u235s(1);
-        SimpleCrossSectionHost u238s(1);
-        SimpleCrossSectionHost h1s(1);
-        SimpleCrossSectionHost o16s(1);
+    	MonteRayCrossSectionHost u234s(1);
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost u238s(1);
+        MonteRayCrossSectionHost h1s(1);
+        MonteRayCrossSectionHost o16s(1);
 
         u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
         u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
@@ -99,15 +99,15 @@ SUITE( Collision_fi_tester ) {
         FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
 
-        SimpleMaterialPropertiesHost mp(2);
+        CellPropertiesHost mp(2);
         mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
         mp.copyToGPU();
 
-    	SimpleCrossSectionHost u234s(1);
-        SimpleCrossSectionHost u235s(1);
-        SimpleCrossSectionHost u238s(1);
-        SimpleCrossSectionHost h1s(1);
-        SimpleCrossSectionHost o16s(1);
+    	MonteRayCrossSectionHost u234s(1);
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost u238s(1);
+        MonteRayCrossSectionHost h1s(1);
+        MonteRayCrossSectionHost o16s(1);
 
         u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
         u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
@@ -155,7 +155,7 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST( sum_crossSection_by_startingCell )  {
-        SimpleMaterialPropertiesHost mp(2);
+        CellPropertiesHost mp(2);
         mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
         FIGenericGPUTestHelper helper( mp.getNumCells() );
         mp.copyToGPU();
@@ -164,11 +164,11 @@ SUITE( Collision_fi_tester ) {
     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin"  );
     	points.copyToGPU();
 
-    	SimpleCrossSectionHost u234s(1);
-        SimpleCrossSectionHost u235s(1);
-        SimpleCrossSectionHost u238s(1);
-        SimpleCrossSectionHost h1s(1);
-        SimpleCrossSectionHost o16s(1);
+    	MonteRayCrossSectionHost u234s(1);
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost u238s(1);
+        MonteRayCrossSectionHost h1s(1);
+        MonteRayCrossSectionHost o16s(1);
 
         u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
         u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
@@ -235,15 +235,15 @@ SUITE( Collision_fi_tester ) {
     	FIGenericGPUTestHelper helper( 0 );
     	helper.copyGridtoGPU(grid_host);
 
-        SimpleMaterialPropertiesHost mp(2);
+        CellPropertiesHost mp(2);
         mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
         mp.copyToGPU();
 
-    	SimpleCrossSectionHost u234s(1);
-        SimpleCrossSectionHost u235s(1);
-        SimpleCrossSectionHost u238s(1);
-        SimpleCrossSectionHost h1s(1);
-        SimpleCrossSectionHost o16s(1);
+    	MonteRayCrossSectionHost u234s(1);
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost u238s(1);
+        MonteRayCrossSectionHost h1s(1);
+        MonteRayCrossSectionHost o16s(1);
 
         u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
         u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
@@ -318,15 +318,15 @@ SUITE( Collision_fi_looping_tester ) {
     	gpuTallyHost tally( grid.getNumCells() );
     	tally.copyToGPU();
 
-        SimpleMaterialPropertiesHost mp(2);
+        CellPropertiesHost mp(2);
         mp.read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
         mp.copyToGPU();
 
-    	SimpleCrossSectionHost u234s(1);
-        SimpleCrossSectionHost u235s(1);
-        SimpleCrossSectionHost u238s(1);
-        SimpleCrossSectionHost h1s(1);
-        SimpleCrossSectionHost o16s(1);
+    	MonteRayCrossSectionHost u234s(1);
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost u238s(1);
+        MonteRayCrossSectionHost h1s(1);
+        MonteRayCrossSectionHost o16s(1);
 
         u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
         u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );

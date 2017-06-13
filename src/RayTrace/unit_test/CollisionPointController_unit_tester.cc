@@ -7,11 +7,11 @@
 #include "GPUUtilityFunctions.hh"
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
-#include "cpuTimer.h"
+#include "MonteRay_timer.hh"
 #include "CollisionPointController.h"
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
-#include "SimpleMaterialProperties.h"
+#include "MonteRay_CellProperties.hh"
 #include "gpuTally.h"
 #include "CollisionPoints.h"
 
@@ -35,10 +35,10 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 
-	    	pMatProps = new SimpleMaterialPropertiesHost(pGrid->getNumCells());
+	    	pMatProps = new CellPropertiesHost(pGrid->getNumCells());
 
 	    	// xs from 0.0 to 100.0 mev with total cross-section of 1.0
-	    	xs = new SimpleCrossSectionHost(2);
+	    	xs = new MonteRayCrossSectionHost(2);
 
 	        metal = new SimpleMaterialHost(1);
 
@@ -85,10 +85,10 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
 		GridBinsHost* pGrid;
 		SimpleMaterialListHost* pMatList;
-		SimpleMaterialPropertiesHost* pMatProps;
+		CellPropertiesHost* pMatProps;
 		gpuTallyHost* pTally;
 
-    	SimpleCrossSectionHost* xs;
+    	MonteRayCrossSectionHost* xs;
 
         SimpleMaterialHost* metal;
 	};

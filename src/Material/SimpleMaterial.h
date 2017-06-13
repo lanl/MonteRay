@@ -2,7 +2,7 @@
 #define SIMPLEMATERIAL_HH_
 
 #include "MonteRayDefinitions.hh"
-#include "SimpleCrossSection.h"
+#include "MonteRayCrossSection.hh"
 
 namespace MonteRay{
 
@@ -12,7 +12,7 @@ struct SimpleMaterial {
     gpuFloatType_t AtomicWeight;
 
     gpuFloatType_t* fraction;
-    struct SimpleCrossSection** xs;
+    struct MonteRayCrossSection** xs;
 };
 
 void ctor(struct SimpleMaterial*, unsigned numIsotopes);
@@ -86,7 +86,7 @@ int getID(struct SimpleMaterial* ptr, unsigned index );
 #ifdef CUDA
 __device__ __host__
 #endif
-void cudaAdd(struct SimpleMaterial* ptr, struct SimpleCrossSection* xs, unsigned index );
+void cudaAdd(struct SimpleMaterial* ptr, struct MonteRayCrossSection* xs, unsigned index );
 
 class SimpleMaterialHost {
 public:
@@ -118,9 +118,9 @@ public:
          return MonteRay::getTotalXS(pMat, pHash, HashBin, E, density);
      }
 
-    void add(unsigned index, SimpleCrossSectionHost& xs, gpuFloatType_t frac );
+    void add(unsigned index, MonteRayCrossSectionHost& xs, gpuFloatType_t frac );
 #ifndef CUDA
-    void add(unsigned index, struct SimpleCrossSection* xs, gpuFloatType_t frac );
+    void add(unsigned index, struct MonteRayCrossSection* xs, gpuFloatType_t frac );
 #endif
 
     void setID( unsigned index, unsigned id);
@@ -145,7 +145,7 @@ private:
 
 public:
     SimpleMaterial* ptr_device;
-    SimpleCrossSection** isotope_device_ptr_list;
+    MonteRayCrossSection** isotope_device_ptr_list;
 
 };
 

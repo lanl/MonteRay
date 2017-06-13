@@ -7,8 +7,8 @@
 
 namespace MonteRay{
 
-class SimpleCrossSectionHost;
-class SimpleCrossSection;
+class MonteRayCrossSectionHost;
+class MonteRayCrossSection;
 
 struct HashLookup {
 	unsigned maxNumIsotopes;
@@ -42,12 +42,12 @@ unsigned getNumIsotopes(HashLookup* ptr);
 #ifdef CUDA
 __device__ __host__
 #endif
-bool setHashMinMax(HashLookup* ptr, SimpleCrossSection* xs );
+bool setHashMinMax(HashLookup* ptr, MonteRayCrossSection* xs );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-void setHashBinBounds(HashLookup* ptr, SimpleCrossSection* xs, unsigned j );
+void setHashBinBounds(HashLookup* ptr, MonteRayCrossSection* xs, unsigned j );
 
 #ifdef CUDA
 __device__ __host__
@@ -128,8 +128,8 @@ public:
     	return MonteRay::getHashBin( ptr, energy );
     }
 
-    void addIsotope( SimpleCrossSectionHost* xs );
-    void addIsotope( SimpleCrossSection* xs );
+    void addIsotope( MonteRayCrossSectionHost* xs );
+    void addIsotope( MonteRayCrossSection* xs );
 
     unsigned getNBins(void);
 
@@ -174,7 +174,7 @@ private:
     MonteRay::HashLookup* temp;
     bool cudaCopyMade;
 
-    std::vector<MonteRay::SimpleCrossSection*> xsList;
+    std::vector<MonteRay::MonteRayCrossSection*> xsList;
 
 public:
     MonteRay::HashLookup* ptr_device;

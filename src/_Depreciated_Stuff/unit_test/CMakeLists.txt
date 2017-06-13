@@ -1,8 +1,11 @@
 include( template_select )
+SET(CUDA_SEPARABLE_COMPILATION ON)
+file(GLOB CUDA_TEST_SRCS "*.cu")
+cuda_add_library(_Depreciated_Stuff_TestHelper SHARED ${CUDA_TEST_SRCS} ${AllCudaFiles} )
 
 list( APPEND ${UnitName}_packages  )
 
-set( ToolkitLibs _Depreciated_Stuff Utilities OutputControls)
+set( ToolkitLibs _Depreciated_Stuff_TestHelper Utilities OutputControls cuda rt)
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

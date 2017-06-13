@@ -7,7 +7,7 @@ SUITE( SimpleMaterialList_tester ) {
     TEST( ctor ) {
         SimpleMaterialHost mat(1);
 
-        SimpleCrossSectionHost xs(4);
+        MonteRayCrossSectionHost xs(4);
         xs.setTotalXS(0, 0.1, 4.0 );
         xs.setTotalXS(1, 1.0, 3.0 );
         xs.setTotalXS(2, 2.0, 2.0 );
@@ -23,7 +23,7 @@ SUITE( SimpleMaterialList_tester ) {
     }
 
     TEST( load_single_isotope_material_from_file ) {
-    	SimpleCrossSectionHost u235s(1);
+    	MonteRayCrossSectionHost u235s(1);
     	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
 
     	SimpleMaterialHost mat(1);
@@ -39,10 +39,10 @@ SUITE( SimpleMaterialList_tester ) {
     	CHECK_EQUAL(0, u235s.getID() );
     }
     TEST( load_two_single_isotope_materials_from_file ) {
-    	SimpleCrossSectionHost u235s(1);
+    	MonteRayCrossSectionHost u235s(1);
     	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
 
-    	SimpleCrossSectionHost h1s(1);
+    	MonteRayCrossSectionHost h1s(1);
     	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
 
     	SimpleMaterialHost mat1(1);
@@ -64,8 +64,8 @@ SUITE( SimpleMaterialList_tester ) {
     	CHECK_EQUAL(0, u235s.getID() );
     }
     TEST( load_single_material_from_file ) {
-    	SimpleCrossSectionHost u235s(1);
-    	SimpleCrossSectionHost h1s(1);
+    	MonteRayCrossSectionHost u235s(1);
+    	MonteRayCrossSectionHost h1s(1);
     	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
     	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
 
@@ -85,8 +85,8 @@ SUITE( SimpleMaterialList_tester ) {
     }
 
     TEST( load_two_materials_from_file ) {
-    	SimpleCrossSectionHost u235s(1);
-    	SimpleCrossSectionHost h1s(1);
+    	MonteRayCrossSectionHost u235s(1);
+    	MonteRayCrossSectionHost h1s(1);
     	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
     	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
 
@@ -111,9 +111,9 @@ SUITE( SimpleMaterialList_tester ) {
     	CHECK_EQUAL(1, h1s.getID() );
     }
     TEST( load_two_materials_from_file2 ) {
-    	SimpleCrossSectionHost u235s(1);
-    	SimpleCrossSectionHost h1s(1);
-    	SimpleCrossSectionHost o16s(1);
+    	MonteRayCrossSectionHost u235s(1);
+    	MonteRayCrossSectionHost h1s(1);
+    	MonteRayCrossSectionHost o16s(1);
     	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
     	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
     	o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
@@ -140,8 +140,8 @@ SUITE( SimpleMaterialList_tester ) {
 
     TEST_FIXTURE(GenericGPUTestHelper, sent_to_gpu_getTotalXS )
     {
-        SimpleCrossSectionHost u235s(1);
-        SimpleCrossSectionHost h1s(1);
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost h1s(1);
         u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
         h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
 
@@ -172,7 +172,7 @@ SUITE( SimpleMaterialList_tester ) {
     	CHECK_CLOSE( 0.0257431f, result, 1e-7 );
     }
     TEST( get_hash_grom_materialList ){
-    	SimpleCrossSectionHost* xs = new SimpleCrossSectionHost(10);
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 1.0 );
     	xs->setTotalXS(1, 1.25, 4.0 );
     	xs->setTotalXS(2, 2.0, 3.0 );

@@ -1,12 +1,12 @@
+SET(CUDA_SEPARABLE_COMPILATION ON)
 file(GLOB CUDA_TEST_SRCS "*.cu")
-cuda_add_library(RayTraceUnitTestHelper STATIC ${CUDA_TEST_SRCS} ${CUDA_SRCS})
-#cuda_add_library(RayTraceUnitTestHelper STATIC ${CUDA_TEST_SRCS})
+cuda_add_library(RayTraceUnitTestHelper SHARED ${CUDA_TEST_SRCS} ${AllCudaFiles} )
 
 include( template_select )
 
 list( APPEND ${UnitName}_packages CUDA )
 
-set( ToolkitLibs RayTraceUnitTestHelper GPU_Utilities Utilities cuda rt )
+set( ToolkitLibs RayTraceUnitTestHelper cuda rt )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

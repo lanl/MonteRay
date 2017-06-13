@@ -1,5 +1,5 @@
-#ifndef SIMPLECROSSSECTION_HH_
-#define SIMPLECROSSSECTION_HH_
+#ifndef MONTERAYCROSSSECTION_HH_
+#define MONTERAYCROSSSECTION_HH_
 
 #include <iostream>
 #include <vector>
@@ -10,7 +10,7 @@
 
 namespace MonteRay{
 
-struct SimpleCrossSection {
+struct MonteRayCrossSection {
 	int id;
     unsigned numPoints;
     gpuFloatType_t AWR;
@@ -19,91 +19,91 @@ struct SimpleCrossSection {
 
 };
 
-void ctor(struct SimpleCrossSection*, unsigned num);
-void dtor(struct SimpleCrossSection*);
-void copy(struct SimpleCrossSection* pCopy, struct SimpleCrossSection* pOrig );
+void ctor(struct MonteRayCrossSection*, unsigned num);
+void dtor(struct MonteRayCrossSection*);
+void copy(struct MonteRayCrossSection* pCopy, struct MonteRayCrossSection* pOrig );
 
 #ifdef CUDA
-void cudaDtor(SimpleCrossSection*);
-void cudaCtor(SimpleCrossSection*, unsigned num);
-void cudaCtor(SimpleCrossSection*, SimpleCrossSection*);
+void cudaDtor(MonteRayCrossSection*);
+void cudaCtor(MonteRayCrossSection*, unsigned num);
+void cudaCtor(MonteRayCrossSection*, MonteRayCrossSection*);
 #endif
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getEnergy(struct SimpleCrossSection* pXS, unsigned i );
+gpuFloatType_t getEnergy(struct MonteRayCrossSection* pXS, unsigned i );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXSByIndex(struct SimpleCrossSection* pXS, unsigned i );
+gpuFloatType_t getTotalXSByIndex(struct MonteRayCrossSection* pXS, unsigned i );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXS(struct SimpleCrossSection* pXS, gpuFloatType_t E );
+gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, gpuFloatType_t E );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXS(struct SimpleCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E );
+gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getTotalXSByIndex(struct SimpleCrossSection* pXS, unsigned i, gpuFloatType_t E );
+gpuFloatType_t getTotalXSByIndex(struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndex(struct SimpleCrossSection* pXS, gpuFloatType_t E );
+unsigned getIndex(struct MonteRayCrossSection* pXS, gpuFloatType_t E );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndex(struct SimpleCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E );
+unsigned getIndex(struct MonteRayCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E );
 
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndexBinary(struct SimpleCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value );
+unsigned getIndexBinary(struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-unsigned getIndexLinear(struct SimpleCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value );
+unsigned getIndexLinear(struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value );
 
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuFloatType_t getAWR(struct SimpleCrossSection* pXS);
+gpuFloatType_t getAWR(struct MonteRayCrossSection* pXS);
 
 #ifdef CUDA
 __device__ __host__
 #endif
-int getID(struct SimpleCrossSection* pXS);
+int getID(struct MonteRayCrossSection* pXS);
 
 #ifdef CUDA
 __device__ __host__
 #endif
-void setID(struct SimpleCrossSection* pXS, unsigned i);
+void setID(struct MonteRayCrossSection* pXS, unsigned i);
 
 #ifdef CUDA
-__global__ void kernelGetTotalXS(struct SimpleCrossSection* pXS, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* result);
+__global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* result);
 #endif
 
 #ifdef CUDA
-__global__ void kernelGetTotalXS(struct SimpleCrossSection* pXS, gpuFloatType_t E, gpuFloatType_t* result);
+__global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS, gpuFloatType_t E, gpuFloatType_t* result);
 #endif
 
 class ContinuousNeutron;
 
-class SimpleCrossSectionHost {
+class MonteRayCrossSectionHost {
 public:
-    SimpleCrossSectionHost(unsigned num);
-    ~SimpleCrossSectionHost();
+    MonteRayCrossSectionHost(unsigned num);
+    ~MonteRayCrossSectionHost();
 
     void copyToGPU(void);
 
@@ -125,7 +125,7 @@ public:
 
     void setTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t value) {
     	if( i >= size() ) {
-    		throw std::runtime_error( "Error: SimpleCrossSectionHost::setTotalXS, invalid index");
+    		throw std::runtime_error( "Error: MonteRayCrossSectionHost::setTotalXS, invalid index");
     	}
         xs->energies[i] = E;
         xs->totalXS[i] = value;
@@ -140,15 +140,15 @@ public:
     void write( const std::string& filename );
     void read( const std::string& filename );
 
-    struct SimpleCrossSection* getXSPtr(void) { return xs;}
-    struct SimpleCrossSection& getXSRef(void) { return *xs;}
+    struct MonteRayCrossSection* getXSPtr(void) { return xs;}
+    struct MonteRayCrossSection& getXSRef(void) { return *xs;}
 
 
 #if !defined( CUDA )
     void load( const ContinuousNeutron& cn );
 #endif
 
-    void load(struct SimpleCrossSection* ptrXS );
+    void load(struct MonteRayCrossSection* ptrXS );
 
     template<typename T>
     void load(const T& CrossSection ) {
@@ -169,19 +169,19 @@ public:
     }
 
 private:
-    struct SimpleCrossSection* xs;
-    SimpleCrossSection* temp;
+    struct MonteRayCrossSection* xs;
+    MonteRayCrossSection* temp;
     bool cudaCopyMade;
 
 public:
-    SimpleCrossSection* xs_device;
+    MonteRayCrossSection* xs_device;
 
 };
 
-gpuFloatType_t launchGetTotalXS( SimpleCrossSectionHost* pXS, gpuFloatType_t energy);
+gpuFloatType_t launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy);
 
 
 }
 
 
-#endif /* SIMPLECROSSSECTION_HH_ */
+#endif /* MONTERAYCROSSSECTION_HH_ */

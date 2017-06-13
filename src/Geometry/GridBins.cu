@@ -7,7 +7,7 @@
 
 #include "GPUErrorCheck.hh"
 #include "MonteRayDefinitions.hh"
-#include "MonteRayBinaryIO.hh"
+#include "MonteRay_binaryIO.hh"
 
 #ifndef CUDA
 #include "ReadLnk3dnt.hh"
