@@ -166,12 +166,13 @@ endif()
 ######################################################################
 #  TESTING
 
-# Create a link in each test directory to the lnk3dnt files on that system
-#add_custom_command( 
-#    TARGET ${appName} POST_BUILD
-#    COMMAND ${CMAKE_COMMAND} -E create_symlink ${lnk3dnt_location} lnk3dnt
-#    DEPENDS ${lnk3dnt_location}
-#)
+#Create a link in each test directory to the lnk3dnt files on that system
+add_custom_command( 
+#    MESSAGE(STATUS "Creating link to lnk3dnt directory ${lnk3dnt_location}")
+    TARGET ${appName} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${lnk3dnt_location} lnk3dnt
+    DEPENDS ${lnk3dnt_location}
+)
 
 if( DEFINED mcatk_SOURCE_DIR )
     # Create a link in each test directory to the sample nuclear data

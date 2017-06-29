@@ -97,3 +97,38 @@ else()
 
 endif()
 
+#  _       _    _____     _       _   
+# | |_ __ | | _|___ /  __| |_ __ | |_ 
+# | | '_ \| |/ / |_ \ / _` | '_ \| __|
+# | | | | |   < ___) | (_| | | | | |_ 
+# |_|_| |_|_|\_\____/ \__,_|_| |_|\__|
+# 
+# ====================================================================
+find_path( lnk3dnt_location 
+           NAMES godiva.lnk3dnt
+           PATHS /local
+                 /home/xshares/PROJECTS
+                 /home/xshares
+                 /usr/projects 
+                 /usr/gapps 
+                 ENV MCATK_LNK3DNT
+           PATH_SUFFIXES mcatk/lnk3dnt
+           DOC "Location of numerous geometry link files." 
+           NO_DEFAULT_PATH )
+
+if( NOT EXISTS ${lnk3dnt_location} )
+  # try LNK3DNTDIR environment variable
+  find_path( lnk3dnt_location 
+           NAMES godiva.lnk3dnt
+           PATHS $ENV{LNK3DNTDIR}
+           DOC "Location of numerous geometry link files." 
+           NO_DEFAULT_PATH )
+endif()
+
+if( lnk3dnt_location )
+    message( "Found link files at [ ${lnk3dnt_location} ]" )
+#    add_definitions( -DMCATK_LINK_DIR="${lnk3dnt_location}" )
+else()
+    message( FATAL_ERROR "Could not locate link files *** ${lnk3dnt_location}" )
+endif()
+

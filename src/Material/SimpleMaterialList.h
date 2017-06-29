@@ -1,6 +1,8 @@
 #ifndef SIMPLEMATERIALLIST_HH_
 #define SIMPLEMATERIALLIST_HH_
 
+#include <sstream>
+
 #include "MonteRayDefinitions.hh"
 
 #include "SimpleMaterial.h"
@@ -82,7 +84,16 @@ public:
     gpuFloatType_t launchGetTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const;
 
     unsigned materialIDtoIndex(unsigned id) const {
-        return MonteRay::materialIDtoIndex( pMatList, id);
+        for( unsigned i=0; i < getNumberMaterials(); ++i ){
+            if( id == getMaterialID(i) ) {
+                return i;
+            }
+        }
+ 		 std::stringstream msg;
+   		 msg << "Can't find index of material ID!\n";
+   		 msg << "Material ID = " << id << "\n";
+   		 msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "SimpleMaterialList::materialIDtoIndex" << "\n\n";
+   		 throw std::runtime_error( msg.str() );
     }
 
     void add( unsigned i, SimpleMaterialHost& mat, unsigned id);

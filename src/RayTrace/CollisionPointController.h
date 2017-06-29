@@ -8,7 +8,7 @@ namespace MonteRay {
 
 class GridBinsHost;
 class SimpleMaterialListHost;
-class CellPropertiesHost;
+class MonteRay_MaterialProperties;
 class gpuTallyHost;
 class CollisionPointsHost;
 
@@ -20,7 +20,7 @@ public:
 			                 unsigned nThreads,
 			                 GridBinsHost*,
 			                 SimpleMaterialListHost*,
-			                 CellPropertiesHost*,
+			                 MonteRay_MaterialProperties*,
 			                 gpuTallyHost* );
 
 	virtual ~CollisionPointController();
@@ -61,7 +61,7 @@ private:
 	unsigned nThreads;
 	GridBinsHost* pGrid;
 	SimpleMaterialListHost* pMatList;
-	CellPropertiesHost* pMatProps;
+	MonteRay_MaterialProperties* pMatProps;
 	gpuTallyHost* pTally;
 
 	CollisionPointsHost* currentBank;

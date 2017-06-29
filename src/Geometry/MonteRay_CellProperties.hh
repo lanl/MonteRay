@@ -1,158 +1,104 @@
 #ifndef MONTERAY_CELLPROPERTIES_HH_
 #define MONTERAY_CELLPROPERTIES_HH_
 
-#include <ostream>
-#include <istream>
-#include <string>
+#include <vector>
+#include <cassert>
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRay_MaterialSpec.hh"
 
-namespace MonteRay{
+namespace MonteRay {
 
-#define NMAX_MATERIALS 3
+class MonteRay_CellProperties {
 
-struct IndividualCellProperties {
-    unsigned numMats;
-    gpuFloatType_t density[NMAX_MATERIALS];
-    unsigned matID[NMAX_MATERIALS];
-};
-
-struct CellProperties {
-    unsigned numCells;
-    struct IndividualCellProperties* props;
-};
-
-void ctor(CellProperties*, unsigned num );
-void dtor(CellProperties* );
-void copy(struct CellProperties* pCopy, struct CellProperties* pOrig);
-void copy(IndividualCellProperties& theCopy, const IndividualCellProperties& theOrig);
-void copy(IndividualCellProperties* pCopy, const IndividualCellProperties* pOrig);
-
-
-#ifdef CUDA
-void cudaCtor(struct CellProperties*,struct CellProperties*);
-void cudaDtor(struct CellProperties*);
-#endif
-
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getNumCells(struct CellProperties* ptr );
-
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getNumMats(struct CellProperties* ptr, unsigned i );
-
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getDensity(struct CellProperties* ptr, unsigned cellNum, unsigned matNum );
-
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getMatID(struct CellProperties* ptr, unsigned cellNum, unsigned matNum );
-
-#ifdef CUDA
-__global__ void kernelGetNumCells(CellProperties* mp, unsigned* results );
-#endif
-
-#ifdef CUDA
-__global__ void kernelSumMatDensity(CellProperties* mp, unsigned matIndex, gpuFloatType_t* results );
-#endif
-
-void addDensityAndID(struct CellProperties* ptr, unsigned cellNum, gpuFloatType_t density, unsigned matID );
-
-class CellPropertiesHost {
 public:
-
-    CellPropertiesHost(unsigned numCells);
-
-    ~CellPropertiesHost();
-
-    void copyToGPU(void);
-
-    unsigned getNumCells(void) const {
-        return MonteRay::getNumCells( ptr );
-    }
-
-    unsigned launchGetNumCells(void) const;
-    unsigned launchSumMatDensity(unsigned matID) const;
-
-    unsigned getNumMats(unsigned i) const {
-        return MonteRay::getNumMats( ptr, i);
-    }
-
-    unsigned getMaxNumMats(void) const {
-        return NMAX_MATERIALS;
-    }
-
-    gpuFloatType_t getDensity(unsigned cell, unsigned matNum) const {
-        return MonteRay::getDensity( ptr, cell, matNum );
-    }
-
-    unsigned getMatID(unsigned cell, unsigned matNum) const {
-         return MonteRay::getMatID( ptr, cell, matNum );
-     }
-
-#ifndef CUDA
-    void loadFromLnk3dnt(const std::string& filename );
-#endif
-
-    template<typename T>
-    void loadFromReadLnk3dnt(const T& reader ){
-        unsigned numCells = reader.getNumTotalCells();
-
-        dtor( ptr );
-        ctor( ptr, numCells );
-
-        unsigned numMats = reader.MaxMaterialsPerCell();
-        //std::cout << "Debug: numMats=" << numMats << std::endl;
-
-        for( unsigned cell=0; cell < numCells; ++cell) {
-            for( unsigned matNum=0; matNum < numMats; ++matNum ) {
-                gpuFloatType_t density = reader.getDensity(cell, matNum);
-                int matID = reader.getMatID(cell, matNum);
-
-                matID -= 2;  // decrement partisn id numbers as they start with 1, and 1 is the ghost mat
-                if( matID < 0 ) {
-                    // partisn ghost id
-                    continue;
-                }
-
-                addDensityAndID(cell, density, matID);
-            }
-        }
-    }
-
-    gpuFloatType_t sumMatDensity( unsigned matIndex) const;
-
-    struct CellProperties* getPtr(void) { return ptr; }
-
-    void addDensityAndID(unsigned cellNum, gpuFloatType_t density, unsigned matID ) {
-    	MonteRay::addDensityAndID(ptr, cellNum, density, matID );
-    }
-
-    void write(std::ostream& outfile) const;
-    void  read(std::istream& infile);
-
-    void write( const std::string& filename ) const;
-    void read( const std::string& filename );
-
-    void write(std::ostream& outfile, const IndividualCellProperties& cellProp) const;
-    void read(std::istream& outfile, IndividualCellProperties& cellProp);
+    typedef unsigned Material_Index_t;
+    typedef double Temperature_t;
+    typedef MonteRay_MaterialSpec::MatID_t MatID_t;
+    typedef MonteRay_MaterialSpec::Density_t Density_t;
 
 private:
-    CellProperties* ptr;
-    CellProperties* temp;
-    bool cudaCopyMade;
+    typedef std::vector< MonteRay_MaterialSpec > MatList_t;
 
 public:
-    CellProperties* ptr_device;
+    MonteRay_CellProperties(void) : cellTemperature(-99.0){};
+    ~MonteRay_CellProperties(void){};
 
+    void operator=( const MatList_t& ml ) { cellMaterials = ml; }
+
+    void setTemperature( Temperature_t t){ cellTemperature = t; }
+    Temperature_t getTemperature( void ) const { return cellTemperature; }
+
+    bool containsMaterial( MatID_t matID ) const;
+
+    size_t capacity(void) const { return cellMaterials.capacity(); }
+    size_t size(void) const { return cellMaterials.size(); }
+    Material_Index_t getNumMaterials(void) const { return size(); }
+
+    Material_Index_t getMaterialID( Material_Index_t i ) const {
+        assert( i < size() );
+        return cellMaterials[i].getID();
+    }
+
+    Density_t getMaterialDensity( Material_Index_t i ) const {
+        assert( i < size() );
+        return cellMaterials[i].getDensity();
+    }
+
+    void add( MonteRay_MaterialSpec ms ) { cellMaterials.push_back( ms ); }
+    void add( MatID_t matID, Density_t density ) { cellMaterials.push_back( MonteRay_MaterialSpec(matID, density) ); }
+    void clear(void) { cellMaterials.clear(); }
+
+    void scaleDensity(MatID_t id, Density_t density );
+    void changeDensity(MatID_t id, Density_t density );
+    void scaleAllDensities(Density_t density);
+    void removeMaterial( MatID_t id );
+
+    template<typename FUNC_T, typename T = double >
+    T getXsecSum( FUNC_T& func ) const;
+
+    template<typename FUNC_T, typename T = double >
+    T getXsecSumPerMass( FUNC_T& func ) const;
+
+    size_t bytesize(void) const;
+    size_t capacitySize(void) const;
+    size_t numEmptyMatSpecs(void) const;
+    void shrink_to_fit(void);
+    void reserve( size_t num);
+
+private:
+    Temperature_t cellTemperature;
+    MatList_t cellMaterials;
 };
 
+template<typename FUNC_T, typename T >
+T MonteRay_CellProperties::getXsecSum( FUNC_T& func) const {
+    Temperature_t temp = getTemperature();
+
+    T sum = T(0);
+    for( Material_Index_t material=0; material < size(); ++material ) {
+        unsigned ID    = getMaterialID(material);
+        double density = getMaterialDensity(material);
+
+        sum += func( ID, density, temp );
+    }
+    return sum;
 }
+
+template<typename FUNC_T, typename T >
+T MonteRay_CellProperties::getXsecSumPerMass( FUNC_T& func) const {
+    Temperature_t temp = getTemperature();
+
+    T sum = T(0);
+    for( Material_Index_t material=0; material < size(); ++material ) {
+        unsigned ID    = getMaterialID(material);
+        double density = getMaterialDensity(material);
+        if( density > 0.0 ) {
+            sum += func( ID, density, temp ) / density;
+        }
+    }
+    return sum;
+}
+
+} /* namespace MonteRay */
 
 #endif /* MONTERAY_CELLPROPERTIES_HH_ */

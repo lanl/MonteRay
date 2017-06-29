@@ -1,4 +1,4 @@
-#include "MonteRay_CellProperties.hh"
+#include "MonteRay_CellProperties_old.hh"
 
 #include <iostream>
 #include <fstream>
@@ -7,7 +7,7 @@
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
 
-namespace MonteRay{
+namespace MonteRay_Depricated{
 
 void copy(IndividualCellProperties& theCopy, const IndividualCellProperties& theOrig) {
 //	theCopy.numMats = theOrig.numMats;

@@ -1,0 +1,11 @@
+2 x 2 x 2 box for testing
+
+Material is U-235 at a density of 18.7 g/cc
+
+X dimension starts at -10 and goes to +10 
+Y dimension starts at -10 and goes to +10
+Z dimension starts at -10 and goes to +10
+
+2 mesh vertices in each X,Y, and Z direction -10 to 0, and 0 to +10
+
+

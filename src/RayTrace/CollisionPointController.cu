@@ -4,7 +4,7 @@
 
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
-#include "MonteRay_CellProperties.hh"
+#include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.h"
 #include "CollisionPoints.h"
 #include "ExpectedPathLength.h"
@@ -18,7 +18,7 @@ CollisionPointController::CollisionPointController(
         unsigned threads,
         GridBinsHost* pGB,
         SimpleMaterialListHost* pML,
-        CellPropertiesHost* pMP,
+        MonteRay_MaterialProperties* pMP,
         gpuTallyHost* pT ) :
         nBlocks(blocks),
         nThreads(threads),
@@ -146,7 +146,7 @@ CollisionPointController::flush(bool final){
 	gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 
 	// launch kernel
-	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device, currentBank->ptrPoints_device, pMatList->ptr_device, pMatProps->ptr_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
+	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device, currentBank->ptrPoints_device, pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
 
 	// only uncomment for testing, forces the cpu and gpu to sync
 //	gpuErrchk( cudaPeekAtLastError() );

@@ -11,7 +11,8 @@
 #include "CollisionPointController.h"
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
-#include "MonteRay_CellProperties.hh"
+#include "MonteRay_MaterialProperties.hh"
+#include "MonteRay_ReadLnk3dnt.hh"
 #include "gpuTally.h"
 #include "CollisionPoints.h"
 
@@ -34,7 +35,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 
-	    	pMatProps = new CellPropertiesHost(2);
+	    	pMatProps = new MonteRay_MaterialProperties;
 
 	    	u234s = new MonteRayCrossSectionHost(1);
 	    	u235s = new MonteRayCrossSectionHost(1);
@@ -56,8 +57,11 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
 	    	pTally->copyToGPU();
 
-	    	pMatProps->read( "/usr/projects/mcatk/user/jsweezy/link_files/godivaR_geometry_100x100x100.bin" );
-	    	pMatProps->copyToGPU();
+			MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
+			readerObject.ReadMatData();
+
+			pMatProps->disableReduction();
+			pMatProps->setMaterialDescription( readerObject );
 
 	        u234s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
 	        u235s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
@@ -74,9 +78,12 @@ SUITE( Collision_fi_bank_controller_tester ) {
 	        water->add(1, *o16s, 1.0f/3.0f );
 	        water->copyToGPU();
 
-	        pMatList->add( 0, *metal, 0 );
-	        pMatList->add( 1, *water, 1 );
+	        pMatList->add( 0, *metal, 2 );
+	        pMatList->add( 1, *water, 3 );
 	        pMatList->copyToGPU();
+
+	        pMatProps->renumberMaterialIDs(*pMatList);
+	        pMatProps->copyToGPU();
 
 	        u234s->copyToGPU();
 	        u235s->copyToGPU();
@@ -101,7 +108,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
 		GridBinsHost* pGrid;
 		SimpleMaterialListHost* pMatList;
-		CellPropertiesHost* pMatProps;
+		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
 
     	MonteRayCrossSectionHost* u234s;

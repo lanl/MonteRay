@@ -11,7 +11,7 @@
 #include "CollisionPointController.h"
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
-#include "MonteRay_CellProperties.hh"
+#include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.h"
 #include "CollisionPoints.h"
 
@@ -35,7 +35,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 
-	    	pMatProps = new CellPropertiesHost(pGrid->getNumCells());
+	    	pMatProps = new MonteRay_MaterialProperties(pGrid->getNumCells());
 
 	    	// xs from 0.0 to 100.0 mev with total cross-section of 1.0
 	    	xs = new MonteRayCrossSectionHost(2);
@@ -54,9 +54,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 	    	pTally->clear();
 
 	    	// Density of 1.0 for mat number 0
-	    	for( unsigned i = 0; i < pGrid->getNumCells(); ++i ) {
-	    		pMatProps->addDensityAndID( i, 1.0, 0 );
-	    	}
+	    	pMatProps->initializeMaterialDescription( std::vector<int>( pGrid->getNumCells(), 0), std::vector<float>( pGrid->getNumCells(), 1.0), pGrid->getNumCells());
 
 	    	pMatProps->copyToGPU();
 
@@ -85,7 +83,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
 		GridBinsHost* pGrid;
 		SimpleMaterialListHost* pMatList;
-		CellPropertiesHost* pMatProps;
+		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
 
     	MonteRayCrossSectionHost* xs;

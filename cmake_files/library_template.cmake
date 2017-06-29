@@ -25,7 +25,7 @@ endforeach()
 set_property( SOURCE ${${libname}_srcs}    APPEND PROPERTY LABELS ${SubProjectName}Src )
 set_property( SOURCE ${${libname}_headers} APPEND PROPERTY LABELS ${SubProjectName}Src )
 
-install( FILES ${${libname}_headers} DESTINATION include/mcatk )
+install( FILES ${${libname}_headers} DESTINATION include/MonteRay )
 
 foreach( src ${ExcludeSource} )
     list( REMOVE_ITEM ${libname}_srcs ${CMAKE_CURRENT_SOURCE_DIR}/${src} )

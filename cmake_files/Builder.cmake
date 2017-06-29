@@ -45,22 +45,35 @@ message ("NDATK_Flags = ${NDATK_Flags}")
 # name of the buildDir.
 string( REGEX MATCH "(debug|db|Debug|DEBUG)" withDebug ${buildDir} )
 if( withDebug )
-  set( DebugOption "-DCMAKE_BUILD_TYPE=Debug -DDEBUG=2" )
+  set( DEBUG_LEVEL_DEFAULT "2" )
+  set( DebugOption "-DCMAKE_BUILD_TYPE=Debug" )
   set( CMAKE_BUILD_TYPE Debug )
 else()
   string( REGEX MATCH "(release|Release|RELEASE)" withRelease ${buildDir} )
   if( withRelease )
-    set( DebugOption "-DCMAKE_BUILD_TYPE=Release -DDEBUG=0" )
+    set( DEBUG_LEVEL_DEFAULT "0" )
+    set( DebugOption "-DCMAKE_BUILD_TYPE=Release" )
     set( CMAKE_BUILD_TYPE Release )
   else()
-    set( DebugOption "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DDEBUG=1" )
+    set( DEBUG_LEVEL_DEFAULT "1" )
+    set( DebugOption "-DCMAKE_BUILD_TYPE=RelWithDebInfo" )
     set( CMAKE_BUILD_TYPE RelWithDebInfo )
   endif()
 endif()
 message( "Building with CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}" )
 
-message( "Executing COMMAND=${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${VersionFlag} ${StandaloneFlag} ${NDATK_Flags} $ENV{PWD} in directory ${buildDir}" )
-execute_process( COMMAND ${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${VersionFlag} ${StandaloneFlag} ${NDATK_Flags} $ENV{PWD}
+if( NOT DEBUG_LEVEL ) 
+  set( DEBUG_LEVEL "-DDEBUG_LEVEL=${DEBUG_LEVEL_DEFAULT}" )
+else()
+  set( DEBUG_LEVEL_DEFAULT ${DEBUG_LEVEL} )
+  set( DEBUG_LEVEL "-DDEBUG_LEVEL=${DEBUG_LEVEL}" )
+endif()
+
+message( "Building with CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}, Debug level=${DEBUG_LEVEL_DEFAULT} " )
+set( DebugOptions ${DEBUG_LEVEL} ${DebugOption} )
+
+message( "Executing COMMAND=${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${UnityBuildFlag} ${VersionFlag} ${StandaloneFlag}  ${FortranOffFlag} ${NDATK_Flags} ${MonteRayFlags} $ENV{PWD} in directory ${buildDir}" )
+execute_process( COMMAND ${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${UnityBuildFlag} ${VersionFlag} ${StandaloneFlag} ${FortranOffFlag} ${NDATK_Flags} ${MonteRayFlags} $ENV{PWD}
                  WORKING_DIRECTORY ${buildDir}
                  RESULT_VARIABLE result_var
                  )
