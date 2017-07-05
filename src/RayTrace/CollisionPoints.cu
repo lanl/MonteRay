@@ -384,6 +384,11 @@ void CollisionPointsHost::readToMemory( const std::string& file ){
     closeInput();
 }
 
+void CollisionPointsHost::writeBank() {
+	for( unsigned i=0; i< size(); ++i ) {
+		writeParticle( getParticle(i) );
+	}
+}
 
 bool CollisionPointsHost::readToBank( const std::string& file, unsigned start ){
     openInput( file );

@@ -1,6 +1,8 @@
 #ifndef COLLISIONPOINTCONTROLLER_H_
 #define COLLISIONPOINTCONTROLLER_H_
 
+#include <string>
+
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_timer.hh"
 
@@ -56,6 +58,18 @@ public:
     void sync(void);
 
     void clearTally(void);
+
+    bool isSendingToFile(void) { return toFile; }
+
+    void setOutputFileName(std::string name) {
+    	outputFileName = name;
+    	sendToFile();
+    }
+
+    void readCollisionsFromFile(std::string name);
+
+    void flushToFile(bool final=false);
+
 private:
 	unsigned nBlocks;
 	unsigned nThreads;
@@ -75,6 +89,12 @@ private:
 	cudaEvent_t* currentCopySync;
 	cpuTimer timer;
 	double cpuTime, gpuTime, wallTime;
+	bool toFile;
+	bool fileIsOpen;
+
+	std::string outputFileName;
+
+    void sendToFile(void) { toFile = true; }
 };
 
 } /* namespace MonteRay */

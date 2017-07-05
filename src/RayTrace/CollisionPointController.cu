@@ -29,7 +29,9 @@ CollisionPointController::CollisionPointController(
         nFlushs(0),
         cpuTime(0.0),
         gpuTime(0.0),
-        wallTime(0.0)
+        wallTime(0.0),
+        toFile( false ),
+        fileIsOpen( false)
 {
 	bank1 = new CollisionPointsHost(1000000); // default 1 millions
 	bank2 = new CollisionPointsHost(1000000); // default 1 millions
@@ -128,6 +130,8 @@ CollisionPointController::add( const void* particle, unsigned N){
 
 void
 CollisionPointController::flush(bool final){
+	if( isSendingToFile() ) { flushToFile(final); }
+
 	if( currentBank->size() == 0 ) {
 		return;
 	}
@@ -162,6 +166,32 @@ CollisionPointController::flush(bool final){
 	}
 
 	swapBanks();
+}
+
+void
+CollisionPointController::flushToFile(bool final){
+
+	if( ! fileIsOpen ) {
+		currentBank->openOutput( outputFileName );
+	}
+	currentBank->writeBank();
+	currentBank->clear();
+
+	if( final ) {
+		currentBank->closeOutput();
+	}
+}
+
+void
+CollisionPointController::readCollisionsFromFile(std::string name) {
+
+	bool end = false;
+	unsigned numParticles = 0;
+	do  {
+		end = currentBank->readToBank(name, numParticles);
+		numParticles += currentBank->size();
+		flush(end);
+	} while ( ! end );
 }
 
 void

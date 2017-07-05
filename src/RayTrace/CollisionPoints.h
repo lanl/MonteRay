@@ -141,6 +141,8 @@ public:
     void resetFile(void);
 
     void writeParticle( const gpuParticle_t& );
+    void writeBank();
+
     gpuParticle_t readParticle(void);
     void  read(std::fstream& infile);
 

@@ -269,6 +269,76 @@ SUITE( Collision_unit_bank_controller_tester ) {
     	std::cout << "Debug: CollisionPointController_unit_tester -- finished- single_ray\n";
     }
 
+    TEST_FIXTURE(UnitControllerSetup, write_single_ray_to_file ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- write_single_ray_to_file\n";
+    	CollisionPointController controller( 1,
+    			1,
+    			pGrid,
+    			pMatList,
+    			pMatProps,
+    			pTally );
+
+     	setup();
+
+     	controller.setOutputFileName( "single_ray_collision.bin" );
+     	CHECK_EQUAL( true, controller.isSendingToFile() );
+
+     	unsigned int matID=0;
+     	gpuFloatType_t energy = 1.0;
+     	gpuFloatType_t density = 1.0;
+     	unsigned HashBin = getHashBin( pMatList->getHashPtr()->getPtr(), energy);
+     	double testXS = MonteRay::getTotalXS( pMatList->getPtr(), matID, pMatList->getHashPtr()->getPtr(), HashBin, energy, density);
+     	CHECK_CLOSE(.602214179f/1.00866491597f, testXS, 1e-6);
+
+    	gpuFloatType_t x = 0.5;
+    	gpuFloatType_t y = 0.5;
+    	gpuFloatType_t z = 0.5;
+
+    	unsigned i = pGrid->getIndex( x, y, z );
+    	CHECK_EQUAL( 555, i);
+
+        controller.add(   x,   y,   z,
+        		        1.0, 0.0, 0.0,
+        		        1.0, 1.0, i);
+
+        controller.flush(true);
+    }
+
+
+    TEST_FIXTURE(UnitControllerSetup, read_single_ray_to_file ){
+    	std::cout << "Debug: CollisionPointController_unit_tester -- read_single_ray_to_file\n";
+    	CollisionPointController controller( 1,
+    			1,
+    			pGrid,
+    			pMatList,
+    			pMatProps,
+    			pTally );
+
+     	setup();
+
+
+     	unsigned int matID=0;
+     	gpuFloatType_t energy = 1.0;
+     	gpuFloatType_t density = 1.0;
+     	unsigned HashBin = getHashBin( pMatList->getHashPtr()->getPtr(), energy);
+     	double testXS = MonteRay::getTotalXS( pMatList->getPtr(), matID, pMatList->getHashPtr()->getPtr(), HashBin, energy, density);
+     	CHECK_CLOSE(.602214179f/1.00866491597f, testXS, 1e-6);
+
+    	gpuFloatType_t x = 0.5;
+    	gpuFloatType_t y = 0.5;
+    	gpuFloatType_t z = 0.5;
+
+    	unsigned i = pGrid->getIndex( x, y, z );
+    	CHECK_EQUAL( 555, i);
+
+        controller.readCollisionsFromFile( "single_ray_collision.bin" );
+
+    	pTally->copyToCPU();
+
+    	float distance = 0.5f;
+    	CHECK_CLOSE( (1.0f-std::exp(-testXS*distance))/testXS, pTally->getTally(i), 1e-5 );
+    }
+
 //    TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
 //    	CollisionPointController controller( 1024,
 //    			1024,

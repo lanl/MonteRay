@@ -82,7 +82,7 @@ double GPUTimingTestHelper::launchGPUStreamSleep(unsigned nBlocks, unsigned nThr
 		int f = frequency_of_primes (1999999);
 //		printf ("The number of primes lower than 2,000,000 is: %d\n",f);
 		timer.stop();
-		std::cout << "Debug: cpu time=" << std::setprecision(5) << timer.getTime() << std::endl;
+		std::cout << "Debug: gpuTiming_test_helper::launchGPUStreamSleep -- cpu time=" << std::setprecision(5) << timer.getTime() << std::endl;
 
 	}
 
@@ -94,11 +94,11 @@ double GPUTimingTestHelper::launchGPUStreamSleep(unsigned nBlocks, unsigned nThr
 //
 	float gpuTime;
 	cudaEventElapsedTime(&gpuTime, startGPU, stopGPU );
-	std::cout << "Debug: gpu time=" << gpuTime/1000.0 << std::endl;
+	std::cout << "Debug: gpuTiming_test_helper::launchGPUStreamSleep -- gpu time=" << gpuTime/1000.0 << std::endl;
 
 	float totalTime;
 	cudaEventElapsedTime(&totalTime, start, stop );
-	std::cout << "Debug: total time=" << totalTime/1000.0 << std::endl;
+	std::cout << "Debug: gpuTiming_test_helper::launchGPUStreamSleep -- total time=" << totalTime/1000.0 << std::endl;
 
 //	cudaStreamDestroy(stream);
 	return gpuTime/1000.0;
