@@ -47,7 +47,8 @@ SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-de
 
 # Titan X -arch=sm_52
 # K40 -arch=compute_35 -code=sm_35
-list(APPEND CUDA_NVCC_FLAGS "-arch=sm_52")
+# Moonlight Tesla M2090 -arch=compute_20 -code=sm_20
+list(APPEND CUDA_NVCC_FLAGS "-arch=sm_20")
 #list(APPEND CUDA_NVCC_FLAGS "-arch=sm_35")
 
 #if( CMAKE_BUILD_TYPE STREQUAL "Debug" ) 

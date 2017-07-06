@@ -308,7 +308,7 @@ SUITE( Collision_fi_tester ) {
     	CHECK_CLOSE( 0.410871, expected, 1e-6);
 
      	helper.setupTimers();
-    	helper.launchRayTraceTally(1024, 1024, &points, &matList, &mp );
+    	helper.launchRayTraceTally(256, 256, &points, &matList, &mp );
     	helper.stopTimers();
 
 //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
@@ -420,8 +420,8 @@ SUITE( Collision_fi_looping_tester ) {
      		bank1.copyToGPU();
      		if( end ) { last = true; }
      		MonteRay::tripleTime time = launchRayTraceTally(cpuWork1,
-     				1024,
-     				1024,
+     				256,
+     				256,
      				&grid,
      				&bank1,
      				&matList,
@@ -436,8 +436,8 @@ SUITE( Collision_fi_looping_tester ) {
           	bank2.copyToGPU();
         	if( end ) { last = true; }
      		time = launchRayTraceTally(cpuWork2,
-     				1024,
-     				1024,
+     				256,
+     				256,
      				&grid,
      				&bank2,
      				&matList,

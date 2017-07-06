@@ -172,8 +172,8 @@ SUITE( Collision_fi_bank_controller_tester ) {
     TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
     	// exact numbers from expected path length tally in mcatk
 
-    	CollisionPointController controller( 1024,
-    			1024,
+    	CollisionPointController controller( 256,
+    			256,
     			pGrid,
     			pMatList,
     			pMatProps,

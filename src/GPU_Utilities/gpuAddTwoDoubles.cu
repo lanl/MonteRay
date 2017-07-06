@@ -2,6 +2,9 @@
 #include "GPUAtomicAdd.hh"
 #include "GPUSync.hh"
 
+#include <iostream>
+#include <stdio.h>
+
 namespace MonteRay {
 
 #ifdef CUDA
@@ -18,6 +21,7 @@ __global__ void add_single(unsigned N, float *a, float *b, float *c ) {
 }
 
 __global__ void add_double(unsigned N, double *a, double *b, double *c ) {
+//	printf("Debug: GPU_Utilities/unit_test/gpuAddTwoDoubles.cu::add_double **************\n");
 	int bid = blockIdx.x;
 	int tid = threadIdx.x;
 	if( bid < N ) {
@@ -50,6 +54,8 @@ double gpuAddTwoDoubles( double A, double B) {
 	c_host[0] = 0.0;
 
 #ifdef CUDA
+//	std::cout <<"Debug: GPU_Utilities/unit_test/gpuAddTwoDoubles.cu::gpuAddTwoDoubles - CUDA defined.\n";
+
 	value_t* pA_device;
 	value_t* pB_device;
 	value_t* pC_device;

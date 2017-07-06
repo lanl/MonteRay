@@ -1,12 +1,8 @@
-/*
- * GPUAtomicAdd.hh
- *
- *  Created on: Mar 20, 2017
- *      Author: jsweezy
- */
-
 #ifndef GPUATOMICADD_HH_
 #define GPUATOMICADD_HH_
+
+#include <cuda.h>
+#include <stdio.h>
 
 #include "MonteRayDefinitions.hh"
 
@@ -19,6 +15,8 @@ __device__ inline void gpu_atomicAdd_single( float *address, float value ) {
 }
 
 __device__ inline void gpu_atomicAdd_double( double *address, double value ) {
+//	printf("Debug: MonteRay::GPUAtomicAdd.h::gpu_atomicAdd_double **************\n");
+
 	// From: https://www.sharcnet.ca/help/index.php/CUDA_tips_and_tricks
 	unsigned long long oldval, newval, readback;
 

@@ -17,9 +17,14 @@ function( locateMCATKDir )
                      /usr/gapps
                      /projects
                PATH_SUFFIXES mcatk )
+    
     if( NOT MCATKDir )
         message( FATAL_ERROR "Unable to locate MCATK's project directory on this system." )
     endif()
+    # Some systems have a special place for checkout and building the toolkit
+    find_path( BuildScratch
+               NAMES user 
+               PATHS /usr/projects/mcatk_autobuild )
 endfunction()
 
 function( PlatformInfo )
@@ -33,7 +38,7 @@ function( PlatformInfo )
     
     site_name( FullSiteName )
     find_path( AutoBuildRoot 
-               NAMES scripts Results 
+               NAMES Results scripts 
                PATHS ${MCATKDir}/AutoBuilds
                PATH_SUFFIXES AutoBuilds )
     if( NOT AutoBuildRoot )
@@ -41,12 +46,20 @@ function( PlatformInfo )
     endif()
 
     find_file( PlatformMetaFile PlatformDB.txt 
-               PATHS ${AutoBuildRoot} 
-               PATH_SUFFIXES scripts
+           PATHS ${CMAKE_MODULE_PATH} 
+                 ${CTEST_SCRIPT_DIRECTORY} 
+                 ${AutoBuildRoot} 
+           PATH_SUFFIXES scripts
     )
+    message(STATUS "scripts/PlatformInfo.cmake PlatformMetaFile = ${PlatformMetaFile}" )
 
     if( NOT PlatformMetaFile )
         message( FATAL_ERROR "Unable to locate the platform description file." )
+    endif()
+
+    if( POLICY CMP0007 )
+        cmake_policy( PUSH )
+        cmake_policy( SET CMP0007 OLD )
     endif()
 
     file( STRINGS ${PlatformMetaFile} Platforms )
@@ -54,22 +67,47 @@ function( PlatformInfo )
     string( REGEX REPLACE "," " - " Headers ${Headers} )
     list( REMOVE_AT Platforms 0 )
 
+    # HPC maintains a script that parses a cluster's front and back end id's to create a single cluster id
+    find_program( SYSNAME sys_name PATHS /usr/projects/hpcsoft/utilities/bin )
+    if( SYSNAME )
+        execute_process( COMMAND ${SYSNAME} OUTPUT_VARIABLE SystemID OUTPUT_STRIP_TRAILING_WHITESPACE )
+    endif()
+    message(STATUS "scripts/PlatformInfo.cmake SystemID = ${SystemID}" )
+
     foreach( line ${Platforms} )
         # convert line to a list of entries
         string( REGEX REPLACE "[ ,]+" ";" line ${line} )
         list( LENGTH line NEntries )
-        list( GET line 0 RegexID )
-        string( REGEX MATCH "^${RegexID}" SiteID ${FullSiteName} )
-#        message( "RegexID ${RegexID} ${line}" )
+        
+        # Look up site by matching
+        if( SystemID ) 
+            list( GET line 10 ClusterName )
+            message(STATUS "scripts/PlatformInfo.cmake ClusterName = ${ClusterName}" )
+            string( REGEX MATCH "${SystemID}" SiteID ${ClusterName} )
+        else()
+            list( GET line 0 RegexID )
+            string( REGEX MATCH "^${RegexID}" SiteID ${FullSiteName} )
+        endif()
+
         if( SiteID )
+            message(STATUS "scripts/PlatformInfo.cmake SiteID found in database file: SiteID = ${SiteID}" )
+        
             # Cluster short name
             set( ClusterID ${SiteID} CACHE STRING "Abbreviated name of compute cluster" )
+            message(STATUS "scripts/PlatformInfo.cmake: ClusterID = ${ClusterID}" )
+            
             # Host Site
             list( GET line 1 HostSite )
             set( HostDomain ${HostSite} CACHE STRING "Compute domain of the cluster" )
+            message(STATUS "scripts/PlatformInfo.cmake HostSite = ${HostSite}" )
+            
             # NUMA Info
             list( GET line 2 NumberNUMA )
+            message(STATUS "scripts/PlatformInfo.cmake NumberNUMA = ${NumberNUMA}" )
+            
             list( GET line 3 JobsPerNUMA )
+            message(STATUS "scripts/PlatformInfo.cmake JobsPerNUMA = ${JobsPerNUMA}" )
+            
             if( NumberNUMA STREQUAL "NA" )
             else()
                 set( NumNUMA        ${NumberNUMA} CACHE STRING "Number of NUMA domains on cluster" )
@@ -77,11 +115,15 @@ function( PlatformInfo )
             endif()
             # Scratch Directory
             list( GET line 4 ScratchDir )
+            message(STATUS "scripts/PlatformInfo.cmake ScratchDir = ${ScratchDir}" )
             set( AutoScratch ${ScratchDir}/$ENV{USER}/AUTOBUILD CACHE PATH "Scratch directory on the cluster"  )
+                        
             # Batch system basics
             if( NEntries GREATER 5 )
                 list( GET line 5 batchSystem )
+                message(STATUS "scripts/PlatformInfo.cmake batchSystem = ${batchSystem}" )
                 set( BatchSystem ${batchSystem} CACHE STRING "Job control system" )
+                message(STATUS "scripts/PlatformInfo.cmake BatchSystem = ${BatchSystem}" )
                 list( GET line 6 acct )
                 if( acct STREQUAL NA )
                     unset( acct )
@@ -100,11 +142,17 @@ function( PlatformInfo )
                 set( JobDuration ${duration} CACHE STRING "Job runtime limit" )
                 list( GET line 10 clustername )
                 set( ClusterName ${clustername} CACHE STRING "Name of the compute cluster" )
+                
+                message(STATUS "scripts/PlatformInfo.cmake ClusterName = ${ClusterName}" )
             else()
             endif()
             break()
         endif()
     endforeach()
+    
+    if( POLICY CMP0007 )
+        cmake_policy( POP )
+    endif()
     
     if( NOT SiteID )
         message( FATAL_ERROR "System [ ${FullSiteName} ] requires an entry in [ ${PlatformMetaFile} ]." )
@@ -114,6 +162,15 @@ function( PlatformInfo )
         set( CTestSite ${ClusterName} CACHE STRING "Site reported to ctest" )
         # Platform ID case -- LANL HPC
         set( Platform ${ClusterName} CACHE INTERNAL "Platform on which this was configured.")
+        find_path( hasNetScratch $ENV{USER} PATH /netscratch NO_DEFAULT_PATH )
+        if( hasNetScratch )
+            set( RootSrcDir /netscratch/$ENV{USER}/mcatk CACHE PATH "Remote directory for holding source." )
+        elseif( BuildScratch )
+            set( RootSrcDir ${BuildScratch}/user/$ENV{USER}/AUTOBUILD CACHE PATH "Remote directory for holding source." )
+        else()
+            set( RootSrcDir ${MCATKDir}/user/$ENV{USER}/AUTOBUILD CACHE PATH "Remote directory for holding source." )
+        endif()
+        message(STATUS "scripts/PlatformInfo.cmake RootSrcDir = ${RootSrcDir}" )
     elseif( HostDomain STREQUAL xdiv )
         set( CTestSite ${ClusterID} CACHE STRING "Site reported to ctest" )
         # Platform ID for xdiv systems
@@ -122,8 +179,10 @@ function( PlatformInfo )
         else()
             message( FATAL_ERROR "User must set environment variable *PlatformOS* in mcatk module file." )
         endif()
+        set( RootSrcDir ${AutoScratch} CACHE PATH "Remote directory for holding source." )
     else()
         set( CTestSite ${ClusterName}-${HostDomain} CACHE STRING "Site reported to ctest" )
+        set( RootSrcDir ${AutoScratch} CACHE PATH "Remote directory for holding source." )
     endif()
 
     # If this isn't part of a system with a job controller, we're done
@@ -131,25 +190,39 @@ function( PlatformInfo )
         return()
     endif()
 
+    message(STATUS "scripts/PlatformInfo.cmake BatchSystem = ${BatchSystem}" )
     if( BatchSystem STREQUAL MOAB )
         find_program( SubmitCmd msub 
                       PATHS $ENV{MOABHOMEDIR}/bin
                       ENV PATH
                     )
+        if( NOT SubmitCmd )
+           # check if explicit path is available
+           if( DEFINED ENV{MSUB_PATH} )
+              set( SubmitCmd $ENV{MSUB_PATH} )
+           endif()
+        endif()
         if( HostDomain STREQUAL "llnl" )
             # Generic case for LLNL TLCC
             set( Platform $ENV{SYS_TYPE} CACHE INTERNAL "Platform on which this was configured.")
         endif()
 
     # Special case for LLNL BlueGeneQ clusters (seq, rzuseq, etc.)
-    elseif( BatchSystem STREQUAL slurm )
+    elseif( BatchSystem STREQUAL slurm AND HostDomain STREQUAL llnl )
         find_program( SubmitCmd srun )
         set( SRUN_SERIAL ${SubmitCmd} --partition=${JobQueue} -n 1 -t 1:30:00 CACHE DOC "Required invocation line on BlueGeneQ" )
 
         set( Platform BlueGeneQ CACHE INTERNAL "Platform on which this was configured" )
 
-    # Special case for SNL batching
+    elseif( BatchSystem STREQUAL slurm )
+        # LANL is shifting to a slurm-ONLY type batch system
+        find_program( SubmitCmd sbatch )
+        if( ClusterID STREQUAL trinitite )
+            set( SBATCH_EXTRA_OPTIONS "SBATCH --gres=craynetwork:0" CACHE DOC "Flag allowing concurrent execution of tests." )
+        endif()
+        
     elseif( BatchSystem STREQUAL SBATCH )
+        # Special case for SNL batching
         find_program( SubmitCmd sbatch )
         
     else()
@@ -167,51 +240,59 @@ endfunction()
 # Function: determineProcessorCount
 # Determines the number of cores/processors available on a system
 function( determineProcessorCount )
-  if( ProcPerNode )
-      set( nHostProcs ${ProcPerNode} PARENT_SCOPE )
-      return()
-  endif()
-
-  # Linux:
-  find_program( APRUN aprun DOC "Cray/MPICH utility for dispatching parallel jobs to backends." )
-  find_program( LSCPU lscpu DOC "Linux utility for analyzing runtime hardware." )
-  if( LSCPU )
-      if( APRUN )
-          execute_process( COMMAND ${APRUN} --quiet ${LSCPU} -e=core OUTPUT_VARIABLE info OUTPUT_STRIP_TRAILING_WHITESPACE )
-      else()
-          execute_process( COMMAND ${LSCPU} -e=core OUTPUT_VARIABLE info OUTPUT_STRIP_TRAILING_WHITESPACE )
-      endif()
-      # convert newlines to semicolons to convert this into a list of strings
-      string( REGEX REPLACE "\\\n" ";" info ${info} )
-      # Remove the header line
-      list( REMOVE_AT info 0 )
-      # This list will have duplicates if hyper-threading is enabled because it reports a line for each *cpu*.
-      list( REMOVE_DUPLICATES info )
-      list( LENGTH info PROCESSOR_COUNT )
-  else()
-      set(cpuinfo_file "/proc/cpuinfo")
-      if(EXISTS "${cpuinfo_file}")
-        file(STRINGS "${cpuinfo_file}" procs REGEX "^processor.: [0-9]+$")
-        list(LENGTH procs PROCESSOR_COUNT)
-      endif()
-  endif()
-
-  # Mac:
-  if(APPLE)
-    find_program(cmd_sys_pro "system_profiler")
-    if(cmd_sys_pro)
-      execute_process(COMMAND ${cmd_sys_pro} OUTPUT_VARIABLE info)
-      string(REGEX REPLACE "^.*Total Number Of Cores: ([0-9]+).*$" "\\1"
-        PROCESSOR_COUNT "${info}")
+    if( ProcPerNode )
+        set( nHostProcs ${ProcPerNode} PARENT_SCOPE )
+        return()
     endif()
-  endif()
-
-  # Windows:
-  if(WIN32)
-    set(PROCESSOR_COUNT "$ENV{NUMBER_OF_PROCESSORS}")
-  endif()
-
-  set( nHostProcs ${PROCESSOR_COUNT} PARENT_SCOPE )
+    
+    # Mac:
+    if(APPLE)
+        find_program( SYSCTL sysctl )
+        if( SYSCTL )
+            execute_process(COMMAND ${SYSCTL} -n hw.ncpu OUTPUT_VARIABLE PROCESSOR_COUNT )
+        else()
+            # Use a safe(?) value
+            set( PROCESSOR_COUNT 8 )
+        endif()
+        set( nHostProcs ${PROCESSOR_COUNT} PARENT_SCOPE )
+        return()
+    endif()
+    
+    # Windows:
+    if(WIN32)
+        message( FATAL_ERROR "Don't know how to count available processor under windows" )
+        set(PROCESSOR_COUNT "$ENV{NUMBER_OF_PROCESSORS}")
+        set( nHostProcs ${PROCESSOR_COUNT} PARENT_SCOPE )
+        return()
+    endif()
+    
+    # Linux:
+#    find_program( APRUN aprun DOC "Cray/MPICH utility for dispatching parallel jobs to backends." )
+    find_program( APRUN srun DOC "Cray/MPICH utility for dispatching parallel jobs to backends." )
+    find_program( LSCPU lscpu DOC "Linux utility for analyzing runtime hardware." )
+    if( LSCPU )
+        if( APRUN )
+            execute_process( COMMAND ${APRUN} --quiet ${LSCPU} -e=core OUTPUT_VARIABLE info OUTPUT_STRIP_TRAILING_WHITESPACE )
+        else()
+            # e=core - physical cores,   e=cpu - cores+hyperthreads
+            execute_process( COMMAND ${LSCPU} -e=core OUTPUT_VARIABLE info OUTPUT_STRIP_TRAILING_WHITESPACE )
+        endif()
+        # convert newlines to semicolons to convert this into a list of strings
+        string( REGEX REPLACE "\\\n" ";" info ${info} )
+        # Remove the header line
+        list( REMOVE_AT info 0 )
+        # This list will have duplicates if hyper-threading is enabled because it reports a line for each *cpu*.
+        list( REMOVE_DUPLICATES info )
+        list( LENGTH info PROCESSOR_COUNT )
+    else()
+        set(cpuinfo_file "/proc/cpuinfo")
+        if(EXISTS "${cpuinfo_file}")
+          file(STRINGS "${cpuinfo_file}" procs REGEX "^processor.: [0-9]+$")
+          list(LENGTH procs PROCESSOR_COUNT)
+        endif()
+    endif()
+    
+    set( nHostProcs ${PROCESSOR_COUNT} PARENT_SCOPE )
 endfunction()
 
 #================================================================================
@@ -235,6 +316,12 @@ endfunction ()
 # Function: configureToolSet
 # Setup the desired toolset using environment variables
 function( configureToolSet Tool )
+
+    if( $ENV{PlatformOS} MATCHES "Darwin" )
+      message("When building on machines with PlatformOS=Darwin, build system will not overide CC, CXX, FC")
+      return()
+    endif()
+
     if( Tool STREQUAL "intel" )
         set( ENV{CC}  "icc" )
         set( ENV{CXX} "icpc" )
@@ -251,7 +338,7 @@ function( configureToolSet Tool )
     elseif( Tool STREQUAL "clang" )
         set( ENV{CC}  "clang" )
         set( ENV{CXX} "clang++" )
-        set( ENV{FC}  "gfortran" )
+        set( ENV{FC}  "ifort" )
     endif()
 
     #--------------------------------
@@ -347,6 +434,13 @@ function( ParseBuildArgs )
         set( ConfigMsg "${ConfigMsg} : **Branch[ ${BranchName} ]**" )        
     endif()
 
+    # toggle using git (over svn)
+    #string( REGEX MATCH "git" repoStyle "${ARGN}" ) 
+    #if( repoStyle ) 
+        set( useGIT ON PARENT_SCOPE )
+    #    set( ConfigMsg "${ConfigMsg} : **Repo[ ${repoStyle} ]**" )
+    #endif()
+
     if( ARGN AND NOT VerbosityFlags )
         validateOption( Verbosity OPTIONAL Verbose VeryVerbose )
         if( Verbosity )
@@ -396,10 +490,11 @@ function( configureCTest )
         set( buildDir ${toolkitBuildDir} )
     else()
         if( BranchName )
-            set( srcDir   "${AutoScratch}/${Model}-${CTestSite}/${BranchName}" )
-            set( buildDir "${AutoScratch}/${Model}-${CTestSite}/obj/${BranchName}-${BuildTag}${Tool}${CompilerVersion}-${Build}" )
+            string( REGEX REPLACE "/" "_" pathToBranchName ${BranchName} )
+            set( srcDir   "${RootSrcDir}/${Model}-${CTestSite}/${pathToBranchName}" )
+            set( buildDir "${AutoScratch}/${Model}-${CTestSite}/obj/${pathToBranchName}-${BuildTag}${Tool}${CompilerVersion}-${Build}" )
         else()
-            set( srcDir   "${AutoScratch}/${Model}-${CTestSite}/trunk" )
+            set( srcDir   "${RootSrcDir}/${Model}-${CTestSite}/trunk" )
             set( buildDir "${AutoScratch}/${Model}-${CTestSite}/obj/${BuildTag}${Tool}${CompilerVersion}-${Build}" )
         endif()
         set( toolkitSrcDir   ${srcDir} PARENT_SCOPE )
@@ -438,86 +533,68 @@ function( configureCTest )
 endfunction()
 
 #######################################################################
-# MCATK Subversion Access
-#--------------------------------
-function( initializeSVN )
-    # insure we can find the 'svn' executable
-    find_package( Subversion REQUIRED )
-
-    locateMCATKDir()
-    
-    # Find software repository (mirror or master)
-    find_path( MCATK_Repository 
-               NAMES db 
-               PATHS ${MCATKDir}
-               PATH_SUFFIXES svn/repo 
-                             master 
-                             mirror
-              )
-    if( NOT MCATK_Repository )
-        message( FATAL_ERROR "Unable to locate repository." )
-    endif()
-
-    if( BranchName )
-        set( ToolkitBranch "mcatk/branch/${BranchName}" )
-    else()
-        set( ToolkitBranch "mcatk/trunk" )
-    endif()
-
-    # Note: you can't use variables set into parent scope. Weird but true.
-    set( svnPath "file://${MCATK_Repository}/${ToolkitBranch}" )
-    set( CTEST_SVN_COMMAND ${Subversion_SVN_EXECUTABLE} PARENT_SCOPE )
-#   message( FATAL_ERROR " ctest src [ ${CTEST_SOURCE_DIRECTORY} ]" )
-    set( CTEST_CHECKOUT_COMMAND "${Subversion_SVN_EXECUTABLE} co ${svnPath} ${CTEST_SOURCE_DIRECTORY}" PARENT_SCOPE )
-    set( CTEST_UPDATE_COMMAND "${Subversion_SVN_EXECUTABLE}" PARENT_SCOPE )
-
-    # Remove source directory if it appears corrupt
-    if( EXISTS ${CTEST_SOURCE_DIRECTORY} )
-        if( EXISTS ${CTEST_SOURCE_DIRECTORY}/CMakeLists.txt )
-            message( STATUS "SVN: Directory already exists.  Checking..." )
-            set( CTEST_CHECKOUT_COMMAND "${Subversion_SVN_EXECUTABLE} info ${CTEST_SOURCE_DIRECTORY}" PARENT_SCOPE )
-        else()
-            execute_process( COMMAND ${CMAKE_COMMAND} -E remove_directory ${CTEST_SOURCE_DIRECTORY} )
-        endif()
-    endif()
-endfunction()
-
-#######################################################################
 # Post results to Dashboard
 #--------------------------------
 function( CollateAndPostResults )
 
     if( NOT toolkitSrcDir )
-        if( BranchName )
-            set( toolkitSrcDir   "${AutoScratch}/${Model}-${CTestSite}/${BranchName}" )
-            set( toolkitBuildDir "${AutoScratch}/${Model}-${CTestSite}/obj/${BranchName}-${Tool}${CompilerVersion}-${Build}" )
+        message( FATAL_ERROR "This routine should only be called AFTER configureCTest." )
+    endif()
+
+    set( CTEST_PROJECT_SUBPROJECTS ToolkitLib FlatAPI QtAPI )
+    
+    find_program( PYTHON python 
+                  PATHS /usr/lanl/bin )
+    find_file( MergeScript 
+               MergeTestResults.py 
+               PATHS ${CMAKE_CURRENT_LIST_DIR}
+             )
+    
+    set( subprojects ToolkitLib Flat Qt4 )
+    
+    foreach( subproject ${subprojects} )
+    
+        if( ${subproject} STREQUAL ToolkitLib )
+            set( SubProjectName ${subproject} )
+            unset( SubProjectDir )
+    
         else()
-            set( toolkitSrcDir   "${AutoScratch}/${Model}-${CTestSite}/trunk" )
-            set( toolkitBuildDir "${AutoScratch}/${Model}-${CTestSite}/obj/${Tool}${CompilerVersion}-${Build}" )
+            set( SubProjectName ${subproject}API )
+            set( SubProjectDir  "API/${subproject}" )
+            if( ${subproject} STREQUAL Qt4 )
+                set( SubProjectName "QtAPI" )
+            endif()
         endif()
-    endif()
-
-    # set the options into a single argument
-    set( ScriptDefines -DModel=${Model} -DTool=${Tool} -DBuild=${Build} -DtoolkitSrcDir=${toolkitSrcDir} -DtoolkitBuildDir=${toolkitBuildDir} )
-
-    find_file( AutoReportScript 
-               ctestReport.cmake 
-               PATHS ${CMAKE_CURRENT_LIST_DIR} )
-
-    set( CmdLine ${CMAKE_CTEST_COMMAND} ${ScriptDefines} -S ${AutoReportScript} )
-
-    execute_process( COMMAND ${CmdLine}
-                     RESULT DashboardResult 
-                     OUTPUT_VARIABLE DashboardOut
-                     ERROR_VARIABLE DashboardErr )
-
-    if( DashboardResult EQUAL 0 )
-        message( "Result submission successful. [ ${Model}-${Tool}-${Build} ]" )
-    else()
-        message( "While executing : [ ${CmdLine} ]" )
-        message( FATAL_ERROR "Dashboard submission encountered difficulties.\n ERR: ${DashboardErr}" )
-    endif()
-
+    
+        set_property( GLOBAL PROPERTY SubProject ${SubProjectName} )
+        set_property( GLOBAL PROPERTY Label      ${SubProjectName} )
+        set( CTEST_SOURCE_DIRECTORY "${toolkitSrcDir}/${SubProjectDir}" )
+        set( CTEST_BINARY_DIRECTORY "${toolkitBuildDir}/${SubProjectDir}")
+    
+        # This initiates a lot of work underneath ctest itself.  It is essential to
+        # what follows.  APPEND appears here to prevent a new date tag from being created.
+        ctest_start( ${Model} APPEND )
+    
+        file  ( READ "${CTEST_BINARY_DIRECTORY}/Testing/TAG" tag_file )
+        string( REGEX MATCH "[^\n]*" BuildTag ${tag_file} )
+        set   ( TEST_OUTPUT_DIR "${CTEST_BINARY_DIRECTORY}/Testing/${BuildTag}" )
+        set   ( TEST_TEMP_DIR "${TEST_OUTPUT_DIR}/temp" )
+    
+        #######################################################################
+        # Merge nightly tests into a single xml
+        #--------------------------------
+        execute_process( COMMAND ${PYTHON} ${MergeScript} WORKING_DIRECTORY ${TEST_TEMP_DIR} )
+        configure_file( ${TEST_TEMP_DIR}/Test.xml ${TEST_OUTPUT_DIR} COPYONLY )
+      
+        #######################################################################
+        # Submit results
+        #--------------------------------
+        if( APPLE )
+            set( CMAKE_USE_OPENSSL OFF )
+        endif()
+        ctest_submit()
+        
+    endforeach()
 endfunction()
 
 #######################################################################

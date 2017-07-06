@@ -3,6 +3,11 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" moduleId="org.eclipse.cdt.core.settings" name="Debug">
+				<macros>
+					<stringMacro name="CUDA" type="VALUE_TEXT" value="true"/>
+					<stringMacro name="PlatformOS" type="VALUE_TEXT" value="rhel7"/>
+					<stringMacro name="BINARY_DIR" type="VALUE_PATH_DIR" value="/usr/projects/mcatk/user/jsweezy/obj/gnu-release-MonteRay"/>
+				</macros>
 				<externalSettings/>
 				<extensions>
 					<extension id="com.nvidia.cuda.ide.cubin" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -17,7 +22,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" name="Debug" parent="com.nvidia.cuda.ide.on_path.configuration.debug">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" name="Debug" parent="com.nvidia.cuda.ide.on_path.configuration.debug">
 					<folderInfo id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945." name="/" resourcePath="">
 						<toolChain id="com.nvidia.cuda.tools.toolchain.on_path.exe.debug.1962468529" name="CUDA Toolkit on the path" nonInternalBuilderId="com.nvidia.cuda.ide.builder" superClass="com.nvidia.cuda.tools.toolchain.on_path.exe.debug">
 							<targetPlatform archList="all" binaryParser="com.nvidia.cuda.ide.elf;com.nvidia.cuda.ide.macho;com.nvidia.cuda.ide.cubin" id="com.nvidia.cuda.ide.targetPlatform.2038224067" isAbstract="false" name="Debug Platform" osList="linux,macosx" superClass="com.nvidia.cuda.ide.targetPlatform"/>
@@ -215,10 +220,10 @@
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Release2"/>
-		<configuration configurationName="Release">
+		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/raytrace2"/>
 		</configuration>
-		<configuration configurationName="Debug">
+		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/raytrace2"/>
 		</configuration>
 	</storageModule>
