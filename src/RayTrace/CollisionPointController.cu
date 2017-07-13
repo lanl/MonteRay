@@ -170,15 +170,15 @@ CollisionPointController::flush(bool final){
 
 void
 CollisionPointController::flushToFile(bool final){
-//	if( final ) {
-//		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = true \n";
-//	} else {
-//		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = false \n";
-//	}
+	if( final ) {
+		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = true \n";
+	} else {
+		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = false \n";
+	}
 
 	if( ! fileIsOpen ) {
 		try {
-//			std::cout << "Debug: CollisionPointController::flushToFile - opening file, filename=" << outputFileName << "\n";
+			std::cout << "Debug: CollisionPointController::flushToFile - opening file, filename=" << outputFileName << "\n";
 			currentBank->openOutput( outputFileName );
 		} catch ( ... ) {
 	        std::stringstream msg;
@@ -192,7 +192,7 @@ CollisionPointController::flushToFile(bool final){
 	}
 
 	try {
-//		std::cout << "Debug: CollisionPointController::flushToFile - writing bank \n";
+		std::cout << "Debug: CollisionPointController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
 		currentBank->writeBank();
 	} catch ( ... ) {
         std::stringstream msg;
@@ -206,6 +206,7 @@ CollisionPointController::flushToFile(bool final){
 
 	if( final ) {
 		try {
+			std::cout << "Debug: CollisionPointController::flushToFile - file flush, closing collision file\n";
 			currentBank->closeOutput();
 		} catch ( ... ) {
 	        std::stringstream msg;

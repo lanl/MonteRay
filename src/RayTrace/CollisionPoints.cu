@@ -247,14 +247,16 @@ void CollisionPointsHost::copyToGPU(void) {
 #endif
     }
 
-
 void CollisionPointsHost::readHeader(std::fstream& infile){
+//	std::cout << "Debug: CollisionPointsHost::readHeader - starting.\n";
     if( ! infile.good() ) {
         fprintf(stderr, "CollisionPointsHost::readHeader -- Failure prior to reading header.  %s %d\n", __FILE__, __LINE__);
         exit(1);
     }
     try{
+//    	std::cout << "Debug: CollisionPointsHost::reading version - starting.\n";
         binaryIO::read(infile,currentVersion);
+//        std::cout << "Debug: CollisionPointsHost::reading number of collisions on the file - starting.\n";
         binaryIO::read(infile,numCollisionOnFile);
     }
     catch( std::iostream::failure& e  ) {
@@ -303,11 +305,15 @@ void CollisionPointsHost::resetFile(void){
 }
 
 void CollisionPointsHost::openInput( const std::string& file){
+//	std::cout << "Debug: CollisionPointsHost::openInput(string) - starting -- setting filename.\n";
     setFilename( file );
+//    std::cout << "Debug: CollisionPointsHost::openInput(string) - opening input.\n";
     openInput(io);
+//    std::cout << "Debug: CollisionPointsHost::openInput(string) - input open.\n";
 }
 
 void CollisionPointsHost::openInput( std::fstream& infile){
+//	std::cout << "Debug: CollisionPointsHost::openInput(fstream) - starting.\n";
     iomode = "in";
     if( infile.is_open() ) {
         closeInput(infile);
@@ -320,7 +326,9 @@ void CollisionPointsHost::openInput( std::fstream& infile){
     }
     assert( infile.good() );
     infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+//    std::cout << "Debug: CollisionPointsHost::openInput(fstream) - reading header.\n";
     readHeader(infile);
+//    std::cout << "Debug: CollisionPointsHost::openInput(fstream) - reading header done.\n";
 }
 
 void CollisionPointsHost::closeOutput(void) {
