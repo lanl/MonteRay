@@ -1,6 +1,8 @@
 #ifndef GPUTALLY_H_
 #define GPUTALLY_H_
 
+#include <string>
+
 #include "MonteRayDefinitions.hh"
 
 namespace MonteRay{
@@ -32,6 +34,9 @@ public:
 
     ~gpuTallyHost();
 
+    void ctor( unsigned num);
+    void dtor();
+
     void copyToGPU(void);
     void copyToCPU(void);
 
@@ -40,6 +45,9 @@ public:
 
     unsigned size() const { return ptr->size; }
     void clear(void);
+
+    void write( std::string filename ) const;
+    void read( std::string filename );
 
 private:
     gpuTally* ptr;

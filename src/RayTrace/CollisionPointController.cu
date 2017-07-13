@@ -170,15 +170,52 @@ CollisionPointController::flush(bool final){
 
 void
 CollisionPointController::flushToFile(bool final){
+//	if( final ) {
+//		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = true \n";
+//	} else {
+//		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = false \n";
+//	}
 
 	if( ! fileIsOpen ) {
-		currentBank->openOutput( outputFileName );
+		try {
+//			std::cout << "Debug: CollisionPointController::flushToFile - opening file, filename=" << outputFileName << "\n";
+			currentBank->openOutput( outputFileName );
+		} catch ( ... ) {
+	        std::stringstream msg;
+	        msg << "Failure opening file for collision writing!\n";
+	        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "CollisionPointController::flushToFile" << "\n\n";
+	        std::cout << "MonteRay Error: " << msg.str();
+	        throw std::runtime_error( msg.str() );
+		}
+
+		fileIsOpen = true;
 	}
-	currentBank->writeBank();
+
+	try {
+//		std::cout << "Debug: CollisionPointController::flushToFile - writing bank \n";
+		currentBank->writeBank();
+	} catch ( ... ) {
+        std::stringstream msg;
+        msg << "Failure writing collisions to file!\n";
+        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "CollisionPointController::flushToFile" << "\n\n";
+        std::cout << "MonteRay Error: " << msg.str();
+        throw std::runtime_error( msg.str() );
+	}
+
 	currentBank->clear();
 
 	if( final ) {
-		currentBank->closeOutput();
+		try {
+			currentBank->closeOutput();
+		} catch ( ... ) {
+	        std::stringstream msg;
+	        msg << "Failure closing collision file!\n";
+	        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " <<"CollisionPointController::flushToFile" << "\n\n";
+	        std::cout << "MonteRay Error: " << msg.str();
+	        throw std::runtime_error( msg.str() );
+		}
+
+		fileIsOpen = false;
 	}
 }
 

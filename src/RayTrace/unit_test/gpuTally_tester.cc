@@ -53,5 +53,17 @@ SUITE( gpuTally_tester ) {
         helper.launchAddTally(&tally, 0, 2.5, 1.25 );
         CHECK_CLOSE( 3.75, tally.getTally(0), 1e-4 );
     }
+    TEST( write_to_file_read_from_file ) {
+    	std::string filename = "test_write_tally_to_file_read_from_file.bin";
+        gpuTallyHost tally(5);
+        tally.setTally(4, 99.0);
+        tally.write( filename);
+
+        gpuTallyHost readTally(1);
+        CHECK_EQUAL( 1, readTally.size());
+        readTally.read( filename );
+        CHECK_EQUAL( 5, readTally.size());
+        CHECK_CLOSE( 99.0, tally.getTally(4), 1e-4 );
+    }
 
 }

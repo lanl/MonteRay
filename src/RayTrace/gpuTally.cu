@@ -1,9 +1,11 @@
 #include "gpuTally.h"
 
 #include <stdexcept>
+#include <fstream>
 
 #include "GPUErrorCheck.hh"
 #include "GPUAtomicAdd.hh"
+#include "MonteRay_binaryIO.hh"
 
 namespace MonteRay{
 
@@ -70,16 +72,20 @@ void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value ) {
 }
 
 gpuTallyHost::gpuTallyHost(unsigned num) {
-	ptr = new gpuTally;
-    ctor(ptr, num);
-    cudaCopyMade = false;
-    ptr_device = NULL;
-    temp = NULL;
+	ctor(num);
 }
 
-gpuTallyHost::~gpuTallyHost() {
+void gpuTallyHost::ctor( unsigned num) {
+	ptr = new gpuTally;
+	MonteRay::ctor(ptr, num);
+	cudaCopyMade = false;
+	ptr_device = NULL;
+	temp = NULL;
+}
+
+void gpuTallyHost::dtor() {
     if( ptr != 0 ) {
-        dtor( ptr );
+    	MonteRay::dtor( ptr );
         delete ptr;
         ptr = 0;
     }
@@ -91,6 +97,11 @@ gpuTallyHost::~gpuTallyHost() {
     	cudaFree( ptr_device );
 #endif
     }
+}
+
+
+gpuTallyHost::~gpuTallyHost() {
+	dtor();
 }
 
 void gpuTallyHost::clear(void) {
@@ -132,6 +143,57 @@ void gpuTallyHost::copyToCPU(void) {
 	// copy data
     CUDA_CHECK_RETURN( cudaMemcpy(ptr->tally, temp->tally, allocSize, cudaMemcpyDeviceToHost));
 #endif
+}
+
+void gpuTallyHost::write( std::string filename ) const {
+	std::ofstream outfile;
+	outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
+	if( ! outfile.is_open() ) {
+		fprintf(stderr, "gpuTallyHost::write -- Failure to open file to write gpuTally info,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+		exit(1);
+	}
+	assert( outfile.good() );
+	outfile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+
+	outfile.seekp(0, std::ios::beg); // reposition to start of file
+
+    unsigned version = 0;
+    binaryIO::write(outfile,version);
+    binaryIO::write(outfile,size());
+
+	for( unsigned i = 0; i< size(); ++i ){
+		binaryIO::write(outfile, getTally(i) );
+	}
+	outfile.close();
+}
+
+void gpuTallyHost::read( std::string filename ) {
+	std::ifstream infile;
+	infile.open( filename.c_str(), std::ios::binary | std::ios::in);
+	if( ! infile.is_open() ) {
+		fprintf(stderr, "gpuTallyHost::write -- Failure to open file to read gpuTally info,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+		exit(1);
+	}
+	assert( infile.good() );
+	infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+
+	infile.seekg(0, std::ios::beg); // reposition to start of file
+
+    unsigned version;
+    binaryIO::read(infile,version);
+
+    unsigned size;
+    binaryIO::read(infile,size);
+
+    dtor();
+    ctor(size);
+
+	for( unsigned i = 0; i < size; ++i ){
+		gpuTallyType_t value;
+		binaryIO::read(infile, value);
+		setTally(i,value);
+	}
+	infile.close();
 }
 
 }
