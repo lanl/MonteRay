@@ -193,13 +193,16 @@ SUITE( Collision_fi_bank_controller_tester ) {
     	double w = 0.0;
     	double energy = 1.0;
     	double weight = 1.0;
-    	double index = 505050;
+    	unsigned index = 505050;
+    	unsigned detectorIndex = 101;
+    	short int particleType = 0;
+
 
     	unsigned nI = 2;
     	unsigned nJ = 1;
     	for( unsigned i = 0; i < nI; ++i ) {
     	    for( unsigned j = 0; j < nJ; ++j ) {
-    	        controller.add( x, y, z, u, v, w, energy, weight, index );
+    	        controller.add( x, y, z, u, v, w, energy, weight, index, detectorIndex, particleType );
     	    }
     	    CHECK_EQUAL( nJ, controller.size() );
     	    controller.flush(false);

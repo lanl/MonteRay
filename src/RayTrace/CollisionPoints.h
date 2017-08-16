@@ -11,13 +11,18 @@ typedef unsigned CollisionPointsSize_t;
 
 typedef float* CollisionPosition_t;
 typedef float* CollisionDirection_t;
+typedef unsigned DetectorIndex_t;
+typedef short int ParticleType_t;
 
 struct gpuParticle_t {
 	gpuFloatType_t pos[3];
 	gpuFloatType_t dir[3];
     gpuFloatType_t energy;
     gpuFloatType_t weight;
-    unsigned index;
+    unsigned index; // starting position mesh index
+    DetectorIndex_t detectorIndex;  // for next-event estimator
+    ParticleType_t particleType; // particle type 0 = neutron, 1=photon
+
 };
 
 struct CollisionPoints {
@@ -68,6 +73,16 @@ unsigned getIndex( CollisionPoints* ptr, CollisionPointsSize_t i);
 #ifdef CUDA
 __device__ __host__
 #endif
+DetectorIndex_t getDetectorIndex( CollisionPoints* ptr, CollisionPointsSize_t i);
+
+#ifdef CUDA
+__device__ __host__
+#endif
+ParticleType_t getParticleType( CollisionPoints* ptr, CollisionPointsSize_t i);
+
+#ifdef CUDA
+__device__ __host__
+#endif
 void clear(CollisionPoints* ptr );
 
 #ifdef CUDA
@@ -78,11 +93,12 @@ gpuParticle_t pop(CollisionPoints* ptr );
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuParticle_t getParticle(CollisionPoints* ptr, CollisionPointsSize_t i);
+gpuParticle_t getParticle(const CollisionPoints* ptr, CollisionPointsSize_t i);
 
 
 class CollisionPointsHost {
 public:
+	typedef MonteRay::gpuParticle_t gpuParticle_t;
     CollisionPointsHost( unsigned num);
 
     ~CollisionPointsHost();
@@ -104,8 +120,11 @@ public:
     gpuFloatType_t getW(unsigned i) const { return getDirection(i)[2]; }
     gpuFloatType_t getEnergy(unsigned i) const { return MonteRay::getEnergy( ptrPoints, i); }
     gpuFloatType_t getWeight(unsigned i) const { return MonteRay::getWeight( ptrPoints, i); }
-    gpuFloatType_t getIndex(unsigned i) const { return MonteRay::getIndex( ptrPoints, i); }
-    gpuParticle_t getParticle(unsigned i) { return MonteRay::getParticle( ptrPoints, i); }
+    unsigned getIndex(unsigned i) const { return MonteRay::getIndex( ptrPoints, i); }
+    DetectorIndex_t getDetectorIndex(unsigned i) const { return MonteRay::getDetectorIndex( ptrPoints, i); }
+    ParticleType_t getParticleType(unsigned i) const { return MonteRay::getParticleType( ptrPoints, i); }
+
+    gpuParticle_t getParticle(unsigned i) const { return MonteRay::getParticle( ptrPoints, i); }
 
 
     void add( const gpuParticle_t& );
@@ -114,7 +133,8 @@ public:
 
     void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
               gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-              gpuFloatType_t energy, gpuFloatType_t weight, unsigned index);
+              gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
+              DetectorIndex_t detectorIndex, ParticleType_t particleType );
 
     void clear(void) { MonteRay::clear( ptrPoints ); }
 
@@ -153,6 +173,9 @@ public:
     unsigned getVersion(void) const { return currentVersion; }
 
     bool isCudaCopyMade(void) const { return cudaCopyMade; }
+
+    void debugPrint() const;
+    void printParticle(unsigned i, const gpuParticle_t& particle ) const;
 
 private:
     CollisionPoints* ptrPoints;

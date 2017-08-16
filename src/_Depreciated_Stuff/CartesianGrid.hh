@@ -22,7 +22,7 @@ namespace MonteRay{
 
 class CartesianGrid {
 public:
-	typedef Vector3D<double> Position_t;
+	typedef MonteRay::Vector3D<double> Position_t;
 
 
 	CartesianGrid(){

@@ -134,7 +134,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
         unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
         controller.add( 0.0, 0.0, 0.0,
         		        1.0, 0.0, 0.0,
-        		        1.0, 1.0, i);
+        		        1.0, 1.0, i, 1, 0);
         //     	s
         CHECK_EQUAL(1, controller.size());
     }
@@ -160,6 +160,8 @@ SUITE( Collision_unit_bank_controller_tester ) {
         particle.energy = 1.0;
         particle.weight = 1.0;
         particle.index = i;
+        particle.detectorIndex = 99;
+        particle.particleType = 0;
 
         controller.add( &particle );
         CHECK_EQUAL(1, controller.size());
@@ -186,6 +188,8 @@ SUITE( Collision_unit_bank_controller_tester ) {
         particle[0].energy = 7.0;
         particle[0].weight = 8.0;
         particle[0].index = 9;
+        particle[0].detectorIndex = 99;
+        particle[0].particleType = 0;
 
         particle[1].pos[0] = 11.0;
         particle[1].pos[1] = 12.0;
@@ -196,6 +200,8 @@ SUITE( Collision_unit_bank_controller_tester ) {
         particle[1].energy = 17.0;
         particle[1].weight = 18.0;
         particle[1].index = 19;
+        particle[1].detectorIndex = 99;
+        particle[1].particleType = 0;
 
         controller.add( particle, 2 );
         CHECK_EQUAL(2, controller.size());
@@ -222,6 +228,8 @@ SUITE( Collision_unit_bank_controller_tester ) {
         	particle[i].energy = 7.0;
         	particle[i].weight = 8.0;
         	particle[i].index = i;
+        	particle[i].detectorIndex = 99;
+        	particle[i].particleType = 0;
         }
         controller.setCapacity(3);
         controller.add( particle, 10 );
@@ -256,7 +264,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
         controller.add(   x,   y,   z,
         		        1.0, 0.0, 0.0,
-        		        1.0, 1.0, i);
+        		        1.0, 1.0, i, 1, 0);
 
         std::cout << "Debug: CollisionPointController_unit_tester -- single_ray - flushing controller \n";
         controller.flush(true);
@@ -299,7 +307,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
         controller.add(   x,   y,   z,
         		        1.0, 0.0, 0.0,
-        		        1.0, 1.0, i);
+        		        1.0, 1.0, i, 1, 0);
 
         controller.flush(true);
     }

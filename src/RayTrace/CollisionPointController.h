@@ -5,6 +5,7 @@
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_timer.hh"
+#include "CollisionPoints.h"
 
 namespace MonteRay {
 
@@ -12,12 +13,12 @@ class GridBinsHost;
 class SimpleMaterialListHost;
 class MonteRay_MaterialProperties;
 class gpuTallyHost;
-class CollisionPointsHost;
 
 struct gpuParticle_t;
 
 class CollisionPointController {
 public:
+
 	CollisionPointController(unsigned nBlocks,
 			                 unsigned nThreads,
 			                 GridBinsHost*,
@@ -33,11 +34,13 @@ public:
 
 	void add( gpuFloatType_t pos[3],
 			  gpuFloatType_t dir[3],
-			  gpuFloatType_t energy, gpuFloatType_t weight, unsigned index);
+			  gpuFloatType_t energy, gpuFloatType_t weight,
+			  unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType);
 
     void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
               gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-              gpuFloatType_t energy, gpuFloatType_t weight, unsigned index);
+              gpuFloatType_t energy, gpuFloatType_t weight,
+			  unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType);
 
     void add( const gpuParticle_t& );
     void add( const gpuParticle_t* particle, unsigned N=1 );
@@ -66,9 +69,13 @@ public:
     	sendToFile();
     }
 
-    void readCollisionsFromFile(std::string name);
+    size_t readCollisionsFromFile(std::string name);
 
     void flushToFile(bool final=false);
+
+    void debugPrint() {
+    	currentBank->debugPrint();
+    }
 
 private:
 	unsigned nBlocks;

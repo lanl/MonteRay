@@ -12,7 +12,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"
 
-#if( true )
+#if( false )
 SUITE( Collision_fi_tester ) {
 
 	TEST( setup ) {

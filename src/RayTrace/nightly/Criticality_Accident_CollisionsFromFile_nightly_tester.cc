@@ -200,36 +200,56 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	// 256
     	//  64
     	// 192
-    	CollisionPointController controller( 2048,
-    			2048,
+    	CollisionPointController controller( 256,
+    			256,
     			pGrid,
     			pMatList,
     			pMatProps,
     			pTally );
     	controller.setCapacity(40000*8U*20*10U);
 
-    	controller.readCollisionsFromFile( "/usr/projects/mcatk/user/jsweezy/link_files/Criticality_accident_collisions.bin" );
+    	size_t numCollisions = controller.readCollisionsFromFile( "/usr/projects/mcatk/user/jsweezy/link_files/Criticality_accident_collisions.bin" );
 
     	controller.sync();
+    	CHECK_EQUAL( 56592340 , numCollisions );
+
     	pTally->copyToCPU();
 
     	gpuTallyHost benchmarkTally(1);
     	benchmarkTally.read( "/usr/projects/mcatk/user/jsweezy/link_files/Criticality_Accident_gpuTally_n20_particles40000_cycles1.bin" );
 
+    	gpuTallyType_t maxdiff = 0.0;
+    	unsigned numBenchmarkZeroNonMatching = 0;
+    	unsigned numGPUZeroNonMatching = 0;
+    	unsigned numZeroZero = 0;
     	for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
     		if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
     			gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
-    			CHECK_CLOSE( 0.0, relDiff, 0.34 );
+    			CHECK_CLOSE( 0.0, relDiff, 0.20 );
+    			if( std::abs(relDiff) > maxdiff ){
+    				maxdiff = std::abs(relDiff);
+    			}
+    		} else if( pTally->getTally(i) > 0.0) {
+    			++numBenchmarkZeroNonMatching;
+    		} else if( benchmarkTally.getTally(i) > 0.0) {
+    			++numGPUZeroNonMatching;
     		} else {
-    			CHECK_CLOSE( 0.0, pTally->getTally(i), 1e-4);
-    			CHECK_CLOSE( 0.0, benchmarkTally.getTally(i), 1e-4);
+    			++numZeroZero;
     		}
     	}
 
+    	std::cout << "Debug:  maxdiff=" << maxdiff << "\n";
+    	std::cout << "Debug:  tally size=" << benchmarkTally.size() << "\n";
+//    	std::cout << "Debug:  tally from file size=" << pTally->size() << "\n";
+//    	std::cout << "Debug:  numBenchmarkZeroNonMatching=" << numBenchmarkZeroNonMatching << "\n";
+//    	std::cout << "Debug:        numGPUZeroNonMatching=" << numGPUZeroNonMatching << "\n";
+//    	std::cout << "Debug:                num both zero=" << numZeroZero << "\n";
+
     	// timings on GTX TitanX GPU 256x256
-    	// total gpuTime = 10.5218
-    	// total cpuTime = 0.328044
-    	// total wallTime = 10.5218
+    	//Debug: total gpuTime = 10.4895
+    	//Debug: total cpuTime = 0.326181
+    	//Debug: total wallTime = 10.4896
+
 
     	// timings on GTX TitanX GPU 1024x1024
     	// total gpuTime = 10.3725

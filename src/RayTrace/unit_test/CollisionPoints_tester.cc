@@ -21,12 +21,13 @@ SUITE( CollisionPoints_simple_tests ) {
     TEST( add_two_particle_via_components ) {
     	CollisionPointsHost points(2);
 
+
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
-    			14.0, 0.9, 99);
+    			14.0, 0.9, 99, 199, 0 );
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
-    			14.0, 0.9, 99);
+    			14.0, 0.9, 99, 199, 0 );
     	CHECK_EQUAL(2, points.size() );
     }
 
@@ -42,6 +43,8 @@ SUITE( CollisionPoints_simple_tests ) {
     	particle.energy = 7.0;
     	particle.weight = 8.0;
     	particle.index = 9;
+    	particle.detectorIndex = 99;
+    	particle.particleType = 0;
 
     	points.add( particle );
     	CHECK_EQUAL(1, points.size() );
@@ -50,7 +53,9 @@ SUITE( CollisionPoints_simple_tests ) {
     	CHECK_EQUAL(2, points.size() );
 
     	gpuParticle_t particle2 = points.getParticle(0);
+    	CHECK_CLOSE(1.0, particle2.pos[0], 1e-5 );
     	CHECK_EQUAL(9, particle2.index );
+
     	particle2 = points.getParticle(1);
     	CHECK_EQUAL(19, particle2.index );
 
@@ -68,6 +73,8 @@ SUITE( CollisionPoints_simple_tests ) {
       	particle[0].energy = 7.0;
       	particle[0].weight = 8.0;
       	particle[0].index = 9;
+      	particle[0].detectorIndex = 99;
+      	particle[0].particleType = 0;
 
       	particle[1].pos[0] = 11.0;
       	particle[1].pos[1] = 12.0;
@@ -78,11 +85,14 @@ SUITE( CollisionPoints_simple_tests ) {
       	particle[1].energy = 17.0;
       	particle[1].weight = 18.0;
       	particle[1].index = 19;
+      	particle[1].detectorIndex = 99;
+      	particle[1].particleType = 0;
 
       	points.add( particle, 2 );
       	CHECK_EQUAL(2, points.size() );
 
       	gpuParticle_t particle2 = points.getParticle(0);
+      	CHECK_CLOSE(1.0, particle2.pos[0], 1e-5 );
       	CHECK_EQUAL(9, particle2.index );
       	particle2 = points.getParticle(1);
       	CHECK_EQUAL(19, particle2.index );
@@ -101,6 +111,8 @@ SUITE( CollisionPoints_simple_tests ) {
        	particle[0].energy = 7.0;
        	particle[0].weight = 8.0;
        	particle[0].index = 9;
+       	particle[0].detectorIndex = 99;
+       	particle[0].particleType = 0;
 
        	particle[1].pos[0] = 11.0;
        	particle[1].pos[1] = 12.0;
@@ -111,12 +123,15 @@ SUITE( CollisionPoints_simple_tests ) {
        	particle[1].energy = 17.0;
        	particle[1].weight = 18.0;
        	particle[1].index = 19;
+       	particle[1].detectorIndex = 99;
+       	particle[1].particleType = 0;
 
        	void* voidPtr = static_cast<void*>( particle );
        	points.add( voidPtr, 2 );
        	CHECK_EQUAL(2, points.size() );
 
        	gpuParticle_t particle2 = points.getParticle(0);
+       	CHECK_CLOSE(1.0, particle2.pos[0], 1e-5 );
        	CHECK_EQUAL(9, particle2.index );
        	particle2 = points.getParticle(1);
        	CHECK_EQUAL(19, particle2.index );
@@ -132,10 +147,10 @@ SUITE( CollisionPoints_simple_tests ) {
 
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
-    			14.0, 0.9, 99);
+    			14.0, 0.9, 99, 199, 0);
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
-    			14.0, 0.9, 99);
+    			14.0, 0.9, 99, 199, 0);
         CHECK_EQUAL(2, points.size() );
         CHECK_EQUAL(2, points.capacity() );
 
@@ -155,10 +170,10 @@ SUITE( CollisionPoints_simple_tests ) {
 
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
-    			14.0, 0.9, 99);
+    			14.0, 0.9, 99, 199, 0);
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
-    			24.0, 0.9, 99);
+    			24.0, 0.9, 99, 199, 0);
         CHECK_EQUAL(2, points.size() );
 
         points.CopyToGPU();
@@ -173,24 +188,51 @@ SUITE( CollisionPoints_simple_tests ) {
      	CollisionPointsTester tester;
 
      	CollisionPointsHost points(2);
-     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin"  );
-     	CHECK_EQUAL(285735, points.size() );
+     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+     	CHECK_EQUAL(2568016, points.size() );
 
      	points.CopyToGPU();
      	tester.setupTimers();
      	CollisionPointsSize_t result = tester.launchGetCapacity(1,1,points);
      	tester.stopTimers();
-     	CHECK_EQUAL( 285735, unsigned(result) );
+     	CHECK_EQUAL( 2568016, unsigned(result) );
 
-     	CHECK_CLOSE(0.948374, points.getEnergy(0), 1e-6);
-     	CHECK_CLOSE(-3.05307, points.getX(0), 1e-5);
-     	CHECK_CLOSE(5.3902, points.getY(0), 1e-4);
-     	CHECK_CLOSE(9.21146, points.getZ(0), 1e-5);
+     	// x =  5.09468442; y= 3.39810971; z=-0.75147645; u=0.73015572; v=-0.62438205; w=-0.27752420; energy=4.44875086e+00; weight= 0.13102725; index=485557;
 
-     	CHECK_CLOSE(2.12997e-08, points.getEnergy(1000), 1e-13);
-     	CHECK_CLOSE(-8.08183, points.getX(1000), 1e-5);
-     	CHECK_CLOSE(-6.36573, points.getY(1000), 1e-5);
-     	CHECK_CLOSE(4.8127, points.getZ(1000), 1e-4);
+     	CHECK_CLOSE(5.09468, points.getX(0), 1e-5);
+     	CHECK_CLOSE(3.39811, points.getY(0), 1e-5);
+     	CHECK_CLOSE(-0.751476, points.getZ(0), 1e-5);
+     	CHECK_CLOSE(0.73015572, points.getU(0), 1e-5);
+     	CHECK_CLOSE(-0.62438205, points.getV(0), 1e-5);
+     	CHECK_CLOSE(-0.27752420, points.getW(0), 1e-5);
+     	CHECK_CLOSE(4.44875, points.getEnergy(0), 1e-5);
+     	CHECK_CLOSE(0.13102725, points.getWeight(0), 1e-5);
+     	CHECK_EQUAL(485557, points.getIndex(0) );
+
+     	// x =  5.09468442; y= 3.39810971; z=-0.75147645; u=0.24749477; v=-0.46621658; w=-0.84934589; energy=4.46686655e+00; weight= 0.13102725; index=485557;
+
+     	CHECK_CLOSE(5.09468, points.getX(1), 1e-5);
+      	CHECK_CLOSE(3.39811, points.getY(1), 1e-5);
+      	CHECK_CLOSE(-0.751476, points.getZ(1), 1e-5);
+      	CHECK_CLOSE(0.24749477, points.getU(1), 1e-5);
+      	CHECK_CLOSE(-0.46621658, points.getV(1), 1e-5);
+      	CHECK_CLOSE(-0.84934589, points.getW(1), 1e-5);
+      	CHECK_CLOSE(4.46686655, points.getEnergy(1), 1e-5);
+      	CHECK_CLOSE(0.13102725, points.getWeight(1), 1e-5);
+      	CHECK_EQUAL(485557, points.getIndex(1) );
+
+      	//  x = -4.03245961; y=-2.47439122; z=-13.36526208; u=0.02893844; v= 0.51430749; w=-0.85711748; energy=3.00844045e-08; weight= 0.13102725; index=304643;
+
+     	CHECK_CLOSE(-4.03245961, points.getX(1000), 1e-5);
+      	CHECK_CLOSE(-2.47439122, points.getY(1000), 1e-5);
+      	CHECK_CLOSE(-13.36526208, points.getZ(1000), 1e-5);
+      	CHECK_CLOSE(0.02893844, points.getU(1000), 1e-5);
+      	CHECK_CLOSE(0.51430749, points.getV(1000), 1e-5);
+      	CHECK_CLOSE(-0.85711748, points.getW(1000), 1e-5);
+      	CHECK_CLOSE(3.00844045e-08, points.getEnergy(1000), 1e-5);
+      	CHECK_CLOSE(0.13102725, points.getWeight(1000), 1e-5);
+      	CHECK_EQUAL(304643, points.getIndex(1000) );
+
     }
 }
 
@@ -198,35 +240,55 @@ SUITE( CollisionPoints_bank_tests ) {
 	TEST( readToBank ) {
 		CollisionPointsHost bank(1000);
 		unsigned offset=0;
-		bool end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin", offset );
-     	CHECK_CLOSE(0.948374, bank.getEnergy(0), 1e-6);
-     	CHECK_CLOSE(-3.05307, bank.getX(0), 1e-5);
-     	CHECK_CLOSE(5.3902, bank.getY(0), 1e-4);
-     	CHECK_CLOSE(9.21146, bank.getZ(0), 1e-5);
+		bool end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+
+     	CHECK_CLOSE(5.09468, bank.getX(0), 1e-5);
+     	CHECK_CLOSE(3.39811, bank.getY(0), 1e-5);
+     	CHECK_CLOSE(-0.751476, bank.getZ(0), 1e-5);
+     	CHECK_CLOSE(0.73015572, bank.getU(0), 1e-5);
+     	CHECK_CLOSE(-0.62438205, bank.getV(0), 1e-5);
+     	CHECK_CLOSE(-0.27752420, bank.getW(0), 1e-5);
+     	CHECK_CLOSE(4.44875, bank.getEnergy(0), 1e-5);
+     	CHECK_CLOSE(0.13102725, bank.getWeight(0), 1e-5);
+     	CHECK_EQUAL(485557, bank.getIndex(0) );
+
+    	CHECK_CLOSE(5.09468, bank.getX(1), 1e-5);
+      	CHECK_CLOSE(3.39811, bank.getY(1), 1e-5);
+      	CHECK_CLOSE(-0.751476, bank.getZ(1), 1e-5);
+      	CHECK_CLOSE(0.24749477, bank.getU(1), 1e-5);
+      	CHECK_CLOSE(-0.46621658, bank.getV(1), 1e-5);
+      	CHECK_CLOSE(-0.84934589, bank.getW(1), 1e-5);
+      	CHECK_CLOSE(4.46686655, bank.getEnergy(1), 1e-5);
+      	CHECK_CLOSE(0.13102725, bank.getWeight(1), 1e-5);
+      	CHECK_EQUAL(485557, bank.getIndex(1) );
+
      	CHECK_EQUAL( false, end);
 
-
      	offset += bank.capacity();
-     	end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin", offset );
-    	CHECK_CLOSE(2.12997e-08, bank.getEnergy(0), 1e-13);
-     	CHECK_CLOSE(-8.08183, bank.getX(0), 1e-5);
-     	CHECK_CLOSE(-6.36573, bank.getY(0), 1e-5);
-     	CHECK_CLOSE(4.8127, bank.getZ(0), 1e-4);
+     	CHECK_EQUAL( 1000, offset );
+     	end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+
+     	CHECK_CLOSE(-4.03245961, bank.getX(0), 1e-5);
+      	CHECK_CLOSE(-2.47439122, bank.getY(0), 1e-5);
+      	CHECK_CLOSE(-13.36526208, bank.getZ(0), 1e-5);
+      	CHECK_CLOSE(0.02893844, bank.getU(0), 1e-5);
+      	CHECK_CLOSE(0.51430749, bank.getV(0), 1e-5);
+      	CHECK_CLOSE(-0.85711748, bank.getW(0), 1e-5);
+      	CHECK_CLOSE(3.00844045e-08, bank.getEnergy(0), 1e-5);
+      	CHECK_CLOSE(0.13102725, bank.getWeight(0), 1e-5);
+      	CHECK_EQUAL(304643, bank.getIndex(0) );
+
      	CHECK_EQUAL( false, end);
 	}
 
 	TEST( nicely_read_end_of_bank ) {
 		CollisionPointsHost bank(1000);
 		unsigned offset=0;
-		bool end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin", offset );
-     	CHECK_CLOSE(0.948374, bank.getEnergy(0), 1e-6);
-     	CHECK_CLOSE(-3.05307, bank.getX(0), 1e-5);
-     	CHECK_CLOSE(5.3902, bank.getY(0), 1e-4);
-     	CHECK_CLOSE(9.21146, bank.getZ(0), 1e-5);
+		bool end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
      	CHECK_EQUAL( false, end);
 
-     	offset = 285735 - 500;
-     	end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin", offset );
+     	offset = 2568016 - 500;
+     	end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
      	CHECK_EQUAL(500, bank.size());
      	CHECK_EQUAL( true, end);
 	}
@@ -237,11 +299,11 @@ SUITE( CollisionPoints_bank_tests ) {
 
 		bool end = false;
 		while( ! end ) {
-			end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin", offset );
+			end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 			offset += bank.size();
 		}
 
-     	CHECK_EQUAL(735, bank.size());
+     	CHECK_EQUAL(16, bank.size());
      	CHECK_EQUAL(true, end);
 	}
 

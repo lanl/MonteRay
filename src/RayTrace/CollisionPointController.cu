@@ -78,20 +78,23 @@ void
 CollisionPointController::add(
 		gpuFloatType_t pos[3],
 		gpuFloatType_t dir[3],
-		gpuFloatType_t energy, gpuFloatType_t weight, unsigned index) {
+		gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
+        DetectorIndex_t detectorIndex, ParticleType_t particleType) {
 
 	add( pos[0], pos[1], pos[2],
 		 dir[0], dir[1], dir[2],
-		 energy, weight, index );
+		 energy, weight, index,
+		 detectorIndex, particleType );
 }
 
 void
 CollisionPointController::add(
 		gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-        gpuFloatType_t energy, gpuFloatType_t weight, unsigned index) {
+        gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
+        DetectorIndex_t detectorIndex, ParticleType_t particleType) {
 
-	currentBank->add(x,y,z,u,v,w,energy,weight,index);
+	currentBank->add(x,y,z,u,v,w,energy,weight,index, detectorIndex, particleType );
 	if( size() == capacity() ) {
 		std::cout << "Debug: bank full, flushing.\n";
 		flush();
@@ -220,7 +223,7 @@ CollisionPointController::flushToFile(bool final){
 	}
 }
 
-void
+size_t
 CollisionPointController::readCollisionsFromFile(std::string name) {
 
 	bool end = false;
@@ -230,6 +233,7 @@ CollisionPointController::readCollisionsFromFile(std::string name) {
 		numParticles += currentBank->size();
 		flush(end);
 	} while ( ! end );
+	return numParticles;
 }
 
 void

@@ -84,6 +84,21 @@ unsigned getIndex( CollisionPoints* ptr, CollisionPointsSize_t i) {
 #ifdef CUDA
 __device__ __host__
 #endif
+DetectorIndex_t getDetectorIndex( CollisionPoints* ptr, CollisionPointsSize_t i) {
+    return ptr->points[i].detectorIndex;
+}
+
+#ifdef CUDA
+__device__ __host__
+#endif
+ParticleType_t getParticleType( CollisionPoints* ptr, CollisionPointsSize_t i) {
+    return ptr->points[i].particleType;
+}
+
+
+#ifdef CUDA
+__device__ __host__
+#endif
 void clear(CollisionPoints* ptr ) {
     ptr->size = 0;
 }
@@ -107,7 +122,7 @@ gpuParticle_t pop(CollisionPoints* ptr ) {
 #ifdef CUDA
 __device__ __host__
 #endif
-gpuParticle_t getParticle(CollisionPoints* ptr, CollisionPointsSize_t i){
+gpuParticle_t getParticle(const CollisionPoints* ptr, CollisionPointsSize_t i){
 #if !defined( RELEASE )
     if( i >= ptr->size ) {
         printf("pop(CollisionPoints*) -- index exceeds size.  %s %d\n", __FILE__, __LINE__);
@@ -153,7 +168,8 @@ CollisionPointsHost::~CollisionPointsHost() {
 
 void CollisionPointsHost::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-        gpuFloatType_t energy, gpuFloatType_t weight, unsigned index) {
+        gpuFloatType_t energy, gpuFloatType_t weight,
+        unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType) {
     gpuParticle_t particle;
     particle.pos[0] = x;
     particle.pos[1] = y;
@@ -164,6 +180,8 @@ void CollisionPointsHost::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_
     particle.energy = energy;
     particle.weight = weight;
     particle.index = index;
+    particle.detectorIndex = detectorIndex;
+    particle.particleType = particleType;
     add( particle );
 }
 
@@ -358,6 +376,22 @@ void CollisionPointsHost::writeParticle(const gpuParticle_t& particle){
     ++numCollisionOnFile;
 }
 
+void CollisionPointsHost::printParticle(unsigned i, const gpuParticle_t& particle ) const {
+	std::cout << "Debug: CollisionPointsHost::printParticle -- i=" << i;
+	std::cout << " x= " << particle.pos[0];
+	std::cout << " y= " << particle.pos[1];
+	std::cout << " z= " << particle.pos[2];
+	std::cout << " u= " << particle.dir[0];
+	std::cout << " v= " << particle.dir[1];
+	std::cout << " w= " << particle.dir[2];
+	std::cout << " E= " << particle.energy;
+	std::cout << " W= " << particle.weight;
+	std::cout << " index= " << particle.index;
+	std::cout << " detector index= " << particle.detectorIndex;
+	std::cout << " particle type= " << particle.particleType;
+	std::cout << "\n";
+}
+
 gpuParticle_t CollisionPointsHost::readParticle(void){
     ++currentParticlePos;
     if( currentParticlePos > numCollisionOnFile ) {
@@ -400,8 +434,8 @@ void CollisionPointsHost::writeBank() {
 
 bool CollisionPointsHost::readToBank( const std::string& file, unsigned start ){
     openInput( file );
-    unsigned offset = start * ( sizeof(gpuFloatType_t)*8+sizeof(unsigned));
-    io.seekg( offset, std::ios::cur); // reposition to start of file
+    unsigned offset = start * ( sizeof(gpuParticle_t) );
+    io.seekg( offset, std::ios::cur); // reposition to offset location
 
     clear();
     unsigned nRead = 0;
@@ -418,6 +452,12 @@ bool CollisionPointsHost::readToBank( const std::string& file, unsigned start ){
     	return true; // return end = true
     }
     return false; // return end = false
+}
+
+void CollisionPointsHost::debugPrint() const {
+	for( unsigned i=0; i< size(); ++i ) {
+		printParticle( i, getParticle(i) );
+	}
 }
 
 }

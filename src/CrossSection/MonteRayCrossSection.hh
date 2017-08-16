@@ -98,7 +98,7 @@ __global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS, HashLookup* p
 __global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS, gpuFloatType_t E, gpuFloatType_t* result);
 #endif
 
-class ContinuousNeutron;
+//class ContinuousNeutron;
 
 class MonteRayCrossSectionHost {
 public:
@@ -142,11 +142,6 @@ public:
 
     struct MonteRayCrossSection* getXSPtr(void) { return xs;}
     struct MonteRayCrossSection& getXSRef(void) { return *xs;}
-
-
-#if !defined( CUDA )
-    void load( const ContinuousNeutron& cn );
-#endif
 
     void load(struct MonteRayCrossSection* ptrXS );
 
