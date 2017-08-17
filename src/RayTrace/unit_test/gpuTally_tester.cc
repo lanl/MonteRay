@@ -38,6 +38,37 @@ SUITE( gpuTally_tester ) {
         tally.copyToCPU();
         CHECK_CLOSE( 99.0, tally.getTally(0), 1e-4 );
     }
+    TEST( get_default_values_from_gpu ) {
+         gpuTallyHost tally(5);
+         tally.copyToGPU();
+         tally.copyToCPU();
+         CHECK_CLOSE( 0.0, tally.getTally(0), 1e-4 );
+         CHECK_CLOSE( 0.0, tally.getTally(1), 1e-4 );
+         CHECK_CLOSE( 0.0, tally.getTally(2), 1e-4 );
+         CHECK_CLOSE( 0.0, tally.getTally(3), 1e-4 );
+         CHECK_CLOSE( 0.0, tally.getTally(4), 1e-4 );
+     }
+    TEST( clear_all_on_cpu ) {
+         gpuTallyHost tally(5);
+         tally.setTally(0, 99.0);
+         tally.setTally(1, 99.0);
+         tally.setTally(2, 99.0);
+         tally.setTally(3, 99.0);
+         tally.setTally(4, 99.0);
+         tally.copyToGPU();
+         tally.setTally(0, 0.0);
+         tally.setTally(1, 0.0);
+         tally.setTally(2, 0.0);
+         tally.setTally(3, 0.0);
+         tally.setTally(4, 0.0);
+         tally.copyToCPU();
+         CHECK_CLOSE( 99.0, tally.getTally(0), 1e-4 );
+         CHECK_CLOSE( 99.0, tally.getTally(1), 1e-4 );
+         CHECK_CLOSE( 99.0, tally.getTally(2), 1e-4 );
+         CHECK_CLOSE( 99.0, tally.getTally(3), 1e-4 );
+         CHECK_CLOSE( 99.0, tally.getTally(4), 1e-4 );
+     }
+
     TEST( clear ) {
         gpuTallyHost tally(5);
         tally.setTally(0, 99.0);

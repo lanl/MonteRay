@@ -318,8 +318,8 @@ SUITE( Collision_fi_tester ) {
 //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
 //    	CHECK_CLOSE( 0.186005, helper.getTally(50+100*100), 1e-4 );
 
-    	CHECK_CLOSE( 0.00741585, helper.getTally(24), 1e-5 );
-    	CHECK_CLOSE( 0.0185556, helper.getTally(500182), 1e-4 );
+    	CHECK_CLOSE( 0.0201584, helper.getTally(24), 1e-5 );
+    	CHECK_CLOSE( 0.0504394, helper.getTally(500182), 1e-4 );
 //    	for( unsigned i=0; i<grid_host->num[0]*grid_host->num[1]*grid_host->num[2]; ++i) {
 //    		if( helper.getTally(i) > 0.0 ) {
 //    			std::cout << "i = " << i << " tally = " << helper.getTally(i) << "\n";
@@ -392,7 +392,7 @@ SUITE( Collision_fi_looping_tester ) {
         h1s.copyToGPU();
         o16s.copyToGPU();
 
-    	CollisionPointsHost bank1(100000);
+    	CollisionPointsHost bank1(1000000);
     	bool end = false;
     	unsigned offset = 0;
 		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );

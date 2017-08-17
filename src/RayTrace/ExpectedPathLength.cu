@@ -75,7 +75,7 @@ namespace MonteRay{
 
 __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuParticle_t* p, gpuTallyType_t* tally){
 
-	 gpuTallyType_t opticalPathLength = 1.0;
+	 gpuTallyType_t opticalPathLength = 0.0;
 	 gpuFloatType_t energy = p->energy;
 	 unsigned HashBin = getHashBin(pHash, energy);
 
@@ -105,7 +105,7 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 
 		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, tally, cell, distance, energy, p->weight, opticalPathLength );
 
-		if( opticalPathLength > 5 ) {
+		if( opticalPathLength > 5.0 ) {
 			// cut off at 5 mean free paths
 			return;
 		}
@@ -124,8 +124,8 @@ tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data*
 		gpuFloatType_t density = getDensity(pMatProps, cell, i );
 		if( density > 1e-5 ) {
 	       	//unsigned materialIndex = materialIDtoIndex(pMatList, matID);
-			totalXS +=   getTotalXS( pMatList, matID, energy, density);
-			//totalXS +=   materialXS[matID]*density;
+			//totalXS +=   getTotalXS( pMatList, matID, energy, density);
+			totalXS +=   materialXS[matID]*density;
 		}
 	}
 
@@ -215,7 +215,7 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally, cell, distance, energy, p->weight, opticalPathLength);
 
 		if( opticalPathLength > 5.0 ) {
-			// cut off at 9 mean free paths
+			// cut off at 5 mean free paths
 			return;
 		}
 	}
@@ -238,16 +238,15 @@ tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data*
 	for( unsigned i=0; i<numMaterials; ++i ) {
 		unsigned matID = getMatID(pMatProps, cell, i);
 		gpuFloatType_t density = getDensity(pMatProps, cell, i );
-		xs_t xs = 0.0;
         if( density > 1e-5 ) {
 //        	totalXS +=   getTotalXS( pMatList, matID, energy, density);
 //             totalXS +=   getTotalXS( pMatList, matID, pHash, HashBin, energy, density);
         	//unsigned materialIndex = materialIDtoIndex(pMatList, matID);
             totalXS +=   materialXS[matID]*density;
         }
-		if( debug ) {
-			printf("GPU::tallyCellSegment::       material=%d, density=%f, xs=%f, totalxs=%f\n", i, density, xs, totalXS);
-		}
+//		if( debug ) {
+//			printf("GPU::tallyCellSegment::       material=%d, density=%f, xs=%f, totalxs=%f\n", i, density, xs, totalXS);
+//		}
 	}
 
 	attenuation_t attenuation = 1.0;

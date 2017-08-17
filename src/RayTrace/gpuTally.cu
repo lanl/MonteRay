@@ -126,8 +126,11 @@ void gpuTallyHost::copyToGPU(void) {
 	temp = new gpuTally;
 	cudaCtor(temp, ptr );
 
-	// copy data
+	// copy ptr data
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( gpuTally ), cudaMemcpyHostToDevice));
+
+	// copy data
+    CUDA_CHECK_RETURN( cudaMemcpy(temp->tally, ptr->tally, sizeof( gpuTallyType_t ) * ptr->size, cudaMemcpyHostToDevice));
 #endif
 }
 
