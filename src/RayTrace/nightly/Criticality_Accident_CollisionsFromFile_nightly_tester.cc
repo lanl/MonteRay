@@ -246,9 +246,9 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 //    	std::cout << "Debug:                num both zero=" << numZeroZero << "\n";
 
     	// timings on GTX TitanX GPU 256x256
-    	//Debug: total gpuTime = 10.4895
-    	//Debug: total cpuTime = 0.326181
-    	//Debug: total wallTime = 10.4896
+    	// total gpuTime = 10.6487
+    	// total cpuTime = 0.459244
+    	// total wallTime = 10.6488
 
 
     	// timings on GTX TitanX GPU 1024x1024

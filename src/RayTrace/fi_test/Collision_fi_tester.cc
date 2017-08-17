@@ -12,7 +12,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"
 
-#if( false )
+#if( true )
 SUITE( Collision_fi_tester ) {
 
 	TEST( setup ) {
@@ -21,7 +21,7 @@ SUITE( Collision_fi_tester ) {
 
     TEST(get_total_xs_from_gpu ) {
     	CollisionPointsHost* points = new CollisionPointsHost(2);
-    	points->readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin"  );
+    	points->readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	FIGenericGPUTestHelper helper(points->size());
     	points->copyToGPU();
 
@@ -31,7 +31,7 @@ SUITE( Collision_fi_tester ) {
 
     	gpuFloatType_t energy = points->getEnergy(0);
     	gpuFloatType_t expected = getTotalXS(xs->getXSPtr(), energy);
-    	CHECK_CLOSE(  6.8940749168395996f, expected, 1e-6);
+    	CHECK_CLOSE(  7.85419f, expected, 1e-5);
 
     	helper.setupTimers();
     	helper.launchTallyCrossSection(1024, 1024, points, xs);
@@ -45,7 +45,7 @@ SUITE( Collision_fi_tester ) {
 
     TEST(load_godiva_metal_from_file_small_file ) {
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCylInWater1.bin"  );
+    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
 
@@ -86,7 +86,7 @@ SUITE( Collision_fi_tester ) {
     	gpuFloatType_t energy = points.getEnergy(0);
     	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
     	gpuFloatType_t expected = getTotalXS(matList.getPtr(), 0, matList.getHashPtr()->getPtr(), HashBin, energy, 18.0 );
-    	CHECK_CLOSE(  0.318065, expected, 1e-6);
+    	CHECK_CLOSE(  0.36215, expected, 1e-5);
 
     	helper.setupTimers();
        	helper.launchTallyCrossSection(1024, 1024, &points, &matList, 0, 18.0);
@@ -97,7 +97,7 @@ SUITE( Collision_fi_tester ) {
 
     TEST( load_godivaR_materials_godivaR_geom_and_collisions_tally_collision ) {
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin"  );
+    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
         FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
 
@@ -150,9 +150,9 @@ SUITE( Collision_fi_tester ) {
     	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
     	gpuFloatType_t expected1 = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
     	gpuFloatType_t expected2 = helper.getTotalXSByMatProp(&mp, matList.getPtr(), cell, energy );
-    	CHECK_CLOSE( 0.804852, energy, 1e-6);
-    	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.410871, expected1, 1e-6);
+    	CHECK_CLOSE( 4.44875, energy, 1e-5);
+    	CHECK_EQUAL( 485557, cell);
+    	CHECK_CLOSE( 0.353442, expected1, 1e-6);
     	CHECK_CLOSE( expected2, expected1, 1e-6);
 
     	helper.setupTimers();
@@ -173,7 +173,7 @@ SUITE( Collision_fi_tester ) {
         FIGenericGPUTestHelper helper( mp.size() );
 
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin"  );
+    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	points.copyToGPU();
 
     	MonteRayCrossSectionHost u234s(1);
@@ -217,9 +217,9 @@ SUITE( Collision_fi_tester ) {
     	unsigned cell = points.getIndex(0);
     	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
     	gpuFloatType_t expected = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
-    	CHECK_CLOSE( 0.804852, energy, 1e-6);
-    	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.410871, expected, 1e-6);
+    	CHECK_CLOSE( 4.44875, energy, 1e-5);
+    	CHECK_EQUAL( 485557, cell);
+    	CHECK_CLOSE( 0.353442, expected, 1e-6);
 
     	expected=0.0;
     	for( unsigned i=0; i<points.size(); ++i){
@@ -229,7 +229,7 @@ SUITE( Collision_fi_tester ) {
     			expected += helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
     		}
     	}
-    	CHECK_CLOSE( 942.722, expected, 1e-3);
+    	CHECK_CLOSE( 16.6541, expected, 1e-3);
 
     	helper.setupTimers();
     	helper.launchSumCrossSectionAtCollisionLocation(1024, 1024, &points, &matList, &mp );
@@ -240,6 +240,8 @@ SUITE( Collision_fi_tester ) {
 
     TEST( rayTraceTally_GodivaR )
     {
+    	cudaReset();
+
     	GridBins* grid_host;
     	grid_host = (GridBins*) malloc( sizeof(GridBins) );
     	ctor( grid_host );
@@ -247,6 +249,7 @@ SUITE( Collision_fi_tester ) {
     	setVertices(grid_host, 1, -33.5, 33.5, 100);
     	setVertices(grid_host, 2, -33.5, 33.5, 100);
     	finalize(grid_host);
+
     	FIGenericGPUTestHelper helper( 0 );
     	helper.copyGridtoGPU(grid_host);
 
@@ -295,17 +298,18 @@ SUITE( Collision_fi_tester ) {
         o16s.copyToGPU();
 
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin"  );
+    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+
     	points.copyToGPU();
-    	CHECK_EQUAL(32786806, points.size());
+    	CHECK_EQUAL(2568016, points.size());
 
     	gpuFloatType_t energy = points.getEnergy(0);
     	unsigned cell = points.getIndex(0);
     	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
     	gpuFloatType_t expected = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
-    	CHECK_CLOSE( 0.804852, energy, 1e-6);
-    	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.410871, expected, 1e-6);
+    	CHECK_CLOSE( 4.44875, energy, 1e-6);
+    	CHECK_EQUAL( 485557, cell);
+    	CHECK_CLOSE( 0.353442, expected, 1e-6);
 
      	helper.setupTimers();
     	helper.launchRayTraceTally(256, 256, &points, &matList, &mp );
@@ -314,8 +318,13 @@ SUITE( Collision_fi_tester ) {
 //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
 //    	CHECK_CLOSE( 0.186005, helper.getTally(50+100*100), 1e-4 );
 
-    	CHECK_CLOSE( 0.0266943, helper.getTally(0), 1e-5 );
-    	CHECK_CLOSE( 0.064631, helper.getTally(50+100*100), 1e-4 );
+    	CHECK_CLOSE( 0.00741585, helper.getTally(24), 1e-5 );
+    	CHECK_CLOSE( 0.0185556, helper.getTally(500182), 1e-4 );
+//    	for( unsigned i=0; i<grid_host->num[0]*grid_host->num[1]*grid_host->num[2]; ++i) {
+//    		if( helper.getTally(i) > 0.0 ) {
+//    			std::cout << "i = " << i << " tally = " << helper.getTally(i) << "\n";
+//    		}
+//    	}
     	free(grid_host);
     }
 }
@@ -383,32 +392,32 @@ SUITE( Collision_fi_looping_tester ) {
         h1s.copyToGPU();
         o16s.copyToGPU();
 
-    	CollisionPointsHost bank1(1000000);
+    	CollisionPointsHost bank1(100000);
     	bool end = false;
     	unsigned offset = 0;
-		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 
     	gpuFloatType_t energy = bank1.getEnergy(0);
     	unsigned cell = bank1.getIndex(0);
     	unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
     	gpuFloatType_t expected = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
-     	CHECK_CLOSE( 0.804852, energy, 1e-6);
-    	CHECK_EQUAL( 435859, cell);
-    	CHECK_CLOSE( 0.410871, expected, 1e-6);
+     	CHECK_CLOSE( 4.44875, energy, 1e-5);
+    	CHECK_EQUAL( 485557, cell);
+    	CHECK_CLOSE( 0.353442, expected, 1e-6);
 
 		offset += bank1.size();
 
-    	CollisionPointsHost bank2(1000000);
+    	CollisionPointsHost bank2(100000);
 
     	auto cpuWork1 = [&] (void) -> void {
     		if( !end ) {
-    			end = bank2.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+    			end = bank2.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     			offset += bank2.size();
     		}
     	};
     	auto cpuWork2 = [&] (void) -> void {
     		if( !end ) {
-    			end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+    			end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     			offset += bank1.size();
     		}
     	};
@@ -455,11 +464,14 @@ SUITE( Collision_fi_looping_tester ) {
 
     	tally.copyToCPU();
 
-//    	CHECK_CLOSE( 0.0803215, tally.getTally(0), 1e-5 );
-//    	CHECK_CLOSE( 0.186005, tally.getTally(50+100*100), 1e-4 );
+    	CHECK_CLOSE( 0.0201584, tally.getTally(24), 1e-5 );
+    	CHECK_CLOSE( 0.0504394, tally.getTally(500182), 1e-4 );
+//    	for( unsigned i=0; i<grid.getNumCells(); ++i) {
+//    		if( tally.getTally(i) > 0.0 ) {
+//    			std::cout << "i = " << i << " tally = " << tally.getTally(i) << "\n";
+//    		}
+//    	}
 
-    	CHECK_CLOSE( 0.0754594, tally.getTally(0), 1e-5 );
-    	CHECK_CLOSE( 0.175685, tally.getTally(50+100*100), 1e-4 );
     }
 
 }

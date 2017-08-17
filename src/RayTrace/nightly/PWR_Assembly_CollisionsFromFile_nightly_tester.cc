@@ -241,10 +241,36 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     		}
     	}
 
+    	gpuTallyType_t maxdiff = 0.0;
+    	unsigned numBenchmarkZeroNonMatching = 0;
+    	unsigned numGPUZeroNonMatching = 0;
+    	unsigned numZeroZero = 0;
+    	for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
+    		if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
+    			gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+    			if( std::abs(relDiff) > maxdiff ){
+    				maxdiff = std::abs(relDiff);
+    			}
+    		} else if( pTally->getTally(i) > 0.0) {
+    			++numBenchmarkZeroNonMatching;
+    		} else if( benchmarkTally.getTally(i) > 0.0) {
+    			++numGPUZeroNonMatching;
+    		} else {
+    			++numZeroZero;
+    		}
+    	}
+
+    	std::cout << "Debug:  maxdiff=" << maxdiff << "\n";
+       	std::cout << "Debug:  tally size=" << benchmarkTally.size() << "\n";
+      	std::cout << "Debug:  tally from file size=" << pTally->size() << "\n";
+      	std::cout << "Debug:  numBenchmarkZeroNonMatching=" << numBenchmarkZeroNonMatching << "\n";
+       	std::cout << "Debug:        numGPUZeroNonMatching=" << numGPUZeroNonMatching << "\n";
+       	std::cout << "Debug:                num both zero=" << numZeroZero << "\n";
+
     	// timings on GTX TitanX GPU 256x256
-    	// gpuTime = 6.41895
-    	// cpuTime = 0.121958
-    	// total wallTime = 6.41898
+    	// total gpuTime = 6.4583
+    	// total cpuTime = 0.118517
+    	// total wallTime = 6.45834
 
     }
 

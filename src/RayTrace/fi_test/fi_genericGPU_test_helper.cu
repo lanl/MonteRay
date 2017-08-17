@@ -246,8 +246,13 @@ void FIGenericGPUTestHelper::launchRayTraceTally(unsigned nBlocks, unsigned nThr
 	gpuTallyType_t* tally_device;
 	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
 	tally = (gpuTallyType_t*) malloc ( allocSize );
+	for( unsigned i = 0; i < nCells; ++i ) {
+		tally[i] = 0.0;
+	}
+
 	CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
-	CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
+	CUDA_CHECK_RETURN(cudaMemcpy(tally_device, tally, allocSize, cudaMemcpyHostToDevice));
+
 	gpuErrchk( cudaPeekAtLastError() );
 
 	cudaEvent_t sync;
