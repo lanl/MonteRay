@@ -75,19 +75,19 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 
 	    	pTally->copyToGPU();
 
-	        iso1001->read( "/usr/projects/mcatk/user/jsweezy/link_files/1001_MonteRayCrossSection.bin" );
-	        iso6000->read( "/usr/projects/mcatk/user/jsweezy/link_files/6000_MonteRayCrossSection.bin" );
-	        iso7014->read( "/usr/projects/mcatk/user/jsweezy/link_files/7014_MonteRayCrossSection.bin" );
-	        iso8016->read( "/usr/projects/mcatk/user/jsweezy/link_files/8016_MonteRayCrossSection.bin" );
-	        iso12000->read( "/usr/projects/mcatk/user/jsweezy/link_files/12000_MonteRayCrossSection.bin" );
-	        iso13027->read( "/usr/projects/mcatk/user/jsweezy/link_files/13027_MonteRayCrossSection.bin" );
-	        iso14000->read( "/usr/projects/mcatk/user/jsweezy/link_files/14000_MonteRayCrossSection.bin" );
-	        iso18040->read( "/usr/projects/mcatk/user/jsweezy/link_files/18040_MonteRayCrossSection.bin" );
-	        iso20000->read( "/usr/projects/mcatk/user/jsweezy/link_files/20000_MonteRayCrossSection.bin" );
-	        iso26000->read( "/usr/projects/mcatk/user/jsweezy/link_files/26000_MonteRayCrossSection.bin" );
-	        iso92234->read( "/usr/projects/mcatk/user/jsweezy/link_files/92234_MonteRayCrossSection.bin" );
-	        iso92235->read( "/usr/projects/mcatk/user/jsweezy/link_files/92235_MonteRayCrossSection.bin" );
-	        iso92238->read( "/usr/projects/mcatk/user/jsweezy/link_files/92238_MonteRayCrossSection.bin" );
+	        iso1001->read( "MonteRayTestFiles/1001_MonteRayCrossSection.bin" );
+	        iso6000->read( "MonteRayTestFiles/6000_MonteRayCrossSection.bin" );
+	        iso7014->read( "MonteRayTestFiles/7014_MonteRayCrossSection.bin" );
+	        iso8016->read( "MonteRayTestFiles/8016_MonteRayCrossSection.bin" );
+	        iso12000->read( "MonteRayTestFiles/12000_MonteRayCrossSection.bin" );
+	        iso13027->read( "MonteRayTestFiles/13027_MonteRayCrossSection.bin" );
+	        iso14000->read( "MonteRayTestFiles/14000_MonteRayCrossSection.bin" );
+	        iso18040->read( "MonteRayTestFiles/18040_MonteRayCrossSection.bin" );
+	        iso20000->read( "MonteRayTestFiles/20000_MonteRayCrossSection.bin" );
+	        iso26000->read( "MonteRayTestFiles/26000_MonteRayCrossSection.bin" );
+	        iso92234->read( "MonteRayTestFiles/92234_MonteRayCrossSection.bin" );
+	        iso92235->read( "MonteRayTestFiles/92235_MonteRayCrossSection.bin" );
+	        iso92238->read( "MonteRayTestFiles/92238_MonteRayCrossSection.bin" );
 
 	        metal->add(0, *iso92234, 1.025e-2 );
 	        metal->add(1, *iso92235, 9.37683e-1 );
@@ -197,18 +197,27 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 
     	setup();
 
-    	// 256
-    	//  64
-    	// 192
-    	CollisionPointController controller( 256,
-    			256,
+    	unsigned nBlocks = 256;
+    	unsigned nThreads = 256;
+    	unsigned capacity = 40000*8U*20*10U;
+#ifdef K420_GPU
+    	nBlocks = 128;
+    	nThreads = 128;
+    	capacity = 1000000;
+#endif
+    	std::cout << "Running Criticality_Accident from collision file with nBlocks=" << nBlocks <<
+    			     " nThreads=" << nThreads << " collision buffer capacity=" << capacity << "\n";
+
+    	CollisionPointController controller(
+    			nBlocks,
+    			nThreads,
     			pGrid,
     			pMatList,
     			pMatProps,
     			pTally );
-    	controller.setCapacity(40000*8U*20*10U);
+    	controller.setCapacity(capacity);
 
-    	size_t numCollisions = controller.readCollisionsFromFile( "/usr/projects/mcatk/user/jsweezy/link_files/Criticality_accident_collisions.bin" );
+    	size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/Criticality_accident_collisions.bin" );
 
     	controller.sync();
     	CHECK_EQUAL( 56592340 , numCollisions );
@@ -216,7 +225,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	pTally->copyToCPU();
 
     	gpuTallyHost benchmarkTally(1);
-    	benchmarkTally.read( "/usr/projects/mcatk/user/jsweezy/link_files/Criticality_Accident_gpuTally_n20_particles40000_cycles1.bin" );
+    	benchmarkTally.read( "MonteRayTestFiles/Criticality_Accident_gpuTally_n20_particles40000_cycles1.bin" );
 
     	gpuTallyType_t maxdiff = 0.0;
     	unsigned numBenchmarkZeroNonMatching = 0;

@@ -21,12 +21,12 @@ SUITE( Collision_fi_tester ) {
 
     TEST(get_total_xs_from_gpu ) {
     	CollisionPointsHost* points = new CollisionPointsHost(2);
-    	points->readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+    	points->readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	FIGenericGPUTestHelper helper(points->size());
     	points->copyToGPU();
 
     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
-    	xs->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin");
+    	xs->read( "MonteRayTestFiles/u235_simpleCrossSection.bin");
     	xs->copyToGPU();
 
     	gpuFloatType_t energy = points->getEnergy(0);
@@ -45,7 +45,7 @@ SUITE( Collision_fi_tester ) {
 
     TEST(load_godiva_metal_from_file_small_file ) {
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+    	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
 
@@ -55,11 +55,11 @@ SUITE( Collision_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
-        u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-        u238s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
-        h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
-        o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -97,7 +97,7 @@ SUITE( Collision_fi_tester ) {
 
     TEST( load_godivaR_materials_godivaR_geom_and_collisions_tally_collision ) {
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+    	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
         FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
 
@@ -114,11 +114,11 @@ SUITE( Collision_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
-        u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-        u238s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
-        h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
-        o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -173,7 +173,7 @@ SUITE( Collision_fi_tester ) {
         FIGenericGPUTestHelper helper( mp.size() );
 
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+    	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	points.copyToGPU();
 
     	MonteRayCrossSectionHost u234s(1);
@@ -182,11 +182,11 @@ SUITE( Collision_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
-        u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-        u238s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
-        h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
-        o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -266,11 +266,11 @@ SUITE( Collision_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
-        u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-        u238s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
-        h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
-        o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -298,7 +298,7 @@ SUITE( Collision_fi_tester ) {
         o16s.copyToGPU();
 
     	CollisionPointsHost points(2);
-    	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+    	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
 
     	points.copyToGPU();
     	CHECK_EQUAL(2568016, points.size());
@@ -361,11 +361,11 @@ SUITE( Collision_fi_looping_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
-        u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-        u238s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
-        h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
-        o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
         SimpleMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -395,7 +395,7 @@ SUITE( Collision_fi_looping_tester ) {
     	CollisionPointsHost bank1(1000000);
     	bool end = false;
     	unsigned offset = 0;
-		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+		end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 
     	gpuFloatType_t energy = bank1.getEnergy(0);
     	unsigned cell = bank1.getIndex(0);
@@ -411,13 +411,13 @@ SUITE( Collision_fi_looping_tester ) {
 
     	auto cpuWork1 = [&] (void) -> void {
     		if( !end ) {
-    			end = bank2.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+    			end = bank2.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     			offset += bank2.size();
     		}
     	};
     	auto cpuWork2 = [&] (void) -> void {
     		if( !end ) {
-    			end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+    			end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     			offset += bank1.size();
     		}
     	};

@@ -367,7 +367,7 @@ SUITE( HashLookup_tester ) {
     TEST( load_u235_from_file)
       {
       	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
-      	xs->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin");
+      	xs->read( "MonteRayTestFiles/u235_simpleCrossSection.bin");
 
       	gpuFloatType_t energy = 2.0;
 
@@ -408,7 +408,7 @@ SUITE( HashLookup_tester ) {
 //    TEST_FIXTURE(MonteRayCrossSectionTestHelper, load_u235_from_file)
 //    {
 //    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
-//    	xs->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin");
+//    	xs->read( "MonteRayTestFiles/u235_simpleCrossSection.bin");
 //
 //    	gpuFloatType_t energy = 2.0;
 //

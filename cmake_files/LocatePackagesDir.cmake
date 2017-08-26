@@ -132,3 +132,34 @@ else()
     message( FATAL_ERROR "Could not locate link files *** ${lnk3dnt_location}" )
 endif()
 
+
+# MontRayTestFiles
+# ====================================================================
+find_path( MonteRayTestFiles_location 
+           NAMES 1001_MonteRayCrossSection.bin
+           PATHS /local
+                 /home/xshares/PROJECTS
+                 /home/xshares
+                 /usr/projects 
+                 /usr/gapps 
+                 ENV MONTERAY_TESTFILES_DIR
+           PATH_SUFFIXES mcatk/MonteRayTestFiles
+           DOC "Location of MonteRay Test files." 
+           NO_DEFAULT_PATH )
+
+if( NOT EXISTS ${MonteRayTestFiles_location} )
+  # try MONTERAY_TESTFILES_DIR environment variable
+  find_path( MonteRayTestFiles_location 
+           NAMES 1001_MonteRayCrossSection.bin
+           PATHS $ENV{MONTERAY_TESTFILES_DIR}
+           DOC "Location of MonteRay Test files." 
+           NO_DEFAULT_PATH )
+endif()
+
+if( MonteRayTestFiles_location )
+    message( "Found MonteRay test files at [ ${MonteRayTestFiles_location} ]" )
+#    add_definitions( -DMONTERAY_TESTFILES_DIR="${MonteRayTestFiles_location}" )
+else()
+    message( FATAL_ERROR "Could not locate MonteRay test files *** ${MonteRayTestFiles_location}" )
+endif()
+

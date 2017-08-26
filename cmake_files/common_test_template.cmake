@@ -77,7 +77,10 @@ endforeach()
 ########################################
 #  Handle includes:
 # Always add in the UnitTest stuff
-list( APPEND ${ParentDir}_packages UnitTest )
+#list( APPEND ${ParentDir}_packages UnitTest )
+set ( ${ParentDir}_packages "UnitTest" ${${ParentDir}_packages} )
+# message( STATUS "common_test_template -- ${ParentDir}_packages = ${${ParentDir}_packages}" )
+
 
 # Serial tests will still require the mpi header
 # NOTE: This may be indicative of larger issue of requiring headers without requiring the library
@@ -87,8 +90,9 @@ endif()
 
 # Pickup any 3rd party headers the library depend ons
 foreach( pkg ${${ParentDir}_packages} ) 
-
+#    message( STATUS "                    -- ${ParentDir}_packages including = ${${pkg}_INCLUDE_DIRS}" )
     include_directories( ${${pkg}_INCLUDE_DIRS} )
+    cuda_include_directories( ${${pkg}_INCLUDE_DIRS} )
 
     if( DEFINED ${pkg}_LIBRARY_DIRS )
         link_directories( ${${pkg}_LIBRARY_DIRS} )
@@ -172,6 +176,14 @@ add_custom_command(
     TARGET ${appName} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${lnk3dnt_location} lnk3dnt
     DEPENDS ${lnk3dnt_location}
+)
+
+#Create a link in each test directory to the MonteRayTestFiles directory on that system
+add_custom_command( 
+#    MESSAGE(STATUS "Creating link to MonteRay Test file directory ${MonteRayTestFiles_location}")
+    TARGET ${appName} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${MonteRayTestFiles_location} MonteRayTestFiles
+    DEPENDS ${MonteRayTestFiles_location}
 )
 
 if( DEFINED mcatk_SOURCE_DIR )

@@ -76,17 +76,17 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
 	    	pTally->copyToGPU();
 
-	        iso1001->read( "/usr/projects/mcatk/user/jsweezy/link_files/1001_MonteRayCrossSection.bin" );;
-	        iso5010->read( "/usr/projects/mcatk/user/jsweezy/link_files/5010_MonteRayCrossSection.bin" );;
-	        iso5011->read( "/usr/projects/mcatk/user/jsweezy/link_files/5011_MonteRayCrossSection.bin" );;
-	        iso6000->read( "/usr/projects/mcatk/user/jsweezy/link_files/6000_MonteRayCrossSection.bin" );;
-	        iso7014->read( "/usr/projects/mcatk/user/jsweezy/link_files/7014_MonteRayCrossSection.bin" );;
-	        iso8016->read( "/usr/projects/mcatk/user/jsweezy/link_files/8016_MonteRayCrossSection.bin" );;
-	        iso26000->read( "/usr/projects/mcatk/user/jsweezy/link_files/26000_MonteRayCrossSection.bin" );;
-	        iso40000->read( "/usr/projects/mcatk/user/jsweezy/link_files/40000_MonteRayCrossSection.bin" );;
-	        iso50000->read( "/usr/projects/mcatk/user/jsweezy/link_files/50000_MonteRayCrossSection.bin" );;
-	        iso92235->read( "/usr/projects/mcatk/user/jsweezy/link_files/92235_MonteRayCrossSection.bin" );;
-	        iso92238->read( "/usr/projects/mcatk/user/jsweezy/link_files/92238_MonteRayCrossSection.bin" );;
+	        iso1001->read( "MonteRayTestFiles/1001_MonteRayCrossSection.bin" );;
+	        iso5010->read( "MonteRayTestFiles/5010_MonteRayCrossSection.bin" );;
+	        iso5011->read( "MonteRayTestFiles/5011_MonteRayCrossSection.bin" );;
+	        iso6000->read( "MonteRayTestFiles/6000_MonteRayCrossSection.bin" );;
+	        iso7014->read( "MonteRayTestFiles/7014_MonteRayCrossSection.bin" );;
+	        iso8016->read( "MonteRayTestFiles/8016_MonteRayCrossSection.bin" );;
+	        iso26000->read( "MonteRayTestFiles/26000_MonteRayCrossSection.bin" );;
+	        iso40000->read( "MonteRayTestFiles/40000_MonteRayCrossSection.bin" );;
+	        iso50000->read( "MonteRayTestFiles/50000_MonteRayCrossSection.bin" );;
+	        iso92235->read( "MonteRayTestFiles/92235_MonteRayCrossSection.bin" );;
+	        iso92238->read( "MonteRayTestFiles/92238_MonteRayCrossSection.bin" );;
 
 	        fuel->add(0, *iso8016,  2.0 );
 	        fuel->add(1, *iso92235, 0.05 );
@@ -214,22 +214,34 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	// 256
     	//  64
     	// 192
-    	CollisionPointController controller( 256,
-    			256,
+    	unsigned nBlocks = 256;
+    	unsigned nThreads = 256;
+    	unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
+#ifdef K420_GPU
+    	nBlocks = 128;
+    	nThreads = 128;
+    	capacity = 1000000;
+#endif
+    	std::cout << "Running PWR_Assembly from collision file with nBlocks=" << nBlocks <<
+    			     " nThreads=" << nThreads << " collision buffer capacity=" << capacity << "\n";
+
+    	CollisionPointController controller( nBlocks,
+    			nThreads,
     			pGrid,
     			pMatList,
     			pMatProps,
     			pTally );
-    	unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
+
+    	// capacity = 1000000;  // Quadro K420 limit
     	controller.setCapacity(capacity);
 
-    	controller.readCollisionsFromFile( "/usr/projects/mcatk/user/jsweezy/link_files/PWR_assembly_collisions.bin" );
+    	controller.readCollisionsFromFile( "MonteRayTestFiles/PWR_assembly_collisions.bin" );
 
     	controller.sync();
     	pTally->copyToCPU();
 
     	gpuTallyHost benchmarkTally(1);
-    	benchmarkTally.read( "/usr/projects/mcatk/user/jsweezy/link_files/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin" );
+    	benchmarkTally.read( "MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin" );
 
     	for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
     		if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
@@ -271,6 +283,12 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	// total gpuTime = 6.4583
     	// total cpuTime = 0.118517
     	// total wallTime = 6.45834
+
+       	// timing on Nvidia Quandro K420 128x128'
+       	// total gpuTime = 101.266
+       	// total cpuTime = 0.904188
+       	// ntotal wallTime = 101.267
+
 
     }
 

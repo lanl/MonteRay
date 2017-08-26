@@ -8,17 +8,55 @@ INCLUDE(FindCUDA)
 #CUDA_SDK_ROOT_DIR
 #CUDA_INCLUDE_DIRS
 
+set( GPUTYPE "NONE" )
+include(IdentifyGPU)
+IdentifyGPU( GPUTYPE )
+message( STATUS "config_nvcc.cmake -- GPU type = ${GPUTYPE}"  )
+
 if( DEFINED CUDA_TOOLKIT_ROOT_DIR) 
     message( STATUS "CUDA library found. CUDA_TOOLKIT_ROOT_DIR= ${CUDA_TOOLKIT_ROOT_DIR}"  )
 else()
     message( WARNING "CUDA library not found." )
 endif()
 
+find_library( CUDART_LIB_PATH 
+                  NAMES cudart
+                  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64
+                        ${CUDA_TOOLKIT_ROOT_DIR}/lib
+                  DOC "The cudart library."
+                  NO_DEFAULT_PATH 
+            )
+get_filename_component( CUDART_LIB_DIR ${CUDART_LIB_PATH} PATH )
+set( CUDA_LIBRARY_DIRS ${CUDART_LIB_DIR} )
+
+find_library( CUDA_LIB_PATH 
+                  NAMES cuda
+                  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64
+                        ${CUDA_TOOLKIT_ROOT_DIR}/lib
+                  PATH_SUFFIXES stubs
+                  DOC "The cuda stub library."
+                  NO_DEFAULT_PATH 
+            )    
+get_filename_component( CUDA_LIB_DIR ${CUDA_LIB_PATH} PATH )            
+list(APPEND CUDA_LIBRARY_DIRS ${CUDA_LIB_DIR} )   
+             
+if( DEFINED CUDA_LIBRARY_DIRS) 
+    message( STATUS "CUDA_LIBRARY_DIRS= ${CUDA_LIBRARY_DIRS}"  )
+else()
+    message( WARNING "CUDA_LIBRARY_DIRS not set." )
+endif()             
+
 if( DEFINED CUDA_INCLUDE_DIRS) 
     message( STATUS "CUDA_INCLUDE_DIRS= ${CUDA_INCLUDE_DIRS}"  )
 else()
     message( WARNING "CUDA_INCLUDE_DIRS not set." )
 endif()
+
+if( DEFINED CUDA_LIBRARIES )
+    message( STATUS "CUDA_LIBRARIES= ${CUDA_LIBRARIES}"  )
+else()
+    message( WARNING "CUDA_LIBRARIES not set." )
+endif() 
 
 if( NOT CUDA_INCLUDE_DRIVER_TYPES ) 
     find_path( CUDA_INCLUDE_DRIVER_TYPES
@@ -43,13 +81,16 @@ if(DEFINED ENV{CUDA_ROOT})
 endif()
 
 SET(CUDA_SEPARABLE_COMPILATION ON)
-SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-device-code=true;--cudart static)
+#SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-device-code=true;--cudart static)
+SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-device-code=true;--cudart shared)
 
 # Titan X -arch=sm_52
 # K40 -arch=compute_35 -code=sm_35
 # Moonlight Tesla M2090 -arch=compute_20 -code=sm_20
+# Quadro K420 - 3.0
 #list(APPEND CUDA_NVCC_FLAGS "-arch=sm_20")
-list(APPEND CUDA_NVCC_FLAGS "-arch=sm_35")
+list(APPEND CUDA_NVCC_FLAGS "-arch=sm_30")
+#list(APPEND CUDA_NVCC_FLAGS "-arch=sm_35")
 #list(APPEND CUDA_NVCC_FLAGS "-arch=sm_52")
 
 #if( CMAKE_BUILD_TYPE STREQUAL "Debug" ) 
@@ -61,5 +102,6 @@ list(APPEND CUDA_NVCC_FLAGS "-arch=sm_35")
 #endif()
 list(APPEND CUDA_NVCC_FLAGS "-O3")
 list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
+# list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
 
 message( STATUS "Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")

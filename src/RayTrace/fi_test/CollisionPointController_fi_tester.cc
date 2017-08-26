@@ -63,11 +63,11 @@ SUITE( Collision_fi_bank_controller_tester ) {
 			pMatProps->disableReduction();
 			pMatProps->setMaterialDescription( readerObject );
 
-	        u234s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u234_simpleCrossSection.bin" );
-	        u235s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-	        u238s->read( "/usr/projects/mcatk/user/jsweezy/link_files/u238_simpleCrossSection.bin" );
-	        h1s->read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
-	        o16s->read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+	        u234s->read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
+	        u235s->read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+	        u238s->read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
+	        h1s->read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
+	        o16s->read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
 	        metal->add(0, *u234s, 0.01);
 	        metal->add(1, *u235s, 0.98);
@@ -233,7 +233,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
     	unsigned offset = 0;
 
     	while( ! end ) {
-    		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+    		end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     		offset += bank1.size();
 
     		for( unsigned i=0; i<bank1.size(); ++i ) {

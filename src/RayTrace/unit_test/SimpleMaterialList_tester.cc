@@ -24,7 +24,7 @@ SUITE( SimpleMaterialList_tester ) {
 
     TEST( load_single_isotope_material_from_file ) {
     	MonteRayCrossSectionHost u235s(1);
-    	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
+    	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
 
     	SimpleMaterialHost mat(1);
     	mat.add(0, u235s, 1.0);
@@ -40,10 +40,10 @@ SUITE( SimpleMaterialList_tester ) {
     }
     TEST( load_two_single_isotope_materials_from_file ) {
     	MonteRayCrossSectionHost u235s(1);
-    	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
+    	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
 
     	MonteRayCrossSectionHost h1s(1);
-    	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
+    	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
     	SimpleMaterialHost mat1(1);
     	mat1.add(0, u235s, 1.0);
@@ -66,8 +66,8 @@ SUITE( SimpleMaterialList_tester ) {
     TEST( load_single_material_from_file ) {
     	MonteRayCrossSectionHost u235s(1);
     	MonteRayCrossSectionHost h1s(1);
-    	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-    	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
+    	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+    	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
     	SimpleMaterialHost mat(2);
     	mat.add(0, u235s, 0.5);
@@ -87,8 +87,8 @@ SUITE( SimpleMaterialList_tester ) {
     TEST( load_two_materials_from_file ) {
     	MonteRayCrossSectionHost u235s(1);
     	MonteRayCrossSectionHost h1s(1);
-    	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-    	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
+    	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+    	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
     	SimpleMaterialHost mat1(2);
     	mat1.add(0, u235s, 0.5);
@@ -114,9 +114,9 @@ SUITE( SimpleMaterialList_tester ) {
     	MonteRayCrossSectionHost u235s(1);
     	MonteRayCrossSectionHost h1s(1);
     	MonteRayCrossSectionHost o16s(1);
-    	u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-    	h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
-    	o16s.read( "/usr/projects/mcatk/user/jsweezy/link_files/o16_simpleCrossSection.bin" );
+    	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+    	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
+    	o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
     	SimpleMaterialHost mat1(2);
     	mat1.add(0, u235s, 0.5);
@@ -142,8 +142,8 @@ SUITE( SimpleMaterialList_tester ) {
     {
         MonteRayCrossSectionHost u235s(1);
         MonteRayCrossSectionHost h1s(1);
-        u235s.read( "/usr/projects/mcatk/user/jsweezy/link_files/u235_simpleCrossSection.bin" );
-        h1s.read( "/usr/projects/mcatk/user/jsweezy/link_files/h1_simpleCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
         SimpleMaterialHost mat1(2);
         mat1.add(0, u235s, 0.5);

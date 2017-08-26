@@ -362,7 +362,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 //    	unsigned offset = 0;
 //
 //    	while( ! end ) {
-//    		end = bank1.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaCyl100x100x100InWater.bin", offset );
+//    		end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaCyl100x100x100InWater.bin", offset );
 //    		offset += bank1.size();
 //
 //    		for( unsigned i=0; i<bank1.size(); ++i ) {

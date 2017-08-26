@@ -188,7 +188,7 @@ SUITE( CollisionPoints_simple_tests ) {
      	CollisionPointsTester tester;
 
      	CollisionPointsHost points(2);
-     	points.readToMemory( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
      	CHECK_EQUAL(2568016, points.size() );
 
      	points.CopyToGPU();
@@ -240,7 +240,7 @@ SUITE( CollisionPoints_bank_tests ) {
 	TEST( readToBank ) {
 		CollisionPointsHost bank(1000);
 		unsigned offset=0;
-		bool end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+		bool end = bank.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 
      	CHECK_CLOSE(5.09468, bank.getX(0), 1e-5);
      	CHECK_CLOSE(3.39811, bank.getY(0), 1e-5);
@@ -266,7 +266,7 @@ SUITE( CollisionPoints_bank_tests ) {
 
      	offset += bank.capacity();
      	CHECK_EQUAL( 1000, offset );
-     	end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+     	end = bank.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 
      	CHECK_CLOSE(-4.03245961, bank.getX(0), 1e-5);
       	CHECK_CLOSE(-2.47439122, bank.getY(0), 1e-5);
@@ -284,11 +284,11 @@ SUITE( CollisionPoints_bank_tests ) {
 	TEST( nicely_read_end_of_bank ) {
 		CollisionPointsHost bank(1000);
 		unsigned offset=0;
-		bool end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+		bool end = bank.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
      	CHECK_EQUAL( false, end);
 
      	offset = 2568016 - 500;
-     	end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+     	end = bank.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
      	CHECK_EQUAL(500, bank.size());
      	CHECK_EQUAL( true, end);
 	}
@@ -299,7 +299,7 @@ SUITE( CollisionPoints_bank_tests ) {
 
 		bool end = false;
 		while( ! end ) {
-			end = bank.readToBank( "/usr/projects/mcatk/user/jsweezy/link_files/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
+			end = bank.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 			offset += bank.size();
 		}
 

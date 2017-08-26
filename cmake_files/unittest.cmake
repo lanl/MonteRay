@@ -36,6 +36,8 @@ endif()
 set( CMAKE_FIND_LIBRARY_SUFFIXES ${_orig_CMAKE_FIND_LIBRARY_SUFFIXES} )
 
 find_path( UnitTest_INCLUDE_DIRS UnitTest++.h PATHS ${package_dir}/include/UnitTest++ )
+
 message( "Found UnitTest++ libraries in : ${UnitTest_LIBRARIES}" )
+message( "Found UnitTest++ headers   in : ${UnitTest_INCLUDE_DIRS}" )
 
 endif()

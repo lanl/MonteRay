@@ -1,7 +1,8 @@
 ###############################################################################
 message( STATUS "Running Builder.cmake")
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1d)
+#CMAKE_MINIMUM_REQUIRED(VERSION 3.1d)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 include( $ENV{PWD}/cmake_files/GeneralFunctions.cmake )
 
@@ -78,28 +79,28 @@ execute_process( COMMAND ${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${UnityBui
                  RESULT_VARIABLE result_var
                  )
 
-execute_process( 
-                 COMMAND chmod -R ug+rwX ${buildDir}
-                 COMMAND chmod -R g+s    ${buildDir}
-                 COMMAND chmod -R o-rwX  ${buildDir}
-                 COMMAND chmod ug+rwX ${buildDir}/..
-                 COMMAND chmod g+s    ${buildDir}/..
-                 COMMAND chmod o-rwX  ${buildDir}/..
-                 RESULT_VARIABLE result_var
-               )
+#execute_process( 
+#                 COMMAND chmod -R ug+rwX ${buildDir}
+#                 COMMAND chmod -R g+s    ${buildDir}
+#                 COMMAND chmod -R o-rwX  ${buildDir}
+#                 COMMAND chmod ug+rwX ${buildDir}/..
+#                 COMMAND chmod g+s    ${buildDir}/..
+#                 COMMAND chmod o-rwX  ${buildDir}/..
+#                 RESULT_VARIABLE result_var
+#               )
 
-if( NOT result_var EQUAL 0 )
-    message( FATAL_ERROR "Builder.cmake:: Unable to set permissions on ${buildDir}/.." )
-endif() 
+#if( NOT result_var EQUAL 0 )
+#    message( FATAL_ERROR "Builder.cmake:: Unable to set permissions on ${buildDir}/.." )
+#endif() 
 
 if( NOT Standalone )             
-  execute_process( 
-                   COMMAND chgrp -R mcatk  ${buildDir}
-                   COMMAND chgrp mcatk  ${buildDir}/.. 
-                   RESULT_VARIABLE chgrp_result_var
-                 )
+#  execute_process( 
+#                   COMMAND chgrp -R mcatk  ${buildDir}
+#                   COMMAND chgrp mcatk  ${buildDir}/.. 
+#                   RESULT_VARIABLE chgrp_result_var
+#                 )
                        
-  if( NOT chgrp_result_var EQUAL 0 )
-      message( FATAL_ERROR "Builder.cmake:: Unable to set permissions on ${buildDir}/.." )
-  endif()
+#  if( NOT chgrp_result_var EQUAL 0 )
+#      message( FATAL_ERROR "Builder.cmake:: Unable to set permissions on ${buildDir}/.." )
+#  endif()
 endif()
