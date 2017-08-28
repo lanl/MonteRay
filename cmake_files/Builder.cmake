@@ -1,7 +1,7 @@
 ###############################################################################
 message( STATUS "Running Builder.cmake")
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.7)
 
 include( $ENV{PWD}/cmake_files/GeneralFunctions.cmake )
 

@@ -17,6 +17,7 @@ if( UNIX )
     find_library( UnitTest_LIBRARIES 
                   NAMES UnitTest++ 
                   PATHS ${package_dir}/lib
+                        $ENV{UNITTEST_DIR}/lib
                   PATH_SUFFIXES ${ut_PathSuffixes}
                   DOC "The UnitTest++ library for System: ${CMAKE_SYSTEM_NAME} Compiler: ${CMAKE_CXX_COMPILER}"
                   NO_DEFAULT_PATH )
@@ -35,7 +36,10 @@ endif()
 # Restore the original cmake list of library suffixs that will be searched
 set( CMAKE_FIND_LIBRARY_SUFFIXES ${_orig_CMAKE_FIND_LIBRARY_SUFFIXES} )
 
-find_path( UnitTest_INCLUDE_DIRS UnitTest++.h PATHS ${package_dir}/include/UnitTest++ )
+find_path( UnitTest_INCLUDE_DIRS UnitTest++.h 
+           PATHS ${package_dir}
+                 $ENV{UNITTEST_DIR}
+           PATH_SUFFIXES include/UnitTest++ )
 
 message( "Found UnitTest++ libraries in : ${UnitTest_LIBRARIES}" )
 message( "Found UnitTest++ headers   in : ${UnitTest_INCLUDE_DIRS}" )

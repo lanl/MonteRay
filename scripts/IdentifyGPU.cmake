@@ -1,10 +1,9 @@
 function( IdentifyGPU RESULT)
 
-execute_process( COMMAND bash "-c" "lspci | grep VGA | grep -m 1 NVIDIA | awk '{print $7}'"
+execute_process( COMMAND ${CMAKE_SOURCE_DIR}/scripts/IdentifyGPU.sh
                  OUTPUT_VARIABLE output_value
                  OUTPUT_STRIP_TRAILING_WHITESPACE
                )
-               
                
 if( DEFINED output_value) 
     message( STATUS "IndentifyGPU.cmake -- raw GPU type = ${output_value}"  )
@@ -21,6 +20,12 @@ endif()
 if( output_value STREQUAL "GM200" )
   add_definitions(-DTITANX_MAXWELL_GPU)
   set( ${RESULT} "TITANX_MAXWELL" PARENT_SCOPE )
+  return()
+endif()   
+
+if( output_value STREQUAL "GP100GL" )
+  add_definitions(-DP100_GPU)
+  set( ${RESULT} "P100" PARENT_SCOPE )
   return()
 endif()   
 

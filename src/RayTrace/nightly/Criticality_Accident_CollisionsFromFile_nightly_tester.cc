@@ -200,6 +200,10 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	unsigned nBlocks = 256;
     	unsigned nThreads = 256;
     	unsigned capacity = 40000*8U*20*10U;
+#ifdef P100_GPU
+        nBlocks  = 4096;
+        nThreads = 1024; 
+#endif
 #ifdef K420_GPU
     	nBlocks = 128;
     	nThreads = 128;
@@ -265,7 +269,10 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	// total cpuTime = 0.32771
     	// total wallTime = 10.3726
 
-
+        // timings on RZManta GP100GL 4096x1024
+        // Debug: total gpuTime = 7.36258
+        // Debug: total cpuTime = 0.249382
+        // Debug: total wallTime = 7.36264
     }
 
 }
