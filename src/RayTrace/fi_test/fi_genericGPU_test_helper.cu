@@ -47,9 +47,9 @@ void FIGenericGPUTestHelper::stopTimers(){
 __global__ void testTallyCrossSection(CollisionPoints* pCP, MonteRayCrossSection* pXS, gpuTallyType_t* results){
 
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
-	int N = pCP->size;
+	int N = pCP->size();
 	while( tid < N ) {
-		gpuFloatType_t E = getEnergy(pCP, tid);
+		gpuFloatType_t E = pCP->getEnergy(tid);
 		results[tid] = getTotalXS(pXS, E);
 		tid += blockDim.x*gridDim.x;
 	}
@@ -83,9 +83,9 @@ void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned 
 __global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleMaterialList* pMatList, unsigned matIndex, HashLookup* pHash, gpuFloatType_t density, gpuTallyType_t* results){
 
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
-	int N = pCP->size;
+	int N = pCP->size();
 	while( tid < N ) {
-		gpuFloatType_t E = getEnergy(pCP, tid);
+		gpuFloatType_t E = pCP->getEnergy(tid);
 		unsigned HashBin = getHashBin( pHash, E);
 		results[tid] = getTotalXS(pMatList, matIndex, pHash, HashBin, E, density);
 		tid += blockDim.x*gridDim.x;
@@ -164,12 +164,12 @@ gpuFloatType_t FIGenericGPUTestHelper::getTotalXSByMatProp(MonteRay_MaterialProp
 __global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTallyType_t* results){
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
-	unsigned N = pCP->size;
+	unsigned N = pCP->size();
 
 	while( tid < N ) {
-		gpuFloatType_t E = getEnergy(pCP, tid);
+		gpuFloatType_t E = pCP->getEnergy(tid);
 		unsigned HashBin = getHashBin( pHash, E);
-		unsigned cell = getIndex( pCP, tid);
+		unsigned cell = pCP->getIndex(tid);
 
 		results[tid] = getTotalXSByMatProp(pMatProps, pMatList, pHash, HashBin, cell, E);
 		tid += blockDim.x*gridDim.x;
@@ -182,12 +182,12 @@ __global__ void testTallyCrossSectionAtCollision(CollisionPoints* pCP, SimpleMat
 __global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTallyType_t* results){
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
-	unsigned N = pCP->size;
+	unsigned N = pCP->size();
 
 	while( tid < N ) {
-		gpuFloatType_t E = getEnergy(pCP, tid);
+		gpuFloatType_t E = pCP->getEnergy(tid);
 		unsigned HashBin = getHashBin( pHash, E);
-		unsigned cell = getIndex( pCP, tid);
+		unsigned cell = pCP->getIndex(tid);
 
 		gpuTallyType_t value = getTotalXSByMatProp(pMatProps, pMatList, pHash, HashBin, cell, E);
 

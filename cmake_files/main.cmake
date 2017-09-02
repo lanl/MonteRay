@@ -76,7 +76,12 @@ endif()
 
 include( package_release )
 include( documentation )
-generate_doc_rule( Toolkit Doxyfile.in     Docs )
+
+message( STATUS "Setting up rules for Document creation in directory=Docs" )
+generate_doc_rule( DeveloperManual    Doxyfile.in  Docs/DeveloperManual )
+
+message( STATUS "Setting up rules for Document creation in directory=Docs/UserManual" )
+generate_doc_rule( UserManual Doxyfile.in  Docs/UserManual )
 
 concatenateInstallSubdirs()
 

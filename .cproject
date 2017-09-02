@@ -20,7 +20,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" name="Debug" parent="com.nvidia.cuda.ide.on_path.configuration.debug">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" name="Debug" parent="com.nvidia.cuda.ide.on_path.configuration.debug">
 					<folderInfo id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945." name="/" resourcePath="">
 						<toolChain id="com.nvidia.cuda.tools.toolchain.on_path.exe.debug.1962468529" name="CUDA Toolkit on the path" nonInternalBuilderId="com.nvidia.cuda.ide.builder" superClass="com.nvidia.cuda.tools.toolchain.on_path.exe.debug">
 							<targetPlatform archList="all" binaryParser="com.nvidia.cuda.ide.elf;com.nvidia.cuda.ide.macho;com.nvidia.cuda.ide.cubin" id="com.nvidia.cuda.ide.targetPlatform.2038224067" isAbstract="false" name="Debug Platform" osList="linux,macosx" superClass="com.nvidia.cuda.ide.targetPlatform"/>
@@ -34,7 +34,7 @@
 								<option id="nvcc.compiler.def.symbols.2056841840" name="Defined symbols (-D)" superClass="nvcc.compiler.def.symbols"/>
 								<option id="nvcc.compiler.include.paths.2003416334" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/raytrace2/external/gtest}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/xshares/PROJECTS/mcatk/packages/rhel7/include/UnitTest++"/>
+									<listOptionValue builtIn="false" value="/projects/mcatk/packages/rhel7/include/UnitTest++"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1899123923" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.322854213" superClass="nvcc.compiler.input.cpp"/>
@@ -278,6 +278,14 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
+			<target name="UnitParticle" path="src/Particle/unit_test" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
+				<buildTarget>UnitParticle</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
 			<target name="Unit_Depreciated_Stuff" path="src/_Depreciated_Stuff" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
 				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
@@ -376,7 +384,8 @@
 			</target>
 			<target name="Initiate Build" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
-				<buildArguments>--debug-output -P cmake_files/Builder.cmake</buildArguments>
+				<buildArguments>--debug-output  -P cmake_files/Builder.cmake</buildArguments>
+				<buildTarget/>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
@@ -412,10 +421,10 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="createDocs" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="createUserManual" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>createDocs</buildTarget>
+				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
+				<buildTarget>createUserManual</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>

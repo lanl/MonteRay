@@ -8,7 +8,8 @@
 #ifndef MONTERAYDEFINITIONS_HH_
 #define MONTERAYDEFINITIONS_HH_
 
-#ifdef CUDA
+#ifdef __CUDACC__
+#include <cuda_runtime_api.h>
 #include <cuda.h>
 #endif
 
@@ -17,6 +18,14 @@
 #define TALLY_DOUBLEPRECISION 1 // turn on (1) and off (0) for double precision tally array and compute
 
 namespace MonteRay{
+
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#define CUDAHOST_CALLABLE_MEMBER __host__
+#else
+#define CUDA_CALLABLE_MEMBER
+#define CUDAHOST_CALLABLE_MEMBER
+#endif
 
 // typedefs
 typedef float float_t;

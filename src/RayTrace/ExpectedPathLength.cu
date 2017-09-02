@@ -11,11 +11,11 @@ namespace MonteRay{
 
  __device__
  gpuTallyType_t
- tallyAttenuation(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuParticle_t* p){
+ tallyAttenuation(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p){
 
 
-	 gpuTallyType_t enteringFraction = p->weight;
-	 gpuFloatType_t energy = p->energy;
+	 gpuTallyType_t enteringFraction = p->weight[0];
+	 gpuFloatType_t energy = p->energy[0];
 	 unsigned HashBin = getHashBin(pHash, energy);
 
 	 if( energy < 1e-20 ) {
@@ -73,10 +73,10 @@ namespace MonteRay{
  }
 
 
-__device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuParticle_t* p, gpuTallyType_t* tally){
+__device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p, gpuTallyType_t* tally){
 
 	 gpuTallyType_t opticalPathLength = 0.0;
-	 gpuFloatType_t energy = p->energy;
+	 gpuFloatType_t energy = p->energy[0];
 	 unsigned HashBin = getHashBin(pHash, energy);
 
 	 if( energy < 1e-20 ) {
@@ -103,7 +103,7 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 		gpuFloatType_t distance = crossingDistances[i];
 		if( cell == UINT_MAX ) continue;
 
-		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, tally, cell, distance, energy, p->weight, opticalPathLength );
+		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, tally, cell, distance, energy, p->weight[0], opticalPathLength );
 
 		if( opticalPathLength > 5.0 ) {
 			// cut off at 5 mean free paths
@@ -150,12 +150,12 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
 	const bool debug = false;
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
-	unsigned N = pCP->size;
+	unsigned N = pCP->size();
 
 	if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
 
 	while( tid < N ) {
-		gpuParticle_t p = getParticle( pCP, tid);
+		ParticleRay_t p = pCP->getParticle(tid);
 		tallyCollision(pGrid, pMatList, pMatProps, pHash, &p, tally);
 
 		tid += blockDim.x*gridDim.x;
@@ -163,12 +163,12 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
 	return;
 }
 
-__device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuParticle_t* p, gpuTally* pTally, unsigned tid){
+__device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p, gpuTally* pTally, unsigned tid){
 	const bool debug = false;
 
 	if( debug ) {
 		printf("--------------------------------------------------------------------------------------------------------\n");
-		printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, w=%f, weight=%f, index=%d \n",
+		printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, e=%f, w=%f, weight=%f, index=%d \n",
 				tid+1,
 				p->pos[0],
 				p->pos[1],
@@ -176,7 +176,8 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 				p->dir[0],
 				p->dir[1],
 				p->dir[2],
-				p->weight,
+				p->energy[0],
+				p->weight[0],
 				p->index
 		);
 	}
@@ -185,7 +186,7 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 
 	gpuTallyType_t opticalPathLength = 0.0;
 
-	gpuFloatType_t energy = p->energy;
+	gpuFloatType_t energy = p->energy[0];
 	unsigned HashBin = getHashBin(pHash, energy);
 
 	if( energy < 1e-20 ) {
@@ -212,7 +213,7 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 		gpuFloatType_t distance = crossingDistances[i];
 		if( cell == UINT_MAX ) continue;
 
-		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally, cell, distance, energy, p->weight, opticalPathLength);
+		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally, cell, distance, energy, p->weight[0], opticalPathLength);
 
 		if( opticalPathLength > 5.0 ) {
 			// cut off at 5 mean free paths
@@ -281,12 +282,12 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-	unsigned N = pCP->size;
+	unsigned N = pCP->size();
 
 	if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
 
 	while( tid < N ) {
-		gpuParticle_t p = getParticle( pCP, tid);
+		ParticleRay_t p = pCP->getParticle(tid);
 
 		if( debug ) {
 		    printf("--------------------------------------------------------------------------------------------------------\n");
@@ -297,8 +298,8 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
             printf("GPU::rayTraceTally:: u=%f\n", p.dir[0] );
             printf("GPU::rayTraceTally:: v=%f\n", p.dir[1] );
             printf("GPU::rayTraceTally:: w=%f\n", p.dir[2] );
-            printf("GPU::rayTraceTally:: energy=%f\n", p.energy );
-            printf("GPU::rayTraceTally:: weight=%f\n", p.weight );
+            printf("GPU::rayTraceTally:: energy=%f\n", p.energy[0] );
+            printf("GPU::rayTraceTally:: weight=%f\n", p.weight[0] );
             printf("GPU::rayTraceTally:: index=%d\n", p.index );
 		}
 

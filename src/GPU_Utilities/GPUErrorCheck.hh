@@ -1,10 +1,3 @@
-/*
- * GPUErrorCheck.hh
- *
- *  Created on: Mar 20, 2017
- *      Author: jsweezy, jsweezy@lanl.gov
- */
-
 #ifndef GPUERRORCHECK_HH_
 #define GPUERRORCHECK_HH_
 
@@ -18,7 +11,7 @@
 
 namespace MonteRay{
 
-#ifdef CUDA
+#ifdef __CUDACC__
 
 /**
  * \def MonteRayAlwaysPeekAtLastError()
@@ -79,10 +72,6 @@ namespace MonteRay{
 		exit(1);															\
 	} }
 
-
-
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true){
    if (code != cudaSuccess)
    {
@@ -90,6 +79,9 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
       if (abort) exit(code);
    }
 }
+
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__, true); }
+
 #else
 #define CUDA_CHECK_RETURN(value) {	value; }
 #define gpuErrchk(ans) { ans; }
@@ -99,15 +91,10 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 // ABORT
 
-#ifdef CUDA
-__host__ __device__ inline void MonteRayAbort( const char* message, const char *file, int line){
 #ifdef __CUDA_ARCH__
+__host__ __device__ inline void MonteRayAbort( const char* message, const char *file, int line){
 	printf("Error: %s %s %d\n", message, file, line);
 	asm("trap;");
-#else
-	fprintf(stderr,"Error: %s %s %d\n", message, file, line);
-	exit(1);
-#endif
 }
 #else
 inline void MonteRayAbort( const char* message, const char *file, int line){
@@ -115,7 +102,8 @@ inline void MonteRayAbort( const char* message, const char *file, int line){
 	exit(1);
 }
 #endif
-#define ABORT(message) { MonteRayAbort(message, __FILE__, __LINE__); }
+
+#define ABORT(message) { MonteRay::MonteRayAbort(message, __FILE__, __LINE__); }
 
 } /* end namespace MonteRay */
 

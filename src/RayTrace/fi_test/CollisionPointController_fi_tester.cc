@@ -219,20 +219,23 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
 #if( true )
     TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
+    	std::cout << "Debug: ********************************************* \n";
+    	std::cout << "Debug: Starting rayTrace tester with single looping bank \n";
     	CollisionPointController controller( 256,
     			256,
     			pGrid,
     			pMatList,
     			pMatProps,
     			pTally );
-
+    	controller.setCapacity( 1000000 );
     	setup();
 
-    	CollisionPointsHost bank1(500000);
+    	CollisionPointsHost bank1(50000);
     	bool end = false;
     	unsigned offset = 0;
 
     	while( ! end ) {
+    		std::cout << "Debug: reading to bank\n";
     		end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     		offset += bank1.size();
 

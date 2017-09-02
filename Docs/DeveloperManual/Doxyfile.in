@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING = UTF-8
-PROJECT_NAME = "MCATK @doc_name@"
+PROJECT_NAME = "MonteRay -- Monte Carlo Volumetric Ray Casting on Advanced Hardware"
 PROJECT_NUMBER = "version"
 OUTPUT_DIRECTORY = "@DOXYFILE_OUTPUT_DIR@"
 CREATE_SUBDIRS = NO

@@ -337,6 +337,8 @@ SUITE( Collision_fi_looping_tester ) {
 
     TEST( rayTraceTally_GodivaR_wGlobalLauncher )
     {
+    	std::cout << "Debug: ********************************************* \n";
+    	std::cout << "Debug: Starting rayTrace tester with Global Launcher \n";
     	FIGenericGPUTestHelper helper(  1 );
 
     	cudaReset();
@@ -392,9 +394,10 @@ SUITE( Collision_fi_looping_tester ) {
         h1s.copyToGPU();
         o16s.copyToGPU();
 
-    	CollisionPointsHost bank1(1000000);
+    	CollisionPointsHost bank1(100000);
     	bool end = false;
     	unsigned offset = 0;
+    	std::cout << "Debug: Reading Bank1 \n";
 		end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 
     	gpuFloatType_t energy = bank1.getEnergy(0);
@@ -408,15 +411,18 @@ SUITE( Collision_fi_looping_tester ) {
 		offset += bank1.size();
 
     	CollisionPointsHost bank2(100000);
+    	bool last = false;
 
     	auto cpuWork1 = [&] (void) -> void {
     		if( !end ) {
+    			std::cout << "Debug: Reading Bank2 \n";
     			end = bank2.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     			offset += bank2.size();
     		}
     	};
     	auto cpuWork2 = [&] (void) -> void {
     		if( !end ) {
+    			std::cout << "Debug: Reading Bank1 \n";
     			end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     			offset += bank1.size();
     		}
@@ -424,7 +430,6 @@ SUITE( Collision_fi_looping_tester ) {
 
      	helper.setupTimers();
 
-     	bool last = false;
      	while(true){
      		bank1.copyToGPU();
      		if( end ) { last = true; }

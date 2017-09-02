@@ -14,8 +14,6 @@ class SimpleMaterialListHost;
 class MonteRay_MaterialProperties;
 class gpuTallyHost;
 
-struct gpuParticle_t;
-
 class CollisionPointController {
 public:
 
@@ -42,8 +40,8 @@ public:
               gpuFloatType_t energy, gpuFloatType_t weight,
 			  unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType);
 
-    void add( const gpuParticle_t& );
-    void add( const gpuParticle_t* particle, unsigned N=1 );
+    void add( const ParticleRay_t& );
+    void add( const ParticleRay_t* particle, unsigned N=1 );
     void add( const void* particle, unsigned N=1 );
 
     void flush(bool final=false);

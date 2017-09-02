@@ -8,21 +8,22 @@
 
 #include "CollisionPoints_test_helper.hh"
 
+using namespace MonteRay;
 
 #ifdef CUDA
-__global__ void testGetCapacity(CollisionPoints* pXS, CollisionPointsSize_t* results){
-	results[0] = capacity(pXS);
+__global__ void testGetCapacity(CollisionPoints* pXS, CollisionPointsHost::CollisionPointsSize_t* results){
+	results[0] = pXS->capacity();
 	return;
 }
 #endif
 
-CollisionPointsSize_t
+CollisionPointsHost::CollisionPointsSize_t
 CollisionPointsTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, CollisionPointsHost& CPs) {
-	CollisionPointsSize_t* result_device;
-	CollisionPointsSize_t* result;
-	size_t allocSize = sizeof( CollisionPointsSize_t) * 1;
+	CollisionPointsHost::CollisionPointsSize_t* result_device;
+	CollisionPointsHost::CollisionPointsSize_t* result;
+	size_t allocSize = sizeof( CollisionPointsHost::CollisionPointsSize_t) * 1;
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, allocSize ));
-	result = (CollisionPointsSize_t*) malloc( allocSize );
+	result = (CollisionPointsHost::CollisionPointsSize_t*) malloc( allocSize );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
@@ -31,10 +32,10 @@ CollisionPointsTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, C
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(CollisionPointsSize_t)*1, cudaMemcpyDeviceToHost));
+	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(CollisionPointsHost::CollisionPointsSize_t)*1, cudaMemcpyDeviceToHost));
 
 	cudaFree( result_device );
-	CollisionPointsSize_t value = *result;
+	CollisionPointsHost::CollisionPointsSize_t value = *result;
 	free(result);
 	return value;
 }
@@ -42,8 +43,8 @@ CollisionPointsTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, C
 #ifdef CUDA
 __global__ void testSumEnergy(CollisionPoints* pXS, gpuFloatType_t* results){
 	gpuFloatType_t total = 0.0f;
-	for(unsigned i=0; i<size(pXS); ++i ) {
-		total += getEnergy(pXS, i);
+	for(unsigned i=0; i< pXS->size(); ++i ) {
+		total += pXS->getEnergy(i);
 	}
 	results[0] = total;
 	return;

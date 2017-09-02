@@ -10,143 +10,7 @@
 
 namespace MonteRay{
 
-void ctor(CollisionPoints* ptr, CollisionPointsSize_t num){
-    if( num <=0 ) { num = 1; }
-    ptr->capacity = num;
-    ptr->size = 0;
-
-    CollisionPointsSize_t allocSize = sizeof(gpuParticle_t)*num;
-    ptr->points = (gpuParticle_t*) malloc( allocSize );
-}
-
-void dtor(CollisionPoints* ptr){
-    free( ptr->points );
-}
-
-void copy(CollisionPoints* pCopy, const CollisionPoints* const pOrig ){
-    CollisionPointsSize_t num = pOrig->capacity;
-    if( num <=0 ) { num = 1; }
-
-    ctor( pCopy, num);
-    pCopy->size = pOrig->size;
-    std::memcpy( pCopy->points, pOrig->points, pOrig->size * sizeof( gpuParticle_t ) );
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-CollisionPointsSize_t capacity(CollisionPoints* ptr){
-    return ptr->capacity;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-CollisionPointsSize_t size(CollisionPoints* ptr) {
-    return ptr->size;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-CollisionPosition_t getPosition( CollisionPoints* ptr, CollisionPointsSize_t i){
-    return ptr->points[i].pos;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-CollisionDirection_t getDirection( CollisionPoints* ptr, CollisionPointsSize_t i){
-    return ptr->points[i].dir;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getEnergy( CollisionPoints* ptr, CollisionPointsSize_t i){
-    return ptr->points[i].energy;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getWeight( CollisionPoints* ptr, CollisionPointsSize_t i){
-    return ptr->points[i].weight;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getIndex( CollisionPoints* ptr, CollisionPointsSize_t i) {
-    return ptr->points[i].index;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-DetectorIndex_t getDetectorIndex( CollisionPoints* ptr, CollisionPointsSize_t i) {
-    return ptr->points[i].detectorIndex;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-ParticleType_t getParticleType( CollisionPoints* ptr, CollisionPointsSize_t i) {
-    return ptr->points[i].particleType;
-}
-
-
-#ifdef CUDA
-__device__ __host__
-#endif
-void clear(CollisionPoints* ptr ) {
-    ptr->size = 0;
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuParticle_t pop(CollisionPoints* ptr ) {
-
-#if !defined( RELEASE )
-    if( ptr->size == 0 ) {
-        printf("pop(CollisionPoints*) -- no points.  %s %d\n", __FILE__, __LINE__);
-        ABORT( "CollisionPoints.cu -- pop" );
-    }
-#endif
-
-    ptr->size -= 1;
-    return ptr->points[ptr->size];
-}
-
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuParticle_t getParticle(const CollisionPoints* ptr, CollisionPointsSize_t i){
-#if !defined( RELEASE )
-    if( i >= ptr->size ) {
-        printf("pop(CollisionPoints*) -- index exceeds size.  %s %d\n", __FILE__, __LINE__);
-        ABORT( "CollisionPoints.cu -- getParticle" );
-    }
-#endif
-    return ptr->points[i];
-}
-
-CollisionPointsHost::CollisionPointsHost( unsigned num) :
-    ptrPoints( new CollisionPoints ),
-    numCollisionOnFile( 0 ),
-    currentVersion( 0 ),
-    position( 0 ),
-    headerPos(0 ),
-    currentParticlePos(0)
-{
-    ctor( ptrPoints, num );
-    cudaCopyMade = false;
-    temp = NULL;
-}
-
 CollisionPointsHost::~CollisionPointsHost() {
-    dtor( ptrPoints );
     delete ptrPoints;
 
     if( io.is_open() ) {
@@ -157,9 +21,8 @@ CollisionPointsHost::~CollisionPointsHost() {
         }
     }
 
-#ifdef CUDA
+#ifdef __CUDACC__
     if( cudaCopyMade ) {
-        cudaFree( temp->points );
         cudaFree( ptrPoints_device );
         delete temp;
     }
@@ -170,46 +33,33 @@ void CollisionPointsHost::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
         gpuFloatType_t energy, gpuFloatType_t weight,
         unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType) {
-    gpuParticle_t particle;
+	ParticleRay_t particle;
     particle.pos[0] = x;
     particle.pos[1] = y;
     particle.pos[2] = z;
     particle.dir[0] = u;
     particle.dir[1] = v;
     particle.dir[2] = w;
-    particle.energy = energy;
-    particle.weight = weight;
+    particle.energy[0] = energy;
+    particle.weight[0] = weight;
     particle.index = index;
     particle.detectorIndex = detectorIndex;
     particle.particleType = particleType;
     add( particle );
 }
 
-void CollisionPointsHost::add( const gpuParticle_t& particle) {
-    CollisionPointsSize_t currentLocation = size();
-    if( currentLocation >= ptrPoints->capacity ) {
-        fprintf(stderr, "CollisionPointsHost::add -- index > number of allocated points.  %s %d\n", __FILE__, __LINE__);
-        exit(1);
-    }
-    ptrPoints->points[currentLocation] = particle;
-    ptrPoints->size += 1;
+void CollisionPointsHost::add( const ParticleRay_t& particle) {
+	ptrPoints->add( particle );
 }
 
-void CollisionPointsHost::add( const gpuParticle_t* particle, unsigned N ) {
-    CollisionPointsSize_t currentLocation = size();
-    if( currentLocation+N-1 >= ptrPoints->capacity ) {
-        fprintf(stderr, "CollisionPointsHost::add -- index > number of allocated points.  %s %d\n", __FILE__, __LINE__);
-        exit(1);
-    }
-    std::memcpy(ptrPoints->points+currentLocation, particle, N*sizeof( gpuParticle_t ) );
-//    for( unsigned i=0; i<N; ++i) {
-//    	ptrPoints->points[currentLocation+i] = particle[i];
-//    }
-    ptrPoints->size += N;
+void CollisionPointsHost::add( const ParticleRay_t* particle, unsigned N ) {
+	for( unsigned i=0; i<N; ++i){
+		add(particle[i]);
+	}
 }
 
 void CollisionPointsHost::add( const void* voidPtrParticle, unsigned N ) {
-	const gpuParticle_t* ptrParticle = (const gpuParticle_t*) voidPtrParticle;
+	const ParticleRay_t* ptrParticle = (const ParticleRay_t*) voidPtrParticle;
 	add( ptrParticle, N);
 }
 
@@ -229,41 +79,33 @@ void CollisionPointsHost::CopyToGPU(void) {
 
 
 void CollisionPointsHost::copyToGPU(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
+	std::cout << "CollisionPointsHost::copyToGPU -- starting\n";
 
-        if( !cudaCopyMade ) {
-        	// first pass allocate memory
+	if( !cudaCopyMade ) {
+		// first pass allocate memory
+		cudaCopyMade = true;
 
-        	cudaCopyMade = true;
+		//std::cout << "CollisionPointsHost::copyToGPU -- calling new for `temp`.\n";
+		temp = new RayList_t<1,true>( *ptrPoints );
 
-        	temp = new CollisionPoints;
+		// allocate target struct
+		CUDA_CHECK_RETURN( cudaMalloc(&ptrPoints_device, sizeof( CollisionPoints) ));
 
-        	// allocate target struct
-        	CUDA_CHECK_RETURN( cudaMalloc(&ptrPoints_device, sizeof( CollisionPoints) ));
+	}  else {
+		if( ptrPoints->capacity() != temp->capacity() ) {
+			// resize
+			delete temp;
+			temp = new RayList_t<1,true>( *ptrPoints );
+		} else {
+			*temp = *ptrPoints;
+		}
+	}
 
-        	// allocate target dynamic memory
-        	CUDA_CHECK_RETURN( cudaMalloc(&(temp->points), sizeof( gpuParticle_t ) * capacity() ));
-
-        }  else {
-        	if( ptrPoints->capacity != temp->capacity ) {
-        		// resize
-
-        		cudaFree( temp->points );
-        		// allocate target dynamic memory
-        		CUDA_CHECK_RETURN( cudaMalloc(&(temp->points), sizeof( gpuParticle_t ) * capacity() ));
-        	}
-        }
-
-    	temp->capacity = ptrPoints->capacity;
-    	temp->size = ptrPoints->size;
-
-        // copy struct data
-        CUDA_CHECK_RETURN( cudaMemcpy(ptrPoints_device, temp, sizeof( CollisionPoints ), cudaMemcpyHostToDevice));
-
-        // copy points data into allocated memory
-        CUDA_CHECK_RETURN( cudaMemcpy(temp->points, ptrPoints->points, sizeof( gpuParticle_t ) * capacity(), cudaMemcpyHostToDevice));
+	// copy struct data
+	CUDA_CHECK_RETURN( cudaMemcpy(ptrPoints_device, temp, sizeof( CollisionPoints ), cudaMemcpyHostToDevice));
 #endif
-    }
+}
 
 void CollisionPointsHost::readHeader(std::fstream& infile){
 //	std::cout << "Debug: CollisionPointsHost::readHeader - starting.\n";
@@ -371,12 +213,12 @@ void CollisionPointsHost::closeInput(std::fstream& infile) {
     }
 }
 
-void CollisionPointsHost::writeParticle(const gpuParticle_t& particle){
-    binaryIO::write(io, particle );
+void CollisionPointsHost::writeParticle(const ParticleRay_t& particle){
+    particle.write(io);
     ++numCollisionOnFile;
 }
 
-void CollisionPointsHost::printParticle(unsigned i, const gpuParticle_t& particle ) const {
+void CollisionPointsHost::printParticle(unsigned i, const ParticleRay_t& particle ) const {
 	std::cout << "Debug: CollisionPointsHost::printParticle -- i=" << i;
 	std::cout << " x= " << particle.pos[0];
 	std::cout << " y= " << particle.pos[1];
@@ -392,15 +234,15 @@ void CollisionPointsHost::printParticle(unsigned i, const gpuParticle_t& particl
 	std::cout << "\n";
 }
 
-gpuParticle_t CollisionPointsHost::readParticle(void){
+ParticleRay_t CollisionPointsHost::readParticle(void){
     ++currentParticlePos;
     if( currentParticlePos > numCollisionOnFile ) {
         fprintf(stderr, "CollisionPointsHost::readParticle -- Exhausted particles on the file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
-    gpuParticle_t particle;
+    ParticleRay_t particle;
     try{
-        binaryIO::read(io, particle);
+    	particle.read(io);
     }
     catch( std::fstream::failure& e  ) {
         std::string message = "CollisionPointsHost::readParticle -- Failure during reading of a collision. -- ";
@@ -417,8 +259,9 @@ gpuParticle_t CollisionPointsHost::readParticle(void){
 
 void CollisionPointsHost::readToMemory( const std::string& file ){
     openInput( file );
-    dtor( ptrPoints );
-    ctor( ptrPoints, getNumCollisionsOnFile() );
+
+    delete ptrPoints;
+    ptrPoints = new CollisionPoints( getNumCollisionsOnFile() );
 
     for( unsigned i=0; i< getNumCollisionsOnFile(); ++i ) {
         add( readParticle() );
@@ -434,7 +277,7 @@ void CollisionPointsHost::writeBank() {
 
 bool CollisionPointsHost::readToBank( const std::string& file, unsigned start ){
     openInput( file );
-    unsigned offset = start * ( sizeof(gpuParticle_t) );
+    unsigned offset = start * ( ParticleRay_t::filesize() );
     io.seekg( offset, std::ios::cur); // reposition to offset location
 
     clear();

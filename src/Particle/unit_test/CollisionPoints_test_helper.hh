@@ -8,7 +8,9 @@
 #include <cuda.h>
 #endif
 
-using namespace MonteRay;
+#include "CollisionPoints.h"
+
+namespace MonteRay {
 
 class CollisionPointsTester
 {
@@ -22,13 +24,15 @@ public:
 
 	void stopTimers();
 
-	CollisionPointsSize_t launchGetCapacity( unsigned nBlocks, unsigned nThreads, CollisionPointsHost& CPs);
+	CollisionPointsHost::CollisionPointsSize_t launchGetCapacity( unsigned nBlocks, unsigned nThreads, CollisionPointsHost& CPs);
 	gpuFloatType_t launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, CollisionPointsHost& CPs);
 
 private:
 	cudaEvent_t start, stop;
 
 };
+
+} // end namespace
 #endif /* COLLISIONPOINTS_TEST_HELPER_HH_ */
 
 

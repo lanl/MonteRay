@@ -102,7 +102,7 @@ CollisionPointController::add(
 }
 
 void
-CollisionPointController::add( const gpuParticle_t& particle){
+CollisionPointController::add( const ParticleRay_t& particle){
 	currentBank->add( particle );
 	if( size() == capacity() ) {
 		std::cout << "Debug: bank full, flushing.\n";
@@ -111,7 +111,7 @@ CollisionPointController::add( const gpuParticle_t& particle){
 }
 
 void
-CollisionPointController::add( const gpuParticle_t* particle, unsigned N){
+CollisionPointController::add( const ParticleRay_t* particle, unsigned N){
 	int NSpaces = capacity() - size();
 
 	int NAdding = std::min(NSpaces, int(N));
@@ -128,7 +128,7 @@ CollisionPointController::add( const gpuParticle_t* particle, unsigned N){
 
 void
 CollisionPointController::add( const void* particle, unsigned N){
-	add(  (const gpuParticle_t*) particle, N  );
+	add(  (const ParticleRay_t*) particle, N  );
 }
 
 void
@@ -165,6 +165,7 @@ CollisionPointController::flush(bool final){
 		std::cout << "Debug: final flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n";
 		stopTimers();
 		printTotalTime();
+		currentBank->clear();
 		return;
 	}
 

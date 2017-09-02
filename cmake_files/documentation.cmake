@@ -40,6 +40,9 @@
 # Create a target called "doc_name"_docs that generates the doxygen documentation including the pdf version
 function( generate_doc_rule doc_name file.in directory )
 
+    set( create "create${doc_name}" )
+    message( STATUS "documentation.cmake -- adding custom target to create documentation ==  ${create}" )            
+
     find_package( Doxygen )
     
     if( NOT DOXYGEN_FOUND )
@@ -48,6 +51,8 @@ function( generate_doc_rule doc_name file.in directory )
     endif()
 
     set( template_search_path "${CMAKE_SOURCE_DIR}/${directory}" )
+    
+    file( GLOB DocumentFiles "${CMAKE_SOURCE_DIR}/${directory}/*.md" )
 
     find_file( DOXYFILE.${doc_name} 
                NAMES ${file.in}
@@ -57,20 +62,29 @@ function( generate_doc_rule doc_name file.in directory )
     if( NOT DOXYFILE.${doc_name} )
         message( FATAL_ERROR "File: ${file.in} was not found.  Searching in ${template_search_path}." )
     endif()
-    
 
     set(DOXYFILE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${directory}")
     execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${DOXYFILE_OUTPUT_DIR} )
     
-    set( DocumentDepends ${CMAKE_BINARY_DIR}/docs/html/index.html )
+    set( DocumentDepends ${CMAKE_BINARY_DIR}/${directory}/html/index.html )
+    set( REFMANTEX ${DOXYFILE_OUTPUT_DIR}/latex/refman.tex )
+    
+    list( APPEND DocumentFiles ${DOXYFILE.${doc_name}} )
+    
+    #foreach( file ${DocumentFiles} ) 
+    #    message( STATUS " dependency = ${file}" ) 
+    #endforeach()
 
-    add_custom_command( OUTPUT ${DocumentDepends} 
-                        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile
+    add_custom_command( OUTPUT ${DocumentDepends} ${REFMANTEX}
+                        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUTPUT_DIR}/Doxyfile
                         COMMAND chmod -R a+rX  ${DOXYFILE_OUTPUT_DIR}
                         COMMAND chmod -R g+w   ${DOXYFILE_OUTPUT_DIR}
-                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                        WORKING_DIRECTORY ${DOXYFILE_OUTPUT_DIR}
+                        DEPENDS ${DocumentFiles} 
                       )
-    add_custom_target( createDocs DEPENDS ${CMAKE_BINARY_DIR}/docs/html/index.html )
+                      
+    add_custom_target( ${create} DEPENDS ${CMAKE_BINARY_DIR}/${directory}/html/index.html )
+    
      
     # Create HTML output
     set(DOXYFILE_HTML_DIR "html")
@@ -122,29 +136,32 @@ function( generate_doc_rule doc_name file.in directory )
         endif()
 
         # Add ability to invoke doxygen's make system for building latex/pdf stuff
-        set( PDFManual ${CMAKE_BINARY_DIR}/Docs/latex/refman.pdf )
+        set( pdfDependencies ${DocumentFiles} )
+        list( APPEND pdfDependencies ${REFMANTEX} )
+        set( PDFManual ${CMAKE_BINARY_DIR}/${directory}/latex/refman.pdf )
+        
         add_custom_command( OUTPUT ${PDFManual}
                             COMMAND ${CMAKE_MAKE_PROGRAM} PATH=${LatexPath}:$ENV{PATH}
                             COMMAND chmod -R a+rX  ${DOXYFILE_OUTPUT_DIR}
                             COMMAND chmod -R g+w   ${DOXYFILE_OUTPUT_DIR}
-                            DEPENDS ${DocumentDepends}
+                            DEPENDS ${pdfDependencies} 
                             WORKING_DIRECTORY "${DOXYFILE_OUTPUT_DIR}/${DOXYFILE_LATEX_DIR}"
                           )
-        add_custom_target( manual_generator DEPENDS ${PDFManual} )                  
-        add_dependencies( createDocs manual_generator )
+        add_custom_target( ${create}Manual_generator DEPENDS ${PDFManual} ${DocumentFiles})                  
+        add_dependencies( ${create} ${create}Manual_generator )
         set( DocumentDepends ${DocumentDepends} ${PDFManual} )
 
     endif()
 
 
-    configure_file( ${DOXYFILE.${doc_name}} Doxyfile ESCAPE_QUOTES IMMEDIATE @ONLY )
+    configure_file( ${DOXYFILE.${doc_name}} ${DOXYFILE_OUTPUT_DIR}/Doxyfile ESCAPE_QUOTES IMMEDIATE @ONLY )
 
     # Create a target for building installing the documentation manually.
     #get_target_property( DOC_TARGET install_docs TYPE )
     if(NOT TARGET install_docs )
        add_custom_target( install_docs 
-                          COMMAND ${CMAKE_COMMAND} -E copy_directory ${DOXYFILE_OUTPUT_DIR} ${CMAKE_INSTALL_PREFIX}/docs
-                          COMMENT "Installing documentation for ${doc_name} in ${CMAKE_INSTALL_PREFIX}/docs"
+                          COMMAND ${CMAKE_COMMAND} -E copy_directory ${DOXYFILE_OUTPUT_DIR} ${CMAKE_INSTALL_PREFIX}/${directory}
+                          COMMENT "Installing documentation for ${doc_name} in ${CMAKE_INSTALL_PREFIX}/${directory}/"
                           DEPENDS ${DocumentDepends}
                         ) 
     endif()

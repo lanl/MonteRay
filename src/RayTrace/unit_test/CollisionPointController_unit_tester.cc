@@ -150,15 +150,15 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
         unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
 
-        gpuParticle_t particle;
+        ParticleRay_t particle;
         particle.pos[0] = 0.0;
         particle.pos[1] = 0.0;
         particle.pos[2] = 0.0;
         particle.dir[0] = 1.0;
         particle.dir[1] = 0.0;
         particle.dir[2] = 0.0;
-        particle.energy = 1.0;
-        particle.weight = 1.0;
+        particle.energy[0] = 1.0;
+        particle.weight[0] = 1.0;
         particle.index = i;
         particle.detectorIndex = 99;
         particle.particleType = 0;
@@ -178,15 +178,15 @@ SUITE( Collision_unit_bank_controller_tester ) {
 
         unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
 
-        gpuParticle_t particle[2];
+        ParticleRay_t particle[2];
         particle[0].pos[0] = 1.0;
         particle[0].pos[1] = 2.0;
         particle[0].pos[2] = 3.0;
         particle[0].dir[0] = 4.0;
         particle[0].dir[1] = 5.0;
         particle[0].dir[2] = 6.0;
-        particle[0].energy = 7.0;
-        particle[0].weight = 8.0;
+        particle[0].energy[0] = 7.0;
+        particle[0].weight[0] = 8.0;
         particle[0].index = 9;
         particle[0].detectorIndex = 99;
         particle[0].particleType = 0;
@@ -197,8 +197,8 @@ SUITE( Collision_unit_bank_controller_tester ) {
         particle[1].dir[0] = 14.0;
         particle[1].dir[1] = 15.0;
         particle[1].dir[2] = 16.0;
-        particle[1].energy = 17.0;
-        particle[1].weight = 18.0;
+        particle[1].energy[0] = 17.0;
+        particle[1].weight[0] = 18.0;
         particle[1].index = 19;
         particle[1].detectorIndex = 99;
         particle[1].particleType = 0;
@@ -217,7 +217,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
  				                             pTally );
         setup();
 
-        gpuParticle_t particle[10];
+        ParticleRay_t particle[10];
         for( auto i = 0; i < 10; ++i ){
         	particle[i].pos[0] = 1.0;
         	particle[i].pos[1] = 2.0;
@@ -225,8 +225,8 @@ SUITE( Collision_unit_bank_controller_tester ) {
         	particle[i].dir[0] = 4.0;
         	particle[i].dir[1] = 5.0;
         	particle[i].dir[2] = 6.0;
-        	particle[i].energy = 7.0;
-        	particle[i].weight = 8.0;
+        	particle[i].energy[0] = 7.0;
+        	particle[i].weight[0] = 8.0;
         	particle[i].index = i;
         	particle[i].detectorIndex = 99;
         	particle[i].particleType = 0;

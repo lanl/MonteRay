@@ -20,11 +20,11 @@ class gpuTimingHost;
 #ifdef CUDA
 __device__
 void
-tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuParticle_t* p, gpuTallyType_t* tally);
+tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p, gpuTallyType_t* tally);
 
 __device__
 void
-tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuParticle_t* p, gpuTally* tally, unsigned tid);
+tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p, gpuTally* tally, unsigned tid);
 
 __device__
 gpuTallyType_t
@@ -36,7 +36,7 @@ tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data*
 
 __device__
 gpuTallyType_t
-tallyAttenuation(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuParticle_t* p);
+tallyAttenuation(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p);
 
 __device__
 gpuTallyType_t

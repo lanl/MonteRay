@@ -217,6 +217,10 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	unsigned nBlocks = 256;
     	unsigned nThreads = 256;
     	unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
+#ifdef TITANX_MAXWELL_GPU
+        nBlocks  = 16384;
+        nThreads = 416;
+#endif
 #ifdef K420_GPU
     	nBlocks = 128;
     	nThreads = 128;
@@ -232,7 +236,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     			pMatProps,
     			pTally );
 
-    	// capacity = 1000000;  // Quadro K420 limit
     	controller.setCapacity(capacity);
 
     	controller.readCollisionsFromFile( "MonteRayTestFiles/PWR_assembly_collisions.bin" );
@@ -280,9 +283,24 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
        	std::cout << "Debug:                num both zero=" << numZeroZero << "\n";
 
     	// timings on GTX TitanX GPU 256x256
-    	// total gpuTime = 6.4583
-    	// total cpuTime = 0.118517
-    	// total wallTime = 6.45834
+       	// Debug: total gpuTime = 6.4024
+       	// Debug: total cpuTime = 0.0860779
+       	// Debug: total wallTime = 6.40247
+
+       	// timings on GTX TitanX GPU 1024x1024
+       	// Debug: total gpuTime = 6.37461
+       	// Debug: total cpuTime = 0.084251
+       	// Debug: total wallTime = 6.37465
+
+       	// timings on GTX TitanX GPU 16384x1024
+       	// Debug: total gpuTime = 6.1284
+       	// Debug: total cpuTime = 0.0829004
+       	// Debug: total wallTime = 6.12846
+
+       	// timings on GTX TitanX GPU 16384x416
+       	// Debug: total gpuTime = 5.68947
+       	// Debug: total cpuTime = 0.0825951
+       	// Debug: total wallTime = 5.68952
 
        	// timing on Nvidia Quandro K420 128x128'
        	// total gpuTime = 101.266

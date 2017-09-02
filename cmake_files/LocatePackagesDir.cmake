@@ -33,6 +33,7 @@ if( NOT EXISTS ${package_dir} )
   find_path( package_dir 
            NAMES lib include
            PATHS $ENV{PACKAGEDIR}
+                 $ENV{UNITTEST_DIR}
            DOC "Location of third party packages required by the toolkit" 
            NO_DEFAULT_PATH )
 endif()

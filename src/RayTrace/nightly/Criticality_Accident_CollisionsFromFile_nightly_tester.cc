@@ -200,6 +200,10 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	unsigned nBlocks = 256;
     	unsigned nThreads = 256;
     	unsigned capacity = 40000*8U*20*10U;
+#ifdef TITANX_MAXWELL_GPU
+        nBlocks  = 16384;
+        nThreads = 1024;
+#endif
 #ifdef P100_GPU
         nBlocks  = 4096;
         nThreads = 1024; 
@@ -259,15 +263,29 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 //    	std::cout << "Debug:                num both zero=" << numZeroZero << "\n";
 
     	// timings on GTX TitanX GPU 256x256
-    	// total gpuTime = 10.6487
-    	// total cpuTime = 0.459244
-    	// total wallTime = 10.6488
-
+    	// Debug: total gpuTime = 10.4979
+    	// Debug: total cpuTime = 0.276888
+    	// Debug: total wallTime = 10.498
 
     	// timings on GTX TitanX GPU 1024x1024
-    	// total gpuTime = 10.3725
-    	// total cpuTime = 0.32771
-    	// total wallTime = 10.3726
+    	// Debug: total gpuTime = 10.3787
+    	// Debug: total cpuTime = 0.278265
+    	// Debug: total wallTime = 10.3788
+
+    	// timings on GTX TitanX GPU 4096x1024
+    	// Debug: total gpuTime = 10.094
+    	// Debug: total cpuTime = 0.28402
+    	// Debug: total wallTime = 10.0941
+
+    	// timings on GTX TitanX GPU 8192x1024
+    	// Debug: total gpuTime = 9.88794
+    	// Debug: total cpuTime = 0.2759
+    	// Debug: total wallTime = 9.88801c
+
+    	// timings on GTX TitanX GPU 16384x1024
+    	// Debug: total gpuTime = 9.77991
+    	// Debug: total cpuTime = 0.27315
+    	// Debug: total wallTime = 9.77998
 
         // timings on RZManta GP100GL 4096x1024
         // Debug: total gpuTime = 7.36258

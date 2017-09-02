@@ -9,8 +9,13 @@
 #include "CollisionPoints_test_helper.hh"
 
 SUITE( CollisionPoints_simple_tests ) {
+	using namespace MonteRay;
+
+	typedef MonteRay::ParticleRay_t ParticleRay_t;
+
 	TEST( test_setup ) {
 		gpuCheck();
+		//CHECK(false);
 	}
     TEST( setup_host ) {
     	CollisionPointsHost points(10);
@@ -20,7 +25,6 @@ SUITE( CollisionPoints_simple_tests ) {
 
     TEST( add_two_particle_via_components ) {
     	CollisionPointsHost points(2);
-
 
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
@@ -33,15 +37,15 @@ SUITE( CollisionPoints_simple_tests ) {
 
     TEST( add_two_particle_via_particle ) {
     	CollisionPointsHost points(2);
-    	gpuParticle_t particle;
+    	ParticleRay_t particle;
     	particle.pos[0] = 1.0;
     	particle.pos[1] = 2.0;
     	particle.pos[2] = 3.0;
     	particle.dir[0] = 4.0;
     	particle.dir[1] = 5.0;
     	particle.dir[2] = 6.0;
-    	particle.energy = 7.0;
-    	particle.weight = 8.0;
+    	particle.energy[0] = 7.0;
+    	particle.weight[0] = 8.0;
     	particle.index = 9;
     	particle.detectorIndex = 99;
     	particle.particleType = 0;
@@ -52,7 +56,7 @@ SUITE( CollisionPoints_simple_tests ) {
     	points.add( particle );
     	CHECK_EQUAL(2, points.size() );
 
-    	gpuParticle_t particle2 = points.getParticle(0);
+    	ParticleRay_t particle2 = points.getParticle(0);
     	CHECK_CLOSE(1.0, particle2.pos[0], 1e-5 );
     	CHECK_EQUAL(9, particle2.index );
 
@@ -63,15 +67,15 @@ SUITE( CollisionPoints_simple_tests ) {
 
     TEST( add_two_particles_via_array ) {
       	CollisionPointsHost points(2);
-      	gpuParticle_t particle[2];
+      	ParticleRay_t particle[2];
       	particle[0].pos[0] = 1.0;
       	particle[0].pos[1] = 2.0;
       	particle[0].pos[2] = 3.0;
       	particle[0].dir[0] = 4.0;
       	particle[0].dir[1] = 5.0;
       	particle[0].dir[2] = 6.0;
-      	particle[0].energy = 7.0;
-      	particle[0].weight = 8.0;
+      	particle[0].energy[0] = 7.0;
+      	particle[0].weight[0] = 8.0;
       	particle[0].index = 9;
       	particle[0].detectorIndex = 99;
       	particle[0].particleType = 0;
@@ -82,8 +86,8 @@ SUITE( CollisionPoints_simple_tests ) {
       	particle[1].dir[0] = 14.0;
       	particle[1].dir[1] = 15.0;
       	particle[1].dir[2] = 16.0;
-      	particle[1].energy = 17.0;
-      	particle[1].weight = 18.0;
+      	particle[1].energy[0] = 17.0;
+      	particle[1].weight[0] = 18.0;
       	particle[1].index = 19;
       	particle[1].detectorIndex = 99;
       	particle[1].particleType = 0;
@@ -91,7 +95,7 @@ SUITE( CollisionPoints_simple_tests ) {
       	points.add( particle, 2 );
       	CHECK_EQUAL(2, points.size() );
 
-      	gpuParticle_t particle2 = points.getParticle(0);
+      	ParticleRay_t particle2 = points.getParticle(0);
       	CHECK_CLOSE(1.0, particle2.pos[0], 1e-5 );
       	CHECK_EQUAL(9, particle2.index );
       	particle2 = points.getParticle(1);
@@ -101,15 +105,15 @@ SUITE( CollisionPoints_simple_tests ) {
 
     TEST( add_two_particles_via_voidPtr ) {
        	CollisionPointsHost points(2);
-       	gpuParticle_t particle[2];
+       	ParticleRay_t particle[2];
        	particle[0].pos[0] = 1.0;
        	particle[0].pos[1] = 2.0;
        	particle[0].pos[2] = 3.0;
        	particle[0].dir[0] = 4.0;
        	particle[0].dir[1] = 5.0;
        	particle[0].dir[2] = 6.0;
-       	particle[0].energy = 7.0;
-       	particle[0].weight = 8.0;
+       	particle[0].energy[0] = 7.0;
+       	particle[0].weight[0] = 8.0;
        	particle[0].index = 9;
        	particle[0].detectorIndex = 99;
        	particle[0].particleType = 0;
@@ -120,8 +124,8 @@ SUITE( CollisionPoints_simple_tests ) {
        	particle[1].dir[0] = 14.0;
        	particle[1].dir[1] = 15.0;
        	particle[1].dir[2] = 16.0;
-       	particle[1].energy = 17.0;
-       	particle[1].weight = 18.0;
+       	particle[1].energy[0] = 17.0;
+       	particle[1].weight[0] = 18.0;
        	particle[1].index = 19;
        	particle[1].detectorIndex = 99;
        	particle[1].particleType = 0;
@@ -130,13 +134,33 @@ SUITE( CollisionPoints_simple_tests ) {
        	points.add( voidPtr, 2 );
        	CHECK_EQUAL(2, points.size() );
 
-       	gpuParticle_t particle2 = points.getParticle(0);
+       	ParticleRay_t particle2 = points.getParticle(0);
        	CHECK_CLOSE(1.0, particle2.pos[0], 1e-5 );
        	CHECK_EQUAL(9, particle2.index );
        	particle2 = points.getParticle(1);
        	CHECK_EQUAL(19, particle2.index );
 
        }
+
+    TEST( send_to_gpu_only) {
+     	std::cout << "Debug: CollisionPoints_tester -- send_to_gpu_only \n";
+     	MonteRay::gpuInfo();
+     	CollisionPointsTester tester;
+
+     	CollisionPointsHost points(2);
+
+     	points.add( 1.0, 2.0, 3.0,
+     			4.0, 5.0, 6.0,
+     			14.0, 0.9, 99, 199, 0);
+     	points.add( 1.0, 2.0, 3.0,
+     			4.0, 5.0, 6.0,
+     			14.0, 0.9, 99, 199, 0);
+         CHECK_EQUAL(2, points.size() );
+         CHECK_EQUAL(2, points.capacity() );
+
+         CHECK_EQUAL( false, points.isCudaCopyMade() );
+         points.copyToGPU();
+    }
 
     TEST( send_to_gpu_getCapacity) {
     	std::cout << "Debug: CollisionPoints_tester -- send_to_gpu_getCapacity \n";
@@ -158,7 +182,7 @@ SUITE( CollisionPoints_simple_tests ) {
         points.copyToGPU();
         CHECK_EQUAL( true, points.isCudaCopyMade() );
         tester.setupTimers();
-        CollisionPointsSize_t result = tester.launchGetCapacity(1,1,points);
+        RayListSize_t result = tester.launchGetCapacity(1,1,points);
         tester.stopTimers();
         CHECK_EQUAL( 2, unsigned(result) );
     }
@@ -183,8 +207,82 @@ SUITE( CollisionPoints_simple_tests ) {
         CHECK_CLOSE( 38.0, float(result), 1e-7 );
     }
 
-    TEST( read_file_getCapacity ) {
-    	std::cout << "Debug: CollisionPoints_tester -- read_file_getCapacity \n";
+    TEST( write_And_read_a_particle ) {
+    	CollisionPointsHost collisions(1);
+
+    	std::string filename = "writeAndReadAParticleTest.bin";
+    	collisions.openOutput( filename );
+
+    	ParticleRay_t particle;
+    	particle.pos[0] = 1.0;
+    	particle.pos[1] = 2.0;
+    	particle.pos[2] = 3.0;
+    	particle.dir[0] = 4.0;
+    	particle.dir[1] = 5.0;
+    	particle.dir[2] = 6.0;
+    	particle.energy[0] = 14.0;
+    	particle.weight[0] = 15.0;
+    	particle.index = 16;
+    	particle.detectorIndex = 17;
+    	particle.particleType = 18;
+
+    	collisions.writeParticle( particle );
+    	CHECK_EQUAL(1, collisions.getNumCollisionsOnFile() );
+    	collisions.closeOutput();
+
+    	CollisionPointsHost collisions2(1);
+    	collisions2.openInput( filename );
+
+    	CHECK_EQUAL(0, collisions2.getVersion() );
+    	CHECK_EQUAL(1, collisions2.getNumCollisionsOnFile() );
+
+    	ParticleRay_t particle2;
+    	particle2 = collisions2.readParticle();
+    	CHECK_CLOSE( 1.0, particle2.pos[0], 1e-7 );
+    	CHECK_CLOSE( 2.0, particle2.pos[1], 1e-7 );
+    	CHECK_CLOSE( 3.0, particle2.pos[2], 1e-7 );
+    	CHECK_CLOSE( 4.0, particle2.dir[0], 1e-7 );
+    	CHECK_CLOSE( 5.0, particle2.dir[1], 1e-7 );
+    	CHECK_CLOSE( 6.0, particle2.dir[2], 1e-7 );
+    	CHECK_CLOSE( 14.0, particle2.energy[0], 1e-7 );
+    	CHECK_CLOSE( 15.0, particle2.weight[0], 1e-7 );
+    	CHECK_EQUAL( 16, particle2.index );
+    	CHECK_EQUAL( 17, particle2.detectorIndex );
+    	CHECK_EQUAL( 18, particle2.particleType );
+    	collisions2.closeInput();
+    }
+
+    TEST( read_mcatk_written_test_collision_file ) {
+    	std::cout << "Debug: CollisionPoints_tester -- read_mcatk_written_test_collision_file \n";
+    	std::cout << "Debug:    reading MonteRayTestFiles/MCATKWriteParticleRayListTest.bin\n";
+     	CollisionPointsTester tester;
+
+     	std::string filename = "MonteRayTestFiles/MCATKWriteParticleRayListTest.bin";
+     	CollisionPointsHost points(1);
+
+     	points.openInput( filename );
+     	CHECK_EQUAL(0, points.getVersion() );
+     	CHECK_EQUAL(1, points.getNumCollisionsOnFile() );
+
+     	ParticleRay_t particle;
+     	particle = points.readParticle();
+
+     	CHECK_CLOSE(1.0, particle.getPosition()[0], 1e-5);
+     	CHECK_CLOSE(2.0, particle.getPosition()[1], 1e-5);
+     	CHECK_CLOSE(3.0, particle.getPosition()[2], 1e-5);
+     	CHECK_CLOSE(4.0, particle.getDirection()[0], 1e-5);
+     	CHECK_CLOSE(5.0, particle.getDirection()[1], 1e-5);
+     	CHECK_CLOSE(6.0, particle.getDirection()[2], 1e-5);
+     	CHECK_CLOSE(14.0, particle.getEnergy(), 1e-5);
+     	CHECK_CLOSE(15.0, particle.getWeight(), 1e-5);
+     	CHECK_EQUAL(16, particle.getIndex() );
+     	CHECK_EQUAL(17, particle.getDetectorIndex() );
+     	CHECK_EQUAL(18, particle.getParticleType() );
+    }
+
+    TEST( big_collision_file_read ) {
+    	std::cout << "Debug: CollisionPoints_tester -- big_collision_file_read \n";
+    	std::cout << "Debug:    reading MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin \n";
      	CollisionPointsTester tester;
 
      	CollisionPointsHost points(2);
@@ -193,7 +291,7 @@ SUITE( CollisionPoints_simple_tests ) {
 
      	points.CopyToGPU();
      	tester.setupTimers();
-     	CollisionPointsSize_t result = tester.launchGetCapacity(1,1,points);
+     	RayListSize_t result = tester.launchGetCapacity(1,1,points);
      	tester.stopTimers();
      	CHECK_EQUAL( 2568016, unsigned(result) );
 
@@ -237,6 +335,8 @@ SUITE( CollisionPoints_simple_tests ) {
 }
 
 SUITE( CollisionPoints_bank_tests ) {
+	using namespace MonteRay;
+
 	TEST( readToBank ) {
 		CollisionPointsHost bank(1000);
 		unsigned offset=0;
@@ -306,7 +406,6 @@ SUITE( CollisionPoints_bank_tests ) {
      	CHECK_EQUAL(16, bank.size());
      	CHECK_EQUAL(true, end);
 	}
-
 
 }
 

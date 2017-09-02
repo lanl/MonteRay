@@ -9,9 +9,11 @@ INCLUDE(FindCUDA)
 #CUDA_INCLUDE_DIRS
 
 set( GPUTYPE "NONE" )
+set( GPUCOMPUTECAPABILITY "-arch=sm_30" )
+
 include(IdentifyGPU)
-IdentifyGPU( GPUTYPE )
-message( STATUS "config_nvcc.cmake -- GPU type = ${GPUTYPE}"  )
+IdentifyGPU( GPUTYPE GPUCOMPUTECAPABILITY )
+message( STATUS "config_nvcc.cmake -- GPU type = ${GPUTYPE}, Compute capability = ${GPUCOMPUTECAPABILITY}"  )
 
 if( DEFINED CUDA_TOOLKIT_ROOT_DIR) 
     message( STATUS "CUDA library found. CUDA_TOOLKIT_ROOT_DIR= ${CUDA_TOOLKIT_ROOT_DIR}"  )
@@ -88,10 +90,7 @@ SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-de
 # K40 -arch=compute_35 -code=sm_35
 # Moonlight Tesla M2090 -arch=compute_20 -code=sm_20
 # Quadro K420 - 3.0
-#list(APPEND CUDA_NVCC_FLAGS "-arch=sm_20")
-list(APPEND CUDA_NVCC_FLAGS "-arch=sm_30")
-#list(APPEND CUDA_NVCC_FLAGS "-arch=sm_35")
-#list(APPEND CUDA_NVCC_FLAGS "-arch=sm_52")
+list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
 
 #if( CMAKE_BUILD_TYPE STREQUAL "Debug" ) 
 #    list(APPEND CUDA_NVCC_FLAGS "-G")
