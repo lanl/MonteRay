@@ -1,0 +1,159 @@
+#include <UnitTest++.h>
+
+#include "MonteRayCopyMemory.hh"
+
+SUITE( CopyMemory_tester ) {
+	using namespace MonteRay;
+
+	class testCopyClass : public CopyMemoryBase<testCopyClass> {
+	public:
+		testCopyClass() : CopyMemoryBase<testCopyClass>() {
+			initialize();
+		}
+		~testCopyClass(){}
+
+		unsigned A = 10;
+		unsigned B = 20;
+		unsigned C = 30;
+	};
+
+	TEST( CopyMemory_ctor ) {
+		testCopyClass* test = new testCopyClass();
+
+		CHECK_EQUAL( 40, sizeof(testCopyClass) );
+	}
+
+	TEST( CopyMemory_initialize ) {
+		testCopyClass* test = new testCopyClass();
+
+		CHECK_EQUAL( 10U, test->A );
+		CHECK_EQUAL( 10U, test->intermediatePtr->A );
+		CHECK_EQUAL( 20U, test->B );
+		CHECK_EQUAL( 20U, test->intermediatePtr->B );
+	}
+
+	__global__ void kernelSumAandB(testCopyClass* A, testCopyClass* B, testCopyClass* C) {
+	    C->A += A->A + B->A;
+	    C->B += A->B + B->B;
+	    return;
+	}
+
+	TEST( CopyMemory_copyToGPU ) {
+		testCopyClass* test1 = new testCopyClass();
+		testCopyClass* test2 = new testCopyClass();
+		testCopyClass* test3 = new testCopyClass();
+
+		test1->A = 10.0;
+		test1->B = 20.0;
+		test2->A = 100.0;
+		test2->B = 200.0;
+		test3->A = 1000.0;
+		test3->B = 2000.0;
+
+		test1->initialize();
+		test2->initialize();
+		test3->initialize();
+
+		test1->copyToGPU();
+		test2->copyToGPU();
+		test3->copyToGPU();
+		kernelSumAandB<<<1,1>>>(test1->devicePtr,test2->devicePtr,test3->devicePtr);
+		test3->copyToCPU();
+
+		CHECK_EQUAL(1110, test3->A);
+		CHECK_EQUAL(2220, test3->B);
+	}
+
+	class testClassWithArray : public CopyMemoryBase<testClassWithArray> {
+	public:
+		testClassWithArray(unsigned num = 1, double mult = 1.0) : CopyMemoryBase() {
+			N = num;
+			multiple = mult;
+			elements = (gpuFloatType_t*) MonteRayHostAlloc( N * sizeof( gpuFloatType_t ), false);
+
+			for( unsigned i=0; i<N; ++i) {
+				elements[i] = 0.0;
+			}
+		}
+		~testClassWithArray(){
+			MonteRayHostFree( elements, false );
+		}
+
+		gpuFloatType_t multiple;
+		unsigned N;
+		gpuFloatType_t* elements;
+
+#ifdef __CUDACC__
+	void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
+		initialize();
+		intermediatePtr->elements = (gpuFloatType_t*) MonteRayDeviceAlloc( N*sizeof(gpuFloatType_t) );
+		CUDA_CHECK_RETURN( cudaMemcpy(intermediatePtr->elements, elements, N*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice));
+		CopyMemoryBase::copyToGPU( stream, device );
+	}
+#else
+	void copyToGPU(void) {
+		throw std::runtime_error( "copyToGPU not valid without CUDA.");
+	}
+#endif
+
+#ifdef __CUDACC__
+	void copyToCPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps()) {
+		gpuFloatType_t* ptr = elements;
+		CopyMemoryBase::copyToCPU( stream );
+		elements = ptr;
+		CUDA_CHECK_RETURN( cudaMemcpy(elements, intermediatePtr->elements, N*sizeof(gpuFloatType_t), cudaMemcpyDeviceToHost));
+	}
+#else
+	void copyToCPU(void) {
+		throw std::runtime_error( "copyToGPU not valid without CUDA.");
+	}
+#endif
+	};
+
+#ifdef __CUDACC__
+__global__ void kernelSumVectors2(testClassWithArray* A, testClassWithArray* B, testClassWithArray* C) {
+    for( unsigned i=0; i<A->N; ++i) {
+    	gpuFloatType_t elementA = A->elements[i] * A->multiple;
+    	gpuFloatType_t elementB = B->elements[i] * B->multiple;
+    	gpuFloatType_t elementC = elementA + elementB;
+    	C->elements[i] = elementC;
+    }
+    C->N = A->N;
+    C->multiple = 1.0;
+    return;
+}
+#endif
+
+TEST( add_vectors_w_copyToCPU ) {
+	testClassWithArray* A = new testClassWithArray(4);
+	testClassWithArray* B = new testClassWithArray(4);
+	testClassWithArray* C = new testClassWithArray(4);
+
+	A->multiple = 10.0;
+	A->elements[0] = 1.0;
+	A->elements[1] = 2.0;
+	A->elements[2] = 3.0;
+	A->elements[3] = 4.0;
+
+	B->multiple = 100.0;
+	B->elements[0] = 10.0;
+	B->elements[1] = 20.0;
+	B->elements[2] = 30.0;
+	B->elements[3] = 40.0;
+
+	A->copyToGPU();
+	B->copyToGPU();
+	C->copyToGPU();
+
+	kernelSumVectors2<<<1,1>>>(A->devicePtr,B->devicePtr,C->devicePtr);
+
+	C->copyToCPU();
+
+	CHECK_EQUAL( 4,C->N);
+	CHECK_CLOSE( 1.0, C->multiple, 1e-6);
+	CHECK_CLOSE( 10.0*1.0+100.0*10.0, C->elements[0], 1e-6);
+	CHECK_CLOSE( 2020.0, C->elements[1], 1e-6);
+	CHECK_CLOSE( 3030.0, C->elements[2], 1e-6);
+	CHECK_CLOSE( 4040.0, C->elements[3], 1e-6);
+}
+}

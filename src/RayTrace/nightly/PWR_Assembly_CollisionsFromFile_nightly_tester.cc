@@ -217,9 +217,15 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	unsigned nBlocks = 256;
     	unsigned nThreads = 256;
     	unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
+    	capacity = 16698849;
 #ifdef TITANX_MAXWELL_GPU
-        nBlocks  = 16384;
         nThreads = 416;
+        nBlocks  = 16384;
+//        nThreads  = std::min( 1024U, (capacity-1) / ( 2* ( nBlocks -1 ) ));
+//        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
+
+        nBlocks = std::min(( capacity + nThreads*4 -1 ) / (nThreads*4), 65535U);
+
 #endif
 #ifdef K420_GPU
     	nBlocks = 128;
@@ -238,7 +244,8 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
     	controller.setCapacity(capacity);
 
-    	controller.readCollisionsFromFile( "MonteRayTestFiles/PWR_assembly_collisions.bin" );
+    	size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/PWR_assembly_collisions.bin" );
+    	CHECK_EQUAL( 16698848 , numCollisions );
 
     	controller.sync();
     	pTally->copyToCPU();

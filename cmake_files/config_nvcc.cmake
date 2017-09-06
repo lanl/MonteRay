@@ -84,7 +84,8 @@ endif()
 
 SET(CUDA_SEPARABLE_COMPILATION ON)
 #SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-device-code=true;--cudart static)
-SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-device-code=true;--cudart shared)
+SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA;-Xcompiler -fPIC;--relocatable-device-code=true;--cudart shared)
+
 
 # Titan X -arch=sm_52
 # K40 -arch=compute_35 -code=sm_35
@@ -101,6 +102,6 @@ list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
 #endif()
 list(APPEND CUDA_NVCC_FLAGS "-O3")
 list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
-# list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+
 
 message( STATUS "Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")

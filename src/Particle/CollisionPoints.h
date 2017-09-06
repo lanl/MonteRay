@@ -96,15 +96,16 @@ public:
     void printParticle(unsigned i, const ParticleRay_t& particle ) const;
 
 private:
-    CollisionPoints* ptrPoints = NULL;
+
     unsigned numCollisionOnFile = 0 ;
     unsigned currentVersion = 0;
     unsigned long long position = 0; ///< position in file (particle number, starting at 1)
     unsigned long long headerPos = 0; ///< position in file in bytes immediately after header (starting position of the first particle record)
     unsigned currentParticlePos = 0;
-
-    RayList_t<1,true>* temp = NULL;
     bool cudaCopyMade = false;
+
+    CollisionPoints* ptrPoints = NULL;
+    RayList_t<1,true>* temp = NULL;
 
 public:
     CollisionPoints* ptrPoints_device = NULL;

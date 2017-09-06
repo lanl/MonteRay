@@ -199,10 +199,15 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 
     	unsigned nBlocks = 256;
     	unsigned nThreads = 256;
-    	unsigned capacity = 40000*8U*20*10U;
+    	unsigned capacity = 56592341;
 #ifdef TITANX_MAXWELL_GPU
-        nBlocks  = 16384;
-        nThreads = 1024;
+        nBlocks = 16384;
+        nThreads  = (capacity-1) / ( nBlocks -1 );
+        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
+        nThreads = std::min( 1024U, nThreads );
+//        if( nThreads == 1024 ) {
+//        	nBlocks = std::min(( capacity + nThreads -1 ) / nThreads, 65535U);
+//        }
 #endif
 #ifdef P100_GPU
         nBlocks  = 4096;

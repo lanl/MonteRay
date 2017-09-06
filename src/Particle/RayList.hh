@@ -16,6 +16,9 @@ typedef unsigned RayListSize_t;
 template<unsigned N = 1, bool isCudaIntermediate = false >
 class RayList_t {
 public:
+
+	/// primary RayList_t Constructo.
+	/// Takes the size of the list as an argument.
 	typedef Ray_t<N> RAY_T;
 	CUDAHOST_CALLABLE_MEMBER RayList_t(RayListSize_t num = 1 ){
 	    if( num == 0 ) { num = 1; }
