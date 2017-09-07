@@ -102,8 +102,8 @@ public:
 	CUDA_CALLABLE_MEMBER void add(const RAY_T& point ) {
 #if !defined( RELEASE )
 	    if( size() >= capacity() ) {
-	    	printf("CollisionPoints::add -- index > number of allocated points.  %s %d\n", __FILE__, __LINE__);
-	    	ABORT( "CollisionPoints.h -- CollisionPoints::add" );
+	    	printf("RayList::add -- index > number of allocated points.  %s %d\n", __FILE__, __LINE__);
+	    	ABORT( "RayList.hh -- RayList::add" );
 	    }
 #endif
 		points[size()] = point;

@@ -4,26 +4,26 @@
 
 #include "MonteRayDefinitions.hh"
 #include "GPUErrorCheck.hh"
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 
-#include "CollisionPoints_test_helper.hh"
+#include "RayListInterface_test_helper.hh"
 
 using namespace MonteRay;
 
 #ifdef CUDA
-__global__ void testGetCapacity(CollisionPoints* pXS, CollisionPointsHost::CollisionPointsSize_t* results){
-	results[0] = pXS->capacity();
+__global__ void testGetCapacity(ParticleRayList* pRayList, RayListInterface::RayListSize_t* results){
+	results[0] = pRayList->capacity();
 	return;
 }
 #endif
 
-CollisionPointsHost::CollisionPointsSize_t
-CollisionPointsTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, CollisionPointsHost& CPs) {
-	CollisionPointsHost::CollisionPointsSize_t* result_device;
-	CollisionPointsHost::CollisionPointsSize_t* result;
-	size_t allocSize = sizeof( CollisionPointsHost::CollisionPointsSize_t) * 1;
+RayListInterface::RayListSize_t
+RayListInterfaceTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, RayListInterface& CPs) {
+	RayListInterface::RayListSize_t* result_device;
+	RayListInterface::RayListSize_t* result;
+	size_t allocSize = sizeof( RayListInterface::RayListSize_t) * 1;
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, allocSize ));
-	result = (CollisionPointsHost::CollisionPointsSize_t*) malloc( allocSize );
+	result = (RayListInterface::RayListSize_t*) malloc( allocSize );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
@@ -32,19 +32,19 @@ CollisionPointsTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, C
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(CollisionPointsHost::CollisionPointsSize_t)*1, cudaMemcpyDeviceToHost));
+	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(RayListInterface::RayListSize_t)*1, cudaMemcpyDeviceToHost));
 
 	cudaFree( result_device );
-	CollisionPointsHost::CollisionPointsSize_t value = *result;
+	RayListInterface::RayListSize_t value = *result;
 	free(result);
 	return value;
 }
 
 #ifdef CUDA
-__global__ void testSumEnergy(CollisionPoints* pXS, gpuFloatType_t* results){
+__global__ void testSumEnergy(ParticleRayList* ParticleRayList, gpuFloatType_t* results){
 	gpuFloatType_t total = 0.0f;
-	for(unsigned i=0; i< pXS->size(); ++i ) {
-		total += pXS->getEnergy(i);
+	for(unsigned i=0; i< ParticleRayList->size(); ++i ) {
+		total += ParticleRayList->getEnergy(i);
 	}
 	results[0] = total;
 	return;
@@ -52,7 +52,7 @@ __global__ void testSumEnergy(CollisionPoints* pXS, gpuFloatType_t* results){
 #endif
 
 gpuFloatType_t
-CollisionPointsTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, CollisionPointsHost& CPs) {
+RayListInterfaceTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface& CPs) {
 	gpuFloatType_t* result_device;
 	gpuFloatType_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
@@ -70,20 +70,20 @@ CollisionPointsTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads,
 	return result[0];
 }
 
-CollisionPointsTester::CollisionPointsTester(){
+RayListInterfaceTester::RayListInterfaceTester(){
 }
 
-CollisionPointsTester::~CollisionPointsTester(){
+RayListInterfaceTester::~RayListInterfaceTester(){
 //		cudaDeviceReset();
 }
 
-void CollisionPointsTester::setupTimers(){
+void RayListInterfaceTester::setupTimers(){
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
 }
 
-void CollisionPointsTester::stopTimers(){
+void RayListInterfaceTester::stopTimers(){
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
 

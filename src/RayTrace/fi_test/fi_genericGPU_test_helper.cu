@@ -57,7 +57,7 @@ __global__ void testTallyCrossSection(CollisionPoints* pCP, MonteRayCrossSection
 }
 #endif
 
-void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, MonteRayCrossSectionHost* pXS ){
+void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, RayListInterface* pCP, MonteRayCrossSectionHost* pXS ){
 	gpuTallyType_t* tally_device;
 
 	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
@@ -94,7 +94,7 @@ __global__ void testTallyCrossSection(CollisionPoints* pCP, SimpleMaterialList* 
 }
 #endif
 
-void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, unsigned matIndex, gpuFloatType_t density ){
+void FIGenericGPUTestHelper::launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, RayListInterface* pCP, SimpleMaterialListHost* pMatList, unsigned matIndex, gpuFloatType_t density ){
 	gpuTallyType_t* tally_device;
 
 	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
@@ -198,7 +198,7 @@ __global__ void testSumCrossSectionAtCollisionLocation(CollisionPoints* pCP, Sim
 }
 #endif
 
-void FIGenericGPUTestHelper::launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps ){
+void FIGenericGPUTestHelper::launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads, RayListInterface* pCP, SimpleMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps ){
 	gpuTallyType_t* tally_device;
 
 	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
@@ -220,7 +220,7 @@ void FIGenericGPUTestHelper::launchTallyCrossSectionAtCollision(unsigned nBlocks
 	return;
 }
 
-void FIGenericGPUTestHelper::launchSumCrossSectionAtCollisionLocation(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps ){
+void FIGenericGPUTestHelper::launchSumCrossSectionAtCollisionLocation(unsigned nBlocks, unsigned nThreads, RayListInterface* pCP, SimpleMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps ){
 	gpuTallyType_t* tally_device;
 
 	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
@@ -242,7 +242,7 @@ void FIGenericGPUTestHelper::launchSumCrossSectionAtCollisionLocation(unsigned n
 	return;
 }
 
-void FIGenericGPUTestHelper::launchRayTraceTally(unsigned nBlocks, unsigned nThreads, CollisionPointsHost* pCP, SimpleMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps ){
+void FIGenericGPUTestHelper::launchRayTraceTally(unsigned nBlocks, unsigned nThreads, RayListInterface* pCP, SimpleMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps ){
 	gpuTallyType_t* tally_device;
 	unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
 	tally = (gpuTallyType_t*) malloc ( allocSize );

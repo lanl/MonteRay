@@ -14,7 +14,7 @@
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "gpuTally.h"
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 
 namespace PWR_Assembly_wCollisionFile_fi_tester{
 

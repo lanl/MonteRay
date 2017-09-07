@@ -5,7 +5,7 @@
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_timer.hh"
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 
 namespace MonteRay {
 
@@ -83,9 +83,9 @@ private:
 	MonteRay_MaterialProperties* pMatProps;
 	gpuTallyHost* pTally;
 
-	CollisionPointsHost* currentBank;
-	CollisionPointsHost* bank1;
-	CollisionPointsHost* bank2;
+	RayListInterface* currentBank;
+	RayListInterface* bank1;
+	RayListInterface* bank2;
 	unsigned nFlushs;
 
 	cudaStream_t stream1;

@@ -13,7 +13,7 @@
 #include "SimpleMaterialList.h"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.h"
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 
 namespace {
 
@@ -357,7 +357,7 @@ SUITE( Collision_unit_bank_controller_tester ) {
 //
 //    	setup();
 //
-//    	CollisionPointsHost bank1(500000);
+//    	RayListInterface bank1(500000);
 //    	bool end = false;
 //    	unsigned offset = 0;
 //

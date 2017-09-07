@@ -14,7 +14,7 @@
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "gpuTally.h"
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 
 namespace {
 
@@ -181,7 +181,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
     	setup();
 
-    	CollisionPointsHost bank1(500000);
+    	RayListInterface bank1(500000);
     	bool end = false;
     	unsigned offset = 0;
 
@@ -230,7 +230,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
     	controller.setCapacity( 1000000 );
     	setup();
 
-    	CollisionPointsHost bank1(50000);
+    	RayListInterface bank1(50000);
     	bool end = false;
     	unsigned offset = 0;
 

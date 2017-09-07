@@ -5,10 +5,10 @@
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
 
-#include "CollisionPoints.h"
-#include "CollisionPoints_test_helper.hh"
+#include "RayListInterface.hh"
+#include "RayListInterface_test_helper.hh"
 
-SUITE( CollisionPoints_simple_tests ) {
+SUITE( RayListInterface_simple_tests ) {
 	using namespace MonteRay;
 
 	typedef MonteRay::ParticleRay_t ParticleRay_t;
@@ -18,13 +18,13 @@ SUITE( CollisionPoints_simple_tests ) {
 		//CHECK(false);
 	}
     TEST( setup_host ) {
-    	CollisionPointsHost points(10);
+    	RayListInterface points(10);
     	CHECK_EQUAL(10, points.capacity() );
     	CHECK_EQUAL(0, points.size() );
     }
 
     TEST( add_two_particle_via_components ) {
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
 
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
@@ -36,7 +36,7 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( add_two_particle_via_particle ) {
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
     	ParticleRay_t particle;
     	particle.pos[0] = 1.0;
     	particle.pos[1] = 2.0;
@@ -66,7 +66,7 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( add_two_particles_via_array ) {
-      	CollisionPointsHost points(2);
+      	RayListInterface points(2);
       	ParticleRay_t particle[2];
       	particle[0].pos[0] = 1.0;
       	particle[0].pos[1] = 2.0;
@@ -104,7 +104,7 @@ SUITE( CollisionPoints_simple_tests ) {
       }
 
     TEST( add_two_particles_via_voidPtr ) {
-       	CollisionPointsHost points(2);
+       	RayListInterface points(2);
        	ParticleRay_t particle[2];
        	particle[0].pos[0] = 1.0;
        	particle[0].pos[1] = 2.0;
@@ -143,11 +143,11 @@ SUITE( CollisionPoints_simple_tests ) {
        }
 
     TEST( send_to_gpu_only) {
-     	std::cout << "Debug: CollisionPoints_tester -- send_to_gpu_only \n";
+     	std::cout << "Debug: RayListInterface_tester -- send_to_gpu_only \n";
      	MonteRay::gpuInfo();
-     	CollisionPointsTester tester;
+     	RayListInterfaceTester tester;
 
-     	CollisionPointsHost points(2);
+     	RayListInterface points(2);
 
      	points.add( 1.0, 2.0, 3.0,
      			4.0, 5.0, 6.0,
@@ -163,11 +163,11 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( send_to_gpu_getCapacity) {
-    	std::cout << "Debug: CollisionPoints_tester -- send_to_gpu_getCapacity \n";
+    	std::cout << "Debug: RayListInterface_tester -- send_to_gpu_getCapacity \n";
     	MonteRay::gpuInfo();
-    	CollisionPointsTester tester;
+    	RayListInterfaceTester tester;
 
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
 
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
@@ -187,9 +187,9 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( send_to_gpu_getTotalEnergy) {
-    	CollisionPointsTester tester;
+    	RayListInterfaceTester tester;
 
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
 
     	points.add( 1.0, 2.0, 3.0,
     			4.0, 5.0, 6.0,
@@ -207,7 +207,7 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( write_And_read_a_particle ) {
-    	CollisionPointsHost collisions(1);
+    	RayListInterface collisions(1);
 
     	std::string filename = "writeAndReadAParticleTest.bin";
     	collisions.openOutput( filename );
@@ -229,7 +229,7 @@ SUITE( CollisionPoints_simple_tests ) {
     	CHECK_EQUAL(1, collisions.getNumCollisionsOnFile() );
     	collisions.closeOutput();
 
-    	CollisionPointsHost collisions2(1);
+    	RayListInterface collisions2(1);
     	collisions2.openInput( filename );
 
     	CHECK_EQUAL(0, collisions2.getVersion() );
@@ -252,12 +252,12 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( read_mcatk_written_test_collision_file ) {
-    	std::cout << "Debug: CollisionPoints_tester -- read_mcatk_written_test_collision_file \n";
+    	std::cout << "Debug: RayListInterface_tester -- read_mcatk_written_test_collision_file \n";
     	std::cout << "Debug:    reading MonteRayTestFiles/MCATKWriteParticleRayListTest.bin\n";
-     	CollisionPointsTester tester;
+     	RayListInterfaceTester tester;
 
      	std::string filename = "MonteRayTestFiles/MCATKWriteParticleRayListTest.bin";
-     	CollisionPointsHost points(1);
+     	RayListInterface points(1);
 
      	points.openInput( filename );
      	CHECK_EQUAL(0, points.getVersion() );
@@ -280,11 +280,11 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 
     TEST( big_collision_file_read ) {
-    	std::cout << "Debug: CollisionPoints_tester -- big_collision_file_read \n";
+    	std::cout << "Debug: RayListInterface_tester -- big_collision_file_read \n";
     	std::cout << "Debug:    reading MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin \n";
-     	CollisionPointsTester tester;
+     	RayListInterfaceTester tester;
 
-     	CollisionPointsHost points(2);
+     	RayListInterface points(2);
      	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
      	CHECK_EQUAL(2568016, points.size() );
 
@@ -333,11 +333,11 @@ SUITE( CollisionPoints_simple_tests ) {
     }
 }
 
-SUITE( CollisionPoints_bank_tests ) {
+SUITE( RayListInterface_bank_tests ) {
 	using namespace MonteRay;
 
 	TEST( readToBank ) {
-		CollisionPointsHost bank(1000);
+		RayListInterface bank(1000);
 		unsigned offset=0;
 		bool end = bank.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
 
@@ -381,7 +381,7 @@ SUITE( CollisionPoints_bank_tests ) {
 	}
 
 	TEST( nicely_read_end_of_bank ) {
-		CollisionPointsHost bank(1000);
+		RayListInterface bank(1000);
 		unsigned offset=0;
 		bool end = bank.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
      	CHECK_EQUAL( false, end);
@@ -393,7 +393,7 @@ SUITE( CollisionPoints_bank_tests ) {
 	}
 
 	TEST( read_collisions_to_bank_in_a_loop ) {
-		CollisionPointsHost bank(1000);
+		RayListInterface bank(1000);
 		unsigned offset=0;
 
 		bool end = false;

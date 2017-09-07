@@ -1,7 +1,7 @@
 #ifndef EXPECTEDPATHLENGTH_H_
 #define EXPECTEDPATHLENGTH_H_
 
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 #include "SimpleMaterialList.h"
 #include "MonteRay_MaterialProperties.hh"
 #include "HashLookup.h"
@@ -58,7 +58,7 @@ MonteRay::tripleTime launchRayTraceTally(
                          unsigned nBlocks,
 		                 unsigned nThreads,
 		                 GridBinsHost* grid,
-		                 CollisionPointsHost* pCP,
+		                 RayListInterface* pCP,
 		                 SimpleMaterialListHost* pMatList,
 		                 MonteRay_MaterialProperties* pMatProps,
 		                 gpuTallyHost* pTally

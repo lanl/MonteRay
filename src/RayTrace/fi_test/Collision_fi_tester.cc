@@ -20,7 +20,7 @@ SUITE( Collision_fi_tester ) {
 	}
 
     TEST(get_total_xs_from_gpu ) {
-    	CollisionPointsHost* points = new CollisionPointsHost(2);
+    	RayListInterface* points = new RayListInterface(2);
     	points->readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	FIGenericGPUTestHelper helper(points->size());
     	points->copyToGPU();
@@ -44,7 +44,7 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST(load_godiva_metal_from_file_small_file ) {
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
@@ -96,7 +96,7 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST( load_godivaR_materials_godivaR_geom_and_collisions_tally_collision ) {
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
         FIGenericGPUTestHelper helper(points.size());
     	points.copyToGPU();
@@ -172,7 +172,7 @@ SUITE( Collision_fi_tester ) {
 
         FIGenericGPUTestHelper helper( mp.size() );
 
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	points.copyToGPU();
 
@@ -297,7 +297,7 @@ SUITE( Collision_fi_tester ) {
         h1s.copyToGPU();
         o16s.copyToGPU();
 
-    	CollisionPointsHost points(2);
+    	RayListInterface points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
 
     	points.copyToGPU();
@@ -394,7 +394,7 @@ SUITE( Collision_fi_looping_tester ) {
         h1s.copyToGPU();
         o16s.copyToGPU();
 
-    	CollisionPointsHost bank1(100000);
+    	RayListInterface bank1(100000);
     	bool end = false;
     	unsigned offset = 0;
     	std::cout << "Debug: Reading Bank1 \n";
@@ -410,7 +410,7 @@ SUITE( Collision_fi_looping_tester ) {
 
 		offset += bank1.size();
 
-    	CollisionPointsHost bank2(100000);
+    	RayListInterface bank2(100000);
     	bool last = false;
 
     	auto cpuWork1 = [&] (void) -> void {

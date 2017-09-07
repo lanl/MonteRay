@@ -1,4 +1,4 @@
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 
 #include <stdlib.h>
 #include <iostream>
@@ -10,7 +10,7 @@
 
 namespace MonteRay{
 
-CollisionPointsHost::~CollisionPointsHost() {
+RayListInterface::~RayListInterface() {
     delete ptrPoints;
 
     if( io.is_open() ) {
@@ -22,7 +22,7 @@ CollisionPointsHost::~CollisionPointsHost() {
     }
 }
 
-void CollisionPointsHost::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
+void RayListInterface::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
         gpuFloatType_t energy, gpuFloatType_t weight,
         unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType) {
@@ -41,30 +41,30 @@ void CollisionPointsHost::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_
     add( particle );
 }
 
-void CollisionPointsHost::add( const ParticleRay_t& particle) {
+void RayListInterface::add( const ParticleRay_t& particle) {
 	ptrPoints->add( particle );
 }
 
-void CollisionPointsHost::add( const ParticleRay_t* particle, unsigned N ) {
+void RayListInterface::add( const ParticleRay_t* particle, unsigned N ) {
 	for( unsigned i=0; i<N; ++i){
 		add(particle[i]);
 	}
 }
 
-void CollisionPointsHost::add( const void* voidPtrParticle, unsigned N ) {
+void RayListInterface::add( const void* voidPtrParticle, unsigned N ) {
 	const ParticleRay_t* ptrParticle = (const ParticleRay_t*) voidPtrParticle;
 	add( ptrParticle, N);
 }
 
-void CollisionPointsHost::copyToGPU(void) {
+void RayListInterface::copyToGPU(void) {
 	ptrPoints->copyToGPU();
 }
 
-void CollisionPointsHost::copyToCPU(void) {
+void RayListInterface::copyToCPU(void) {
 	ptrPoints->copyToCPU();
 }
 
-void CollisionPointsHost::writeHeader(std::fstream& infile){
+void RayListInterface::writeHeader(std::fstream& infile){
     infile.seekp(0, std::ios::beg); // reposition to start of file
 
     unsigned version = currentVersion;
@@ -74,44 +74,44 @@ void CollisionPointsHost::writeHeader(std::fstream& infile){
     headerPos = infile.tellg();
 }
 
-void CollisionPointsHost::readHeader(std::fstream& infile){
-//	std::cout << "Debug: CollisionPointsHost::readHeader - starting.\n";
+void RayListInterface::readHeader(std::fstream& infile){
+//	std::cout << "Debug: RayListInterface::readHeader - starting.\n";
     if( ! infile.good() ) {
-        fprintf(stderr, "CollisionPointsHost::readHeader -- Failure prior to reading header.  %s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "RayListInterface::readHeader -- Failure prior to reading header.  %s %d\n", __FILE__, __LINE__);
         exit(1);
     }
     try{
-//    	std::cout << "Debug: CollisionPointsHost::reading version - starting.\n";
+//    	std::cout << "Debug: RayListInterface::reading version - starting.\n";
         binaryIO::read(infile,currentVersion);
-//        std::cout << "Debug: CollisionPointsHost::reading number of collisions on the file - starting.\n";
+//        std::cout << "Debug: RayListInterface::reading number of collisions on the file - starting.\n";
         binaryIO::read(infile,numCollisionOnFile);
     }
     catch( std::iostream::failure& e  ) {
-        std::string message = "CollisionPointsHost::readHeader -- Failure during reading of header. -- ";
+        std::string message = "RayListInterface::readHeader -- Failure during reading of header. -- ";
         if( infile.eof() ) {
             message += "End-of-file failure";
         } else {
             message += "Unknown failure";
         }
-        fprintf(stderr, "CollisionPointsHost::readHeader -- %s.  %s %d\n", message.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "RayListInterface::readHeader -- %s.  %s %d\n", message.c_str(), __FILE__, __LINE__);
         exit(1);
     }
 }
 
-void CollisionPointsHost::setFilename(const std::string& file ) {
+void RayListInterface::setFilename(const std::string& file ) {
     filename = file;
 }
 
-void CollisionPointsHost::openOutput( const std::string& file){
+void RayListInterface::openOutput( const std::string& file){
     setFilename( file );
     openOutput(io);
 }
 
-void CollisionPointsHost::openOutput(std::fstream& outfile) {
+void RayListInterface::openOutput(std::fstream& outfile) {
     iomode = "out";
     outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
     if( ! outfile.is_open() ) {
-        fprintf(stderr, "CollisionPointsHost::openOutput -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "RayListInterface::openOutput -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     assert( outfile.good() );
@@ -119,28 +119,28 @@ void CollisionPointsHost::openOutput(std::fstream& outfile) {
     writeHeader(outfile);
 }
 
-void CollisionPointsHost::updateHeader(std::fstream& outfile) {
+void RayListInterface::updateHeader(std::fstream& outfile) {
     outfile.seekg(0, std::ios::beg); // reposition to start of file
 
     binaryIO::write(io,currentVersion);
     binaryIO::write(io,numCollisionOnFile);
 }
 
-void CollisionPointsHost::resetFile(void){
+void RayListInterface::resetFile(void){
     numCollisionOnFile = 0;
     updateHeader(io);
 }
 
-void CollisionPointsHost::openInput( const std::string& file){
-//	std::cout << "Debug: CollisionPointsHost::openInput(string) - starting -- setting filename.\n";
+void RayListInterface::openInput( const std::string& file){
+//	std::cout << "Debug: RayListInterface::openInput(string) - starting -- setting filename.\n";
     setFilename( file );
-//    std::cout << "Debug: CollisionPointsHost::openInput(string) - opening input.\n";
+//    std::cout << "Debug: RayListInterface::openInput(string) - opening input.\n";
     openInput(io);
-//    std::cout << "Debug: CollisionPointsHost::openInput(string) - input open.\n";
+//    std::cout << "Debug: RayListInterface::openInput(string) - input open.\n";
 }
 
-void CollisionPointsHost::openInput( std::fstream& infile){
-//	std::cout << "Debug: CollisionPointsHost::openInput(fstream) - starting.\n";
+void RayListInterface::openInput( std::fstream& infile){
+//	std::cout << "Debug: RayListInterface::openInput(fstream) - starting.\n";
     iomode = "in";
     if( infile.is_open() ) {
         closeInput(infile);
@@ -148,45 +148,45 @@ void CollisionPointsHost::openInput( std::fstream& infile){
     infile.open( filename.c_str(), std::ios::binary | std::ios::in);
 
     if( ! infile.is_open() ) {
-        fprintf(stderr, "CollisionPointsHost::openInput -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "RayListInterface::openInput -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     assert( infile.good() );
     infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
-//    std::cout << "Debug: CollisionPointsHost::openInput(fstream) - reading header.\n";
+//    std::cout << "Debug: RayListInterface::openInput(fstream) - reading header.\n";
     readHeader(infile);
-//    std::cout << "Debug: CollisionPointsHost::openInput(fstream) - reading header done.\n";
+//    std::cout << "Debug: RayListInterface::openInput(fstream) - reading header done.\n";
 }
 
-void CollisionPointsHost::closeOutput(void) {
+void RayListInterface::closeOutput(void) {
     closeOutput(io);
 }
 
-void CollisionPointsHost::closeOutput(std::fstream& outfile) {
+void RayListInterface::closeOutput(std::fstream& outfile) {
     if( outfile.is_open() ) {
         updateHeader(outfile);
         outfile.close();
     }
 }
 
-void CollisionPointsHost::closeInput(void) {
+void RayListInterface::closeInput(void) {
     closeInput(io);
 }
 
 ///\brief Close the input file
-void CollisionPointsHost::closeInput(std::fstream& infile) {
+void RayListInterface::closeInput(std::fstream& infile) {
     if( infile.is_open() ) {
         infile.close();
     }
 }
 
-void CollisionPointsHost::writeParticle(const ParticleRay_t& particle){
+void RayListInterface::writeParticle(const ParticleRay_t& particle){
     particle.write(io);
     ++numCollisionOnFile;
 }
 
-void CollisionPointsHost::printParticle(unsigned i, const ParticleRay_t& particle ) const {
-	std::cout << "Debug: CollisionPointsHost::printParticle -- i=" << i;
+void RayListInterface::printParticle(unsigned i, const ParticleRay_t& particle ) const {
+	std::cout << "Debug: RayListInterface::printParticle -- i=" << i;
 	std::cout << " x= " << particle.pos[0];
 	std::cout << " y= " << particle.pos[1];
 	std::cout << " z= " << particle.pos[2];
@@ -201,10 +201,10 @@ void CollisionPointsHost::printParticle(unsigned i, const ParticleRay_t& particl
 	std::cout << "\n";
 }
 
-ParticleRay_t CollisionPointsHost::readParticle(void){
+ParticleRay_t RayListInterface::readParticle(void){
     ++currentParticlePos;
     if( currentParticlePos > numCollisionOnFile ) {
-        fprintf(stderr, "CollisionPointsHost::readParticle -- Exhausted particles on the file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "RayListInterface::readParticle -- Exhausted particles on the file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     ParticleRay_t particle;
@@ -212,19 +212,19 @@ ParticleRay_t CollisionPointsHost::readParticle(void){
     	particle.read(io);
     }
     catch( std::fstream::failure& e  ) {
-        std::string message = "CollisionPointsHost::readParticle -- Failure during reading of a collision. -- ";
+        std::string message = "RayListInterface::readParticle -- Failure during reading of a collision. -- ";
         if( io.eof() ) {
             message += "End-of-file failure";
         } else {
             message += "Unknown failure";
         }
-        fprintf(stderr, "CollisionPointsHost::readParticle -- %s.  %s %d\n", message.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "RayListInterface::readParticle -- %s.  %s %d\n", message.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     return particle;
 }
 
-void CollisionPointsHost::readToMemory( const std::string& file ){
+void RayListInterface::readToMemory( const std::string& file ){
     openInput( file );
 
     delete ptrPoints;
@@ -236,13 +236,13 @@ void CollisionPointsHost::readToMemory( const std::string& file ){
     closeInput();
 }
 
-void CollisionPointsHost::writeBank() {
+void RayListInterface::writeBank() {
 	for( unsigned i=0; i< size(); ++i ) {
 		writeParticle( getParticle(i) );
 	}
 }
 
-bool CollisionPointsHost::readToBank( const std::string& file, unsigned start ){
+bool RayListInterface::readToBank( const std::string& file, unsigned start ){
     openInput( file );
     unsigned offset = start * ( ParticleRay_t::filesize() );
     io.seekg( offset, std::ios::cur); // reposition to offset location
@@ -264,7 +264,7 @@ bool CollisionPointsHost::readToBank( const std::string& file, unsigned start ){
     return false; // return end = false
 }
 
-void CollisionPointsHost::debugPrint() const {
+void RayListInterface::debugPrint() const {
 	for( unsigned i=0; i< size(); ++i ) {
 		printParticle( i, getParticle(i) );
 	}

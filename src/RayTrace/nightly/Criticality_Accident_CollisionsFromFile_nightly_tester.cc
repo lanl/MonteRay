@@ -14,7 +14,7 @@
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "gpuTally.h"
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 
 namespace Criticality_Accident_wCollisionFile_nightly_tester{
 

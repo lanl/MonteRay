@@ -315,7 +315,7 @@ MonteRay::tripleTime launchRayTraceTally(
 		                 unsigned nBlocks,
 		                 unsigned nThreads,
 		                 GridBinsHost* pGrid,
-		                 CollisionPointsHost* pCP,
+		                 RayListInterface* pCP,
 		                 SimpleMaterialListHost* pMatList,
 		                 MonteRay_MaterialProperties* pMatProps,
 		                 gpuTallyHost* pTally

@@ -1,5 +1,5 @@
-#ifndef COLLISIONPOINTS_HH_
-#define COLLISIONPOINTS_HH_
+#ifndef RAYLISTINTERFACE_HH_
+#define RAYLISTINTERFACE_HH_
 
 #include <cstring>
 #include <fstream>
@@ -11,22 +11,22 @@
 
 namespace MonteRay{
 
-class CollisionPointsHost {
+class RayListInterface {
 public:
 	typedef MonteRay::ParticleRay_t ParticleRay_t;
-	typedef MonteRay::RayListSize_t CollisionPointsSize_t;
+	typedef MonteRay::RayListSize_t RayListSize_t;
 
-    CollisionPointsHost( unsigned num) :
+    RayListInterface( unsigned num) :
         ptrPoints( new CollisionPoints(num) )
 	{}
 
-    ~CollisionPointsHost();
+    ~RayListInterface();
 
     void copyToGPU(void);
     void copyToCPU(void);
 
-    CollisionPointsSize_t capacity(void) const { return ptrPoints->capacity(); }
-    CollisionPointsSize_t size(void) const { return ptrPoints->size(); }
+    RayListSize_t capacity(void) const { return ptrPoints->capacity(); }
+    RayListSize_t size(void) const { return ptrPoints->size(); }
 
     CollisionPosition_t getPosition( unsigned i) const { return ptrPoints->getPosition(i); }
     CollisionDirection_t getDirection( unsigned i) const { return ptrPoints->getDirection(i); }
@@ -111,4 +111,4 @@ private:
 };
 
 }
-#endif /* COLLISIONPOINTS_HH_ */
+#endif /* RAYLISTINTERFACE_HH_ */

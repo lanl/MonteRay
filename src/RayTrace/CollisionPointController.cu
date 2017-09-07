@@ -6,7 +6,7 @@
 #include "SimpleMaterialList.h"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.h"
-#include "CollisionPoints.h"
+#include "RayListInterface.hh"
 #include "ExpectedPathLength.h"
 #include "GPUErrorCheck.hh"
 #include "GPUSync.hh"
@@ -33,8 +33,8 @@ CollisionPointController::CollisionPointController(
         toFile( false ),
         fileIsOpen( false)
 {
-	bank1 = new CollisionPointsHost(1000000); // default 1 millions
-	bank2 = new CollisionPointsHost(1000000); // default 1 millions
+	bank1 = new RayListInterface(1000000); // default 1 millions
+	bank2 = new RayListInterface(1000000); // default 1 millions
 
 	cudaStreamCreate( &stream1 );
 	cudaEventCreate(&start);
@@ -69,8 +69,8 @@ void
 CollisionPointController::setCapacity(unsigned n) {
 	delete bank1;
 	delete bank2;
-	bank1 = new CollisionPointsHost(n);
-	bank2 = new CollisionPointsHost(n);
+	bank1 = new RayListInterface(n);
+	bank2 = new RayListInterface(n);
 	currentBank = bank1;
 }
 
