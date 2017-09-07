@@ -7,27 +7,27 @@ namespace MonteRay {
 
 class ManagedMemoryBase {
 public:
-	static void* operator new(size_t len) {
+	CUDAHOST_CALLABLE_MEMBER static void* operator new(size_t len) {
 
 #ifndef __CUDA_ARCH__
 		if( debug ) {
 			std::cout << "Debug: AllocBase:new -- Custom new operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len);
+		return MonteRayHostAlloc(len, isManagedMemory);
 	}
 
-	static void* operator new[](size_t len) {
+	CUDAHOST_CALLABLE_MEMBER static void* operator new[](size_t len) {
 
 #ifndef __CUDA_ARCH__
 		if( debug ) {
 			std::cout << "Debug: AllocBase:new[] -- Custom new[] operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len);
+		return MonteRayHostAlloc(len, isManagedMemory);
 	}
 
-	void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
+	CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
 #ifdef __CUDACC__
 		cudaMemAdvise(this, sizeof(*this), cudaMemAdviseSetReadMostly, device.deviceID);
 		if( device.deviceProps.concurrentManagedAccess ) {
@@ -38,7 +38,7 @@ public:
 #endif
 	}
 
-	void copyToCPU(cudaStream_t stream = NULL) {
+	CUDAHOST_CALLABLE_MEMBER void copyToCPU(cudaStream_t stream = NULL) {
 #ifdef __CUDACC__
 		cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, NULL );
 #else
@@ -46,7 +46,7 @@ public:
 #endif
 	}
 
-	static void operator delete(void* ptr) {
+	CUDAHOST_CALLABLE_MEMBER static void operator delete(void* ptr) {
 
 #ifndef __CUDA_ARCH__
 		if( debug ) {
@@ -57,6 +57,7 @@ public:
 	}
 
 	static const bool debug = false;
+	static const bool isManagedMemory = true;
 };
 
 } // end namespace

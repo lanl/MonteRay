@@ -27,7 +27,7 @@ CollisionPointsTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, C
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-    testGetCapacity<<<nBlocks,nThreads>>>(CPs.ptrPoints_device, result_device);
+    testGetCapacity<<<nBlocks,nThreads>>>(CPs.getPtrPoints()->devicePtr, result_device);
     gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
@@ -59,7 +59,7 @@ CollisionPointsTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads,
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-	testSumEnergy<<<nBlocks,nThreads>>>(CPs.ptrPoints_device, result_device);
+	testSumEnergy<<<nBlocks,nThreads>>>(CPs.getPtrPoints()->devicePtr, result_device);
 	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);

@@ -227,6 +227,16 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         nBlocks = std::min(( capacity + nThreads*4 -1 ) / (nThreads*4), 65535U);
 
 #endif
+#ifdef TESLA_K40_GPU
+//        nBlocks = 16384;
+//        nThreads  = (capacity-1) / ( nBlocks -1 );
+//        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
+//        nThreads = std::min( 1024U, nThreads );
+
+        unsigned N = 4;
+        nThreads = 416;
+        nBlocks = std::min(( capacity + N*nThreads -1 ) / (N*nThreads), 65535U);
+#endif
 #ifdef K420_GPU
     	nBlocks = 128;
     	nThreads = 128;
@@ -308,6 +318,11 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
        	// Debug: total gpuTime = 5.68947
        	// Debug: total cpuTime = 0.0825951
        	// Debug: total wallTime = 5.68952
+
+       	// timings on Tesla K40c GPU 10036x416
+       	// Debug: total gpuTime = 12.709
+       	// Debug: total cpuTime = 0.118516
+       	// Debug: total wallTime = 12.7091
 
        	// timing on Nvidia Quandro K420 128x128'
        	// total gpuTime = 101.266

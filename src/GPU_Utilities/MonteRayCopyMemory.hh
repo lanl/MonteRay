@@ -5,87 +5,97 @@
 #include "GPUErrorCheck.hh"
 #include <MonteRayMemory.hh>
 
-
 namespace MonteRay {
 
 template<typename Derived>
 class CopyMemoryBase {
 public:
 
-	CopyMemoryBase(){
+	CUDAHOST_CALLABLE_MEMBER CopyMemoryBase(){
 		if( debug ) {
 			std::cout << "Debug: CopyMemoryBase::CopyMemoryBase() -- allocating " << sizeof( Derived ) << " bytes\n";
 		}
 		devicePtr = (Derived*) MonteRayDeviceAlloc( sizeof( Derived ) );
-		intermediatePtr = (Derived*) MonteRayHostAlloc(sizeof( Derived ), false);
+		intermediatePtr = (Derived*) MonteRayHostAlloc(sizeof( Derived ), isManagedMemory);
+		intermediatePtr->Derived::init();
+		intermediatePtr->isCudaIntermediate = true;
 	}
-	virtual ~CopyMemoryBase(){
+
+	CUDAHOST_CALLABLE_MEMBER virtual ~CopyMemoryBase(){
 		deleteGPUMemory();
 	}
 
-	static void* operator new(size_t len) {
+	CUDAHOST_CALLABLE_MEMBER virtual void init() = 0;
+	CUDAHOST_CALLABLE_MEMBER virtual void copy(const Derived* rhs) = 0;
+
+	CUDAHOST_CALLABLE_MEMBER static void* operator new(size_t len) {
 
 #ifndef __CUDA_ARCH__
 		if( debug ) {
 			std::cout << "Debug: CopyMemoryBase::new -- Custom new operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len, false);
+		return MonteRayHostAlloc(len, isManagedMemory );
 	}
 
-	static void* operator new[](size_t len) {
+	CUDAHOST_CALLABLE_MEMBER static void* operator new[](size_t len) {
 
 #ifndef __CUDA_ARCH__
 		if( debug ) {
 			std::cout << "Debug: CopyMemoryBase::new[] -- Custom new[] operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len, false);
+		return MonteRayHostAlloc(len, isManagedMemory );
 	}
 
-	virtual void initialize() {
-		std::memcpy( intermediatePtr, (Derived*) this, sizeof( Derived ) );
-	}
-
-	virtual void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
+	CUDAHOST_CALLABLE_MEMBER virtual void copyToGPU(void) {
+		if( debug ) {
+			std::cout << "Debug: CopyMemoryBase::copyToGPU() \n";
+		}
 #ifdef __CUDACC__
+		Derived* ptr = ( Derived* ) this;
+		intermediatePtr->Derived::copy( ptr );
+		intermediatePtr->isCudaIntermediate = false;
 		CUDA_CHECK_RETURN( cudaMemcpy(devicePtr, intermediatePtr, sizeof(Derived), cudaMemcpyHostToDevice));
+		intermediatePtr->isCudaIntermediate = true;
 #else
 		throw std::runtime_error( "CopyMemoryBase::copyToGPU -- not valid without CUDA.");
 #endif
 	}
 
-	virtual void copyToCPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
+	CUDAHOST_CALLABLE_MEMBER virtual void copyToCPU() {
 #ifdef __CUDACC__
-		Derived* copy = (Derived*) malloc(sizeof(Derived));
-		CUDA_CHECK_RETURN( cudaMemcpy(copy, devicePtr, sizeof(Derived), cudaMemcpyDeviceToHost));
-		copy->intermediatePtr = intermediatePtr;
-		copy->devicePtr = devicePtr;
-		std::memcpy( (Derived*) this, copy, sizeof( Derived ) );
+		CUDA_CHECK_RETURN( cudaMemcpy(intermediatePtr, devicePtr, sizeof(Derived), cudaMemcpyDeviceToHost));
+		intermediatePtr->isCudaIntermediate = true;
+		Derived* ptr = ( Derived* ) this;
+		ptr->Derived::copy( intermediatePtr );
 #else
 		throw std::runtime_error( "CopyMemoryBase::copyToGPU -- not valid without CUDA.");
 #endif
 	}
 
-	virtual void deleteGPUMemory(){
-		MonteRayHostFree(intermediatePtr, false);
+	CUDAHOST_CALLABLE_MEMBER virtual void deleteGPUMemory(){
+		MonteRayHostFree(intermediatePtr, isManagedMemory);
 		MonteRayDeviceFree( devicePtr );
 	}
 
-	static void operator delete(void* ptr) {
+	CUDAHOST_CALLABLE_MEMBER static void operator delete(void* ptr) {
 
 #ifndef __CUDA_ARCH__
 		if( debug ) {
 			std::cout << "Debug: CopyMemoryBase::delete -- Custom delete operator.\n";
 		}
 #endif
-		MonteRayHostFree(ptr, false);
+		MonteRayHostFree(ptr, isManagedMemory);
 	}
-
-	static const bool debug = false;
 
 	Derived* intermediatePtr = NULL;
 	Derived* devicePtr = NULL;
+
+	bool isCudaIntermediate = false;
+
+	static const bool isManagedMemory = false;
+	static const bool debug = false;
 };
 
 } // end namespace

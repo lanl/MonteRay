@@ -209,6 +209,16 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 //        	nBlocks = std::min(( capacity + nThreads -1 ) / nThreads, 65535U);
 //        }
 #endif
+#ifdef TESLA_K40_GPU
+//        nBlocks = 16384;
+//        nThreads  = (capacity-1) / ( nBlocks -1 );
+//        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
+//        nThreads = std::min( 1024U, nThreads );
+
+        unsigned N = 4;
+        nThreads = 416;
+        nBlocks = std::min(( capacity + N*nThreads -1 ) / (N*nThreads), 65535U);
+#endif
 #ifdef P100_GPU
         nBlocks  = 4096;
         nThreads = 1024; 
@@ -291,6 +301,11 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	// Debug: total gpuTime = 9.77991
     	// Debug: total cpuTime = 0.27315
     	// Debug: total wallTime = 9.77998
+
+    	// timings on Tesla K40c GPU 34010x416
+    	// Debug: total gpuTime = 22.6417
+    	// Debug: total cpuTime = 0.308987
+    	// Debug: total wallTime = 22.6418
 
         // timings on RZManta GP100GL 4096x1024
         // Debug: total gpuTime = 7.36258

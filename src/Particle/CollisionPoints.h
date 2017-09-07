@@ -22,8 +22,8 @@ public:
 
     ~CollisionPointsHost();
 
-    void CopyToGPU(void);
     void copyToGPU(void);
+    void copyToCPU(void);
 
     CollisionPointsSize_t capacity(void) const { return ptrPoints->capacity(); }
     CollisionPointsSize_t size(void) const { return ptrPoints->size(); }
@@ -95,6 +95,8 @@ public:
     void debugPrint() const;
     void printParticle(unsigned i, const ParticleRay_t& particle ) const;
 
+    const CollisionPoints* getPtrPoints() { return ptrPoints; }
+
 private:
 
     unsigned numCollisionOnFile = 0 ;
@@ -105,10 +107,6 @@ private:
     bool cudaCopyMade = false;
 
     CollisionPoints* ptrPoints = NULL;
-    RayList_t<1,true>* temp = NULL;
-
-public:
-    CollisionPoints* ptrPoints_device = NULL;
 
 };
 

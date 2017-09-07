@@ -1,5 +1,5 @@
 SET(CUDA_SEPARABLE_COMPILATION ON)
-file(GLOB CUDA_TEST_SRCS "*.cu" )
+file(GLOB CUDA_TEST_SRCS "*.cu" "*.cc" )
 CUDA_INCLUDE_DIRECTORIES( ${UnitTest_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} )
 cuda_add_library(ParticleUnitTestHelper SHARED ${CUDA_TEST_SRCS} ${AllCudaFiles} )
 

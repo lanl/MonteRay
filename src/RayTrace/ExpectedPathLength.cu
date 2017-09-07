@@ -336,7 +336,7 @@ MonteRay::tripleTime launchRayTraceTally(
 	cudaEventRecord(start,0);
 	cudaEventRecord(startGPU,stream);
 
-	rayTraceTally<<<nBlocks,nThreads,0,stream>>>(pGrid->ptr_device, pCP->ptrPoints_device, pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
+	rayTraceTally<<<nBlocks,nThreads,0,stream>>>(pGrid->ptr_device, pCP->getPtrPoints()->devicePtr, pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
 	cudaEventRecord(stopGPU,stream);
 	cudaStreamWaitEvent(stream, stopGPU, 0);
 

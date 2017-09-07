@@ -1,6 +1,7 @@
 #ifndef MONTERAYMEMORY_HH_
 #define MONTERAYMEMORY_HH_
 
+#include <memory>
 #include <stdexcept>
 #include <cstdlib>
 #include <typeinfo>
@@ -8,15 +9,21 @@
 
 #ifdef __CUDACC__
 #include "cuda_runtime_api.h"
+#include "MonteRayDefinitions.hh"
+#include "GPUErrorCheck.hh"
 #endif
 
 namespace MonteRay {
 
+/// MonteRay GPU Properties class
 class MonteRayGPUProps {
 public:
-	MonteRayGPUProps(){
-		int numDevices = -1;
+	MonteRayGPUProps() :
+		deviceID( -1 ),
+		numDevices( -1 )
+	{
 #ifdef __CUDACC__
+		deviceProps = cudaDevicePropDontCare;
 		cudaGetDeviceCount(&numDevices);
 
 		if( numDevices <= 0 ) {
@@ -25,7 +32,8 @@ public:
 
 		// TODO: setup for multiple devices
 		cudaGetDevice(&deviceID);
-		cudaGetDeviceProperties(&deviceProps, deviceID);
+
+		cudaGetDeviceProperties(&deviceProps , deviceID);
 
 		if( ! deviceProps.managedMemory ) {
 			std::cout << "MONTERAY WARNING: GPU does not support managed memory.\n";
@@ -33,20 +41,30 @@ public:
 		if( ! deviceProps.concurrentManagedAccess ) {
 			std::cout << "MONTERAY WARNING: GPU does not support concurrent managed memory access.\n";
 		}
-#else
+	#else
 		throw std::runtime_error("MonteRayGPUProps::MonteRayGPUProps() -- CUDA not enabled.");
+	#endif
+	}
+
+	MonteRayGPUProps( const MonteRayGPUProps& rhs ) {
+		deviceID = rhs.deviceID;
+		numDevices = rhs.numDevices;
+#ifdef __CUDACC__
+		deviceProps = rhs.deviceProps;
 #endif
 	}
 
-	int deviceID = -1;
+	~MonteRayGPUProps(){}
+
+	int deviceID; ///< GPU ID Number
+	int numDevices;
+
 #ifdef __CUDACC__
-	cudaDeviceProp deviceProps = cudaDevicePropDontCare;
+	cudaDeviceProp deviceProps;
 #endif
 };
 
-/// Ref: http://on-demand.gputechconf.com/gtc/2015/presentation/S5530-Stephen-Johns.pdfhmrs
-
-inline void* MonteRayHostAlloc(size_t len, bool managed = true ) {
+inline void* MonteRayHostAlloc(size_t len, bool managed = true) {
 #ifdef __CUDACC__
 	const bool debug = false;
 
@@ -84,7 +102,7 @@ inline void* MonteRayDeviceAlloc(size_t len ){
 	return ptr;
 }
 
-inline void MonteRayHostFree(void* ptr, bool managed = true) noexcept {
+inline void MonteRayHostFree(void* ptr, bool managed ) noexcept {
 #ifdef __CUDACC__
 	if( managed ) {
 		cudaFree(ptr);
@@ -104,6 +122,13 @@ inline void MonteRayDeviceFree(void* ptr) noexcept {
 #endif
 }
 
+inline void MonteRayMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind){
+#ifdef __CUDACC__
+	CUDA_CHECK_RETURN( cudaMemcpy(dst, src, count, kind) );
+#else
+	throw std::runtime_error( "MonteRayMemcpy -- can NOT use cudaMemcpy without CUDA." );
+#endif
+}
 } // end namespace
 
 

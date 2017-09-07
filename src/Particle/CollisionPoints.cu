@@ -20,13 +20,6 @@ CollisionPointsHost::~CollisionPointsHost() {
             closeInput();
         }
     }
-
-#ifdef __CUDACC__
-    if( cudaCopyMade ) {
-        cudaFree( ptrPoints_device );
-        delete temp;
-    }
-#endif
 }
 
 void CollisionPointsHost::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
@@ -63,6 +56,14 @@ void CollisionPointsHost::add( const void* voidPtrParticle, unsigned N ) {
 	add( ptrParticle, N);
 }
 
+void CollisionPointsHost::copyToGPU(void) {
+	ptrPoints->copyToGPU();
+}
+
+void CollisionPointsHost::copyToCPU(void) {
+	ptrPoints->copyToCPU();
+}
+
 void CollisionPointsHost::writeHeader(std::fstream& infile){
     infile.seekp(0, std::ios::beg); // reposition to start of file
 
@@ -71,40 +72,6 @@ void CollisionPointsHost::writeHeader(std::fstream& infile){
     binaryIO::write(infile,numCollisionOnFile);
 
     headerPos = infile.tellg();
-}
-
-void CollisionPointsHost::CopyToGPU(void) {
- 	copyToGPU();
- }
-
-
-void CollisionPointsHost::copyToGPU(void) {
-#ifdef __CUDACC__
-	std::cout << "CollisionPointsHost::copyToGPU -- starting\n";
-
-	if( !cudaCopyMade ) {
-		// first pass allocate memory
-		cudaCopyMade = true;
-
-		//std::cout << "CollisionPointsHost::copyToGPU -- calling new for `temp`.\n";
-		temp = new RayList_t<1,true>( *ptrPoints );
-
-		// allocate target struct
-		CUDA_CHECK_RETURN( cudaMalloc(&ptrPoints_device, sizeof( CollisionPoints) ));
-
-	}  else {
-		if( ptrPoints->capacity() != temp->capacity() ) {
-			// resize
-			delete temp;
-			temp = new RayList_t<1,true>( *ptrPoints );
-		} else {
-			*temp = *ptrPoints;
-		}
-	}
-
-	// copy struct data
-	CUDA_CHECK_RETURN( cudaMemcpy(ptrPoints_device, temp, sizeof( CollisionPoints ), cudaMemcpyHostToDevice));
-#endif
 }
 
 void CollisionPointsHost::readHeader(std::fstream& infile){

@@ -153,7 +153,7 @@ CollisionPointController::flush(bool final){
 	gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 
 	// launch kernel
-	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device, currentBank->ptrPoints_device, pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
+	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device, currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(), pTally->ptr_device);
 
 	// only uncomment for testing, forces the cpu and gpu to sync
 //	gpuErrchk( cudaPeekAtLastError() );

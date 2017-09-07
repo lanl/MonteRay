@@ -18,6 +18,14 @@ if( output_value STREQUAL "GK107GL" )
   return()
 endif() 
 
+# Tesla K40m
+if( output_value STREQUAL "GK110BGL" )
+  add_definitions(-DTESLA_K40_GPU)
+  set( ${RESULT} "TESLA_K40" PARENT_SCOPE )
+  set( ${COMPUTECAPABILITY} "-arch=sm_35" PARENT_SCOPE )
+  return()
+endif()   
+
 if( output_value STREQUAL "GM200" )
   add_definitions(-DTITANX_MAXWELL_GPU)
   set( ${RESULT} "TITANX_MAXWELL" PARENT_SCOPE )

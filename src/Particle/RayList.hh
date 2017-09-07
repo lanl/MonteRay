@@ -8,94 +8,34 @@
 #include <iostream>
 
 #include "Ray.hh"
+#include "MonteRayCopyMemory.hh"
 
 namespace MonteRay{
 
 typedef unsigned RayListSize_t;
 
-template<unsigned N = 1, bool isCudaIntermediate = false >
-class RayList_t {
+template<unsigned N = 1>
+class RayList_t : public CopyMemoryBase<RayList_t<N>>{
 public:
+	using Base = CopyMemoryBase<RayList_t<N>>;
 
-	/// primary RayList_t Constructo.
+	/// Primary RayList_t constructor.
 	/// Takes the size of the list as an argument.
 	typedef Ray_t<N> RAY_T;
-	CUDAHOST_CALLABLE_MEMBER RayList_t(RayListSize_t num = 1 ){
-	    if( num == 0 ) { num = 1; }
-	    //std::cout << "RayList_t - ctor(n), n=" << num << " \n";
+	CUDAHOST_CALLABLE_MEMBER RayList_t(RayListSize_t num = 1);
 
-	    if( ! isCudaIntermediate ) {
-	    	points = (RAY_T*) malloc( num*sizeof( RAY_T ) );
-	    } else {
-#ifdef __CUDACC__
-	    	cudaMalloc(&points, num*sizeof( RAY_T ) );
-#else
-	    	throw std::runtime_error("RayList_t::RayList_t(num) -- can NOT allocate CUDA intermediate without CUDA.");
-#endif
-	    }
-	    nAllocated = num;
+	/// Copy constructor
+	CUDAHOST_CALLABLE_MEMBER RayList_t(const RayList_t<N>& rhs);
+
+	CUDAHOST_CALLABLE_MEMBER ~RayList_t();
+
+	CUDAHOST_CALLABLE_MEMBER void init() {
+		nAllocated = 0;
+		nUsed = 0;
+		points = NULL;
 	}
 
-	CUDAHOST_CALLABLE_MEMBER RayList_t(const RayList_t<N,false>& rhs) :
-		RayList_t( rhs.size() )
-	{
-		//std::cout << "RayList_t - ctor(rhs) \n";
-
-		nUsed = rhs.nUsed;
-		if( ! isCudaIntermediate ) {
-			std::memcpy( points, rhs.points, nUsed*sizeof( RAY_T ) );
-		} else {
-#ifdef __CUDACC__
-			CUDA_CHECK_RETURN( cudaMemcpy(points, rhs.points, sizeof( RAY_T ) * capacity(), cudaMemcpyHostToDevice));
-#else
-			throw std::runtime_error("RayList_t::RayList_t(RayList_t&) -- can NOT initialize CUDA intermediate without CUDA.");
-#endif
-		}
-	}
-
-	CUDAHOST_CALLABLE_MEMBER RayList_t(const RayList_t<N,true>& rhs) :
-		RayList_t( rhs.size() )
-	{
-		//std::cout << "RayList_t - ctor(rhs) \n";
-
-		nUsed = rhs.nUsed;
-		if( ! isCudaIntermediate ) {
-#ifdef __CUDACC__
-			CUDA_CHECK_RETURN( cudaMemcpy(points, rhs.points, sizeof( RAY_T ) * capacity(), cudaMemcpyDeviceToHost));
-#else
-			throw std::runtime_error("RayList_t::RayList_t(RayList_t&) -- can NOT copy from CUDA intermediate without CUDA.");
-#endif
-		} else {
-			std::memcpy( points, rhs.points, nUsed*sizeof( RAY_T ) );
-		}
-	}
-
-	CUDAHOST_CALLABLE_MEMBER void operator=(const RayList_t<N,false>& rhs) {
-		//std::cout << "RayList_t - ctor(rhs) \n";
-
-		nUsed = rhs.nUsed;
-		if( ! isCudaIntermediate ) {
-			std::memcpy( points, rhs.points, nUsed*sizeof( RAY_T ) );
-		} else {
-#ifdef __CUDACC__
-			CUDA_CHECK_RETURN( cudaMemcpy(points, rhs.points, sizeof( RAY_T ) * capacity(), cudaMemcpyHostToDevice));
-#else
-			throw std::runtime_error("RayList_t::RayList_t(RayList_t&) -- can NOT initialize CUDA intermediate without CUDA.");
-#endif
-		}
-	}
-
-	CUDA_CALLABLE_MEMBER ~RayList_t(){
-		if( ! isCudaIntermediate ) {
-			free(points);
-		} else {
-#ifdef __CUDACC__
-			cudaFree( points );
-#else
-			throw std::runtime_error("RayList_t::~RayList_t -- Destructor can NOT free CUDA intermediate without CUDA.");
-#endif
-		}
-	}
+	CUDAHOST_CALLABLE_MEMBER void copy(const RayList_t<N>* rhs);
 
 	CUDA_CALLABLE_MEMBER RayListSize_t size(void) const {
 		return nUsed;
@@ -180,9 +120,9 @@ public:
 
 };
 
-typedef RayList_t<1,false> CollisionPoints;
-typedef RayList_t<1,false> ParticleRayList;
-typedef RayList_t<3,false> PointDetRayList;
+typedef RayList_t<1> CollisionPoints;
+typedef RayList_t<1> ParticleRayList;
+typedef RayList_t<3> PointDetRayList;
 
 } // end namespace
 

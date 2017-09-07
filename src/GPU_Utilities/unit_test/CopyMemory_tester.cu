@@ -6,15 +6,46 @@ SUITE( CopyMemory_tester ) {
 	using namespace MonteRay;
 
 	class testCopyClass : public CopyMemoryBase<testCopyClass> {
+
 	public:
+		using Base = CopyMemoryBase<testCopyClass>;
 		testCopyClass() : CopyMemoryBase<testCopyClass>() {
-			initialize();
+			init();
 		}
 		~testCopyClass(){}
 
-		unsigned A = 10;
-		unsigned B = 20;
-		unsigned C = 30;
+		void init() {
+			A = 10;
+			B = 20;
+			C = 30;
+		}
+
+		void copyToGPU(void) {
+			//std::cout << "Debug: testCopyClass::copyToGPU \n";
+			Base::copyToGPU();
+		}
+
+		void copy(const testCopyClass* rhs) {
+			if( debug ) {
+				std::cout << "Debug: testCopyClass::operator= (const RayList_t<N>& rhs) \n";
+			}
+
+			if( isCudaIntermediate && rhs->isCudaIntermediate ) {
+				throw std::runtime_error("RayList_t::operator= -- can NOT copy CUDA intermediate to CUDA intermediate.");
+			}
+
+			if( !isCudaIntermediate && !rhs->isCudaIntermediate ) {
+				throw std::runtime_error("RayList_t::operator= -- can NOT copy CUDA non-intermediate to CUDA non-intermediate.");
+			}
+
+			A = rhs->A;
+			B = rhs->B;
+			C = rhs->C;
+		}
+
+		unsigned A;
+		unsigned B;
+		unsigned C;
 	};
 
 	TEST( CopyMemory_ctor ) {
@@ -50,10 +81,6 @@ SUITE( CopyMemory_tester ) {
 		test3->A = 1000.0;
 		test3->B = 2000.0;
 
-		test1->initialize();
-		test2->initialize();
-		test3->initialize();
-
 		test1->copyToGPU();
 		test2->copyToGPU();
 		test3->copyToGPU();
@@ -63,7 +90,7 @@ SUITE( CopyMemory_tester ) {
 		CHECK_EQUAL(1110, test3->A);
 		CHECK_EQUAL(2220, test3->B);
 	}
-
+#if true
 	class testClassWithArray : public CopyMemoryBase<testClassWithArray> {
 	public:
 		testClassWithArray(unsigned num = 1, double mult = 1.0) : CopyMemoryBase() {
@@ -79,35 +106,44 @@ SUITE( CopyMemory_tester ) {
 			MonteRayHostFree( elements, false );
 		}
 
+		void init() {
+			multiple = 0.0;
+			N = 0;
+			elements = NULL;
+		}
+
 		gpuFloatType_t multiple;
 		unsigned N;
 		gpuFloatType_t* elements;
 
+		void copy(const testClassWithArray* rhs) {
 #ifdef __CUDACC__
-	void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
-		initialize();
-		intermediatePtr->elements = (gpuFloatType_t*) MonteRayDeviceAlloc( N*sizeof(gpuFloatType_t) );
-		CUDA_CHECK_RETURN( cudaMemcpy(intermediatePtr->elements, elements, N*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice));
-		CopyMemoryBase::copyToGPU( stream, device );
-	}
-#else
-	void copyToGPU(void) {
-		throw std::runtime_error( "copyToGPU not valid without CUDA.");
-	}
-#endif
+			if( N != 0 && (N != rhs->N) ) {
+				std::cout << "Error: testClassWithArray::copy -- can't change size after initialization.\n";
+				std::cout << "Error: testClassWithArray::copy -- N = " << N << " \n";
+				std::cout << "Error: testClassWithArray::copy -- rhs->N = " << rhs->N << " \n";
+				std::cout << "Error: testClassWithArray::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
+				std::cout << "Error: testClassWithArray::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
+				throw std::runtime_error("testClassWithArray::copy -- can't change size after initialization.");
+			}
 
-#ifdef __CUDACC__
-	void copyToCPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps()) {
-		gpuFloatType_t* ptr = elements;
-		CopyMemoryBase::copyToCPU( stream );
-		elements = ptr;
-		CUDA_CHECK_RETURN( cudaMemcpy(elements, intermediatePtr->elements, N*sizeof(gpuFloatType_t), cudaMemcpyDeviceToHost));
-	}
+			if( isCudaIntermediate ) {
+				// host to device
+				if( N == 0 ) {
+					elements = (gpuFloatType_t*) MonteRayDeviceAlloc( rhs->N*sizeof(gpuFloatType_t) );
+				}
+				MonteRayMemcpy( elements, rhs->elements, rhs->N*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
+			} else {
+				// device to host
+				MonteRayMemcpy( elements, rhs->elements, rhs->N*sizeof(gpuFloatType_t), cudaMemcpyDeviceToHost );
+			}
+
+			multiple = rhs->multiple;
+			N = rhs->N;
 #else
-	void copyToCPU(void) {
-		throw std::runtime_error( "copyToGPU not valid without CUDA.");
-	}
+			throw std::runtime_error("testClassWithArray::copy -- can NOT copy between host and device without CUDA.");
 #endif
+		}
 	};
 
 #ifdef __CUDACC__
@@ -156,4 +192,5 @@ TEST( add_vectors_w_copyToCPU ) {
 	CHECK_CLOSE( 3030.0, C->elements[2], 1e-6);
 	CHECK_CLOSE( 4040.0, C->elements[3], 1e-6);
 }
+#endif
 }
