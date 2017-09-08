@@ -51,10 +51,10 @@ public:
 
 private:
     gpuTally* ptr;
-    gpuTally* temp;
     bool cudaCopyMade;
 
 public:
+    gpuTally* temp;
     gpuTally* ptr_device;
 
 };
