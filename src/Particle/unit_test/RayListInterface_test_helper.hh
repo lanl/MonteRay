@@ -12,6 +12,7 @@
 
 namespace MonteRay {
 
+template< unsigned N = 1>
 class RayListInterfaceTester
 {
 public:
@@ -24,8 +25,8 @@ public:
 
 	void stopTimers();
 
-	RayListInterface::RayListSize_t launchGetCapacity( unsigned nBlocks, unsigned nThreads, RayListInterface& CPs);
-	gpuFloatType_t launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface& CPs);
+	MonteRay::RayListSize_t launchGetCapacity( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs);
+	gpuFloatType_t launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs);
 
 private:
 	cudaEvent_t start, stop;

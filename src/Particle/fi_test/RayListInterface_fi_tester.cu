@@ -13,16 +13,16 @@
 #include "MonteRay_timer.hh"
 
 #if( true )
-SUITE( Collision_fi_tester ) {
+SUITE( RayListInterface_fi_tester ) {
 
 	TEST( setup ) {
 		gpuCheck();
 	}
 
     TEST(get_total_xs_from_gpu ) {
-    	RayListInterface* points = new RayListInterface(2);
+    	RayListInterface<1>* points = new RayListInterface<1>(2);
     	points->readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
-    	FIGenericGPUTestHelper helper(points->size());
+    	FIGenericGPUTestHelper<1> helper(points->size());
     	points->copyToGPU();
 
     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
@@ -44,9 +44,9 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST(load_godiva_metal_from_file_small_file ) {
-    	RayListInterface points(2);
+    	RayListInterface<1> points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
-    	FIGenericGPUTestHelper helper(points.size());
+    	FIGenericGPUTestHelper<1> helper(points.size());
     	points.copyToGPU();
 
     	MonteRayCrossSectionHost u234s(1);
@@ -96,9 +96,9 @@ SUITE( Collision_fi_tester ) {
     }
 
     TEST( load_godivaR_materials_godivaR_geom_and_collisions_tally_collision ) {
-    	RayListInterface points(2);
+    	RayListInterface<1> points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
-        FIGenericGPUTestHelper helper(points.size());
+        FIGenericGPUTestHelper<1> helper(points.size());
     	points.copyToGPU();
 
 		MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
@@ -170,9 +170,9 @@ SUITE( Collision_fi_tester ) {
 		mp.disableReduction();
 		mp.setMaterialDescription( readerObject );
 
-        FIGenericGPUTestHelper helper( mp.size() );
+        FIGenericGPUTestHelper<1> helper( mp.size() );
 
-    	RayListInterface points(2);
+    	RayListInterface<1> points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
     	points.copyToGPU();
 
@@ -250,7 +250,7 @@ SUITE( Collision_fi_tester ) {
     	setVertices(grid_host, 2, -33.5, 33.5, 100);
     	finalize(grid_host);
 
-    	FIGenericGPUTestHelper helper( 0 );
+    	FIGenericGPUTestHelper<1> helper( 0 );
     	helper.copyGridtoGPU(grid_host);
 
 		MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
@@ -297,7 +297,7 @@ SUITE( Collision_fi_tester ) {
         h1s.copyToGPU();
         o16s.copyToGPU();
 
-    	RayListInterface points(2);
+    	RayListInterface<1> points(2);
     	points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
 
     	points.copyToGPU();
@@ -339,7 +339,7 @@ SUITE( Collision_fi_looping_tester ) {
     {
     	std::cout << "Debug: ********************************************* \n";
     	std::cout << "Debug: Starting rayTrace tester with Global Launcher \n";
-    	FIGenericGPUTestHelper helper(  1 );
+    	FIGenericGPUTestHelper<1> helper(  1 );
 
     	cudaReset();
     	GridBinsHost grid(-33.5, 33.5, 100,
@@ -394,7 +394,7 @@ SUITE( Collision_fi_looping_tester ) {
         h1s.copyToGPU();
         o16s.copyToGPU();
 
-    	RayListInterface bank1(100000);
+    	RayListInterface<1> bank1(100000);
     	bool end = false;
     	unsigned offset = 0;
     	std::cout << "Debug: Reading Bank1 \n";
@@ -410,7 +410,7 @@ SUITE( Collision_fi_looping_tester ) {
 
 		offset += bank1.size();
 
-    	RayListInterface bank2(100000);
+    	RayListInterface<1> bank2(100000);
     	bool last = false;
 
     	auto cpuWork1 = [&] (void) -> void {

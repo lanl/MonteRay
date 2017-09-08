@@ -9,9 +9,10 @@
 
 namespace MonteRay{
 
+ template<unsigned N>
  __device__
  gpuTallyType_t
- tallyAttenuation(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p){
+ tallyAttenuation(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<N>* p){
 
 
 	 gpuTallyType_t enteringFraction = p->weight[0];
@@ -47,6 +48,13 @@ namespace MonteRay{
 	 return enteringFraction;
  }
 
+ template __device__ gpuTallyType_t
+ tallyAttenuation<1>(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<1>* p);
+
+ template __device__ gpuTallyType_t
+ tallyAttenuation<3>(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<3>* p);
+
+
  __device__
  gpuTallyType_t
  attenuateRayTraceOnly(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t distance, gpuFloatType_t energy, gpuTallyType_t enteringFraction ) {
@@ -72,8 +80,8 @@ namespace MonteRay{
 
  }
 
-
-__device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p, gpuTallyType_t* tally){
+ template<unsigned N> __device__ void
+ tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<N>* p, gpuTallyType_t* tally){
 
 	 gpuTallyType_t opticalPathLength = 0.0;
 	 gpuFloatType_t energy = p->energy[0];
@@ -112,6 +120,12 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 	}
 }
 
+ template __device__ void
+ tallyCollision<1>(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<1>* p, gpuTallyType_t* tally);
+
+ template __device__ void
+ tallyCollision<3>(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<3>* p, gpuTallyType_t* tally);
+
 __device__
 gpuTallyType_t
 tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, gpuFloatType_t* materialXS, gpuTallyType_t* tally, unsigned cell, gpuFloatType_t distance, gpuFloatType_t energy, gpuFloatType_t weight, gpuTallyType_t opticalPathLength ) {
@@ -144,18 +158,20 @@ tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data*
 	return cellOpticalPathLength;
 }
 
-__global__
-void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTallyType_t* tally){
+template<unsigned N> __global__ void
+rayTraceTally(GridBins* pGrid, RayList_t<N>* pCP, SimpleMaterialList* pMatList,
+		      MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash,
+		      gpuTallyType_t* tally){
 
 	const bool debug = false;
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
-	unsigned N = pCP->size();
+	unsigned num = pCP->size();
 
 	if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
 
-	while( tid < N ) {
-		ParticleRay_t p = pCP->getParticle(tid);
+	while( tid < num ) {
+		Ray_t<N> p = pCP->getParticle(tid);
 		tallyCollision(pGrid, pMatList, pMatProps, pHash, &p, tally);
 
 		tid += blockDim.x*gridDim.x;
@@ -163,7 +179,21 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
 	return;
 }
 
-__device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, ParticleRay_t* p, gpuTally* pTally, unsigned tid){
+template __global__ void
+rayTraceTally<1>(GridBins* pGrid, RayList_t<1>* pCP, SimpleMaterialList* pMatList,
+		         MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash,
+		         gpuTallyType_t* tally);
+
+template __global__ void
+rayTraceTally<3>(GridBins* pGrid, RayList_t<3>* pCP, SimpleMaterialList* pMatList,
+		         MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash,
+		         gpuTallyType_t* tally);
+
+template<unsigned N> __device__ void
+tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList,
+		            MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<N>* p,
+		            gpuTally* pTally, unsigned tid)
+{
 	const bool debug = false;
 
 	if( debug ) {
@@ -213,7 +243,8 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 		gpuFloatType_t distance = crossingDistances[i];
 		if( cell == UINT_MAX ) continue;
 
-		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally, cell, distance, energy, p->weight[0], opticalPathLength);
+		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally,
+				                              cell, distance, energy, p->weight[0], opticalPathLength);
 
 		if( opticalPathLength > 5.0 ) {
 			// cut off at 5 mean free paths
@@ -222,9 +253,21 @@ __device__ void tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList, Mo
 	}
 }
 
-__device__
-gpuTallyType_t
-tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, gpuFloatType_t* materialXS , struct gpuTally* pTally, unsigned cell, gpuFloatType_t distance, gpuFloatType_t energy, gpuFloatType_t weight, gpuTallyType_t opticalPathLength ) {
+template __device__ void
+tallyCollision<1>(GridBins* pGrid, SimpleMaterialList* pMatList,
+		            MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<1>* p,
+		            gpuTally* pTally, unsigned tid);
+
+template __device__ void
+tallyCollision<3>(GridBins* pGrid, SimpleMaterialList* pMatList,
+		            MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<3>* p,
+		            gpuTally* pTally, unsigned tid);
+
+__device__ gpuTallyType_t
+tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps,
+		         gpuFloatType_t* materialXS , struct gpuTally* pTally, unsigned cell,
+		         gpuFloatType_t distance, gpuFloatType_t energy, gpuFloatType_t weight,
+		         gpuTallyType_t opticalPathLength ) {
 	const bool debug = false;
 
 	typedef gpuTallyType_t xs_t;
@@ -274,20 +317,20 @@ tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data*
 	return cellOpticalPathLength;
 }
 
-
-__global__
-void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTally* pTally ){
+template<unsigned N> __global__ void
+rayTraceTally(GridBins* pGrid, RayList_t<N>* pCP, SimpleMaterialList* pMatList,
+		      MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTally* pTally ){
 
 	const bool debug = false;
 
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-	unsigned N = pCP->size();
+	unsigned num = pCP->size();
 
 	if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
 
-	while( tid < N ) {
-		ParticleRay_t p = pCP->getParticle(tid);
+	while( tid < num ) {
+		Ray_t<N> p = pCP->getParticle(tid);
 
 		if( debug ) {
 		    printf("--------------------------------------------------------------------------------------------------------\n");
@@ -310,12 +353,21 @@ void rayTraceTally(GridBins* pGrid, CollisionPoints* pCP, SimpleMaterialList* pM
 	return;
 }
 
+template __global__ void
+rayTraceTally<1>(GridBins* pGrid, RayList_t<1>* pCP, SimpleMaterialList* pMatList,
+		         MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTally* pTally );
+
+template __global__ void
+rayTraceTally<3>(GridBins* pGrid, RayList_t<3>* pCP, SimpleMaterialList* pMatList,
+		         MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTally* pTally );
+
+template<unsigned N>
 MonteRay::tripleTime launchRayTraceTally(
 		                 std::function<void (void)> cpuWork,
 		                 unsigned nBlocks,
 		                 unsigned nThreads,
 		                 GridBinsHost* pGrid,
-		                 RayListInterface* pCP,
+		                 RayListInterface<N>* pCP,
 		                 SimpleMaterialListHost* pMatList,
 		                 MonteRay_MaterialProperties* pMatProps,
 		                 gpuTallyHost* pTally
@@ -364,4 +416,16 @@ MonteRay::tripleTime launchRayTraceTally(
 	return time;
 }
 
+template MonteRay::tripleTime
+launchRayTraceTally<1>( std::function<void (void)> cpuWork, unsigned nBlocks, unsigned nThreads,
+		                GridBinsHost* pGrid, RayListInterface<1>* pCP, SimpleMaterialListHost* pMatList,
+		                MonteRay_MaterialProperties* pMatProps, gpuTallyHost* pTally );
+
+template MonteRay::tripleTime
+launchRayTraceTally<3>( std::function<void (void)> cpuWork, unsigned nBlocks, unsigned nThreads,
+		                GridBinsHost* pGrid, RayListInterface<3>* pCP, SimpleMaterialListHost* pMatList,
+		                MonteRay_MaterialProperties* pMatProps, gpuTallyHost* pTally );
+
 }
+
+

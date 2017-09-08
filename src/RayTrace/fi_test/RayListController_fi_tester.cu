@@ -8,7 +8,7 @@
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
 #include "MonteRay_timer.hh"
-#include "CollisionPointController.h"
+#include "RayListController.hh"
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
 #include "MonteRay_MaterialProperties.hh"
@@ -16,11 +16,11 @@
 #include "gpuTally.h"
 #include "RayListInterface.hh"
 
-namespace {
+namespace RayListController_fi_tester {
 
 using namespace MonteRay;
 
-SUITE( Collision_fi_bank_controller_tester ) {
+SUITE( Ray_bank_controller_fi_tester ) {
 
 	class ControllerSetup {
 	public:
@@ -181,9 +181,9 @@ SUITE( Collision_fi_bank_controller_tester ) {
 
     	setup();
 
-    	RayListInterface bank1(500000);
-    	bool end = false;
-    	unsigned offset = 0;
+    	RayListInterface<1> bank1(500000);
+//    	bool end = false;
+//    	unsigned offset = 0;
 
     	double x = 0.0001;
     	double y = 0.0001;
@@ -197,12 +197,23 @@ SUITE( Collision_fi_bank_controller_tester ) {
     	unsigned detectorIndex = 101;
     	short int particleType = 0;
 
-
     	unsigned nI = 2;
     	unsigned nJ = 1;
     	for( unsigned i = 0; i < nI; ++i ) {
     	    for( unsigned j = 0; j < nJ; ++j ) {
-    	        controller.add( x, y, z, u, v, w, energy, weight, index, detectorIndex, particleType );
+    	    	ParticleRay_t ray;
+    	    	ray.pos[0] = x;
+    	    	ray.pos[1] = y;
+    	    	ray.pos[2] = z;
+    	    	ray.dir[0] = u;
+    	    	ray.dir[1] = v;
+    	    	ray.dir[2] = w;
+    	    	ray.energy[0] = energy;
+    	    	ray.weight[0] = weight;
+    	    	ray.index = index;
+    	    	ray.detectorIndex = detectorIndex;
+    	    	ray.particleType = particleType;
+    	        controller.add( ray );
     	    }
     	    CHECK_EQUAL( nJ, controller.size() );
     	    controller.flush(false);
@@ -230,7 +241,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
     	controller.setCapacity( 1000000 );
     	setup();
 
-    	RayListInterface bank1(50000);
+    	RayListInterface<1> bank1(50000);
     	bool end = false;
     	unsigned offset = 0;
 
@@ -240,13 +251,7 @@ SUITE( Collision_fi_bank_controller_tester ) {
     		offset += bank1.size();
 
     		for( unsigned i=0; i<bank1.size(); ++i ) {
-
-    			controller.add(
-    				bank1.getX(i), bank1.getY(i), bank1.getZ(i),
-    				bank1.getU(i), bank1.getV(i), bank1.getW(i),
-    				bank1.getEnergy(i), bank1.getWeight(i), bank1.getIndex(i),
-    				bank1.getDetectorIndex(i), bank1.getParticleType(i)
-    			);
+    			controller.add( bank1.getParticle(i) );
     		}
 
     		if( end ) {

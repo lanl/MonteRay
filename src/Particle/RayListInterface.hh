@@ -11,19 +11,21 @@
 
 namespace MonteRay{
 
+template<unsigned N = 1>
 class RayListInterface {
 public:
-	typedef MonteRay::ParticleRay_t ParticleRay_t;
+	typedef MonteRay::Ray_t<N>      RAY_T;
+	typedef MonteRay::RayList_t<N>  RAYLIST_T;
 	typedef MonteRay::RayListSize_t RayListSize_t;
 
     RayListInterface( unsigned num) :
-        ptrPoints( new CollisionPoints(num) )
+        ptrPoints( new RAYLIST_T(num) )
 	{}
 
     ~RayListInterface();
 
-    void copyToGPU(void);
-    void copyToCPU(void);
+    void copyToGPU(void) { ptrPoints->copyToGPU(); }
+    void copyToCPU(void) { ptrPoints->copyToCPU(); }
 
     RayListSize_t capacity(void) const { return ptrPoints->capacity(); }
     RayListSize_t size(void) const { return ptrPoints->size(); }
@@ -43,11 +45,12 @@ public:
     DetectorIndex_t getDetectorIndex(unsigned i) const { return ptrPoints->getDetectorIndex(i); }
     ParticleType_t getParticleType(unsigned i) const { return ptrPoints->getParticleType(i); }
 
-    ParticleRay_t getParticle(unsigned i) const { return ptrPoints->getParticle(i); }
+    RAY_T getParticle(unsigned i) const { return ptrPoints->getParticle(i); }
 
-    void add( const ParticleRay_t& );
-    void add( const ParticleRay_t*, unsigned N=1 );
-    void add( const void*, unsigned N=1 );
+    void add( const RAY_T& ray) { ptrPoints->add( ray ); }
+
+    void add( const RAY_T* rayArray, unsigned num=1 ) { for( unsigned i=0; i<num; ++i) add( rayArray[i] );}
+    void add( const void* ptrRay, unsigned num=1 ) { add( (const ParticleRay_t*) ptrRay, num); }
 
     void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
               gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
@@ -56,7 +59,7 @@ public:
 
     void clear(void) { ptrPoints->clear(); }
 
-    ParticleRay_t pop(void) { return ptrPoints->pop(); }
+    RAY_T pop(void) { return ptrPoints->pop(); }
 
     std::string filename;
     std::string iomode;
@@ -78,10 +81,10 @@ public:
     void updateHeader(std::fstream& outfile);
     void resetFile(void);
 
-    void writeParticle( const ParticleRay_t& );
+    void writeParticle( const RAY_T& );
     void writeBank();
 
-    ParticleRay_t readParticle(void);
+    RAY_T readParticle(void);
     void  read(std::fstream& infile);
 
     void readToMemory( const std::string& file );
@@ -93,9 +96,9 @@ public:
     bool isCudaCopyMade(void) const { return cudaCopyMade; }
 
     void debugPrint() const;
-    void printParticle(unsigned i, const ParticleRay_t& particle ) const;
+    void printParticle(unsigned i, const RAY_T& particle ) const;
 
-    const CollisionPoints* getPtrPoints() { return ptrPoints; }
+    const RAYLIST_T* getPtrPoints() { return ptrPoints; }
 
 private:
 
@@ -106,9 +109,11 @@ private:
     unsigned currentParticlePos = 0;
     bool cudaCopyMade = false;
 
-    CollisionPoints* ptrPoints = NULL;
+    RAYLIST_T* ptrPoints = NULL;
 
 };
 
+
+typedef RayListInterface<1> ParticleRayListInterface;
 }
 #endif /* RAYLISTINTERFACE_HH_ */

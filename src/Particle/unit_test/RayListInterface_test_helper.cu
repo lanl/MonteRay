@@ -8,22 +8,24 @@
 
 #include "RayListInterface_test_helper.hh"
 
-using namespace MonteRay;
+namespace MonteRay {
 
 #ifdef CUDA
-__global__ void testGetCapacity(ParticleRayList* pRayList, RayListInterface::RayListSize_t* results){
+template< unsigned N> __global__ void
+testGetCapacity(RayList_t<N>* pRayList, MonteRay::RayListSize_t* results){
 	results[0] = pRayList->capacity();
 	return;
 }
 #endif
 
-RayListInterface::RayListSize_t
-RayListInterfaceTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, RayListInterface& CPs) {
-	RayListInterface::RayListSize_t* result_device;
-	RayListInterface::RayListSize_t* result;
-	size_t allocSize = sizeof( RayListInterface::RayListSize_t) * 1;
+template< unsigned N>
+MonteRay::RayListSize_t
+RayListInterfaceTester<N>::launchGetCapacity( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs) {
+	MonteRay::RayListSize_t* result_device;
+	MonteRay::RayListSize_t* result;
+	size_t allocSize = sizeof( MonteRay::RayListSize_t ) * 1;
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, allocSize ));
-	result = (RayListInterface::RayListSize_t*) malloc( allocSize );
+	result = (MonteRay::RayListSize_t*) malloc( allocSize );
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
@@ -32,16 +34,17 @@ RayListInterfaceTester::launchGetCapacity( unsigned nBlocks, unsigned nThreads, 
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(RayListInterface::RayListSize_t)*1, cudaMemcpyDeviceToHost));
+	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(MonteRay::RayListSize_t)*1, cudaMemcpyDeviceToHost));
 
 	cudaFree( result_device );
-	RayListInterface::RayListSize_t value = *result;
+	MonteRay::RayListSize_t value = *result;
 	free(result);
 	return value;
 }
 
 #ifdef CUDA
-__global__ void testSumEnergy(ParticleRayList* ParticleRayList, gpuFloatType_t* results){
+template< unsigned N>
+__global__ void testSumEnergy(MonteRay::RayList_t<N>* ParticleRayList, gpuFloatType_t* results){
 	gpuFloatType_t total = 0.0f;
 	for(unsigned i=0; i< ParticleRayList->size(); ++i ) {
 		total += ParticleRayList->getEnergy(i);
@@ -51,8 +54,9 @@ __global__ void testSumEnergy(ParticleRayList* ParticleRayList, gpuFloatType_t* 
 }
 #endif
 
+template< unsigned N>
 gpuFloatType_t
-RayListInterfaceTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface& CPs) {
+RayListInterfaceTester<N>::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs) {
 	gpuFloatType_t* result_device;
 	gpuFloatType_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
@@ -70,20 +74,24 @@ RayListInterfaceTester::launchTestSumEnergy( unsigned nBlocks, unsigned nThreads
 	return result[0];
 }
 
-RayListInterfaceTester::RayListInterfaceTester(){
+template< unsigned N>
+RayListInterfaceTester<N>::RayListInterfaceTester(){
 }
 
-RayListInterfaceTester::~RayListInterfaceTester(){
+template< unsigned N>
+RayListInterfaceTester<N>::~RayListInterfaceTester(){
 //		cudaDeviceReset();
 }
 
-void RayListInterfaceTester::setupTimers(){
+template< unsigned N>
+void RayListInterfaceTester<N>::setupTimers(){
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
 }
 
-void RayListInterfaceTester::stopTimers(){
+template< unsigned N>
+void RayListInterfaceTester<N>::stopTimers(){
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
 
@@ -95,4 +103,7 @@ void RayListInterfaceTester::stopTimers(){
 
 }
 
+} //end namespace
 
+template class MonteRay::RayListInterfaceTester<1>;
+template class MonteRay::RayListInterfaceTester<3>;

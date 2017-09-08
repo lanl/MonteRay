@@ -1,5 +1,5 @@
-#ifndef COLLISIONPOINTCONTROLLER_H_
-#define COLLISIONPOINTCONTROLLER_H_
+#ifndef RAYLISTCONTROLLER_H_
+#define RAYLISTCONTROLLER_H_
 
 #include <string>
 
@@ -14,35 +14,26 @@ class SimpleMaterialListHost;
 class MonteRay_MaterialProperties;
 class gpuTallyHost;
 
-class CollisionPointController {
+template<unsigned N = 1>
+class RayListController {
 public:
 
-	CollisionPointController(unsigned nBlocks,
+	RayListController(unsigned nBlocks,
 			                 unsigned nThreads,
 			                 GridBinsHost*,
 			                 SimpleMaterialListHost*,
 			                 MonteRay_MaterialProperties*,
 			                 gpuTallyHost* );
 
-	virtual ~CollisionPointController();
+	virtual ~RayListController();
 
 	unsigned capacity(void) const;
 	unsigned size(void) const;
 	void setCapacity(unsigned n );
 
-	void add( gpuFloatType_t pos[3],
-			  gpuFloatType_t dir[3],
-			  gpuFloatType_t energy, gpuFloatType_t weight,
-			  unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType);
-
-    void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
-              gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-              gpuFloatType_t energy, gpuFloatType_t weight,
-			  unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType);
-
-    void add( const ParticleRay_t& );
-    void add( const ParticleRay_t* particle, unsigned N=1 );
-    void add( const void* particle, unsigned N=1 );
+    void add( const Ray_t<N>& ray);
+    void add( const Ray_t<N>* rayArray, unsigned num=1 );
+    void add( const void* ray, unsigned num=1 ) { add(  (const Ray_t<N>*) ray, num  ); }
 
     void flush(bool final=false);
     void finalFlush(void);
@@ -83,9 +74,9 @@ private:
 	MonteRay_MaterialProperties* pMatProps;
 	gpuTallyHost* pTally;
 
-	RayListInterface* currentBank;
-	RayListInterface* bank1;
-	RayListInterface* bank2;
+	RayListInterface<N>* currentBank;
+	RayListInterface<N>* bank1;
+	RayListInterface<N>* bank2;
 	unsigned nFlushs;
 
 	cudaStream_t stream1;
@@ -102,6 +93,8 @@ private:
     void sendToFile(void) { toFile = true; }
 };
 
+typedef RayListController<1> CollisionPointController;
+
 } /* namespace MonteRay */
 
-#endif /* COLLISIONPOINTCONTROLLER_H_ */
+#endif /* RAYLISTCONTROLLER_H_ */

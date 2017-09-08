@@ -8,18 +8,18 @@
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
 #include "MonteRay_timer.hh"
-#include "CollisionPointController.h"
+#include "RayListController.hh"
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.h"
 #include "RayListInterface.hh"
 
-namespace {
+namespace RayListController_unit_tester{
 
 using namespace MonteRay;
 
-SUITE( Collision_unit_bank_controller_tester ) {
+SUITE( RayListController_unit_tester_basic_tests ) {
 
 	class UnitControllerSetup {
 	public:
@@ -132,10 +132,23 @@ SUITE( Collision_unit_bank_controller_tester ) {
  				                             pTally );
 
         unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
-        controller.add( 0.0, 0.0, 0.0,
-        		        1.0, 0.0, 0.0,
-        		        1.0, 1.0, i, 1, 0);
-        //     	s
+        ParticleRay_t particle;
+
+        particle.pos[0] = 0.0;
+        particle.pos[1] = 0.0;
+        particle.pos[2] = 0.0;
+
+        particle.dir[0] = 1.0;
+        particle.dir[1] = 0.0;
+        particle.dir[2] = 0.0;
+
+        particle.energy[0] = 1.0;
+        particle.weight[0] = 1.0;
+        particle.index = i;
+        particle.detectorIndex = 1;
+        particle.particleType = 0;
+
+        controller.add( particle );
         CHECK_EQUAL(1, controller.size());
     }
 
@@ -262,9 +275,23 @@ SUITE( Collision_unit_bank_controller_tester ) {
     	unsigned i = pGrid->getIndex( x, y, z );
     	CHECK_EQUAL( 555, i);
 
-        controller.add(   x,   y,   z,
-        		        1.0, 0.0, 0.0,
-        		        1.0, 1.0, i, 1, 0);
+        ParticleRay_t particle;
+
+        particle.pos[0] = x;
+        particle.pos[1] = y;
+        particle.pos[2] = z;
+
+        particle.dir[0] = 1.0;
+        particle.dir[1] = 0.0;
+        particle.dir[2] = 0.0;
+
+        particle.energy[0] = 1.0;
+        particle.weight[0] = 1.0;
+        particle.index = i;
+        particle.detectorIndex = 1;
+        particle.particleType = 0;
+
+        controller.add(  particle );
 
         std::cout << "Debug: CollisionPointController_unit_tester -- single_ray - flushing controller \n";
         controller.flush(true);
@@ -305,9 +332,23 @@ SUITE( Collision_unit_bank_controller_tester ) {
     	unsigned i = pGrid->getIndex( x, y, z );
     	CHECK_EQUAL( 555, i);
 
-        controller.add(   x,   y,   z,
-        		        1.0, 0.0, 0.0,
-        		        1.0, 1.0, i, 1, 0);
+        ParticleRay_t particle;
+
+        particle.pos[0] = x;
+        particle.pos[1] = y;
+        particle.pos[2] = z;
+
+        particle.dir[0] = 1.0;
+        particle.dir[1] = 0.0;
+        particle.dir[2] = 0.0;
+
+        particle.energy[0] = 1.0;
+        particle.weight[0] = 1.0;
+        particle.index = i;
+        particle.detectorIndex = 1;
+        particle.particleType = 0;
+
+        controller.add(  particle );
 
         controller.flush(true);
     }

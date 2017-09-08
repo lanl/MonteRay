@@ -8,7 +8,7 @@
 #include "gpuTally.h"
 #include "ExpectedPathLength.h"
 #include "MonteRay_timer.hh"
-#include "CollisionPointController.h"
+#include "RayListController.hh"
 #include "GridBins.h"
 #include "SimpleMaterialList.h"
 #include "MonteRay_MaterialProperties.hh"

@@ -1,4 +1,4 @@
-#include "CollisionPointController.h"
+#include "RayListController.hh"
 
 #include <algorithm>
 
@@ -13,7 +13,8 @@
 
 namespace MonteRay {
 
-CollisionPointController::CollisionPointController(
+template<unsigned N >
+RayListController<N>::RayListController(
 		unsigned blocks,
         unsigned threads,
         GridBinsHost* pGB,
@@ -33,8 +34,8 @@ CollisionPointController::CollisionPointController(
         toFile( false ),
         fileIsOpen( false)
 {
-	bank1 = new RayListInterface(1000000); // default 1 millions
-	bank2 = new RayListInterface(1000000); // default 1 millions
+	bank1 = new RayListInterface<N>(1000000); // default 1 millions
+	bank2 = new RayListInterface<N>(1000000); // default 1 millions
 
 	cudaStreamCreate( &stream1 );
 	cudaEventCreate(&start);
@@ -48,91 +49,66 @@ CollisionPointController::CollisionPointController(
 	currentCopySync = &copySync1;
 }
 
-CollisionPointController::~CollisionPointController(){
+template<unsigned N >
+RayListController<N>::~RayListController(){
 	delete bank1;
 	delete bank2;
 
 	cudaStreamDestroy(stream1);
 }
 
+template<unsigned N >
 unsigned
-CollisionPointController::capacity(void) const {
+RayListController<N>::capacity(void) const {
 	return currentBank->capacity();
 }
 
+template<unsigned N >
 unsigned
-CollisionPointController::size(void) const {
+RayListController<N>::size(void) const {
 	return currentBank->size();
 }
 
+template<unsigned N >
 void
-CollisionPointController::setCapacity(unsigned n) {
+RayListController<N>::setCapacity(unsigned n) {
 	delete bank1;
 	delete bank2;
-	bank1 = new RayListInterface(n);
-	bank2 = new RayListInterface(n);
+	bank1 = new RayListInterface<N>(n);
+	bank2 = new RayListInterface<N>(n);
 	currentBank = bank1;
 }
 
+template<unsigned N >
 void
-CollisionPointController::add(
-		gpuFloatType_t pos[3],
-		gpuFloatType_t dir[3],
-		gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
-        DetectorIndex_t detectorIndex, ParticleType_t particleType) {
-
-	add( pos[0], pos[1], pos[2],
-		 dir[0], dir[1], dir[2],
-		 energy, weight, index,
-		 detectorIndex, particleType );
-}
-
-void
-CollisionPointController::add(
-		gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
-        gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-        gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
-        DetectorIndex_t detectorIndex, ParticleType_t particleType) {
-
-	currentBank->add(x,y,z,u,v,w,energy,weight,index, detectorIndex, particleType );
+RayListController<N>::add( const Ray_t<N>& ray){
+	currentBank->add( ray );
 	if( size() == capacity() ) {
 		std::cout << "Debug: bank full, flushing.\n";
 		flush();
 	}
 }
 
+template<unsigned N >
 void
-CollisionPointController::add( const ParticleRay_t& particle){
-	currentBank->add( particle );
-	if( size() == capacity() ) {
-		std::cout << "Debug: bank full, flushing.\n";
-		flush();
-	}
-}
-
-void
-CollisionPointController::add( const ParticleRay_t* particle, unsigned N){
+RayListController<N>::add( const Ray_t<N>* rayArray, unsigned num){
 	int NSpaces = capacity() - size();
 
-	int NAdding = std::min(NSpaces, int(N));
-	int NRemaining = N - NAdding;
-	currentBank->add( particle, NAdding );
+	int NAdding = std::min(NSpaces, int(num));
+	int NRemaining = num - NAdding;
+	currentBank->add( rayArray, NAdding );
 	if( size() == capacity() ) {
 		std::cout << "Debug: bank full, flushing.\n";
 		flush();
 	}
 	if( NRemaining > 0 ) {
-		add( particle + NAdding, NRemaining );
+		add( rayArray + NAdding, NRemaining );
 	}
 }
 
+template<unsigned N >
 void
-CollisionPointController::add( const void* particle, unsigned N){
-	add(  (const ParticleRay_t*) particle, N  );
-}
-
-void
-CollisionPointController::flush(bool final){
+RayListController<N>::flush(bool final){
 	if( isSendingToFile() ) { flushToFile(final); }
 
 	if( currentBank->size() == 0 ) {
@@ -172,22 +148,23 @@ CollisionPointController::flush(bool final){
 	swapBanks();
 }
 
+template<unsigned N >
 void
-CollisionPointController::flushToFile(bool final){
+RayListController<N>::flushToFile(bool final){
 	if( final ) {
-		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = true \n";
+		std::cout << "Debug: RayListController::flushToFile - starting -- final = true \n";
 	} else {
-		std::cout << "Debug: CollisionPointController::flushToFile - starting -- final = false \n";
+		std::cout << "Debug: RayListController::flushToFile - starting -- final = false \n";
 	}
 
 	if( ! fileIsOpen ) {
 		try {
-			std::cout << "Debug: CollisionPointController::flushToFile - opening file, filename=" << outputFileName << "\n";
+			std::cout << "Debug: RayListController::flushToFile - opening file, filename=" << outputFileName << "\n";
 			currentBank->openOutput( outputFileName );
 		} catch ( ... ) {
 	        std::stringstream msg;
 	        msg << "Failure opening file for collision writing!\n";
-	        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "CollisionPointController::flushToFile" << "\n\n";
+	        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "RayListController::flushToFile" << "\n\n";
 	        std::cout << "MonteRay Error: " << msg.str();
 	        throw std::runtime_error( msg.str() );
 		}
@@ -196,12 +173,12 @@ CollisionPointController::flushToFile(bool final){
 	}
 
 	try {
-		std::cout << "Debug: CollisionPointController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
+		std::cout << "Debug: RayListController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
 		currentBank->writeBank();
 	} catch ( ... ) {
         std::stringstream msg;
         msg << "Failure writing collisions to file!\n";
-        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "CollisionPointController::flushToFile" << "\n\n";
+        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "RayListController::flushToFile" << "\n\n";
         std::cout << "MonteRay Error: " << msg.str();
         throw std::runtime_error( msg.str() );
 	}
@@ -210,12 +187,12 @@ CollisionPointController::flushToFile(bool final){
 
 	if( final ) {
 		try {
-			std::cout << "Debug: CollisionPointController::flushToFile - file flush, closing collision file\n";
+			std::cout << "Debug: RayListController::flushToFile - file flush, closing collision file\n";
 			currentBank->closeOutput();
 		} catch ( ... ) {
 	        std::stringstream msg;
 	        msg << "Failure closing collision file!\n";
-	        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " <<"CollisionPointController::flushToFile" << "\n\n";
+	        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " <<"RayListController::flushToFile" << "\n\n";
 	        std::cout << "MonteRay Error: " << msg.str();
 	        throw std::runtime_error( msg.str() );
 		}
@@ -224,8 +201,9 @@ CollisionPointController::flushToFile(bool final){
 	}
 }
 
+template<unsigned N >
 size_t
-CollisionPointController::readCollisionsFromFile(std::string name) {
+RayListController<N>::readCollisionsFromFile(std::string name) {
 
 	bool end = false;
 	unsigned numParticles = 0;
@@ -237,16 +215,18 @@ CollisionPointController::readCollisionsFromFile(std::string name) {
 	return numParticles;
 }
 
+template<unsigned N >
 void
-CollisionPointController::startTimers(){
+RayListController<N>::startTimers(){
 	// start timers
 	timer.start();
 	gpuErrchk( cudaEventRecord(start,0) );
 	gpuErrchk( cudaEventRecord(startGPU,stream1) );
 }
 
+template<unsigned N >
 void
-CollisionPointController::stopTimers(){
+RayListController<N>::stopTimers(){
 	// stop timers and sync
 
 	timer.stop();
@@ -273,8 +253,9 @@ CollisionPointController::stopTimers(){
 	printCycleTime(cpuCycleTime, gpuCycleTime , totalCycleTime);
 }
 
+template<unsigned N >
 void
-CollisionPointController::swapBanks(){
+RayListController<N>::swapBanks(){
 	// Swap banks
 	if( currentBank == bank1 ) {
 		currentBank = bank2;
@@ -288,13 +269,16 @@ CollisionPointController::swapBanks(){
 	currentBank->clear();
 }
 
-void CollisionPointController::sync(void){
+template<unsigned N >
+void
+RayListController<N>::sync(void){
 	GPUSync sync;
 	sync.sync();
 }
 
+template<unsigned N >
 void
-CollisionPointController::clearTally(void) {
+RayListController<N>::clearTally(void) {
 
 	std::cout << "Debug: clearTally called \n";
 
@@ -316,21 +300,25 @@ CollisionPointController::clearTally(void) {
 	sync.sync();
 }
 
+template<unsigned N >
 void
-CollisionPointController::printTotalTime() const{
+RayListController<N>::printTotalTime() const{
 	std::cout << "Debug: \n";
 	std::cout << "Debug: total gpuTime = " << gpuTime << "\n";
 	std::cout << "Debug: total cpuTime = " << cpuTime << "\n";
 	std::cout << "Debug: total wallTime = " << wallTime << "\n";
 }
 
+template<unsigned N >
 void
-CollisionPointController::printCycleTime(float_t cpu, float_t gpu, float_t wall) const{
+RayListController<N>::printCycleTime(float_t cpu, float_t gpu, float_t wall) const{
 	std::cout << "Debug: \n";
 	std::cout << "Debug: cycle gpuTime = " << gpu << "\n";
 	std::cout << "Debug: cycle cpuTime = " << cpu << "\n";
 	std::cout << "Debug: cycle wallTime = " << wall << "\n";
-
 }
 
 }
+
+template class MonteRay::RayListController<1>;
+template class MonteRay::RayListController<3>;
