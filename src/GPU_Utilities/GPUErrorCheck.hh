@@ -6,6 +6,8 @@
  * */
 
 #include <stdio.h>
+#include <sstream>
+#include <stdexcept>
 
 #include "MonteRayDefinitions.hh"
 
@@ -92,18 +94,40 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 // ABORT
 
 #ifdef __CUDA_ARCH__
-__host__ __device__ inline void MonteRayAbort( const char* message, const char *file, int line){
+__device__ inline void MonteRayAbort( const char* message, const char *file, int line){
 	printf("Error: %s %s %d\n", message, file, line);
 	asm("trap;");
 }
 #else
-inline void MonteRayAbort( const char* message, const char *file, int line){
-	fprintf(stderr,"Error: %s %s %d\n", message, file, line);
-	exit(1);
+CUDAHOST_CALLABLE_MEMBER inline void MonteRayAbort( const char* message, const char *file, int line){
+    std::stringstream msg;
+    msg << message << "\n";
+    msg << "Called from : " << file << "[" << line << "] \n\n";
+    throw std::runtime_error( msg.str() );
 }
 #endif
 
 #define ABORT(message) { MonteRay::MonteRayAbort(message, __FILE__, __LINE__); }
+
+#ifndef NDEBUG
+CUDA_CALLABLE_MEMBER inline void MonteRayAssert( bool test, const char *file, int line){
+	if( test != true ) {
+		MonteRayAbort( "MonteRay ERROR:", file, line );
+	}
+}
+
+#define MONTERAY_ASSERT(message) { MonteRay::MonteRayAssert(message, __FILE__, __LINE__); }
+#else
+#define MONTERAY_ASSERT(message) { message; }
+#endif
+
+CUDA_CALLABLE_MEMBER inline void MonteRayVerify( bool test, const char* message, const char *file, int line){
+	if( test != true ) {
+		MonteRayAbort( message, file, line );
+	}
+}
+
+#define MONTERAY_VERIFY(test, message) { MonteRay::MonteRayVerify(test, message, __FILE__, __LINE__); }
 
 } /* end namespace MonteRay */
 

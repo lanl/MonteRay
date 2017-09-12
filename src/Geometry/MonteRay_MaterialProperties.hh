@@ -34,48 +34,38 @@ struct MonteRay_MaterialProperties_Data {
 void ctor(MonteRay_MaterialProperties_Data*, unsigned num );
 void dtor(MonteRay_MaterialProperties_Data* );
 
-#ifdef CUDA
 void cudaCtor(struct MonteRay_MaterialProperties_Data*,struct MonteRay_MaterialProperties_Data*);
 void cudaDtor(struct MonteRay_MaterialProperties_Data*);
-#endif
 
-#ifdef CUDA
-__device__ __host__
-#endif
-size_t getNumCells(struct MonteRay_MaterialProperties_Data* ptr );
+CUDA_CALLABLE_MEMBER
+size_t getNumCells(const struct MonteRay_MaterialProperties_Data* ptr );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-MonteRay_MaterialProperties_Data::offset_t getNumMats(struct MonteRay_MaterialProperties_Data* ptr, unsigned i );
+CUDA_CALLABLE_MEMBER
+MonteRay_MaterialProperties_Data::offset_t getNumMats(const struct MonteRay_MaterialProperties_Data* ptr, unsigned i );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-MonteRay_MaterialProperties_Data::Density_t getDensity(struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum );
+CUDA_CALLABLE_MEMBER
+MonteRay_MaterialProperties_Data::Density_t getDensity(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-MonteRay_MaterialProperties_Data::MatID_t getMatID(struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum );
+CUDA_CALLABLE_MEMBER
+MonteRay_MaterialProperties_Data::MatID_t getMatID(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum );
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results );
 #endif
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results );
 #endif
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results );
 #endif
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results );
 #endif
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteRay_MaterialProperties_Data::MatID_t matIndex, MonteRay_MaterialProperties_Data::Density_t* results );
 #endif
 
@@ -106,18 +96,21 @@ public:
     MonteRay_MaterialProperties(void) {
         pMemoryLayout.reset( new MemoryLayout_t() );
         disableReduction();
+        ptrData = new MonteRay_MaterialProperties_Data;
     }
 
     ///Ctor initialized by total number of cells.
     MonteRay_MaterialProperties(const std::size_t& nCells) {
         pMemoryLayout.reset( new MemoryLayout_t(nCells) );
         disableReduction();
+        ptrData = new MonteRay_MaterialProperties_Data;
     }
 
     ///Ctor initialized by matIDs, density, and total number of cells (indexes).
     template<typename MaterialIDType, typename DensityType>
     MonteRay_MaterialProperties(const std::vector<MaterialIDType>& IDs, const std::vector<DensityType>& dens, const std::size_t nCells){
         pMemoryLayout.reset( new MemoryLayout_t(IDs, dens, nCells) );
+        ptrData = new MonteRay_MaterialProperties_Data;
     }
 
     ///Default Dtor
@@ -125,6 +118,7 @@ public:
 #ifdef CUDA
     	cudaDtor();
 #endif
+    	delete ptrData;
     }
 
     void cudaDtor(void);
@@ -142,11 +136,21 @@ public:
     template<typename MaterialIDType, typename DensityType>
     void initializeMaterialDescription( const std::vector<MaterialIDType>& IDs, const std::vector<DensityType>& dens, const std::size_t nCells) {
         pMemoryLayout->template initializeMaterialDescription<MaterialIDType,DensityType>( IDs, dens, nCells );
+        setupPtrData();
     }
 
     template<typename MaterialIDType, typename DensityType, typename TempType>
     void initializeMaterialDescription( const std::vector<MaterialIDType>& IDs, const std::vector<DensityType>& dens, const std::vector<TempType>& temps, const std::size_t nCells) {
         pMemoryLayout->template initializeMaterialDescription<MaterialIDType,DensityType,TempType>( IDs, dens, temps, nCells );
+        setupPtrData();
+    }
+
+    void setupPtrData(void) {
+    	ptrData->numCells = size();
+    	ptrData->numMaterialComponents = numMatSpecs();
+    	ptrData->offset = getOffsetData();
+    	ptrData->ID = getMaterialIDData();
+    	ptrData->density = getMaterialDensityData();
     }
 
     template< typename FUNC_T, typename CELLINDEX_T, typename T = double >
@@ -290,8 +294,12 @@ public:
     MatID_t launchGetMaterialID( Cell_Index_t cellID, Material_Index_t i ) const;
     Density_t launchGetMaterialDensity( Cell_Index_t cellID, Material_Index_t i ) const;
 
+    const MonteRay_MaterialProperties_Data* getPtr( void ) const {
+    	return ptrData;
+    }
 private:
     pMemoryLayout_t pMemoryLayout;
+    MonteRay_MaterialProperties_Data* ptrData = NULL;
     MonteRay_MaterialProperties_Data* tempData = NULL;
     bool cudaCopyMade = false;
 

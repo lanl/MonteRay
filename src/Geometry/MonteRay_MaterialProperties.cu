@@ -89,16 +89,17 @@ void dtor(struct MonteRay_MaterialProperties_Data* ptr){
     }
 }
 
-#ifdef CUDA
 void cudaDtor(MonteRay_MaterialProperties_Data* ptr) {
+#ifdef __CUDACC__
 	cudaFree( ptr->offset );
 	cudaFree( ptr->ID );
 	cudaFree( ptr->density );
-}
 #endif
+}
+
 
 void MonteRay_MaterialProperties::cudaDtor(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
     if( cudaCopyMade ) {
         cudaFree( ptrData_device );
         MonteRay::cudaDtor( tempData );
@@ -131,61 +132,43 @@ void MonteRay_MaterialProperties::copyToGPU(void) {
 	CUDA_CHECK_RETURN( cudaMemcpy(ptrData_device, tempData, sizeof( MonteRay_MaterialProperties_Data ), cudaMemcpyHostToDevice));
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-size_t getNumCells(struct MonteRay_MaterialProperties_Data* ptr ) {
+CUDA_CALLABLE_MEMBER
+size_t getNumCells(const struct MonteRay_MaterialProperties_Data* ptr ) {
     return ptr->numCells;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-offset_t getNumMats(struct MonteRay_MaterialProperties_Data* ptr, unsigned i ){
+CUDA_CALLABLE_MEMBER
+offset_t getNumMats(const struct MonteRay_MaterialProperties_Data* ptr, unsigned i ){
     return ptr->offset[i+1] - ptr->offset[i];
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-Density_t getDensity(struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum ){
+CUDA_CALLABLE_MEMBER
+Density_t getDensity(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum ){
     return ptr->density[ ptr->offset[cellNum] + matNum];
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-MatID_t getMatID(struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum ){
+CUDA_CALLABLE_MEMBER
+MatID_t getMatID(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum ){
 	return ptr->ID[ ptr->offset[cellNum] + matNum];
 }
 
-#ifdef CUDA
-__global__ void kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results ) {
+CUDA_CALLABLE_KERNEL void kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results ) {
      results[0] = getNumCells(mp);
 }
-#endif
 
-
-#ifdef CUDA
-__global__ void kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results ) {
+CUDA_CALLABLE_KERNEL void kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results ) {
 	results[0] = getNumMats(mp, cellNum);
 }
-#endif
 
-#ifdef CUDA
-__global__ void kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results ) {
+CUDA_CALLABLE_KERNEL void kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results ) {
 	results[0] = getMatID(mp, cellNum, i);
 }
-#endif
 
-#ifdef CUDA
-__global__ void kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results ) {
+CUDA_CALLABLE_KERNEL void kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results ) {
 	results[0] = getDensity(mp, cellNum, i);
 }
-#endif
 
-
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteRay_MaterialProperties_Data::MatID_t matIndex, MonteRay_MaterialProperties_Data::Density_t* results ) {
     gpuFloatType_t sum = 0.0f;
     for( unsigned cell=0; cell < getNumCells(mp); ++cell) {
@@ -202,7 +185,6 @@ __global__ void kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteR
      results[0] = sum;
 }
 #endif
-
 
 size_t MonteRay_MaterialProperties::launchGetNumCells(void) const{
 	typedef unsigned type_t;
@@ -286,7 +268,6 @@ MonteRay_MaterialProperties::Density_t MonteRay_MaterialProperties::launchGetMat
 	return result[0];
 }
 
-
 Density_t MonteRay_MaterialProperties::launchSumMatDensity(MatID_t matID) const{
 	typedef Density_t type_t;
 
@@ -307,7 +288,6 @@ Density_t MonteRay_MaterialProperties::launchSumMatDensity(MatID_t matID) const{
 	return result[0];
 }
 
-
 Density_t MonteRay_MaterialProperties::sumMatDensity( MatID_t matIndex) const {
 	Density_t sum = 0.0f;
     for( unsigned cell=0; cell < size(); ++cell) {
@@ -323,6 +303,5 @@ Density_t MonteRay_MaterialProperties::sumMatDensity( MatID_t matIndex) const {
      }
      return sum;
 }
-
 
 }

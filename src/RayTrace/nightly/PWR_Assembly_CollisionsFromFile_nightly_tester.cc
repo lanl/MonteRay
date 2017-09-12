@@ -10,7 +10,7 @@
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
 #include "GridBins.h"
-#include "SimpleMaterialList.h"
+#include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "gpuTally.h"
@@ -41,14 +41,14 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 	    	iso92235 = new MonteRayCrossSectionHost(1);
 	    	iso92238 = new MonteRayCrossSectionHost(1);
 
-	        fuel      = new SimpleMaterialHost(3);
-	        stainless = new SimpleMaterialHost(3);
-	        b4c       = new SimpleMaterialHost(3);
-	        water     = new SimpleMaterialHost(2);
-	        graphite  = new SimpleMaterialHost(1);
-	        soln      = new SimpleMaterialHost(5);
+	        fuel      = new MonteRayMaterialHost(3);
+	        stainless = new MonteRayMaterialHost(3);
+	        b4c       = new MonteRayMaterialHost(3);
+	        water     = new MonteRayMaterialHost(2);
+	        graphite  = new MonteRayMaterialHost(1);
+	        soln      = new MonteRayMaterialHost(5);
 
-	        pMatList = new SimpleMaterialListHost(6,11);
+	        pMatList = new MonteRayMaterialListHost(6,11);
 	        pMatProps = new MonteRay_MaterialProperties;
 		}
 
@@ -180,7 +180,7 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 		}
 
 		GridBinsHost* pGrid;
-		SimpleMaterialListHost* pMatList;
+		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
 
@@ -196,12 +196,12 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	MonteRayCrossSectionHost* iso92235;
     	MonteRayCrossSectionHost* iso92238;
 
-        SimpleMaterialHost* fuel;
-        SimpleMaterialHost* stainless;
-        SimpleMaterialHost* b4c;
-        SimpleMaterialHost* water;
-        SimpleMaterialHost* graphite;
-        SimpleMaterialHost* soln;
+        MonteRayMaterialHost* fuel;
+        MonteRayMaterialHost* stainless;
+        MonteRayMaterialHost* b4c;
+        MonteRayMaterialHost* water;
+        MonteRayMaterialHost* graphite;
+        MonteRayMaterialHost* soln;
 
 	};
 

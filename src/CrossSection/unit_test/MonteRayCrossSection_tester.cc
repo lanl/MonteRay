@@ -46,6 +46,7 @@ SUITE( MonteRayCrossSection_tester ) {
     	gpuFloatType_t totalXS = launchGetTotalXS( xs, energy);
     	stopTimers();
 
+    	CHECK_CLOSE( 3.5f, xs->getTotalXS(0.5), 1e-7 );
     	CHECK_CLOSE( 3.5f, totalXS, 1e-7 );
 
     	delete xs;

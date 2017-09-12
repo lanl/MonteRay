@@ -24,80 +24,41 @@ void ctor(HashLookup* ptr, unsigned num, unsigned nBins=8000 );
 void dtor(HashLookup* ptr);
 void copy(HashLookup* pCopy, const HashLookup* const pOrig );
 
-#ifdef CUDA
 void cudaCtor(struct HashLookup*,struct HashLookup*);
 void cudaDtor(struct HashLookup*);
-#endif
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getMaxNumIsotopes(HashLookup* ptr);
+CUDA_CALLABLE_MEMBER
+unsigned getMaxNumIsotopes(const HashLookup* ptr);
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getNumIsotopes(HashLookup* ptr);
+CUDA_CALLABLE_MEMBER
+unsigned getNumIsotopes(const HashLookup* ptr);
 
-#ifdef CUDA
-__device__ __host__
-#endif
+CUDA_CALLABLE_MEMBER
 bool setHashMinMax(HashLookup* ptr, MonteRayCrossSection* xs );
 
-#ifdef CUDA
-__device__ __host__
-#endif
+CUDA_CALLABLE_MEMBER
 void setHashBinBounds(HashLookup* ptr, MonteRayCrossSection* xs, unsigned j );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getNBins(HashLookup* ptr );
+CUDA_CALLABLE_MEMBER
+unsigned getNBins(const HashLookup* ptr );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getMaxEnergy(HashLookup* ptr );
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getMaxEnergy(const HashLookup* ptr );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getMinEnergy(HashLookup* ptr );
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getMinEnergy(const HashLookup* ptr );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getHashBin(HashLookup* ptr, gpuFloatType_t energy );
+CUDA_CALLABLE_MEMBER
+unsigned getHashBin(const HashLookup* ptr, gpuFloatType_t energy );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getLowerBoundbyIndex(HashLookup* ptr, unsigned isotope, unsigned index );
+CUDA_CALLABLE_MEMBER
+unsigned getLowerBoundbyIndex(const HashLookup* ptr, unsigned isotope, unsigned index );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getUpperBoundbyIndex(HashLookup* ptr, unsigned isotope, unsigned index );
+CUDA_CALLABLE_MEMBER
+unsigned getUpperBoundbyIndex(const HashLookup* ptr, unsigned isotope, unsigned index );
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getBinBoundIndex(HashLookup* ptr, unsigned isotope, unsigned index );
-
-//#ifdef CUDA
-//__device__ __host__
-//#endif
-//SimpleMaterial* getMaterial(HashLookup* ptr, unsigned i );
-//
-//#ifdef CUDA
-//__device__ __host__
-//#endif
-//gpuFloatType_t getTotalXS(HashLookup* ptr, unsigned i, gpuFloatType_t E, gpuFloatType_t density);
-//
-//#ifdef CUDA
-//__device__ __host__
-//#endif
-//unsigned materialIDtoIndex(HashLookup* ptr, unsigned id );
+CUDA_CALLABLE_MEMBER
+unsigned getBinBoundIndex(const HashLookup* ptr, unsigned isotope, unsigned index );
 
 class HashLookupHost {
 public:
@@ -144,7 +105,7 @@ public:
 //        return MonteRay::getMaterialID( pMatList, i );
 //    }
 //
-//    SimpleMaterial* getMaterial(unsigned i) const {
+//    MonteRayMaterial* getMaterial(unsigned i) const {
 //        return MonteRay::getMaterial( pMatList, i );
 //    }
 //
@@ -158,13 +119,13 @@ public:
 //        return MonteRay::materialIDtoIndex( pMatList, id);
 //    }
 //
-//    void add( unsigned i, SimpleMaterialHost& mat, unsigned id);
+//    void add( unsigned i, MonteRayMaterialHost& mat, unsigned id);
 //#ifndef CUDA
-//    void add( unsigned i, SimpleMaterial* mat, unsigned id);
+//    void add( unsigned i, MonteRayMaterial* mat, unsigned id);
 //#endif
 //
-    MonteRay::HashLookup* getPtr(void) const { return ptr; }
-    MonteRay::HashLookup* getPtrDevice(void) const { return ptr_device; }
+    const MonteRay::HashLookup* getPtr(void) const { return ptr; }
+    const MonteRay::HashLookup* getPtrDevice(void) const { return ptr_device; }
 //
 //    void write(std::ostream& outfile) const;
 //    void  read(std::istream& infile);

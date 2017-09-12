@@ -8,15 +8,20 @@
 
 namespace MonteRay{
 
-#ifdef CUDA
+#ifdef __CUDACC__
 
-__device__ inline void gpu_atomicAdd_single( float *address, float value ) {
+
+CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd_single( float *address, float value ) {
+#ifdef __CUDA_ARCH__
 	atomicAdd( address,value);
+#else
+	(*address) += value;
+#endif
 }
 
-__device__ inline void gpu_atomicAdd_double( double *address, double value ) {
+CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd_double( double *address, double value ) {
 //	printf("Debug: MonteRay::GPUAtomicAdd.h::gpu_atomicAdd_double **************\n");
-
+#ifdef __CUDA_ARCH__
 	// From: https://www.sharcnet.ca/help/index.php/CUDA_tips_and_tricks
 	unsigned long long oldval, newval, readback;
 
@@ -27,9 +32,12 @@ __device__ inline void gpu_atomicAdd_double( double *address, double value ) {
 		oldval = readback;
 		newval = __double_as_longlong(__longlong_as_double(oldval) + value);
 	}
+#else
+	(*address) += value;
+#endif
 }
 
-__device__ inline void gpu_atomicAdd(gpuTallyType_t *address, gpuTallyType_t value){
+CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd(gpuTallyType_t *address, gpuTallyType_t value){
 #if TALLY_DOUBLEPRECISION < 1
 	gpu_atomicAdd_single( address,value);
 #else

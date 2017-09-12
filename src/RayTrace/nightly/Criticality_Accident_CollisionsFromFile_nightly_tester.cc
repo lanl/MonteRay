@@ -10,7 +10,7 @@
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
 #include "GridBins.h"
-#include "SimpleMaterialList.h"
+#include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "gpuTally.h"
@@ -43,11 +43,11 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 	    	iso92235 = new MonteRayCrossSectionHost(1);
 	    	iso92238 = new MonteRayCrossSectionHost(1);
 
-	    	metal     = new SimpleMaterialHost(3);
-	    	air       = new SimpleMaterialHost(4);
-	    	concrete  = new SimpleMaterialHost(8);
+	    	metal     = new MonteRayMaterialHost(3);
+	    	air       = new MonteRayMaterialHost(4);
+	    	concrete  = new MonteRayMaterialHost(8);
 
-	        pMatList = new SimpleMaterialListHost(3,13);
+	        pMatList = new MonteRayMaterialListHost(3,13);
 	        pMatProps = new MonteRay_MaterialProperties;
 		}
 
@@ -167,7 +167,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 		}
 
 		GridBinsHost* pGrid;
-		SimpleMaterialListHost* pMatList;
+		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
 
@@ -185,9 +185,9 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	MonteRayCrossSectionHost* iso92235; //12
     	MonteRayCrossSectionHost* iso92238; //13
 
-        SimpleMaterialHost* metal;
-        SimpleMaterialHost* air;
-        SimpleMaterialHost* concrete;
+        MonteRayMaterialHost* metal;
+        MonteRayMaterialHost* air;
+        MonteRayMaterialHost* concrete;
 
 	};
 

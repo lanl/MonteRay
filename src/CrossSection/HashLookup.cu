@@ -13,6 +13,8 @@ namespace MonteRay{
 
 void ctor(HashLookup* ptr, unsigned num, unsigned nBins ) {
     if( num <=0 ) { num = 1; }
+    if( nBins <=2 ) { nBins = 3; }
+
     ptr->maxNumIsotopes = num;
     ptr->numIsotopes = 0;
     ptr->eMax = 0.0f;
@@ -29,27 +31,28 @@ void ctor(HashLookup* ptr, unsigned num, unsigned nBins ) {
     }
 }
 
-#ifdef CUDA
-void cudaCtor(HashLookup* pCopy, unsigned num, unsigned nBins) {
 
+void cudaCtor(HashLookup* pCopy, unsigned num, unsigned nBins) {
+#ifdef __CUDACC__
 	pCopy->maxNumIsotopes = num;
 	pCopy->N = nBins;
 
 	// binBounds
 	unsigned allocSize = sizeof(unsigned)*num*nBins;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->binBounds, allocSize ));
+#endif
 }
 
 void cudaCtor(struct HashLookup* pCopy, struct HashLookup* pOrig){
+#ifdef __CUDACC__
 	cudaCtor( pCopy, pOrig->maxNumIsotopes, pOrig->N);
 	pCopy->maxNumIsotopes = pOrig->maxNumIsotopes;
 	pCopy->numIsotopes = pOrig->numIsotopes;
 	pCopy->eMin = pOrig->eMin;
 	pCopy->eMax = pOrig->eMax;
 	pCopy->delta = pOrig->delta;
-}
-
 #endif
+}
 
 void dtor(HashLookup* ptr) {
     if( ptr->binBounds != 0 ) {
@@ -58,11 +61,11 @@ void dtor(HashLookup* ptr) {
     }
 }
 
-#ifdef CUDA
 void cudaDtor(HashLookup* ptr) {
+#ifdef __CUDACC__
 	cudaFree( ptr->binBounds );
-}
 #endif
+}
 
 HashLookupHost::HashLookupHost(unsigned num, unsigned nBins) {
      ptr = new HashLookup;
@@ -77,7 +80,7 @@ HashLookupHost::~HashLookupHost() {
      dtor( ptr );
      delete ptr;
 
-#ifdef CUDA
+#ifdef __CUDACC__
      if( cudaCopyMade ) {
        	cudaDtor( temp );
        	delete temp;
@@ -88,7 +91,7 @@ HashLookupHost::~HashLookupHost() {
 
 
 void HashLookupHost::copyToGPU(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
 	cudaCopyMade = true;
     temp = new HashLookup;
 //    copy(temp, ptr);
@@ -125,38 +128,28 @@ void copy(HashLookup* pCopy, const HashLookup* const pOrig ) {
     }
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getMaxNumIsotopes(HashLookup* ptr ) {
+CUDA_CALLABLE_MEMBER
+unsigned getMaxNumIsotopes(const HashLookup* ptr ) {
     return ptr->maxNumIsotopes;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getNumIsotopes(HashLookup* ptr ) {
+CUDA_CALLABLE_MEMBER
+unsigned getNumIsotopes(const HashLookup* ptr ) {
     return ptr->numIsotopes;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getMaxEnergy(HashLookup* ptr ) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getMaxEnergy(const HashLookup* ptr ) {
 	return std::exp(ptr->eMax);
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getMinEnergy(HashLookup* ptr ) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getMinEnergy(const HashLookup* ptr ) {
 	return std::exp(ptr->eMin);
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getNBins(HashLookup* ptr ) {
+CUDA_CALLABLE_MEMBER
+unsigned getNBins(const HashLookup* ptr ) {
 	return ptr->N;
 }
 
@@ -164,9 +157,7 @@ unsigned HashLookupHost::getNBins(void) {
 	return MonteRay::getNBins( ptr );
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
+CUDA_CALLABLE_MEMBER
 bool setHashMinMax(HashLookup* ptr, MonteRayCrossSection* xs ) {
 	setID(xs, ptr->numIsotopes );
 
@@ -193,9 +184,7 @@ bool setHashMinMax(HashLookup* ptr, MonteRayCrossSection* xs ) {
 	return false;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
+CUDA_CALLABLE_MEMBER
 void setHashBinBounds(HashLookup* ptr, MonteRayCrossSection* xs, unsigned j ) {
 	for( unsigned i = 0; i < ptr->N; ++i ){
 		unsigned index = getBinBoundIndex(ptr, j, i);
@@ -204,10 +193,8 @@ void setHashBinBounds(HashLookup* ptr, MonteRayCrossSection* xs, unsigned j ) {
 	}
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getBinBoundIndex(HashLookup* ptr, unsigned isotope, unsigned index ){
+CUDA_CALLABLE_MEMBER
+unsigned getBinBoundIndex(const HashLookup* ptr, unsigned isotope, unsigned index ){
 	if( isotope > ptr->numIsotopes) {
 		printf("Error: HasLookup::getBinBoundIndex -- isotope ( = %d )  > numIsotopes (= %d), %s %d\n", isotope, ptr->numIsotopes, __FILE__, __LINE__);
 		ABORT( "HashLookup.cu -- getBinBoundIndex" );
@@ -244,33 +231,26 @@ void HashLookupHost::addIsotope( MonteRayCrossSection* xs ) {
 	}
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getHashBin(HashLookup* ptr, gpuFloatType_t energy ) {
+CUDA_CALLABLE_MEMBER
+unsigned getHashBin(const HashLookup* ptr, gpuFloatType_t energy ) {
 	gpuFloatType_t logE = logf(energy);
 	if( logE <= ptr->eMin) { return 0; }
 	if( logE >= ptr->eMax ) { return ptr->N-1; }
 	return (logE-ptr->eMin)/ptr->delta;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getLowerBoundbyIndex(HashLookup* ptr, unsigned isotope, unsigned index ){
+CUDA_CALLABLE_MEMBER
+unsigned getLowerBoundbyIndex(const HashLookup* ptr, unsigned isotope, unsigned index ){
 	return ptr->binBounds[getBinBoundIndex( ptr, isotope, index )];
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getUpperBoundbyIndex(HashLookup* ptr, unsigned isotope, unsigned index ){
+CUDA_CALLABLE_MEMBER
+unsigned getUpperBoundbyIndex(const HashLookup* ptr, unsigned isotope, unsigned index ){
 	if( index < ptr->N - 1 ) {
 		return getLowerBoundbyIndex( ptr, isotope, index+1) + 1;
 	}
 	return index;
 }
-
 
 unsigned HashLookupHost::getLowerBoundbyIndex( unsigned isotope, unsigned index) const {
 	return MonteRay::getLowerBoundbyIndex(ptr, isotope, index);
@@ -279,61 +259,5 @@ unsigned HashLookupHost::getLowerBoundbyIndex( unsigned isotope, unsigned index)
 unsigned HashLookupHost::getUpperBoundbyIndex( unsigned isotope, unsigned index) const {
 	return MonteRay::getUpperBoundbyIndex(ptr, isotope, index);
 }
-
-//#ifndef CUDA
-//void HashLookupHost::add( unsigned index, SimpleMaterial* mat, unsigned id) {
-//    if( index >= getNumberMaterials() ) {
-//        fprintf(stderr, "HashLookupHost::add -- index > number of allocated materials.  %s %d\n", __FILE__, __LINE__);
-//        exit(1);
-//    }
-//
-//    pMatList->materialID[index] = id;
-//    pMatList->materials[index] = mat;
-//}
-//#endif
-//
-//void HashLookupHost::write(std::ostream& outfile) const {
-//
-//
-//    unsigned realNumMaterials = 0;
-//    for( unsigned i=0; i<getNumberMaterials(); ++i ){
-//        if( getPtr()->materials[i] != 0 ) {
-//            ++realNumMaterials;
-//        }
-//    }
-//    binaryIO::write(outfile, realNumMaterials );
-//
-//    for( unsigned i=0; i<getNumberMaterials(); ++i ){
-//        if( getPtr()->materials[i] != 0 ) {
-//            binaryIO::write(outfile, getMaterialID(i) );
-//        }
-//    }
-//
-//    for( unsigned i=0; i<getNumberMaterials(); ++i ){
-//        SimpleMaterialHost mat(1);
-//        if( getPtr()->materials[i] != 0 ) {
-//            mat.load( getPtr()->materials[i] );
-//            mat.write( outfile );
-//        }
-//    }
-//}
-//
-//void HashLookupHost::read(std::istream& infile) {
-//    unsigned num;
-//    binaryIO::read(infile, num);
-//    dtor( pMatList );
-//    ctor( pMatList, num );
-//
-//    for( unsigned i=0; i<num; ++i ){
-//        unsigned id;
-//        binaryIO::read(infile, id );
-//        pMatList->materialID[i] = id;
-//    }
-//    for( unsigned i=0; i<num; ++i ){
-//        SimpleMaterialHost* mat = new SimpleMaterialHost(1); // TODO: need shared ptr here
-//        mat->read(infile);
-//        add( i, *mat, pMatList->materialID[i] );
-//    }
-//}
 
 }

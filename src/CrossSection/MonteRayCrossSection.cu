@@ -40,18 +40,20 @@ void dtor(struct MonteRayCrossSection* pXS) {
     }
 }
 
-#ifdef CUDA
-void cudaCtor(MonteRayCrossSection* ptr, unsigned num) {
 
+void cudaCtor(MonteRayCrossSection* ptr, unsigned num) {
+#ifdef __CUDACC__
 	 ptr->numPoints = num;
      unsigned allocSize = sizeof( gpuFloatType_t ) * num;
 
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->energies, allocSize ));
 
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->totalXS, allocSize ));
+#endif
 }
 
 void cudaCtor(MonteRayCrossSection* pCopy, MonteRayCrossSection* pOrig) {
+#ifdef __CUDACC__
 	unsigned num = pOrig->numPoints;
 	cudaCtor( pCopy, num);
 
@@ -63,13 +65,15 @@ void cudaCtor(MonteRayCrossSection* pCopy, MonteRayCrossSection* pOrig) {
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->energies, pOrig->energies, allocSize, cudaMemcpyHostToDevice));
 
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->totalXS, pOrig->totalXS, allocSize, cudaMemcpyHostToDevice));
+#endif
 }
 
 void cudaDtor(MonteRayCrossSection* ptr) {
+#ifdef __CUDACC__
     cudaFree( ptr->energies );
     cudaFree( ptr->totalXS );
-}
 #endif
+}
 
 void copy(struct MonteRayCrossSection* pCopy, struct MonteRayCrossSection* pOrig ) {
     unsigned num = pOrig->numPoints;
@@ -84,49 +88,36 @@ void copy(struct MonteRayCrossSection* pCopy, struct MonteRayCrossSection* pOrig
     }
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-int getID(struct MonteRayCrossSection* pXS) {
+CUDA_CALLABLE_MEMBER
+int getID(const struct MonteRayCrossSection* pXS) {
 	return pXS->id;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
+CUDA_CALLABLE_MEMBER
 void setID(struct MonteRayCrossSection* pXS, unsigned i) {
 	if( pXS->id < 0 ) {
 		pXS->id = i;
 	}
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getEnergy(struct MonteRayCrossSection* pXS, unsigned i ) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getEnergy(const struct MonteRayCrossSection* pXS, unsigned i ) {
     return pXS->energies[i];
 }
 
-
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getTotalXSByIndex(struct MonteRayCrossSection* pXS, unsigned i ){
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigned i ){
     return pXS->totalXS[i];
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getIndex(struct MonteRayCrossSection* pXS, gpuFloatType_t value ){
+CUDA_CALLABLE_MEMBER
+unsigned getIndex(const struct MonteRayCrossSection* pXS, gpuFloatType_t value ){
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
 	return getIndexBinary( pXS, 0, pXS->numPoints-1, value);
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getIndexBinary(struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
+CUDA_CALLABLE_MEMBER
+unsigned getIndexBinary(const struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
     unsigned it, step;
     unsigned first = lower;
@@ -147,10 +138,8 @@ unsigned getIndexBinary(struct MonteRayCrossSection* pXS, unsigned lower, unsign
     return first;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getIndexLinear(struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
+CUDA_CALLABLE_MEMBER
+unsigned getIndexLinear(const struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
 
     for( unsigned i=lower+1; i < upper+1; ++i ){
     	if( value < pXS->energies[ i ] ) {
@@ -161,10 +150,8 @@ unsigned getIndexLinear(struct MonteRayCrossSection* pXS, unsigned lower, unsign
     return upper;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getIndex(struct MonteRayCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ){
+CUDA_CALLABLE_MEMBER
+unsigned getIndex(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ){
 	unsigned isotope = MonteRay::getID(pXS);
 	unsigned lowerBin = MonteRay::getLowerBoundbyIndex(pHash, isotope, hashBin);
 	unsigned upperBin = MonteRay::getUpperBoundbyIndex(pHash, isotope, hashBin);
@@ -178,17 +165,13 @@ unsigned getIndex(struct MonteRayCrossSection* pXS, struct HashLookup* pHash, un
 }
 
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getAWR(struct MonteRayCrossSection* pXS) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getAWR(const struct MonteRayCrossSection* pXS) {
     return pXS->AWR;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getTotalXSByIndex(struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
 
     gpuFloatType_t lower =  pXS->totalXS[i];
     gpuFloatType_t upper =  pXS->totalXS[i+1];
@@ -198,10 +181,8 @@ gpuFloatType_t getTotalXSByIndex(struct MonteRayCrossSection* pXS, unsigned i, g
     return value;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, gpuFloatType_t E ) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t E ) {
 
     if( E > pXS->energies[ pXS->numPoints-1] ) {
         return pXS->totalXS[ pXS->numPoints-1];
@@ -215,10 +196,8 @@ gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, gpuFloatType_t E ) {
     return getTotalXSByIndex( pXS, i, E);
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) {
 
     if( E > pXS->energies[ pXS->numPoints-1] ) {
         return pXS->totalXS[ pXS->numPoints-1];
@@ -232,23 +211,20 @@ gpuFloatType_t getTotalXS(struct MonteRayCrossSection* pXS, struct HashLookup* p
     return getTotalXSByIndex( pXS, i, E);
 }
 
-#ifdef CUDA
-__global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, pHash, HashBin, E);
     return;
 }
-#endif
 
-#ifdef CUDA
-__global__ void kernelGetTotalXS(struct MonteRayCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
+
+CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, E);
     return;
 }
-#endif
 
 gpuFloatType_t
 launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
-#ifdef CUDA
+#ifdef __CUDACC__
 	gpuFloatType_t* result_device;
 	gpuFloatType_t result[1];
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
@@ -270,7 +246,7 @@ launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
 }
 
 
-#if !defined( CUDA )
+#if !defined( __CUDACC__ )
 #include "ContinuousNeutron.hh"
 void MonteRayCrossSectionHost::load( const ContinuousNeutron& cn){
     unsigned num = cn.getEnergyGrid().GridSize();
@@ -297,7 +273,7 @@ MonteRayCrossSectionHost::MonteRayCrossSectionHost(unsigned num){
     cudaCopyMade = false;
     temp = NULL;
 
-#ifdef CUDA
+#ifdef __CUDACC__
     CUDA_CHECK_RETURN( cudaMalloc(&xs_device, sizeof( MonteRayCrossSection) ));
 #endif
 }
@@ -314,26 +290,26 @@ MonteRayCrossSectionHost::~MonteRayCrossSectionHost(){
         cudaDtor( temp );
         delete temp;
     }
-#ifdef CUDA
+#ifdef __CUDACC__
     cudaFree( xs_device );
 #endif
 }
 
-gpuFloatType_t MonteRayCrossSectionHost::getTotalXS( struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) const {
+gpuFloatType_t MonteRayCrossSectionHost::getTotalXS( const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) const {
 	return MonteRay::getTotalXS(xs, pHash, hashBin, E);
 }
 
-gpuFloatType_t MonteRayCrossSectionHost::getTotalXSByHashIndex(struct HashLookup* pHash, unsigned i, gpuFloatType_t E) const {
+gpuFloatType_t MonteRayCrossSectionHost::getTotalXSByHashIndex(const struct HashLookup* pHash, unsigned i, gpuFloatType_t E) const {
 	return MonteRay::getTotalXS(xs, pHash, i, E);
 }
 
-unsigned MonteRayCrossSectionHost::getIndex( HashLookupHost* pHost, unsigned hashBin, gpuFloatType_t e ) const {
+unsigned MonteRayCrossSectionHost::getIndex( const HashLookupHost* pHost, unsigned hashBin, gpuFloatType_t e ) const {
 	return MonteRay::getIndex( xs, pHost->getPtr(), hashBin, e);
 }
 
 
 void MonteRayCrossSectionHost::copyToGPU(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
     cudaCopyMade = true;
     temp = new MonteRayCrossSection;
     cudaCtor(temp, xs );

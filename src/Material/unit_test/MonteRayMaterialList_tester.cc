@@ -1,11 +1,11 @@
 #include <UnitTest++.h>
 
-#include "SimpleMaterialList.h"
-#include "genericGPU_test_helper.hh"
+#include "MonteRayMaterialList.hh"
+#include "Material_test_helper.hh"
 
-SUITE( SimpleMaterialList_tester ) {
+SUITE( MonteRayMaterialList_tester ) {
     TEST( ctor ) {
-        SimpleMaterialHost mat(1);
+        MonteRayMaterialHost mat(1);
 
         MonteRayCrossSectionHost xs(4);
         xs.setTotalXS(0, 0.1, 4.0 );
@@ -16,7 +16,7 @@ SUITE( SimpleMaterialList_tester ) {
         gpuFloatType_t fraction = 0.95;
         mat.add( 0, xs, fraction);
 
-        SimpleMaterialListHost matList(1);
+        MonteRayMaterialListHost matList(1);
         matList.add(0, mat, 9);
 
         CHECK_EQUAL(9, matList.getMaterialID(0) );
@@ -26,10 +26,10 @@ SUITE( SimpleMaterialList_tester ) {
     	MonteRayCrossSectionHost u235s(1);
     	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
 
-    	SimpleMaterialHost mat(1);
+    	MonteRayMaterialHost mat(1);
     	mat.add(0, u235s, 1.0);
 
-    	SimpleMaterialListHost matList(1,1,8192);
+    	MonteRayMaterialListHost matList(1,1,8192);
     	matList.add( 0, mat, 0 );
 
     	gpuFloatType_t energy=2.0;
@@ -45,13 +45,13 @@ SUITE( SimpleMaterialList_tester ) {
     	MonteRayCrossSectionHost h1s(1);
     	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
-    	SimpleMaterialHost mat1(1);
+    	MonteRayMaterialHost mat1(1);
     	mat1.add(0, u235s, 1.0);
 
-    	SimpleMaterialHost mat2(1);
+    	MonteRayMaterialHost mat2(1);
     	mat2.add(0, h1s, 1.0);
 
-    	SimpleMaterialListHost matList(2,2,8192);
+    	MonteRayMaterialListHost matList(2,2,8192);
     	matList.add( 0, mat1, 0 );
     	matList.add( 1, mat2, 1 );
 
@@ -69,11 +69,11 @@ SUITE( SimpleMaterialList_tester ) {
     	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
     	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
-    	SimpleMaterialHost mat(2);
+    	MonteRayMaterialHost mat(2);
     	mat.add(0, u235s, 0.5);
     	mat.add(1, h1s, 0.5);
 
-    	SimpleMaterialListHost matList(1);
+    	MonteRayMaterialListHost matList(1);
     	matList.add( 0, mat, 0 );
 
     	gpuFloatType_t energy=2.0;
@@ -90,14 +90,14 @@ SUITE( SimpleMaterialList_tester ) {
     	u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
     	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
-    	SimpleMaterialHost mat1(2);
+    	MonteRayMaterialHost mat1(2);
     	mat1.add(0, u235s, 0.5);
     	mat1.add(1, h1s, 0.5);
 
-    	SimpleMaterialHost mat2(1);
+    	MonteRayMaterialHost mat2(1);
     	mat2.add(0, u235s, 1.0);
 
-    	SimpleMaterialListHost matList(2);
+    	MonteRayMaterialListHost matList(2);
     	matList.add( 0, mat1, 0 );
     	matList.add( 1, mat2, 1 );
 
@@ -118,15 +118,15 @@ SUITE( SimpleMaterialList_tester ) {
     	h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
     	o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
-    	SimpleMaterialHost mat1(2);
+    	MonteRayMaterialHost mat1(2);
     	mat1.add(0, u235s, 0.5);
     	mat1.add(1, h1s, 0.5);
 
-    	SimpleMaterialHost mat2(2);
+    	MonteRayMaterialHost mat2(2);
     	mat2.add(0, u235s, 0.5);
     	mat2.add(1, o16s, 0.5);
 
-    	SimpleMaterialListHost matList(2);
+    	MonteRayMaterialListHost matList(2);
     	matList.add( 0, mat1, 0 );
     	matList.add( 1, mat2, 1 );
 
@@ -138,23 +138,23 @@ SUITE( SimpleMaterialList_tester ) {
     	CHECK_EQUAL(2, o16s.getID() );
     }
 
-    TEST_FIXTURE(GenericGPUTestHelper, sent_to_gpu_getTotalXS )
+    TEST_FIXTURE(MaterialTestHelper, sent_to_gpu_getTotalXS )
     {
         MonteRayCrossSectionHost u235s(1);
         MonteRayCrossSectionHost h1s(1);
         u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
         h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
 
-        SimpleMaterialHost mat1(2);
+        MonteRayMaterialHost mat1(2);
         mat1.add(0, u235s, 0.5);
         mat1.add(1, h1s, 0.5);
         mat1.copyToGPU();
 
-        SimpleMaterialHost mat2(1);
+        MonteRayMaterialHost mat2(1);
         mat2.add(0, u235s, 1.0);
         mat2.copyToGPU();
 
-        SimpleMaterialListHost matList(2,2,8192);
+        MonteRayMaterialListHost matList(2,2,8192);
         matList.add( 0, mat1, 0 );
         matList.add( 1, mat2, 1 );
         matList.copyToGPU();
@@ -185,12 +185,12 @@ SUITE( SimpleMaterialList_tester ) {
     	xs->setTotalXS(9, 10.0, 10.0 );
     	CHECK_EQUAL( -1, xs->getID());
 
-    	SimpleMaterialHost mat(1);
+    	MonteRayMaterialHost mat(1);
 
     	gpuFloatType_t fraction = 1.00;
     	mat.add( 0, *xs, fraction);
 
-    	SimpleMaterialListHost matList(1,1,10);
+    	MonteRayMaterialListHost matList(1,1,10);
     	matList.add(0, mat, 9);
 
     	HashLookupHost* hash = matList.getHashPtr();

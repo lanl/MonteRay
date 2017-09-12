@@ -374,6 +374,14 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
+			<target name="UnitMaterial" path="src/Material" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j20</buildArguments>
+				<buildTarget>UnitMaterial</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
 			<target name="UnitGPU_Utilities" path="src/GPU_Utilities" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
 				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>

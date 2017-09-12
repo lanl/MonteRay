@@ -10,7 +10,7 @@
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
 #include "GridBins.h"
-#include "SimpleMaterialList.h"
+#include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "gpuTally.h"
@@ -43,10 +43,10 @@ SUITE( Ray_bank_controller_fi_tester ) {
 	    	h1s = new MonteRayCrossSectionHost(1);
 	    	o16s = new MonteRayCrossSectionHost(1);
 
-	        metal = new SimpleMaterialHost(3);
-	        water = new SimpleMaterialHost(2);
+	        metal = new MonteRayMaterialHost(3);
+	        water = new MonteRayMaterialHost(2);
 
-	        pMatList = new SimpleMaterialListHost(2,5);
+	        pMatList = new MonteRayMaterialListHost(2,5);
 
 		}
 
@@ -107,7 +107,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
 		}
 
 		GridBinsHost* pGrid;
-		SimpleMaterialListHost* pMatList;
+		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
 
@@ -117,8 +117,8 @@ SUITE( Ray_bank_controller_fi_tester ) {
         MonteRayCrossSectionHost* h1s;
         MonteRayCrossSectionHost* o16s;
 
-        SimpleMaterialHost* metal;
-        SimpleMaterialHost* water;
+        MonteRayMaterialHost* metal;
+        MonteRayMaterialHost* water;
 
 	};
 

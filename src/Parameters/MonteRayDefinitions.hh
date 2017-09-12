@@ -22,14 +22,23 @@ namespace MonteRay{
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER __host__ __device__
 #define CUDAHOST_CALLABLE_MEMBER __host__
+#define CUDADEVICE_CALLABLE_MEMBER __device__
+#define CUDA_CALLABLE_KERNEL __global__
 #else
 #define CUDA_CALLABLE_MEMBER
 #define CUDAHOST_CALLABLE_MEMBER
+#define CUDA_CALLABLE_KERNEL
+#define CUDADEVICE_CALLABLE_MEMBER
 #endif
 
 // typedefs
 typedef float float_t;
 typedef float gpuFloatType_t;
+
+#ifdef __CUDACC__
+typedef float1 float1_t;
+typedef float3 float3_t;
+#endif
 
 #if TALLY_DOUBLEPRECISION < 1
 typedef float gpuTallyType_t;

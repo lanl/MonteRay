@@ -10,7 +10,7 @@
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
 #include "GridBins.h"
-#include "SimpleMaterialList.h"
+#include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.h"
 #include "RayListInterface.hh"
@@ -40,9 +40,9 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 	    	// xs from 0.0 to 100.0 mev with total cross-section of 1.0
 	    	xs = new MonteRayCrossSectionHost(2);
 
-	        metal = new SimpleMaterialHost(1);
+	        metal = new MonteRayMaterialHost(1);
 
-	        pMatList = new SimpleMaterialListHost(1);
+	        pMatList = new MonteRayMaterialListHost(1);
 
 		}
 
@@ -82,13 +82,13 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 		}
 
 		GridBinsHost* pGrid;
-		SimpleMaterialListHost* pMatList;
+		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
 
     	MonteRayCrossSectionHost* xs;
 
-        SimpleMaterialHost* metal;
+        MonteRayMaterialHost* metal;
 	};
 
 	TEST( setup ) {

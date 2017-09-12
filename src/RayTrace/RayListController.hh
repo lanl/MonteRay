@@ -10,7 +10,7 @@
 namespace MonteRay {
 
 class GridBinsHost;
-class SimpleMaterialListHost;
+class MonteRayMaterialListHost;
 class MonteRay_MaterialProperties;
 class gpuTallyHost;
 
@@ -21,7 +21,7 @@ public:
 	RayListController(unsigned nBlocks,
 			                 unsigned nThreads,
 			                 GridBinsHost*,
-			                 SimpleMaterialListHost*,
+			                 MonteRayMaterialListHost*,
 			                 MonteRay_MaterialProperties*,
 			                 gpuTallyHost* );
 
@@ -70,7 +70,7 @@ private:
 	unsigned nBlocks;
 	unsigned nThreads;
 	GridBinsHost* pGrid;
-	SimpleMaterialListHost* pMatList;
+	MonteRayMaterialListHost* pMatList;
 	MonteRay_MaterialProperties* pMatProps;
 	gpuTallyHost* pTally;
 

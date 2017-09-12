@@ -9,80 +9,90 @@
 
 namespace MonteRay{
 
- template<unsigned N>
- __device__
- gpuTallyType_t
- tallyAttenuation(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<N>* p){
-
-
-	 gpuTallyType_t enteringFraction = p->weight[0];
-	 gpuFloatType_t energy = p->energy[0];
-	 unsigned HashBin = getHashBin(pHash, energy);
-
-	 if( energy < 1e-20 ) {
-		 return 0.0;
-	 }
-
-	 int cells[2*MAXNUMVERTICES];
-	 gpuFloatType_t crossingDistances[2*MAXNUMVERTICES];
-
-	 unsigned numberOfCells;
-
-	 float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
-	 float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
-
-	 numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
-
-	 for( unsigned i=0; i < numberOfCells; ++i ){
-		 int cell = cells[i];
-		 gpuFloatType_t distance = crossingDistances[i];
-		 if( cell == UINT_MAX ) continue;
-
-		 enteringFraction = attenuateRayTraceOnly(pMatList, pMatProps, pHash, HashBin, cell, distance, energy, enteringFraction );
-
-		 if( enteringFraction < 1e-11 ) {
-			 // cut off at 25 mean free paths
-			 return 0.0;
-		 }
-	 }
-	 return enteringFraction;
- }
-
- template __device__ gpuTallyType_t
- tallyAttenuation<1>(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<1>* p);
-
- template __device__ gpuTallyType_t
- tallyAttenuation<3>(GridBins* pGrid, SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<3>* p);
-
-
- __device__
- gpuTallyType_t
- attenuateRayTraceOnly(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t distance, gpuFloatType_t energy, gpuTallyType_t enteringFraction ) {
-
-	 gpuTallyType_t totalXS = 0.0;
-	 unsigned numMaterials = getNumMats( pMatProps, cell);
-	 for( unsigned i=0; i<numMaterials; ++i ) {
-
-		 unsigned matID = getMatID(pMatProps, cell, i);
-		 gpuFloatType_t density = getDensity(pMatProps, cell, i );
-		 if( density > 1e-5 ) {
-			 //unsigned materialIndex = materialIDtoIndex(pMatList, matID);
-			 totalXS +=  getTotalXS( pMatList, matID, pHash, HashBin, energy, density);
-		 }
-	 }
-
-	 gpuTallyType_t attenuation = 1.0;
-
-	 if( totalXS > 1e-5 ) {
-		 attenuation = exp( - totalXS*distance );
-	 }
-	 return enteringFraction * attenuation;
-
- }
-
-__device__
+template<unsigned N>
+CUDA_CALLABLE_MEMBER
 gpuTallyType_t
-tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps,
+tallyAttenuation(GridBins* pGrid,
+			     MonteRayMaterialList* pMatList,
+			     MonteRay_MaterialProperties_Data* pMatProps,
+			     const HashLookup* pHash,
+			     Ray_t<N>* p){
+
+	gpuTallyType_t enteringFraction = p->weight[0];
+	gpuFloatType_t energy = p->energy[0];
+	unsigned HashBin = getHashBin(pHash, energy);
+
+	if( energy < 1e-20 ) {
+		return 0.0;
+	}
+
+	int cells[2*MAXNUMVERTICES];
+	gpuFloatType_t crossingDistances[2*MAXNUMVERTICES];
+
+	unsigned numberOfCells;
+
+	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
+	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
+
+	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
+
+	for( unsigned i=0; i < numberOfCells; ++i ){
+		int cell = cells[i];
+		gpuFloatType_t distance = crossingDistances[i];
+		if( cell == UINT_MAX ) continue;
+
+		enteringFraction = attenuateRayTraceOnly(pMatList, pMatProps, pHash, HashBin, cell, distance, energy, enteringFraction );
+
+		if( enteringFraction < 1e-11 ) {
+			// cut off at 25 mean free paths
+			return 0.0;
+		}
+	}
+	return enteringFraction;
+}
+
+template CUDA_CALLABLE_MEMBER gpuTallyType_t
+tallyAttenuation<1>(GridBins* pGrid, MonteRayMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, const HashLookup* pHash, Ray_t<1>* p);
+
+template CUDA_CALLABLE_MEMBER gpuTallyType_t
+tallyAttenuation<3>(GridBins* pGrid, MonteRayMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps, const HashLookup* pHash, Ray_t<3>* p);
+
+
+CUDA_CALLABLE_MEMBER
+gpuTallyType_t
+attenuateRayTraceOnly(const MonteRayMaterialList* pMatList,
+		              const MonteRay_MaterialProperties_Data* pMatProps,
+		              const HashLookup* pHash,
+		              unsigned HashBin,
+		              unsigned cell,
+		              gpuFloatType_t distance,
+		              gpuFloatType_t energy,
+		              gpuTallyType_t enteringFraction )
+{
+	gpuTallyType_t totalXS = 0.0;
+	unsigned numMaterials = getNumMats( pMatProps, cell);
+	for( unsigned i=0; i<numMaterials; ++i ) {
+
+		unsigned matID = getMatID(pMatProps, cell, i);
+		gpuFloatType_t density = getDensity(pMatProps, cell, i );
+		if( density > 1e-5 ) {
+			//unsigned materialIndex = materialIDtoIndex(pMatList, matID);
+			totalXS +=  getTotalXS( pMatList, matID, pHash, HashBin, energy, density);
+		}
+	}
+
+	gpuTallyType_t attenuation = 1.0;
+
+	if( totalXS > 1e-5 ) {
+		attenuation = exp( - totalXS*distance );
+	}
+	return enteringFraction * attenuation;
+
+}
+
+CUDA_CALLABLE_MEMBER
+gpuTallyType_t
+tallyCellSegment(MonteRayMaterialList* pMatList, MonteRay_MaterialProperties_Data* pMatProps,
 		gpuFloatType_t* materialXS, gpuTallyType_t* tally, unsigned cell, gpuFloatType_t distance,
 		gpuFloatType_t energy, gpuFloatType_t weight, gpuTallyType_t opticalPathLength ) {
 	const bool debug = false;
@@ -128,8 +138,11 @@ tallyCellSegment(SimpleMaterialList* pMatList, MonteRay_MaterialProperties_Data*
 }
 
 template<unsigned N> __global__ void
-rayTraceTally(GridBins* pGrid, RayList_t<N>* pCP, SimpleMaterialList* pMatList,
-		      MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash,
+rayTraceTally(GridBins* pGrid,
+			  RayList_t<N>* pCP,
+			  MonteRayMaterialList* pMatList,
+		      MonteRay_MaterialProperties_Data* pMatProps,
+		      const HashLookup* pHash,
 		      gpuTallyType_t* tally){
 
 	const bool debug = false;
@@ -165,20 +178,24 @@ rayTraceTally(GridBins* pGrid, RayList_t<N>* pCP, SimpleMaterialList* pMatList,
 }
 
 template __global__ void
-rayTraceTally<1>(GridBins* pGrid, RayList_t<1>* pCP, SimpleMaterialList* pMatList,
-		         MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash,
+rayTraceTally<1>(GridBins* pGrid, RayList_t<1>* pCP, MonteRayMaterialList* pMatList,
+		         MonteRay_MaterialProperties_Data* pMatProps, const HashLookup* pHash,
 		         gpuTallyType_t* tally);
 
 template __global__ void
-rayTraceTally<3>(GridBins* pGrid, RayList_t<3>* pCP, SimpleMaterialList* pMatList,
-		         MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash,
+rayTraceTally<3>(GridBins* pGrid, RayList_t<3>* pCP, MonteRayMaterialList* pMatList,
+		         MonteRay_MaterialProperties_Data* pMatProps, const HashLookup* pHash,
 		         gpuTallyType_t* tally);
 
 template<unsigned N>
-__device__ void
-tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList,
-		       MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<N>* p,
-		       gpuTallyType_t* pTally, unsigned tid )
+CUDA_CALLABLE_MEMBER void
+tallyCollision(GridBins* pGrid,
+			   MonteRayMaterialList* pMatList,
+		       MonteRay_MaterialProperties_Data* pMatProps,
+		       const HashLookup* pHash,
+		       Ray_t<N>* p,
+		       gpuTallyType_t* pTally,
+		       unsigned tid )
 {
 	const bool debug = false;
 
@@ -239,14 +256,14 @@ tallyCollision(GridBins* pGrid, SimpleMaterialList* pMatList,
 	}
 }
 
-template __device__ void
-tallyCollision<1>(GridBins* pGrid, SimpleMaterialList* pMatList,
-		MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<1>* p,
+template CUDA_CALLABLE_MEMBER void
+tallyCollision<1>(GridBins* pGrid, MonteRayMaterialList* pMatList,
+		MonteRay_MaterialProperties_Data* pMatProps, const HashLookup* pHash, Ray_t<1>* p,
 		gpuTallyType_t* tally, unsigned tid);
 
-template __device__ void
-tallyCollision<3>(GridBins* pGrid, SimpleMaterialList* pMatList,
-		MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, Ray_t<3>* p,
+template CUDA_CALLABLE_MEMBER void
+tallyCollision<3>(GridBins* pGrid, MonteRayMaterialList* pMatList,
+		MonteRay_MaterialProperties_Data* pMatProps, const HashLookup* pHash, Ray_t<3>* p,
 		gpuTallyType_t* tally, unsigned tid);
 
 template<unsigned N>
@@ -256,7 +273,7 @@ MonteRay::tripleTime launchRayTraceTally(
 		                 unsigned nThreads,
 		                 GridBinsHost* pGrid,
 		                 RayListInterface<N>* pCP,
-		                 SimpleMaterialListHost* pMatList,
+		                 MonteRayMaterialListHost* pMatList,
 		                 MonteRay_MaterialProperties* pMatProps,
 		                 gpuTallyHost* pTally
 		                )
@@ -309,12 +326,12 @@ MonteRay::tripleTime launchRayTraceTally(
 
 template MonteRay::tripleTime
 launchRayTraceTally<1>( std::function<void (void)> cpuWork, unsigned nBlocks, unsigned nThreads,
-		                GridBinsHost* pGrid, RayListInterface<1>* pCP, SimpleMaterialListHost* pMatList,
+		                GridBinsHost* pGrid, RayListInterface<1>* pCP, MonteRayMaterialListHost* pMatList,
 		                MonteRay_MaterialProperties* pMatProps, gpuTallyHost* pTally );
 
 template MonteRay::tripleTime
 launchRayTraceTally<3>( std::function<void (void)> cpuWork, unsigned nBlocks, unsigned nThreads,
-		                GridBinsHost* pGrid, RayListInterface<3>* pCP, SimpleMaterialListHost* pMatList,
+		                GridBinsHost* pGrid, RayListInterface<3>* pCP, MonteRayMaterialListHost* pMatList,
 		                MonteRay_MaterialProperties* pMatProps, gpuTallyHost* pTally );
 
 }

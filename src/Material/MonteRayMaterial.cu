@@ -1,4 +1,4 @@
-#include "SimpleMaterial.h"
+#include "MonteRayMaterial.hh"
 
 #include "GPUErrorCheck.hh"
 #include "MonteRayConstants.hh"
@@ -6,7 +6,7 @@
 
 namespace MonteRay{
 
-void ctor(struct SimpleMaterial* ptr, unsigned num) {
+void ctor(struct MonteRayMaterial* ptr, unsigned num) {
     if( num <=0 ) { num = 1; }
     ptr->numIsotopes = num;
     ptr->AtomicWeight = 0.0;
@@ -27,9 +27,9 @@ void ctor(struct SimpleMaterial* ptr, unsigned num) {
     }
 }
 
-#ifdef CUDA
-void cudaCtor(SimpleMaterial* pCopy, unsigned num) {
 
+void cudaCtor(MonteRayMaterial* pCopy, unsigned num) {
+#ifdef __CUDACC__
 	pCopy->numIsotopes = num;
 	pCopy->AtomicWeight = 0.0;
 
@@ -40,17 +40,18 @@ void cudaCtor(SimpleMaterial* pCopy, unsigned num) {
     // MonteRayCrossSections
 	allocSize = sizeof(MonteRayCrossSection*)*num;
 	CUDA_CHECK_RETURN( cudaMalloc(&pCopy->xs, allocSize ));
+#endif
 }
 
-void cudaCtor(struct SimpleMaterial* pCopy, struct SimpleMaterial* pOrig){
+void cudaCtor(struct MonteRayMaterial* pCopy, struct MonteRayMaterial* pOrig){
 	unsigned num = pOrig->numIsotopes;
 	cudaCtor( pCopy, num);
 
 	pCopy->AtomicWeight = pOrig->AtomicWeight;
 }
-#endif
 
-void dtor(struct SimpleMaterial* ptr){
+
+void dtor(struct MonteRayMaterial* ptr){
     if( ptr->fraction != 0 ) {
         free(ptr->fraction);
         ptr->fraction = 0;
@@ -61,15 +62,15 @@ void dtor(struct SimpleMaterial* ptr){
     }
 }
 
-#ifdef CUDA
-void cudaDtor(SimpleMaterial* ptr) {
+void cudaDtor(MonteRayMaterial* ptr) {
+#ifdef __CUDACC__
 	cudaFree( ptr->fraction );
 	cudaFree( ptr->xs );
-}
 #endif
+}
 
-SimpleMaterialHost::SimpleMaterialHost(unsigned numIsotopes) {
-    pMat = new SimpleMaterial;
+MonteRayMaterialHost::MonteRayMaterialHost(unsigned numIsotopes) {
+    pMat = new MonteRayMaterial;
     ctor(pMat, numIsotopes );
     cudaCopyMade = false;
     ptr_device = NULL;
@@ -81,7 +82,7 @@ SimpleMaterialHost::SimpleMaterialHost(unsigned numIsotopes) {
     }
 }
 
-SimpleMaterialHost::~SimpleMaterialHost() {
+MonteRayMaterialHost::~MonteRayMaterialHost() {
     if( pMat != 0 ) {
         dtor( pMat );
         delete pMat;
@@ -89,7 +90,7 @@ SimpleMaterialHost::~SimpleMaterialHost() {
     }
 
     if( cudaCopyMade ) {
-#ifdef CUDA
+#ifdef __CUDACC__
     	cudaFree( ptr_device );
     	cudaDtor( temp );
     	delete temp;
@@ -98,10 +99,10 @@ SimpleMaterialHost::~SimpleMaterialHost() {
     free( isotope_device_ptr_list );
 }
 
-void SimpleMaterialHost::copyToGPU(void) {
-#ifdef CUDA
+void MonteRayMaterialHost::copyToGPU(void) {
+#ifdef __CUDACC__
 	cudaCopyMade = true;
-	temp = new SimpleMaterial;
+	temp = new MonteRayMaterial;
 
     copy(temp, pMat);
 
@@ -111,7 +112,7 @@ void SimpleMaterialHost::copyToGPU(void) {
 	temp->AtomicWeight = pMat->AtomicWeight;
 
 	// allocate target struct
-	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( SimpleMaterial) ));
+	CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( MonteRayMaterial) ));
 
 	// allocate target dynamic memory
 	cudaCtor( temp, pMat);
@@ -123,11 +124,11 @@ void SimpleMaterialHost::copyToGPU(void) {
 	CUDA_CHECK_RETURN( cudaMemcpy(temp->xs, isotope_device_ptr_list, allocSize, cudaMemcpyHostToDevice));
 
 	// copy data
-	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( SimpleMaterial ), cudaMemcpyHostToDevice));
+	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( MonteRayMaterial ), cudaMemcpyHostToDevice));
 #endif
 }
 
-void copy(struct SimpleMaterial* pCopy, struct SimpleMaterial* pOrig) {
+void copy(struct MonteRayMaterial* pCopy, struct MonteRayMaterial* pOrig) {
     unsigned num = pOrig->numIsotopes;
     if( num <=0 ) { num = 1; }
 
@@ -145,29 +146,21 @@ void copy(struct SimpleMaterial* pCopy, struct SimpleMaterial* pOrig) {
     }
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-unsigned getNumIsotopes(struct SimpleMaterial* ptr ) { return ptr->numIsotopes; }
+CUDA_CALLABLE_MEMBER
+unsigned getNumIsotopes(struct MonteRayMaterial* ptr ) { return ptr->numIsotopes; }
 
-#ifdef CUDA
-__global__ void kernelGetNumIsotopes(SimpleMaterial* pMat, unsigned* results){
+CUDA_CALLABLE_KERNEL void kernelGetNumIsotopes(MonteRayMaterial* pMat, unsigned* results){
 	results[0] = getNumIsotopes(pMat);
 	return;
 }
-#endif
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getFraction(struct SimpleMaterial* ptr, unsigned i) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getFraction(struct MonteRayMaterial* ptr, unsigned i) {
     return ptr->fraction[i];
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-void normalizeFractions(struct SimpleMaterial* ptr ){
+CUDA_CALLABLE_MEMBER
+void normalizeFractions(struct MonteRayMaterial* ptr ){
     gpuFloatType_t total = 0.0f;
     for( unsigned i=0; i<ptr->numIsotopes; ++i){
         total += ptr->fraction[i];
@@ -178,10 +171,8 @@ void normalizeFractions(struct SimpleMaterial* ptr ){
     calcAtomicWeight( ptr );
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-void calcAtomicWeight(struct SimpleMaterial* ptr ){
+CUDA_CALLABLE_MEMBER
+void calcAtomicWeight(struct MonteRayMaterial* ptr ){
     gpuFloatType_t total = 0.0f;
     for( unsigned i=0; i<ptr->numIsotopes; ++i){
         if( ptr->xs[i] != 0 ) {
@@ -191,17 +182,13 @@ void calcAtomicWeight(struct SimpleMaterial* ptr ){
     ptr->AtomicWeight = total * gpu_neutron_molar_mass;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getAtomicWeight(struct SimpleMaterial* ptr ) {
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getAtomicWeight(struct MonteRayMaterial* ptr ) {
     return ptr->AtomicWeight;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E){
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getMicroTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E){
     gpuFloatType_t total = 0.0f;
     for( unsigned i=0; i<ptr->numIsotopes; ++i){
         if( ptr->xs[i] != 0 ) {
@@ -211,10 +198,8 @@ gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, HashLookup* pHash, un
     return total;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E){
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getMicroTotalXS(const struct MonteRayMaterial* ptr, gpuFloatType_t E){
     gpuFloatType_t total = 0.0f;
     for( unsigned i=0; i<ptr->numIsotopes; ++i){
         if( ptr->xs[i] != 0 ) {
@@ -224,52 +209,42 @@ gpuFloatType_t getMicroTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E){
     return total;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getTotalXS(struct SimpleMaterial* ptr, HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density){
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density){
     return getMicroTotalXS(ptr, pHash, HashBin, E ) * density * gpu_AvogadroBarn / ptr->AtomicWeight;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-gpuFloatType_t getTotalXS(struct SimpleMaterial* ptr, gpuFloatType_t E, gpuFloatType_t density){
+CUDA_CALLABLE_MEMBER
+gpuFloatType_t getTotalXS(const struct MonteRayMaterial* ptr, gpuFloatType_t E, gpuFloatType_t density){
     return getMicroTotalXS(ptr, E ) * density * gpu_AvogadroBarn / ptr->AtomicWeight;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-void cudaAdd(struct SimpleMaterial* ptr, struct MonteRayCrossSection* xs, unsigned index ) {
+CUDA_CALLABLE_MEMBER
+void cudaAdd(struct MonteRayMaterial* ptr, struct MonteRayCrossSection* xs, unsigned index ) {
 	ptr->xs[ index ] = xs;
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-void setID(struct SimpleMaterial* ptr, unsigned index, unsigned id ) {
+CUDA_CALLABLE_MEMBER
+void setID(struct MonteRayMaterial* ptr, unsigned index, unsigned id ) {
 	MonteRay::setID(ptr->xs[index], id );
 }
 
-#ifdef CUDA
-__device__ __host__
-#endif
-int getID(struct SimpleMaterial* ptr, unsigned index ) {
+CUDA_CALLABLE_MEMBER
+int getID(struct MonteRayMaterial* ptr, unsigned index ) {
 	return MonteRay::getID( ptr->xs[index] );
 }
 
-void SimpleMaterialHost::setID( unsigned index, unsigned id) {
+void MonteRayMaterialHost::setID( unsigned index, unsigned id) {
 	MonteRay::setID(pMat, index, id );
 }
 
-int SimpleMaterialHost::getID( unsigned index ) {
+int MonteRayMaterialHost::getID( unsigned index ) {
 	return MonteRay::getID(pMat, index );
 }
 
-void SimpleMaterialHost::add(unsigned index,struct MonteRayCrossSectionHost& xs, gpuFloatType_t frac ) {
+void MonteRayMaterialHost::add(unsigned index,struct MonteRayCrossSectionHost& xs, gpuFloatType_t frac ) {
     if( index > getNumIsotopes() ) {
-        fprintf(stderr, "SimpleMaterialHost::add -- index > number of allocated isotopes.  %s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "MonteRayMaterialHost::add -- index > number of allocated isotopes.  %s %d\n", __FILE__, __LINE__);
         exit(1);
     }
 
@@ -278,12 +253,12 @@ void SimpleMaterialHost::add(unsigned index,struct MonteRayCrossSectionHost& xs,
 
     calcAWR();
 
-#ifdef CUDA
+#ifdef __CUDACC__
     isotope_device_ptr_list[index] = xs.xs_device;
 #endif
 }
 
-unsigned SimpleMaterialHost::launchGetNumIsotopes(void) {
+unsigned MonteRayMaterialHost::launchGetNumIsotopes(void) {
 	typedef unsigned type_t;
 
 	type_t* result_device;
@@ -304,10 +279,10 @@ unsigned SimpleMaterialHost::launchGetNumIsotopes(void) {
 }
 
 
-#ifndef CUDA
-void SimpleMaterialHost::add(unsigned index,struct MonteRayCrossSection* xs, gpuFloatType_t frac ) {
+#ifndef __CUDACC__
+void MonteRayMaterialHost::add(unsigned index,struct MonteRayCrossSection* xs, gpuFloatType_t frac ) {
     if( index > getNumIsotopes() ) {
-        fprintf(stderr, "SimpleMaterialHost::add -- index > number of allocated isotopes.  %s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "MonteRayMaterialHost::add -- index > number of allocated isotopes.  %s %d\n", __FILE__, __LINE__);
         exit(1);
     }
 
@@ -318,7 +293,7 @@ void SimpleMaterialHost::add(unsigned index,struct MonteRayCrossSection* xs, gpu
 }
 #endif
 
-void SimpleMaterialHost::write(std::ostream& outf) const{
+void MonteRayMaterialHost::write(std::ostream& outf) const{
     unsigned realNumIsotopes = 0;
     for( unsigned i=0; i<getNumIsotopes(); ++i ){
         if( pMat->xs[i] != 0 ) {
@@ -344,7 +319,7 @@ void SimpleMaterialHost::write(std::ostream& outf) const{
     }
 }
 
-void SimpleMaterialHost::read(std::istream& infile) {
+void MonteRayMaterialHost::read(std::istream& infile) {
     unsigned num;
     binaryIO::read(infile, num);
     dtor( pMat );
@@ -364,7 +339,7 @@ void SimpleMaterialHost::read(std::istream& infile) {
     }
 }
 
-void SimpleMaterialHost::load(struct SimpleMaterial* ptrMat ) {
+void MonteRayMaterialHost::load(struct MonteRayMaterial* ptrMat ) {
     copy( pMat, ptrMat);
 }
 

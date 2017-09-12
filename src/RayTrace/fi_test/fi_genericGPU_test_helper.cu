@@ -88,7 +88,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(unsigned nBlocks, unsign
 
 #ifdef CUDA
 template< unsigned N>
-__global__ void testTallyCrossSection(RayList_t<N>* pCP, SimpleMaterialList* pMatList, unsigned matIndex,
+__global__ void testTallyCrossSection(RayList_t<N>* pCP, MonteRayMaterialList* pMatList, unsigned matIndex,
 		HashLookup* pHash, gpuFloatType_t density, gpuTallyType_t* results)
 {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -105,7 +105,7 @@ __global__ void testTallyCrossSection(RayList_t<N>* pCP, SimpleMaterialList* pMa
 
 template<unsigned N>
 void FIGenericGPUTestHelper<N>::launchTallyCrossSection(unsigned nBlocks, unsigned nThreads,
-		RayListInterface<N>* pCP, SimpleMaterialListHost* pMatList, unsigned matIndex,
+		RayListInterface<N>* pCP, MonteRayMaterialListHost* pMatList, unsigned matIndex,
 		gpuFloatType_t density )
 {
 	gpuTallyType_t* tally_device;
@@ -133,7 +133,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(unsigned nBlocks, unsign
 #ifdef CUDA
 __device__ __host__
 gpuFloatType_t getTotalXSByMatProp(MonteRay_MaterialProperties_Data* matProps,
-		SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell,
+		MonteRayMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell,
 		gpuFloatType_t E)
 {
 	gpuFloatType_t total = 0.0f;
@@ -148,7 +148,7 @@ gpuFloatType_t getTotalXSByMatProp(MonteRay_MaterialProperties_Data* matProps,
 #endif
 
 gpuFloatType_t nonCudaGetTotalXSByMatProp(MonteRay_MaterialProperties* matProps,
-		SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell,
+		MonteRayMaterialList* pMatList, const HashLookup* pHash, unsigned HashBin, unsigned cell,
 		gpuFloatType_t E)
 {
 	gpuFloatType_t total = 0.0f;
@@ -162,7 +162,7 @@ gpuFloatType_t nonCudaGetTotalXSByMatProp(MonteRay_MaterialProperties* matProps,
 }
 
 gpuFloatType_t nonCudaGetTotalXSByMatProp(MonteRay_MaterialProperties* matProps,
-		SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E)
+		MonteRayMaterialList* pMatList, unsigned cell, gpuFloatType_t E)
 {
 	gpuFloatType_t total = 0.0f;
 	for( unsigned i=0; i< matProps->getNumMaterials(cell); ++i) {
@@ -177,7 +177,7 @@ gpuFloatType_t nonCudaGetTotalXSByMatProp(MonteRay_MaterialProperties* matProps,
 template<unsigned N>
 gpuFloatType_t
 FIGenericGPUTestHelper<N>::getTotalXSByMatProp(MonteRay_MaterialProperties* matProps,
-		SimpleMaterialList* pMatList, HashLookup* pHash, unsigned HashBin, unsigned cell,
+		MonteRayMaterialList* pMatList, const HashLookup* pHash, unsigned HashBin, unsigned cell,
 		gpuFloatType_t E)
 {
 	return nonCudaGetTotalXSByMatProp( matProps, pMatList, pHash, HashBin, cell, E);
@@ -186,7 +186,7 @@ FIGenericGPUTestHelper<N>::getTotalXSByMatProp(MonteRay_MaterialProperties* matP
 template<unsigned N>
 gpuFloatType_t
 FIGenericGPUTestHelper<N>::getTotalXSByMatProp(MonteRay_MaterialProperties* matProps,
-		SimpleMaterialList* pMatList, unsigned cell, gpuFloatType_t E)
+		MonteRayMaterialList* pMatList, unsigned cell, gpuFloatType_t E)
 {
 	return nonCudaGetTotalXSByMatProp( matProps, pMatList, cell, E);
 }
@@ -194,7 +194,7 @@ FIGenericGPUTestHelper<N>::getTotalXSByMatProp(MonteRay_MaterialProperties* matP
 #ifdef CUDA
 template<unsigned N>
 __global__ void
-testTallyCrossSectionAtCollision(RayList_t<N>* pCP, SimpleMaterialList* pMatList,
+testTallyCrossSectionAtCollision(RayList_t<N>* pCP, MonteRayMaterialList* pMatList,
 		MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTallyType_t* results)
 {
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -214,7 +214,7 @@ testTallyCrossSectionAtCollision(RayList_t<N>* pCP, SimpleMaterialList* pMatList
 
 #ifdef CUDA
 template<unsigned N>
-__global__ void testSumCrossSectionAtCollisionLocation(RayList_t<N>* pCP, SimpleMaterialList* pMatList,
+__global__ void testSumCrossSectionAtCollisionLocation(RayList_t<N>* pCP, MonteRayMaterialList* pMatList,
 		MonteRay_MaterialProperties_Data* pMatProps, HashLookup* pHash, gpuTallyType_t* results)
 {
 	unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -236,7 +236,7 @@ __global__ void testSumCrossSectionAtCollisionLocation(RayList_t<N>* pCP, Simple
 
 template<unsigned N>
 void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads,
-		RayListInterface<N>* pCP, SimpleMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps )
+		RayListInterface<N>* pCP, MonteRayMaterialListHost* pMatList, MonteRay_MaterialProperties* pMatProps )
 {
 	gpuTallyType_t* tally_device;
 
@@ -263,7 +263,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(unsigned nBlo
 
 template<unsigned N>
 void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(unsigned nBlocks,
-		unsigned nThreads, RayListInterface<N>* pCP, SimpleMaterialListHost* pMatList,
+		unsigned nThreads, RayListInterface<N>* pCP, MonteRayMaterialListHost* pMatList,
 		MonteRay_MaterialProperties* pMatProps )
 {
 	gpuTallyType_t* tally_device;
@@ -291,7 +291,7 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(unsigne
 
 template<unsigned N>
 void FIGenericGPUTestHelper<N>::launchRayTraceTally(unsigned nBlocks, unsigned nThreads,
-		RayListInterface<N>* pCP, SimpleMaterialListHost* pMatList,
+		RayListInterface<N>* pCP, MonteRayMaterialListHost* pMatList,
 		MonteRay_MaterialProperties* pMatProps )
 {
 	gpuTallyType_t* tally_device;

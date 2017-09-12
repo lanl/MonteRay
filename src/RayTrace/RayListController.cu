@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "GridBins.h"
-#include "SimpleMaterialList.h"
+#include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.h"
 #include "RayListInterface.hh"
@@ -18,7 +18,7 @@ RayListController<N>::RayListController(
 		unsigned blocks,
         unsigned threads,
         GridBinsHost* pGB,
-        SimpleMaterialListHost* pML,
+        MonteRayMaterialListHost* pML,
         MonteRay_MaterialProperties* pMP,
         gpuTallyHost* pT ) :
         nBlocks(blocks),

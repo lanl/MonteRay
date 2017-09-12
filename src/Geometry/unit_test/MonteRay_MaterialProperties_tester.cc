@@ -43,7 +43,6 @@ SUITE( MaterialProperties_tests ) {
     };
 
     TEST(Ctor_withLnk3dnt){
-
         ReadLnk3dnt readerObject( "lnk3dnt/3iso_3shell_godiva.lnk3dnt" );
         readerObject.ReadMatData();
 

@@ -61,18 +61,18 @@ SUITE( RayListInterface_fi_tester ) {
         h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
         o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
-        SimpleMaterialHost metal(3);
+        MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
         metal.add(2, u238s, 0.01);
         metal.copyToGPU();
 
-        SimpleMaterialHost water(2);
+        MonteRayMaterialHost water(2);
         water.add(0, h1s, 0.667 );
         water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2,5);
+        MonteRayMaterialListHost matList(2,5);
         matList.add( 0, metal, 0 );
         matList.add( 1, water, 1 );
         matList.copyToGPU();
@@ -120,18 +120,18 @@ SUITE( RayListInterface_fi_tester ) {
         h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
         o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
-        SimpleMaterialHost metal(3);
+        MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
         metal.add(2, u238s, 0.01);
         metal.copyToGPU();
 
-        SimpleMaterialHost water(2);
+        MonteRayMaterialHost water(2);
         water.add(0, h1s, 0.667 );
         water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2,5);
+        MonteRayMaterialListHost matList(2,5);
         matList.add( 0, metal, 2 );
         matList.add( 1, water, 3 );
         matList.copyToGPU();
@@ -188,18 +188,18 @@ SUITE( RayListInterface_fi_tester ) {
         h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
         o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
-        SimpleMaterialHost metal(3);
+        MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
         metal.add(2, u238s, 0.01);
         metal.copyToGPU();
 
-        SimpleMaterialHost water(2);
+        MonteRayMaterialHost water(2);
         water.add(0, h1s, 0.667 );
         water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2,5);
+        MonteRayMaterialListHost matList(2,5);
         matList.add( 0, metal, 2 );
         matList.add( 1, water, 3 );
         matList.copyToGPU();
@@ -272,18 +272,18 @@ SUITE( RayListInterface_fi_tester ) {
         h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
         o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
-        SimpleMaterialHost metal(3);
+        MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
         metal.add(2, u238s, 0.01);
         metal.copyToGPU();
 
-        SimpleMaterialHost water(2);
+        MonteRayMaterialHost water(2);
         water.add(0, h1s, 0.667 );
         water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2,5);
+        MonteRayMaterialListHost matList(2,5);
         matList.add( 0, metal, 2 );
         matList.add( 1, water, 3 );
         matList.copyToGPU();
@@ -369,18 +369,18 @@ SUITE( Collision_fi_looping_tester ) {
         h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
         o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
 
-        SimpleMaterialHost metal(3);
+        MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
         metal.add(1, u235s, 0.98);
         metal.add(2, u238s, 0.01);
         metal.copyToGPU();
 
-        SimpleMaterialHost water(2);
+        MonteRayMaterialHost water(2);
         water.add(0, h1s, 0.667 );
         water.add(1, o16s, 0.333 );
         water.copyToGPU();
 
-        SimpleMaterialListHost matList(2,5);
+        MonteRayMaterialListHost matList(2,5);
         matList.add( 0, metal, 2 );
         matList.add( 1, water, 3 );
         matList.copyToGPU();

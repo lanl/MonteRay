@@ -116,7 +116,7 @@ public:
     void finalize() {
     	MonteRay::finalize(ptr);
     }
-    GridBins* getPtr() { return ptr; }
+    const GridBins* getPtr() const { return ptr; }
 
     void write(std::ostream& outfile) const;
     void  read(std::istream& infile);
