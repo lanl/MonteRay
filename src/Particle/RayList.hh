@@ -29,6 +29,8 @@ public:
 
 	CUDAHOST_CALLABLE_MEMBER ~RayList_t();
 
+	CUDAHOST_CALLABLE_MEMBER std::string className() { return std::string("RayList_t");}
+
 	CUDAHOST_CALLABLE_MEMBER void init() {
 		nAllocated = 0;
 		nUsed = 0;

@@ -14,7 +14,7 @@ public:
 			std::cout << "Debug: AllocBase:new -- Custom new operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len, isManagedMemory);
+		return MONTERAYHOSTALLOC(len, isManagedMemory, std::string("ManagedMemoryBase::new()") );
 	}
 
 	CUDAHOST_CALLABLE_MEMBER static void* operator new[](size_t len) {
@@ -24,7 +24,7 @@ public:
 			std::cout << "Debug: AllocBase:new[] -- Custom new[] operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len, isManagedMemory);
+		return MONTERAYHOSTALLOC(len, isManagedMemory, std::string("ManagedMemoryBase::new[]"));
 	}
 
 	CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {

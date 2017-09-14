@@ -189,12 +189,19 @@ gpuFloatType_t getAtomicWeight(struct MonteRayMaterial* ptr ) {
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getMicroTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E){
-    gpuFloatType_t total = 0.0f;
+	const bool debug = false;
+
+	if( debug ) printf("Debug: MonteRayMaterials::getMicroTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E)\n");
+
+	gpuFloatType_t total = 0.0f;
+	if( debug ) printf("Debug: MonteRayMaterials::getMicroTotalXS -- ptr->numIsotopes = %d\n", ptr->numIsotopes);
     for( unsigned i=0; i<ptr->numIsotopes; ++i){
+    	if( debug ) printf("Debug: MonteRayMaterials::getMicroTotalXS i = %d \n", i);
         if( ptr->xs[i] != 0 ) {
             total += getTotalXS( ptr->xs[i], pHash, HashBin, E) * ptr->fraction[i];
         }
     }
+    if( debug ) printf("Debug: MonteRayMaterials::getMicroTotalXS -- total microscopic xsec = %f \n", total );
     return total;
 }
 
@@ -211,7 +218,8 @@ gpuFloatType_t getMicroTotalXS(const struct MonteRayMaterial* ptr, gpuFloatType_
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density){
-    return getMicroTotalXS(ptr, pHash, HashBin, E ) * density * gpu_AvogadroBarn / ptr->AtomicWeight;
+//	printf("Debug: MonteRayMaterials::getTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density)\n");
+	return getMicroTotalXS(ptr, pHash, HashBin, E ) * density * gpu_AvogadroBarn / ptr->AtomicWeight;
 }
 
 CUDA_CALLABLE_MEMBER

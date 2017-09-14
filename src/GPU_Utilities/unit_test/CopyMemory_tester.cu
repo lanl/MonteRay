@@ -12,7 +12,15 @@ SUITE( CopyMemory_tester ) {
 		testCopyClass() : CopyMemoryBase<testCopyClass>() {
 			init();
 		}
-		~testCopyClass(){}
+		~testCopyClass(){
+			if( Base::isCudaIntermediate ) {
+				// MonteRayDeviceFree( x );
+			} else {
+				// MonteRayHostFree( x, Base::isManagedMemory );
+			}
+		}
+
+		std::string className(){ return std::string("testCopyClass");}
 
 		void init() {
 			A = 10;
@@ -52,6 +60,8 @@ SUITE( CopyMemory_tester ) {
 		testCopyClass* test = new testCopyClass();
 
 		CHECK_EQUAL( 40, sizeof(testCopyClass) );
+
+		delete test;
 	}
 
 	TEST( CopyMemory_initialize ) {
@@ -61,6 +71,8 @@ SUITE( CopyMemory_tester ) {
 		CHECK_EQUAL( 10U, test->intermediatePtr->A );
 		CHECK_EQUAL( 20U, test->B );
 		CHECK_EQUAL( 20U, test->intermediatePtr->B );
+
+		delete test;
 	}
 
 	__global__ void kernelSumAandB(testCopyClass* A, testCopyClass* B, testCopyClass* C) {
@@ -89,22 +101,33 @@ SUITE( CopyMemory_tester ) {
 
 		CHECK_EQUAL(1110, test3->A);
 		CHECK_EQUAL(2220, test3->B);
+
+		delete test1;
+		delete test2;
+		delete test3;
 	}
 #if true
 	class testClassWithArray : public CopyMemoryBase<testClassWithArray> {
 	public:
+		using Base = MonteRay::CopyMemoryBase<testClassWithArray> ;
 		testClassWithArray(unsigned num = 1, double mult = 1.0) : CopyMemoryBase() {
 			N = num;
 			multiple = mult;
-			elements = (gpuFloatType_t*) MonteRayHostAlloc( N * sizeof( gpuFloatType_t ), false);
+			elements = (gpuFloatType_t*) MONTERAYHOSTALLOC( N * sizeof( gpuFloatType_t ), false, std::string("testClassWithArray") );
 
 			for( unsigned i=0; i<N; ++i) {
 				elements[i] = 0.0;
 			}
 		}
 		~testClassWithArray(){
-			MonteRayHostFree( elements, false );
+			if( Base::isCudaIntermediate ) {
+				MonteRayDeviceFree( elements );
+			} else {
+				MonteRayHostFree( elements, Base::isManagedMemory );
+			}
 		}
+
+		std::string className(){ return std::string("testClassWithArray");}
 
 		void init() {
 			multiple = 0.0;
@@ -130,7 +153,7 @@ SUITE( CopyMemory_tester ) {
 			if( isCudaIntermediate ) {
 				// host to device
 				if( N == 0 ) {
-					elements = (gpuFloatType_t*) MonteRayDeviceAlloc( rhs->N*sizeof(gpuFloatType_t) );
+					elements = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->N*sizeof(gpuFloatType_t), std::string("device - testClassWithArray::elements") );
 				}
 				MonteRayMemcpy( elements, rhs->elements, rhs->N*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
 			} else {
@@ -191,6 +214,10 @@ TEST( add_vectors_w_copyToCPU ) {
 	CHECK_CLOSE( 2020.0, C->elements[1], 1e-6);
 	CHECK_CLOSE( 3030.0, C->elements[2], 1e-6);
 	CHECK_CLOSE( 4040.0, C->elements[3], 1e-6);
+
+	delete A;
+	delete B;
+	delete C;
 }
 #endif
 }

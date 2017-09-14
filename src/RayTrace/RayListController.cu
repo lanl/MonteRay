@@ -154,15 +154,19 @@ RayListController<N>::flush(bool final){
 template<unsigned N >
 void
 RayListController<N>::flushToFile(bool final){
-	if( final ) {
-		std::cout << "Debug: RayListController::flushToFile - starting -- final = true \n";
-	} else {
-		std::cout << "Debug: RayListController::flushToFile - starting -- final = false \n";
+	const bool debug = false;
+
+	if( debug ) {
+		if( final ) {
+			std::cout << "Debug: RayListController::flushToFile - starting -- final = true \n";
+		} else {
+			std::cout << "Debug: RayListController::flushToFile - starting -- final = false \n";
+		}
 	}
 
 	if( ! fileIsOpen ) {
 		try {
-			std::cout << "Debug: RayListController::flushToFile - opening file, filename=" << outputFileName << "\n";
+			if( debug ) std::cout << "Debug: RayListController::flushToFile - opening file, filename=" << outputFileName << "\n";
 			currentBank->openOutput( outputFileName );
 		} catch ( ... ) {
 	        std::stringstream msg;
@@ -176,7 +180,7 @@ RayListController<N>::flushToFile(bool final){
 	}
 
 	try {
-		std::cout << "Debug: RayListController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
+		if( debug )  std::cout << "Debug: RayListController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
 		currentBank->writeBank();
 	} catch ( ... ) {
         std::stringstream msg;
@@ -190,7 +194,7 @@ RayListController<N>::flushToFile(bool final){
 
 	if( final ) {
 		try {
-			std::cout << "Debug: RayListController::flushToFile - file flush, closing collision file\n";
+			if( debug ) std::cout << "Debug: RayListController::flushToFile - file flush, closing collision file\n";
 			currentBank->closeOutput();
 		} catch ( ... ) {
 	        std::stringstream msg;

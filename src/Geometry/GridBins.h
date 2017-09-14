@@ -117,6 +117,7 @@ public:
     	MonteRay::finalize(ptr);
     }
     const GridBins* getPtr() const { return ptr; }
+    const GridBins* getPtrDevice() const { return ptr_device; }
 
     void write(std::ostream& outfile) const;
     void  read(std::istream& infile);

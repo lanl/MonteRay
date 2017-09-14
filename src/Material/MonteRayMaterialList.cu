@@ -165,7 +165,8 @@ const MonteRayMaterial* getMaterial(const MonteRayMaterialList* ptr, unsigned i 
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const MonteRayMaterialList* ptr, unsigned i, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density) {
-    return getTotalXS( getMaterial(ptr,i), pHash, HashBin, E, density );
+//	printf("Debug: MonteRayMaterials::getTotalXS(const MonteRayMaterialList* ptr, unsigned i, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density)\n");
+	return getTotalXS( getMaterial(ptr,i), pHash, HashBin, E, density );
 }
 
 CUDA_CALLABLE_MEMBER

@@ -15,18 +15,24 @@ public:
 		if( debug ) {
 			std::cout << "Debug: CopyMemoryBase::CopyMemoryBase() -- allocating " << sizeof( Derived ) << " bytes\n";
 		}
-		devicePtr = (Derived*) MonteRayDeviceAlloc( sizeof( Derived ) );
-		intermediatePtr = (Derived*) MonteRayHostAlloc(sizeof( Derived ), isManagedMemory);
+		devicePtr = (Derived*) MONTERAYDEVICEALLOC( sizeof( Derived ), intermediatePtr->Derived::className() + std::string("::devicePtr") );
+		intermediatePtr = (Derived*) MONTERAYHOSTALLOC(sizeof( Derived ), isManagedMemory, intermediatePtr->Derived::className() + std::string("::intermediatePtr"));
 		intermediatePtr->Derived::init();
 		intermediatePtr->isCudaIntermediate = true;
 	}
 
 	CUDAHOST_CALLABLE_MEMBER virtual ~CopyMemoryBase(){
-		deleteGPUMemory();
+		if( ! isCudaIntermediate ) {
+			if( debug ) std::cout << "Debug: CopyMemoryBase::~CopyMemoryBase() -- calling intermediatePtr->Derived::~Derived()\n";
+			intermediatePtr->Derived::~Derived();
+			if( debug ) std::cout << "Debug: CopyMemoryBase::~CopyMemoryBase() -- calling deleteGPUMemory()\n";
+			deleteGPUMemory();
+		}
 	}
 
 	CUDAHOST_CALLABLE_MEMBER virtual void init() = 0;
 	CUDAHOST_CALLABLE_MEMBER virtual void copy(const Derived* rhs) = 0;
+	CUDAHOST_CALLABLE_MEMBER virtual std::string className() = 0;
 
 	CUDAHOST_CALLABLE_MEMBER static void* operator new(size_t len) {
 
@@ -35,7 +41,7 @@ public:
 			std::cout << "Debug: CopyMemoryBase::new -- Custom new operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len, isManagedMemory );
+		return MONTERAYHOSTALLOC(len, isManagedMemory, std::string("MonteRayCopyMemory::new()") );
 	}
 
 	CUDAHOST_CALLABLE_MEMBER static void* operator new[](size_t len) {
@@ -45,7 +51,7 @@ public:
 			std::cout << "Debug: CopyMemoryBase::new[] -- Custom new[] operator, size=" << len << "\n";
 		}
 #endif
-		return MonteRayHostAlloc(len, isManagedMemory );
+		return MONTERAYHOSTALLOC(len, isManagedMemory, std::string("MonteRayCopyMemory::::new[]") );
 	}
 
 	CUDAHOST_CALLABLE_MEMBER virtual void copyToGPU(void) {
@@ -75,7 +81,9 @@ public:
 	}
 
 	CUDAHOST_CALLABLE_MEMBER virtual void deleteGPUMemory(){
+		if( debug ) std::cout << "Debug: CopyMemoryBase::deleteGPUMemory -- calling MonteRayHostFree( intermediatePtr )\n";
 		MonteRayHostFree(intermediatePtr, isManagedMemory);
+		if( debug ) std::cout << "Debug: CopyMemoryBase::deleteGPUMemory -- calling MonteRayDeviceFree( devicePtr )\n";
 		MonteRayDeviceFree( devicePtr );
 	}
 

@@ -246,7 +246,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
     	unsigned offset = 0;
 
     	while( ! end ) {
-    		std::cout << "Debug: reading to bank\n";
+//    		std::cout << "Debug: reading to bank\n";
     		end = bank1.readToBank( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin", offset );
     		offset += bank1.size();
 

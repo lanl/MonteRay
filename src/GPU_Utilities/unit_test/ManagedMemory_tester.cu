@@ -15,6 +15,7 @@ SUITE( ManagedMemory_tester ) {
 	TEST( ManagedMemory_ctor_with_new ) {
 		testClass* test = new testClass(4);
 		CHECK_EQUAL(4, test->N);
+		delete test;
 	}
 
 	TEST_FIXTURE(ManagedMemoryTestHelper, add_vectors ) {
@@ -42,6 +43,10 @@ SUITE( ManagedMemory_tester ) {
 		CHECK_CLOSE( 2020.0, C->elements[1], 1e-6);
 		CHECK_CLOSE( 3030.0, C->elements[2], 1e-6);
 		CHECK_CLOSE( 4040.0, C->elements[3], 1e-6);
+
+		delete A;
+		delete B;
+		delete C;
 	}
 
 	TEST_FIXTURE(ManagedMemoryTestHelper, add_vectors_w_copyToCPU ) {
@@ -75,6 +80,10 @@ SUITE( ManagedMemory_tester ) {
 		CHECK_CLOSE( 2020.0, C->elements[1], 1e-6);
 		CHECK_CLOSE( 3030.0, C->elements[2], 1e-6);
 		CHECK_CLOSE( 4040.0, C->elements[3], 1e-6);
+
+		delete A;
+		delete B;
+		delete C;
 	}
 
 }

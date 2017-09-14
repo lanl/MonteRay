@@ -108,7 +108,7 @@ SUITE( HashLookup_tester ) {
     	delete xs;
     }
     TEST( fill_lower_bin_array ){
-    	std::cout << "Debug: starting fill_lower_bin_array\n";
+//    	std::cout << "Debug: starting fill_lower_bin_array\n";
     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 4.0 );
     	xs->setTotalXS(1, 1.25, 4.0 );
@@ -122,7 +122,7 @@ SUITE( HashLookup_tester ) {
     	xs->setTotalXS(9, 10.0, 3.0 );
 
     	HashLookupHost hash(4, 10);
-    	std::cout << "Debug:calling add isotope\n";
+//    	std::cout << "Debug:calling add isotope\n";
     	hash.addIsotope( xs );
     	CHECK_EQUAL(1, hash.getNumIsotopes() );
     	CHECK_EQUAL(10, hash.getNBins() );
@@ -131,7 +131,7 @@ SUITE( HashLookup_tester ) {
 
     	unsigned isotopeNum = 0;
     	// check getBinBoundIndex
-    	std::cout << "Debug:calling testing indexs \n";
+//    	std::cout << "Debug:calling testing indexs \n";
     	CHECK_EQUAL(0, hash.getBinBoundIndex(0,0));
 //    	CHECK_EQUAL(1, hash.getBinBoundIndex(1,0));
 //    	CHECK_EQUAL(2, hash.getBinBoundIndex(2,0));
@@ -163,7 +163,7 @@ SUITE( HashLookup_tester ) {
     }
 
     TEST( getTotalXS_via_hash ){
-    	std::cout << "Debug: starting getTotalXS_via_hash\n";
+//    	std::cout << "Debug: starting getTotalXS_via_hash\n";
     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 1.0 );
     	xs->setTotalXS(1, 1.25, 4.0 );

@@ -312,7 +312,7 @@ GridBinsHost::GridBinsHost( std::vector<double> x, std::vector<double> y, std::v
 
 GridBinsHost::~GridBinsHost(){
 	free( ptr );
-#ifdef CUDA
+#ifdef __CUDACC__
 	if( cudaCopyMade ) {
 		if( ptr_device != NULL ) {
 			cudaFree( ptr_device );
@@ -322,10 +322,12 @@ GridBinsHost::~GridBinsHost(){
 }
 
 void GridBinsHost::copyToGPU(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
 	cudaCopyMade = true;
 	CUDA_CHECK_RETURN( cudaMalloc( &ptr_device, sizeof(GridBins) ));
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof(GridBins), cudaMemcpyHostToDevice ));
+#else
+	throw std::runtime_error("GridBinsHost::copyToGPU -- Can not copy to GPU without CUDA.")
 #endif
 }
 

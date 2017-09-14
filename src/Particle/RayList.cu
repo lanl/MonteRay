@@ -10,7 +10,7 @@ RayList_t<N>::RayList_t(RayListSize_t num) {
 		std::cout << "RayList_t::RayList_t(n), n=" << num << " \n";
 	}
 	init();
-	points = (RAY_T*) MonteRayHostAlloc( num*sizeof( RAY_T ), Base::isManagedMemory );
+	points = (RAY_T*) MONTERAYHOSTALLOC( num*sizeof( RAY_T ), Base::isManagedMemory, "host RayList_t::points" );
 	nAllocated = num;
 }
 
@@ -60,7 +60,7 @@ RayList_t<N>::copy(const RayList_t<N>* rhs) {
 	if( Base::isCudaIntermediate ) {
 		// target is the intermediate, origin is the host
 		if( points == NULL ) {
-			points = (RAY_T*) MonteRayDeviceAlloc( rhs->nAllocated*sizeof(RAY_T) );
+			points = (RAY_T*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(RAY_T), "device - RayList_t::points" );
 		}
 		MonteRayMemcpy(points, rhs->points, rhs->nAllocated*sizeof(RAY_T), cudaMemcpyHostToDevice);
 	} else {

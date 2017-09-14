@@ -198,7 +198,7 @@ gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) {
-
+//	printf("Debug: MonteRayCrossSection::getTotalXS(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E )\n");
     if( E > pXS->energies[ pXS->numPoints-1] ) {
         return pXS->totalXS[ pXS->numPoints-1];
     }

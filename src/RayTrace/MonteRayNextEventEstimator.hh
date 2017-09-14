@@ -1,11 +1,14 @@
 #ifndef MONTERAYNEXTEVENTESTIMATOR_HH_
 #define MONTERAYNEXTEVENTESTIMATOR_HH_
 
+#include <iostream>
+
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.hh"
 #include "GPUErrorCheck.hh"
+#include "GPUAtomicAdd.hh"
+#include "RayList.hh"
 
-#include "Ray.hh"
 #include "gpuRayTrace.h"
 #include "GridBins.h"
 #include "MonteRay_MaterialProperties.hh"
@@ -20,20 +23,41 @@ public:
 	typedef gpuFloatType_t position_t;
 	using Base = MonteRay::CopyMemoryBase<MonteRayNextEventEstimator> ;
 
+	CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRayNextEventEstimator");}
+
 	CUDAHOST_CALLABLE_MEMBER MonteRayNextEventEstimator(unsigned num){
 		if( num == 0 ) { num = 1; }
 		if( Base::debug ) {
 			std::cout << "RayList_t::RayList_t(n), n=" << num << " \n";
 		}
 		init();
-		x = (position_t*) MonteRayHostAlloc( num*sizeof( position_t ), Base::isManagedMemory );
-		y = (position_t*) MonteRayHostAlloc( num*sizeof( position_t ), Base::isManagedMemory );
-		z = (position_t*) MonteRayHostAlloc( num*sizeof( position_t ), Base::isManagedMemory );
-		tally = (tally_t*) MonteRayHostAlloc( num*sizeof( tally_t ), Base::isManagedMemory );
+		x = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "x" );
+		y = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "y" );
+		z = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "z" );
+		if( Base::debug ) {
+			std::cout << "RayList_t::RayList_t -- allocating host tally memory. \n";
+		}
+		tally = (tally_t*) MONTERAYHOSTALLOC( num*sizeof( tally_t ), Base::isManagedMemory, "tally" );
 		nAllocated = num;
+
+		for( auto i=0; i<num; ++i){
+			tally[i] = 0.0;
+		}
 	}
 
-	CUDAHOST_CALLABLE_MEMBER ~MonteRayNextEventEstimator(){}
+	CUDAHOST_CALLABLE_MEMBER ~MonteRayNextEventEstimator(){
+		if( Base::isCudaIntermediate ) {
+			if( x != NULL )	{ MonteRayDeviceFree( x ); }
+			if( y != NULL )	{ MonteRayDeviceFree( y ); }
+			if( z != NULL )	{ MonteRayDeviceFree( z ); }
+			if( tally != NULL )	{ MonteRayDeviceFree( tally ); }
+		} else {
+			if( x != NULL )	{ MonteRayHostFree( x, Base::isManagedMemory ); }
+			if( y != NULL )	{ MonteRayHostFree( y, Base::isManagedMemory ); }
+			if( z != NULL )	{ MonteRayHostFree( z, Base::isManagedMemory ); }
+			if( tally != NULL )	{ MonteRayHostFree( tally, Base::isManagedMemory ); }
+		}
+	}
 
 	CUDAHOST_CALLABLE_MEMBER void init() {
 		nUsed = 0;
@@ -41,6 +65,7 @@ public:
 		radius = 0.0;
 		x = NULL;
 		y = NULL;
+		z = NULL;
 		tally = NULL;
 
 		pGridBinsHost = NULL;
@@ -49,6 +74,8 @@ public:
 		pMatProps = NULL;
 		pMatListHost = NULL;
 		pMatList = NULL;
+		pHash = NULL;
+		pHashHost = NULL;
 	}
 
 	CUDAHOST_CALLABLE_MEMBER void copy(const MonteRayNextEventEstimator* rhs) {
@@ -72,29 +99,41 @@ public:
 		if( Base::isCudaIntermediate ) {
 			// target is the intermediate, origin is the host
 			if( x == NULL ) {
-				x = (position_t*) MonteRayDeviceAlloc( num*sizeof( position_t ) );
-				y = (position_t*) MonteRayDeviceAlloc( num*sizeof( position_t ) );
-				z = (position_t*) MonteRayDeviceAlloc( num*sizeof( position_t ) );
-				tally = (tally_t*) MonteRayDeviceAlloc( num*sizeof( tally_t ) );
+				x = (position_t*) MONTERAYDEVICEALLOC( num*sizeof( position_t ), "x" );
 			}
+			if( y == NULL )	{
+				y = (position_t*) MONTERAYDEVICEALLOC( num*sizeof( position_t ), "y" );
+			}
+			if( z == NULL )	{
+				z = (position_t*) MONTERAYDEVICEALLOC( num*sizeof( position_t ), "z" );
+			}
+			if( tally == NULL )	{
+				tally = (tally_t*) MONTERAYDEVICEALLOC( num*sizeof( tally_t ), "tally" );
+			}
+
 			MonteRayMemcpy(x, rhs->x, num*sizeof(position_t), cudaMemcpyHostToDevice);
 			MonteRayMemcpy(y, rhs->y, num*sizeof(position_t), cudaMemcpyHostToDevice);
 			MonteRayMemcpy(z, rhs->z, num*sizeof(position_t), cudaMemcpyHostToDevice);
-			MonteRayMemcpy(tally, rhs->tally, num*sizeof(tally_t), cudaMemcpyHostToDevice);
-			pGridBins = pGridBinsHost->ptr_device;
-			pMatProps = pMatPropsHost->ptrData_device;
-			pMatList = pMatListHost->ptr_device;
-			pHash = pHashHost->getPtrDevice();
+			MonteRayMemcpy( tally, rhs->tally, num*sizeof(tally_t), cudaMemcpyHostToDevice);
+
+			pGridBins = rhs->pGridBinsHost->getPtrDevice();
+			pMatProps = rhs->pMatPropsHost->ptrData_device;
+			pMatList = rhs->pMatListHost->ptr_device;
+			pHash = rhs->pMatListHost->getHashPtr()->getPtrDevice();
 		} else {
 			// target is the host, origin is the intermediate
-			MonteRayMemcpy(rhs->x, x, num*sizeof(position_t), cudaMemcpyDeviceToHost);
-			MonteRayMemcpy(rhs->y, y, num*sizeof(position_t), cudaMemcpyDeviceToHost);
-			MonteRayMemcpy(rhs->z, z, num*sizeof(position_t), cudaMemcpyDeviceToHost);
-			MonteRayMemcpy(rhs->tally, tally, num*sizeof(tally_t), cudaMemcpyDeviceToHost);
+
+			if( Base::debug ) std::cout << "Debug: MonteRayNextEventEstimator::copy - copying tally from device to host\n";
+			MonteRayMemcpy( tally, rhs->tally, num*sizeof(tally_t), cudaMemcpyDeviceToHost);
+			if( Base::debug ) std::cout << "Debug: MonteRayNextEventEstimator::copy - DONE copying tally from device to host\n";
 		}
 
 		nAllocated = rhs->nAllocated;
 		nUsed = rhs->nUsed;
+
+		if( Base::debug ) {
+			std::cout << "Debug: MonteRayNextEventEstimator::copy -- exitting." << std::endl;
+		}
 	}
 
 	CUDAHOST_CALLABLE_MEMBER unsigned add( position_t xarg, position_t yarg, position_t zarg) {
@@ -116,6 +155,8 @@ public:
 	CUDA_CALLABLE_MEMBER position_t getX(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return x[i]; }
 	CUDA_CALLABLE_MEMBER position_t getY(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return y[i]; }
 	CUDA_CALLABLE_MEMBER position_t getZ(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return z[i]; }
+
+	CUDA_CALLABLE_MEMBER tally_t getTally(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return tally[i]; }
 
 	CUDA_CALLABLE_MEMBER position_t distance(unsigned i, position_t x,  position_t y, position_t z ) const {
 		using namespace std;
@@ -157,7 +198,7 @@ public:
 			ParticleType_t particleType
 			)
 	{
-		const bool debug = true;
+		const bool debug = false;
 
 		MONTERAY_ASSERT(detectorIndex<nUsed);
 		tally_t score = 0.0;
@@ -189,6 +230,7 @@ public:
 			}
 			gpuFloatType_t materialXS[MAXNUMMATERIALS];
 			for( unsigned i=0; i < pMatList->numMaterials; ++i ){
+				if( Base::debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d\n", i);
 				materialXS[i] = getTotalXS( pMatList, i, pHash, HashBin, energy, 1.0);
 				if( debug ) {
 					printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d, materialXS=%f\n", i, materialXS[i]);
@@ -226,6 +268,42 @@ public:
 		return score;
 	}
 
+	template<unsigned N>
+	CUDA_CALLABLE_MEMBER void score( const RayList_t<N>* pRayList, unsigned tid ) {
+		const bool debug = false;
+
+		if( debug ) {
+			printf("Debug: MonteRayNextEventEstimator::score -- tid=%d .\n" , tid);
+		}
+		tally_t value = calcScore<N>( pRayList->points[tid].detectorIndex,
+								   pRayList->points[tid].pos[0],
+								   pRayList->points[tid].pos[1],
+								   pRayList->points[tid].pos[2],
+								   pRayList->points[tid].dir[0],
+								   pRayList->points[tid].dir[1],
+								   pRayList->points[tid].dir[2],
+								   pRayList->points[tid].energy,
+								   pRayList->points[tid].weight,
+								   pRayList->points[tid].index,
+								   pRayList->points[tid].particleType);
+		if( debug ) {
+			printf("Debug: MonteRayNextEventEstimator::score -- value=%f.\n" , value);
+		}
+		gpu_atomicAdd( &tally[pRayList->points[tid].detectorIndex], value );
+	}
+
+	template<unsigned N>
+	void cpuScoreRayList( const RayList_t<N>* pRayList ) {
+		for( auto i=0; i<pRayList->size(); ++i ) {
+			score(pRayList,i);
+		}
+	}
+
+#ifdef __CUDACC__
+	template<unsigned N>
+	void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t stream, const RayList_t<N>* pRayList );
+#endif
+
 	CUDAHOST_CALLABLE_MEMBER void setGeometry(const GridBinsHost* pGrid, const MonteRay_MaterialProperties* pMPs) {
 		pGridBinsHost = pGrid;
 		pGridBins = pGrid->getPtr();
@@ -260,6 +338,11 @@ private:
 	const HashLookupHost* pHashHost;
 	const HashLookup* pHash;
 };
+
+#ifdef __CUDACC__
+template<unsigned N>
+CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator* ptr, const RayList_t<N>* pRayList );
+#endif
 
 } /* namespace MonteRay */
 
