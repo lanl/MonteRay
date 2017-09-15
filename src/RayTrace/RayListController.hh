@@ -2,6 +2,8 @@
 #define RAYLISTCONTROLLER_H_
 
 #include <string>
+#include <memory>
+#include <functional>
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_timer.hh"
@@ -13,11 +15,13 @@ class GridBinsHost;
 class MonteRayMaterialListHost;
 class MonteRay_MaterialProperties;
 class gpuTallyHost;
+class MonteRayNextEventEstimator;
 
 template<unsigned N = 1>
 class RayListController {
 public:
 
+	/// Ctor for the volumetric ray casting solver
 	RayListController(unsigned nBlocks,
 			                 unsigned nThreads,
 			                 GridBinsHost*,
@@ -25,8 +29,17 @@ public:
 			                 MonteRay_MaterialProperties*,
 			                 gpuTallyHost* );
 
+	/// Ctor for the next event estimator solver
+	RayListController(unsigned nBlocks,
+				                 unsigned nThreads,
+				                 GridBinsHost*,
+				                 MonteRayMaterialListHost*,
+				                 MonteRay_MaterialProperties*,
+				                 unsigned numPointDets );
+
 	virtual ~RayListController();
 
+	void initialize();
 	unsigned capacity(void) const;
 	unsigned size(void) const;
 	void setCapacity(unsigned n );
@@ -34,6 +47,12 @@ public:
     void add( const Ray_t<N>& ray);
     void add( const Ray_t<N>* rayArray, unsigned num=1 );
     void add( const void* ray, unsigned num=1 ) { add(  (const Ray_t<N>*) ray, num  ); }
+
+    unsigned addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z );
+    void setPointDetExclusionRadius(gpuFloatType_t r);
+    void copyPointDetTallyToCPU(void);
+    gpuTallyType_t getPointDetTally(unsigned i ) const;
+    void copyPointDetToGPU(void);
 
     void flush(bool final=false);
     void finalFlush(void);
@@ -66,6 +85,10 @@ public:
     	currentBank->debugPrint();
     }
 
+    bool isUsingNextEventEstimator(void) const {
+    	return usingNextEventEstimator;
+    }
+
 private:
 	unsigned nBlocks;
 	unsigned nThreads;
@@ -73,6 +96,7 @@ private:
 	MonteRayMaterialListHost* pMatList;
 	MonteRay_MaterialProperties* pMatProps;
 	gpuTallyHost* pTally;
+	std::shared_ptr<MonteRayNextEventEstimator> pNextEventEstimator;
 
 	RayListInterface<N>* currentBank;
 	RayListInterface<N>* bank1;
@@ -91,9 +115,15 @@ private:
 	std::string outputFileName;
 
     void sendToFile(void) { toFile = true; }
+
+    bool usingNextEventEstimator = false;
+
+    typedef std::function<void ( void )> kernel_t;
+    kernel_t kernel;
 };
 
 typedef RayListController<1> CollisionPointController;
+typedef RayListController<3> NextEventEstimatorController;
 
 } /* namespace MonteRay */
 

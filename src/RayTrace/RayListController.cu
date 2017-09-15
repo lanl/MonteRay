@@ -10,6 +10,7 @@
 #include "ExpectedPathLength.h"
 #include "GPUErrorCheck.hh"
 #include "GPUSync.hh"
+#include "MonteRayNextEventEstimator.hh"
 
 namespace MonteRay {
 
@@ -20,20 +21,59 @@ RayListController<N>::RayListController(
         GridBinsHost* pGB,
         MonteRayMaterialListHost* pML,
         MonteRay_MaterialProperties* pMP,
-        gpuTallyHost* pT ) :
+        gpuTallyHost* pT
+	) :
         nBlocks(blocks),
         nThreads(threads),
         pGrid( pGB ),
         pMatList( pML ),
         pMatProps( pMP ),
-        pTally(pT),
-        nFlushs(0),
-        cpuTime(0.0),
-        gpuTime(0.0),
-        wallTime(0.0),
-        toFile( false ),
-        fileIsOpen( false)
+        pTally(pT)
 {
+	pNextEventEstimator.reset();
+	initialize();
+	kernel = [&] ( void ) {
+		rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device,
+				currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device,
+				pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+				pTally->temp->tally);
+	};
+
+}
+
+template<unsigned N >
+RayListController<N>::RayListController(
+		unsigned blocks,
+        unsigned threads,
+        GridBinsHost* pGB,
+        MonteRayMaterialListHost* pML,
+        MonteRay_MaterialProperties* pMP,
+        unsigned numPointDets
+	) :
+        nBlocks(blocks),
+        nThreads(threads),
+        pGrid( pGB ),
+        pMatList( pML ),
+        pMatProps( pMP ),
+        pTally(NULL)
+{
+	pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator>( numPointDets );
+	usingNextEventEstimator = true;
+	initialize();
+	kernel = [&] ( void ) {
+		pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads,stream1, currentBank->getPtrPoints());
+	};
+}
+
+template<unsigned N >
+void
+RayListController<N>::initialize(){
+	nFlushs = 0;
+	cpuTime = 0.0;
+	gpuTime = 0.0;
+	wallTime = 0.0;
+	toFile = false;
+	fileIsOpen = false;
 	bank1 = new RayListInterface<N>(1000000); // default 1 millions
 	bank2 = new RayListInterface<N>(1000000); // default 1 millions
 
@@ -129,10 +169,7 @@ RayListController<N>::flush(bool final){
 	gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 
 	// launch kernel
-	rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device,
-			currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device,
-			pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
-			pTally->temp->tally);
+	kernel();
 
 	// only uncomment for testing, forces the cpu and gpu to sync
 //	gpuErrchk( cudaPeekAtLastError() );
@@ -325,7 +362,54 @@ RayListController<N>::printCycleTime(float_t cpu, float_t gpu, float_t wall) con
 	std::cout << "Debug: cycle wallTime = " << wall << "\n";
 }
 
+template<unsigned N >
+unsigned
+RayListController<N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z ){
+	if( ! isUsingNextEventEstimator() ) {
+		throw std::runtime_error( "RayListController::addPointDet - Next Event Estimator not enabled." );
+	}
+	return pNextEventEstimator->add( x, y, z );
 }
 
+template<unsigned N >
+void
+RayListController<N>::setPointDetExclusionRadius(gpuFloatType_t r){
+	if( ! isUsingNextEventEstimator() ) {
+		throw std::runtime_error( "RayListController::setPointDetExclusionRadius - Next Event Estimator not enabled." );
+	}
+	pNextEventEstimator->setExclusionRadius( r );
+}
+
+template<unsigned N >
+void
+RayListController<N>::copyPointDetTallyToCPU(void) {
+	if( ! isUsingNextEventEstimator() ) {
+		throw std::runtime_error( "RayListController::copyPointDetTallyToCPU - Next Event Estimator not enabled." );
+	}
+	pNextEventEstimator->copyToCPU();
+}
+
+template<unsigned N >
+gpuTallyType_t
+RayListController<N>::getPointDetTally(unsigned i ) const {
+	if( ! isUsingNextEventEstimator() ) {
+		throw std::runtime_error( "RayListController::getPointDetTally - Next Event Estimator not enabled." );
+	}
+	return pNextEventEstimator->getTally(i);
+}
+
+template<unsigned N >
+void
+RayListController<N>::copyPointDetToGPU(void) {
+	if( ! isUsingNextEventEstimator() ) {
+		throw std::runtime_error( "RayListController::getPointDetTally - Next Event Estimator not enabled." );
+	}
+
+	pNextEventEstimator->setGeometry( pGrid, pMatProps );
+	pNextEventEstimator->setMaterialList( pMatList );
+	pNextEventEstimator->copyToGPU();
+}
+
+}
 template class MonteRay::RayListController<1>;
 template class MonteRay::RayListController<3>;
