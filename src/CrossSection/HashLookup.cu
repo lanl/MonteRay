@@ -219,6 +219,9 @@ void HashLookupHost::addIsotope( MonteRayCrossSectionHost* xs ) {
 }
 
 void HashLookupHost::addIsotope( MonteRayCrossSection* xs ) {
+	// hash table is only for neutrons
+	if( getParticleType(xs) == photon ) return;
+
 	xsList.push_back(xs);
 	if( xs->id < 0 ) {
 		bool err = MonteRay::setHashMinMax(ptr, xs );

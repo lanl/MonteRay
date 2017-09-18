@@ -137,7 +137,7 @@ endif()
 # MontRayTestFiles
 # ====================================================================
 find_path( MonteRayTestFiles_location 
-           NAMES 1001_MonteRayCrossSection.bin
+           NAMES 1001-70c_MonteRayCrossSection.bin
            PATHS /local
                  /home/xshares/PROJECTS
                  /home/xshares
@@ -151,7 +151,7 @@ find_path( MonteRayTestFiles_location
 if( NOT EXISTS ${MonteRayTestFiles_location} )
   # try MONTERAY_TESTFILES_DIR environment variable
   find_path( MonteRayTestFiles_location 
-           NAMES 1001_MonteRayCrossSection.bin
+           NAMES 1001-70c_MonteRayCrossSection.bin
            PATHS $ENV{MONTERAY_TESTFILES_DIR}
            DOC "Location of MonteRay Test files." 
            NO_DEFAULT_PATH )

@@ -61,7 +61,27 @@ RayListController<N>::RayListController(
 	usingNextEventEstimator = true;
 	initialize();
 	kernel = [&] ( void ) {
+		const bool debug = false;
+		if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
 		pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads,stream1, currentBank->getPtrPoints());
+	};
+}
+
+template<unsigned N >
+RayListController<N>::RayListController( unsigned numPointDets, std::string filename ) :
+        nBlocks(0),
+        nThreads(0),
+        pGrid( NULL ),
+        pMatList( NULL ),
+        pMatProps( NULL ),
+        pTally(NULL)
+{
+	pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator>( numPointDets );
+	setOutputFileName( filename );
+	usingNextEventEstimator = true;
+	initialize();
+	kernel = [&] ( void ) {
+		throw std::runtime_error( "RayListController<N>::RayListController -- not setup to launch a kernel, file mode only.");
 	};
 }
 
@@ -149,6 +169,9 @@ RayListController<N>::add( const Ray_t<N>* rayArray, unsigned num){
 template<unsigned N >
 void
 RayListController<N>::flush(bool final){
+	const bool debug = false;
+	if( debug ) std::cout << "Debug: RayListController<N>::flush\n";
+
 	if( isSendingToFile() ) { flushToFile(final); }
 
 	if( currentBank->size() == 0 ) {

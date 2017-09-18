@@ -218,20 +218,23 @@ public:
 
 		numberOfCells = cudaRayTrace( pGridBins, cells, crossingDistances, pos, dir, dist, false);
 
+		gpuFloatType_t logEnergies[N];
 		for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
-			gpuFloatType_t energy = energies[energyIndex];
+			logEnergies[energyIndex] = log ( energies[energyIndex] );
+		}
+		for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
+			gpuFloatType_t logEnergy = logEnergies[energyIndex];
 			gpuFloatType_t weight = weights[energyIndex];
 
 			tally_t partialScore = 0.0;
-			unsigned HashBin = getHashBin(pHash, energy);
 
 			if( debug ) {
-				printf("Debug: MonteRayNextEventEstimator::calcScore -- energyIndex=%d, energy=%f, hashIndex=%d, weight=%f\n", energyIndex, energy, HashBin, weight);
+				printf("Debug: MonteRayNextEventEstimator::calcScore -- energyIndex=%d, energy=%f, weight=%f\n", energyIndex, std::exp( logEnergy ),  weight);
 			}
 			gpuFloatType_t materialXS[MAXNUMMATERIALS];
 			for( unsigned i=0; i < pMatList->numMaterials; ++i ){
-				if( Base::debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d\n", i);
-				materialXS[i] = getTotalXS( pMatList, i, pHash, HashBin, energy, 1.0);
+				if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d\n", i);
+				materialXS[i] = getTotalXS( pMatList, i, logEnergy, 1.0);
 				if( debug ) {
 					printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d, materialXS=%f\n", i, materialXS[i]);
 				}
@@ -273,8 +276,13 @@ public:
 		const bool debug = false;
 
 		if( debug ) {
-			printf("Debug: MonteRayNextEventEstimator::score -- tid=%d .\n" , tid);
+			printf("Debug: MonteRayNextEventEstimator::score -- tid=%d, particle=%d .\n",
+					tid,  pRayList->points[tid].particleType);
 		}
+
+		// Neutrons are not yet supported
+		if( pRayList->points[tid].particleType == neutron ) return;
+
 		tally_t value = calcScore<N>( pRayList->points[tid].detectorIndex,
 								   pRayList->points[tid].pos[0],
 								   pRayList->points[tid].pos[1],

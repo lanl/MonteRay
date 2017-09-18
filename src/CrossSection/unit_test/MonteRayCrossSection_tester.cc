@@ -1,8 +1,11 @@
 #include <UnitTest++.h>
 
+#include <cmath>
+
 #include "GPUSync.hh"
 #include "GPUUtilityFunctions.hh"
 #include "MonteRayCrossSection.hh"
+#include "MonteRayConstants.hh"
 
 #include "MonteRayCrossSection_test_helper.hh"
 
@@ -55,14 +58,14 @@ SUITE( MonteRayCrossSection_tester ) {
     TEST_FIXTURE(MonteRayCrossSectionTestHelper, load_u235_from_file)
     {
     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
-    	xs->read( "MonteRayTestFiles/u235_simpleCrossSection.bin");
+    	xs->read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin");
 
     	gpuFloatType_t energy = 2.0;
 
-    	CHECK_EQUAL( 24135, xs->size() );
+    	CHECK_EQUAL( 76525, xs->size() );
     	CHECK_CLOSE( 233.025, xs->getAWR(), 1e-3 );
     	double value = getTotalXS(xs->getXSPtr(), energy);
-    	CHECK_CLOSE( 7.17639378000f, value, 1e-6);
+    	CHECK_CLOSE( 7.14769f, value, 1e-5);
 
     	xs->copyToGPU();
 
@@ -70,7 +73,23 @@ SUITE( MonteRayCrossSection_tester ) {
     	gpuFloatType_t totalXS = launchGetTotalXS( xs, energy);
     	sync.sync();
 
-    	CHECK_CLOSE( 7.17639378000f, totalXS, 1e-7 );
+    	CHECK_CLOSE( 7.14769f, totalXS, 1e-5 );
+
+    	delete xs;
+    }
+
+    TEST_FIXTURE(MonteRayCrossSectionTestHelper, set_photon_ParticleType ) {
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(4);
+
+    	xs->setParticleType( photon );
+    	CHECK_EQUAL( photon, xs->getParticleType() );
+
+    	xs->setTotalXS(0, std::log( 1e-11 ), std::log( 4.0 )  );
+    	xs->setTotalXS(1, std::log(1.0), std::log(3.0) );
+    	xs->setTotalXS(2, std::log(2.0), std::log(2.0) );
+    	xs->setTotalXS(3, std::log(3.0), std::log(1.0) );
+
+    	CHECK_CLOSE( 2.0, xs->getTotalXS( std::log(2.0) ), 1e-7);
 
     	delete xs;
     }

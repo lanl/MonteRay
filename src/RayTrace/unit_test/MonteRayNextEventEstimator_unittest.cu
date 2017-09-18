@@ -1,6 +1,7 @@
 #include <UnitTest++.h>
 
 #include <memory>
+#include <cmath>
 
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
@@ -225,10 +226,11 @@ SUITE( NextEventEstimator_Tester ) {
 
 			// setup a material list
 			pXS = std::unique_ptr<MonteRayCrossSectionHost> ( new MonteRayCrossSectionHost(4) );
-			pXS->setTotalXS(0,  1e-11, 1.0 );
-			pXS->setTotalXS(1,  0.75, 1.0 );
-			pXS->setTotalXS(2,  1.00, 2.0 );
-			pXS->setTotalXS(3,  3.00, 4.0 );
+			pXS->setParticleType( photon );
+			pXS->setTotalXS(0,  std::log( 1e-11 ), std::log( 1.0 ) );
+			pXS->setTotalXS(1,  std::log( 0.75 ),  std::log( 1.0 ) );
+			pXS->setTotalXS(2,  std::log( 1.00 ),  std::log( 2.0 ) );
+			pXS->setTotalXS(3,  std::log( 3.00 ),  std::log( 4.0 ) );
 			pXS->setAWR( gpu_AvogadroBarn / gpu_neutron_molar_mass );
 
 			pMat = std::unique_ptr<MonteRayMaterialHost>( new MonteRayMaterialHost(1) );
@@ -264,8 +266,8 @@ SUITE( NextEventEstimator_Tester ) {
 
 #ifndef MEMCHECK
 	TEST_FIXTURE(CalcScore_test, calcScore_vacuum ) {
-		CHECK_CLOSE( 1.0, pXS->getTotalXS( 0.5 ), 1e-6 );
-		CHECK_CLOSE(1.0, pMat->getTotalXS( 0.5 ), 1e-6 );
+		CHECK_CLOSE( 1.0, pXS->getTotalXS( std::log( 0.5 ) ), 1e-6 );
+		CHECK_CLOSE( 1.0, pMat->getTotalXS( std::log( 0.5 ) ), 1e-6 );
 
         unsigned id = pEstimator->add( 1.0, 0.0, 0.0);
 
@@ -287,15 +289,15 @@ SUITE( NextEventEstimator_Tester ) {
         		x, y, z,
         		u, v, w,
         		energy, weight,
-        		0, 0 );
+        		0, photon );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-0.0);
         CHECK_CLOSE( expected, score, 1e-6);
 	}
 
 	TEST_FIXTURE(CalcScore_test, calcScore_thru_material ) {
-		CHECK_CLOSE( 1.0, pXS->getTotalXS( 0.5 ), 1e-6 );
-		CHECK_CLOSE(1.0, pMat->getTotalXS( 0.5 ), 1e-6 );
+		CHECK_CLOSE( 1.0, pXS->getTotalXS( std::log(0.5) ) , 1e-6 );
+		CHECK_CLOSE( 1.0, pMat->getTotalXS( std::log(0.5) ) , 1e-6 );
 
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
 
@@ -317,16 +319,13 @@ SUITE( NextEventEstimator_Tester ) {
         		x, y, z,
         		u, v, w,
         		energy, weight,
-        		0, 0 );
+        		0, photon );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-1.0);
         CHECK_CLOSE( expected, score, 1e-6);
 	}
 
 	TEST_FIXTURE(CalcScore_test, calcScore_thru_vacuum_and_material ) {
-		CHECK_CLOSE( 1.0, pXS->getTotalXS( 0.5 ), 1e-6 );
-		CHECK_CLOSE(1.0, pMat->getTotalXS( 0.5 ), 1e-6 );
-
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
 
 		gpuFloatType_t x = 0.0;
@@ -347,15 +346,19 @@ SUITE( NextEventEstimator_Tester ) {
         		x, y, z,
         		u, v, w,
         		energy, weight,
-        		0, 0 );
+        		0, photon );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
         CHECK_CLOSE( expected, score, 1e-6);
 	}
 
 	TEST_FIXTURE(CalcScore_test, calcScore_thru_material_3_probabilities ) {
-		CHECK_CLOSE( 1.0, pXS->getTotalXS( 0.5 ), 1e-6 );
-		CHECK_CLOSE(1.0, pMat->getTotalXS( 0.5 ), 1e-6 );
+		CHECK_CLOSE( 1.0, pXS->getTotalXS( std::log(0.5) ) , 1e-6 );
+		CHECK_CLOSE( 1.0, pMat->getTotalXS( std::log(0.5) ) , 1e-6 );
+		CHECK_CLOSE( 2.0, pXS->getTotalXS( std::log(1.0) ) , 1e-6 );
+		CHECK_CLOSE( 2.0, pMat->getTotalXS( std::log(1.0) ) , 1e-6 );
+		CHECK_CLOSE( 4.0, pXS->getTotalXS( std::log(3.0) ) , 1e-6 );
+		CHECK_CLOSE( 4.0, pMat->getTotalXS( std::log(3.0) ) , 1e-6 );
 
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
         const unsigned N = 3;
@@ -370,7 +373,7 @@ SUITE( NextEventEstimator_Tester ) {
 		gpuFloatType_t energy[N];
 		energy[0]= 0.5;
 		energy[1]= 1.0;
-		energy[2]= 2.0;
+		energy[2]= 3.0;
 
 		gpuFloatType_t weight[N];
 		weight[0] = 0.3;  // isotropic
@@ -383,15 +386,15 @@ SUITE( NextEventEstimator_Tester ) {
         		x, y, z,
         		u, v, w,
         		energy, weight,
-        		0, 0 );
+        		0, photon );
         //std:: cout << "Debug: *************************\n";
 
         gpuFloatType_t expected1 = ( 0.3f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*1.0 );
         gpuFloatType_t expected2 = ( 1.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*2.0 );
-        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*3.0 );
+        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*4.0 );
         CHECK_CLOSE( 0.00439124, expected1, 1e-7);
         CHECK_CLOSE( 0.00538482, expected2, 1e-7);
-        CHECK_CLOSE( 0.00396193, expected3, 1e-7);
+        CHECK_CLOSE( 0.00145751, expected3, 1e-7);
         CHECK_CLOSE( expected1+expected2+expected3, score, 1e-7);
 
 	}
@@ -410,7 +413,7 @@ SUITE( NextEventEstimator_Tester ) {
 		gpuFloatType_t energy[N];
 		energy[0]= 0.5;
 		energy[1]= 1.0;
-		energy[2]= 2.0;
+		energy[2]= 3.0;
 
 		gpuFloatType_t weight[N];
 		weight[0] = 0.3;  // isotropic
@@ -431,21 +434,21 @@ SUITE( NextEventEstimator_Tester ) {
 		}
 		ray.index = 0;
 		ray.detectorIndex = 0;
-		ray.particleType = 0;
+		ray.particleType = photon;
 
 		std::unique_ptr<RayList_t<N>> pBank =  std::unique_ptr<RayList_t<N>>( new RayList_t<N>(2) );
 		pBank->add( ray );
 		pBank->add( ray );
 
-		//std:: cout << "Debug: *************************\n";
+		//std:: cout << "Debug: **********calcScore_with_RayList***************\n";
 		CHECK_CLOSE( 0.0, pEstimator->getTally(0), 1e-7);
         pEstimator->cpuScoreRayList(pBank.get());
         gpuTallyType_t value = pEstimator->getTally(0);
-        //std:: cout << "Debug: *************************\n";
+        //std:: cout << "Debug: ************************************************\n";
 
         gpuFloatType_t expected1 = ( 0.3f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*1.0 );
         gpuFloatType_t expected2 = ( 1.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*2.0 );
-        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*3.0 );
+        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*4.0 );
 
         CHECK_CLOSE( 2*(expected1+expected2+expected3), value, 1e-7);
 
@@ -467,7 +470,7 @@ SUITE( NextEventEstimator_Tester ) {
 		gpuFloatType_t energy[N];
 		energy[0]= 0.5;
 		energy[1]= 1.0;
-		energy[2]= 2.0;
+		energy[2]= 3.0;
 
 		gpuFloatType_t weight[N];
 		weight[0] = 0.3;  // isotropic
@@ -488,7 +491,7 @@ SUITE( NextEventEstimator_Tester ) {
 		}
 		ray.index = 0;
 		ray.detectorIndex = 0;
-		ray.particleType = 0;
+		ray.particleType = photon;
 
 		std::unique_ptr<RayList_t<N>> pBank =  std::unique_ptr<RayList_t<N>>( new RayList_t<N>(2) );
 		pBank->add( ray );
@@ -517,7 +520,7 @@ SUITE( NextEventEstimator_Tester ) {
 
         gpuFloatType_t expected1 = ( 0.3f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*1.0 );
         gpuFloatType_t expected2 = ( 1.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*2.0 );
-        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*3.0 );
+        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*4.0 );
 
         CHECK_CLOSE( 2*(expected1+expected2+expected3), value, 1e-7);
 	}

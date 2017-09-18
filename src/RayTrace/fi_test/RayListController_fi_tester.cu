@@ -63,11 +63,11 @@ SUITE( Ray_bank_controller_fi_tester ) {
 			pMatProps->disableReduction();
 			pMatProps->setMaterialDescription( readerObject );
 
-	        u234s->read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
-	        u235s->read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
-	        u238s->read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
-	        h1s->read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
-	        o16s->read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
+	        u234s->read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
+	        u235s->read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
+	        u238s->read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
+	        h1s->read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
+	        o16s->read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
 
 	        metal->add(0, *u234s, 0.01);
 	        metal->add(1, *u235s, 0.98);

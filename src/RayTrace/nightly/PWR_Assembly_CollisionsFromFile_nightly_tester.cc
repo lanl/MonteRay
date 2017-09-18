@@ -76,17 +76,17 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
 	    	pTally->copyToGPU();
 
-	        iso1001->read( "MonteRayTestFiles/1001_MonteRayCrossSection.bin" );;
-	        iso5010->read( "MonteRayTestFiles/5010_MonteRayCrossSection.bin" );;
-	        iso5011->read( "MonteRayTestFiles/5011_MonteRayCrossSection.bin" );;
-	        iso6000->read( "MonteRayTestFiles/6000_MonteRayCrossSection.bin" );;
-	        iso7014->read( "MonteRayTestFiles/7014_MonteRayCrossSection.bin" );;
-	        iso8016->read( "MonteRayTestFiles/8016_MonteRayCrossSection.bin" );;
-	        iso26000->read( "MonteRayTestFiles/26000_MonteRayCrossSection.bin" );;
-	        iso40000->read( "MonteRayTestFiles/40000_MonteRayCrossSection.bin" );;
-	        iso50000->read( "MonteRayTestFiles/50000_MonteRayCrossSection.bin" );;
-	        iso92235->read( "MonteRayTestFiles/92235_MonteRayCrossSection.bin" );;
-	        iso92238->read( "MonteRayTestFiles/92238_MonteRayCrossSection.bin" );;
+	        iso1001->read( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin" );;
+	        iso5010->read( "MonteRayTestFiles/5010-70c_MonteRayCrossSection.bin" );;
+	        iso5011->read( "MonteRayTestFiles/5011-70c_MonteRayCrossSection.bin" );;
+	        iso6000->read( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin" );;
+	        iso7014->read( "MonteRayTestFiles/7014-70c_MonteRayCrossSection.bin" );;
+	        iso8016->read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );;
+	        iso26000->read( "MonteRayTestFiles/26000-55c_MonteRayCrossSection.bin" );;
+	        iso40000->read( "MonteRayTestFiles/40000-66c_MonteRayCrossSection.bin" );;
+	        iso50000->read( "MonteRayTestFiles/50000-42c_MonteRayCrossSection.bin" );;
+	        iso92235->read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin" );;
+	        iso92238->read( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin" );;
 
 	        fuel->add(0, *iso8016,  2.0 );
 	        fuel->add(1, *iso92235, 0.05 );

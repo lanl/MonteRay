@@ -3,17 +3,18 @@
 
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
+#include "MonteRayConstants.hh"
 
 namespace MonteRay{
 
 typedef gpuFloatType_t* CollisionPosition_t;
 typedef gpuFloatType_t* CollisionDirection_t;
 typedef unsigned DetectorIndex_t;
-typedef short int ParticleType_t;
 
 template< unsigned N = 1 >
 class Ray_t{
 public:
+	typedef MonteRay::ParticleType_t ParticleType_t;
 	CUDA_CALLABLE_MEMBER Ray_t(){}
 
 	gpuFloatType_t pos[3] = { 0.0 };

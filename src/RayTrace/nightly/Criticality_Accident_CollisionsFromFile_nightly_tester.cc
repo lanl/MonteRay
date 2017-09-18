@@ -75,19 +75,19 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 
 	    	pTally->copyToGPU();
 
-	        iso1001->read( "MonteRayTestFiles/1001_MonteRayCrossSection.bin" );
-	        iso6000->read( "MonteRayTestFiles/6000_MonteRayCrossSection.bin" );
-	        iso7014->read( "MonteRayTestFiles/7014_MonteRayCrossSection.bin" );
-	        iso8016->read( "MonteRayTestFiles/8016_MonteRayCrossSection.bin" );
-	        iso12000->read( "MonteRayTestFiles/12000_MonteRayCrossSection.bin" );
-	        iso13027->read( "MonteRayTestFiles/13027_MonteRayCrossSection.bin" );
-	        iso14000->read( "MonteRayTestFiles/14000_MonteRayCrossSection.bin" );
-	        iso18040->read( "MonteRayTestFiles/18040_MonteRayCrossSection.bin" );
-	        iso20000->read( "MonteRayTestFiles/20000_MonteRayCrossSection.bin" );
-	        iso26000->read( "MonteRayTestFiles/26000_MonteRayCrossSection.bin" );
-	        iso92234->read( "MonteRayTestFiles/92234_MonteRayCrossSection.bin" );
-	        iso92235->read( "MonteRayTestFiles/92235_MonteRayCrossSection.bin" );
-	        iso92238->read( "MonteRayTestFiles/92238_MonteRayCrossSection.bin" );
+	        iso1001->read( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin" );
+	        iso6000->read( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin" );
+	        iso7014->read( "MonteRayTestFiles/7014-70c_MonteRayCrossSection.bin" );
+	        iso8016->read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
+	        iso12000->read( "MonteRayTestFiles/12000-62c_MonteRayCrossSection.bin" );
+	        iso13027->read( "MonteRayTestFiles/13027-70c_MonteRayCrossSection.bin" );
+	        iso14000->read( "MonteRayTestFiles/14000-60c_MonteRayCrossSection.bin" );
+	        iso18040->read( "MonteRayTestFiles/18040-70c_MonteRayCrossSection.bin" );
+	        iso20000->read( "MonteRayTestFiles/20000-62c_MonteRayCrossSection.bin" );
+	        iso26000->read( "MonteRayTestFiles/26000-55c_MonteRayCrossSection.bin" );
+	        iso92234->read( "MonteRayTestFiles/92234-70c_MonteRayCrossSection.bin" );
+	        iso92235->read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin" );
+	        iso92238->read( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin" );
 
 	        metal->add(0, *iso92234, 1.025e-2 );
 	        metal->add(1, *iso92235, 9.37683e-1 );

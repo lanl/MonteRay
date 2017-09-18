@@ -26,7 +26,7 @@ SUITE( RayListInterface_fi_tester ) {
     	points->copyToGPU();
 
     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
-    	xs->read( "MonteRayTestFiles/u235_simpleCrossSection.bin");
+    	xs->read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin");
     	xs->copyToGPU();
 
     	gpuFloatType_t energy = points->getEnergy(0);
@@ -55,11 +55,11 @@ SUITE( RayListInterface_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
 
         MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -114,11 +114,11 @@ SUITE( RayListInterface_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
 
         MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -182,11 +182,11 @@ SUITE( RayListInterface_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
 
         MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -266,11 +266,11 @@ SUITE( RayListInterface_fi_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
 
         MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);
@@ -363,11 +363,11 @@ SUITE( Collision_fi_looping_tester ) {
         MonteRayCrossSectionHost h1s(1);
         MonteRayCrossSectionHost o16s(1);
 
-        u234s.read( "MonteRayTestFiles/u234_simpleCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/u235_simpleCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/u238_simpleCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/h1_simpleCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/o16_simpleCrossSection.bin" );
+        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
+        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
+        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
+        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
 
         MonteRayMaterialHost metal(3);
         metal.add(0, u234s, 0.01);

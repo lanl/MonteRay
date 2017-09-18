@@ -58,10 +58,11 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 
 	    	pGrid->copyToGPU();
 
-			pXS->setTotalXS(0,  1e-11, 1.0 );
-			pXS->setTotalXS(1,  0.75, 1.0 );
-			pXS->setTotalXS(2,  1.00, 2.0 );
-			pXS->setTotalXS(3,  3.00, 4.0 );
+	    	pXS->setParticleType( photon );
+			pXS->setTotalXS(0,  std::log( 1e-11 ), std::log( 1.0 ) );
+			pXS->setTotalXS(1,  std::log( 0.75 ),  std::log( 1.0 ) );
+			pXS->setTotalXS(2,  std::log( 1.00 ),  std::log( 2.0 ) );
+			pXS->setTotalXS(3,  std::log( 3.00 ),  std::log( 4.0 ) );
 			pXS->setAWR( gpu_AvogadroBarn / gpu_neutron_molar_mass );
 
 	        pMat->add(0, *pXS, 1.0);
@@ -100,8 +101,8 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 
     TEST_FIXTURE(ControllerSetup, ctorForNEE ){
     	unsigned numPointDets = 1;
-    	NextEventEstimatorController controller( 1024,
- 				                             1024,
+    	NextEventEstimatorController controller( 1,
+ 				                             1,
  				                             pGrid,
  				                             pMatList,
  				                             pMatProps,
@@ -113,12 +114,12 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
     }
 #endif
 
-    TEST_FIXTURE(ControllerSetup, setCapacity ){
+    TEST_FIXTURE(ControllerSetup, testOnGPU ){
     	unsigned numPointDets = 1;
 
     	setup();
-    	NextEventEstimatorController controller( 1024,
- 				                             1024,
+    	NextEventEstimatorController controller( 1,
+ 				                             1,
  				                             pGrid,
  				                             pMatList,
  				                             pMatProps,
@@ -128,7 +129,6 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
     	CHECK_EQUAL( true, controller.isUsingNextEventEstimator() );
     	unsigned id = controller.addPointDet( 2.0, 0.0, 0.0 );
     	CHECK_EQUAL( 0, id);
-
 
     	controller.copyPointDetToGPU();
 
@@ -142,7 +142,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 		gpuFloatType_t energy[3];
 		energy[0]= 0.5;
 		energy[1]= 1.0;
-		energy[2]= 2.0;
+		energy[2]= 3.0;
 
 		gpuFloatType_t weight[3];
 		weight[0] = 0.3;  // isotropic
@@ -163,20 +163,24 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 		}
 		ray.index = 0;
 		ray.detectorIndex = 0;
-		ray.particleType = 0;
+		ray.particleType = photon;
 
 		controller.add( ray );
 		controller.add( ray );
 		CHECK_EQUAL(2, controller.size());
         CHECK_EQUAL(10, controller.capacity());
 
+//        std::cout << "Debug: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \n";
+//        std::cout << "Debug: RayListController_wNexteVentEstimator_fi_tester.cu:: testOnGPU - flushing \n";
+        controller.sync();
         controller.flush(true);
         controller.sync();
         controller.copyPointDetTallyToCPU();
+//        std::cout << "Debug: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \n";
 
         gpuFloatType_t expected1 = ( 0.3f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*1.0 );
         gpuFloatType_t expected2 = ( 1.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*2.0 );
-        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*3.0 );
+        gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*4.0 );
 
         CHECK_CLOSE( 2*(expected1+expected2+expected3), controller.getPointDetTally(0), 1e-7);
     }

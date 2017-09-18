@@ -37,6 +37,10 @@ public:
 				                 MonteRay_MaterialProperties*,
 				                 unsigned numPointDets );
 
+	/// Ctor for the writing next-event estimator collision and source points to file
+	/// Can not launch a kernel
+	RayListController( unsigned numPointDets, std::string filename );
+
 	virtual ~RayListController();
 
 	void initialize();

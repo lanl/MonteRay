@@ -13,6 +13,7 @@ void ctor(struct MonteRayCrossSection* pXS, unsigned num) {
     if( num <=0 ) { num = 1; }
 
     pXS->id = -1;
+    pXS->ParticleType = neutron;
     pXS->numPoints = num;
     pXS->AWR = 0.0;
 
@@ -44,6 +45,7 @@ void dtor(struct MonteRayCrossSection* pXS) {
 void cudaCtor(MonteRayCrossSection* ptr, unsigned num) {
 #ifdef __CUDACC__
 	 ptr->numPoints = num;
+	 ptr->ParticleType = neutron;
      unsigned allocSize = sizeof( gpuFloatType_t ) * num;
 
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->energies, allocSize ));
@@ -59,6 +61,7 @@ void cudaCtor(MonteRayCrossSection* pCopy, MonteRayCrossSection* pOrig) {
 
 	pCopy->id = pOrig->id;
 	pCopy->AWR = pOrig->AWR;
+	pCopy->ParticleType = pOrig->ParticleType;
 
 	unsigned allocSize = sizeof( gpuFloatType_t ) * pOrig->numPoints;
 
@@ -82,10 +85,21 @@ void copy(struct MonteRayCrossSection* pCopy, struct MonteRayCrossSection* pOrig
     ctor( pCopy, num);
     pCopy->id = pOrig->id;
     pCopy->AWR = pOrig->AWR;
+    pCopy->ParticleType = pOrig->ParticleType;
     for( unsigned i=0; i<num; ++i ){
         pCopy->energies[i] = pOrig->energies[i];
         pCopy->totalXS[i] =  pOrig->totalXS[i];
     }
+}
+
+CUDA_CALLABLE_MEMBER
+ParticleType_t getParticleType(const struct MonteRayCrossSection* pXS) {
+	return pXS->ParticleType;
+}
+
+CUDA_CALLABLE_MEMBER
+void setParticleType( struct MonteRayCrossSection* pXS, ParticleType_t type) {
+	pXS->ParticleType = type;
 }
 
 CUDA_CALLABLE_MEMBER
@@ -172,25 +186,40 @@ gpuFloatType_t getAWR(const struct MonteRayCrossSection* pXS) {
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
+	// Assumes energy E is provided in log(E) for photons
 
     gpuFloatType_t lower =  pXS->totalXS[i];
     gpuFloatType_t upper =  pXS->totalXS[i+1];
     gpuFloatType_t deltaE = pXS->energies[i+1] - pXS->energies[i];
 
     gpuFloatType_t value = lower + (upper-lower) * (E - pXS->energies[i])/deltaE;
+
+    if( pXS->ParticleType == photon ) {
+    	value = exp( value );
+    }
+
     return value;
 }
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t E ) {
+	// Assumes energy E is provided in log(E) for photons
 
-    if( E > pXS->energies[ pXS->numPoints-1] ) {
-        return pXS->totalXS[ pXS->numPoints-1];
-    }
+	if( E >= pXS->energies[ pXS->numPoints-1] ) {
+		gpuFloatType_t value = pXS->totalXS[ pXS->numPoints-1];
+		if( pXS->ParticleType == photon ) {
+			value = exp( value );
+		}
+		return value;
+	}
 
-    if( E < pXS->energies[ 0 ] ) {
-        return pXS->totalXS[ 0 ];
-    }
+	if( E <= pXS->energies[ 0 ] ) {
+		gpuFloatType_t value = pXS->totalXS[ 0 ];
+		if( pXS->ParticleType == photon ) {
+			value = exp( value );
+		}
+		return value;
+	}
 
     unsigned i = getIndex(pXS, E);
     return getTotalXSByIndex( pXS, i, E);
@@ -333,6 +362,10 @@ void MonteRayCrossSectionHost::load(struct MonteRayCrossSection* ptrXS ) {
 }
 
 void MonteRayCrossSectionHost::write(std::ostream& outf) const{
+	unsigned CrossSectionFileVersion = 0;
+	binaryIO::write(outf, CrossSectionFileVersion );
+
+	binaryIO::write(outf, xs->ParticleType );
     binaryIO::write(outf, xs->numPoints );
     binaryIO::write(outf, xs->AWR );
     for( unsigned i=0; i<xs->numPoints; ++i ){
@@ -344,6 +377,11 @@ void MonteRayCrossSectionHost::write(std::ostream& outf) const{
 }
 
 void MonteRayCrossSectionHost::read(std::istream& infile) {
+	unsigned CrossSectionFileVersion;
+	binaryIO::read(infile, CrossSectionFileVersion);
+
+	binaryIO::read(infile, xs->ParticleType );
+
     unsigned num;
     binaryIO::read(infile, num);
     dtor( xs );
@@ -382,7 +420,7 @@ void MonteRayCrossSectionHost::read( const std::string& filename ) {
     infile.open( filename.c_str(), std::ios::binary | std::ios::in);
 
     if( ! infile.is_open() ) {
-        fprintf(stderr, "MonteRayCrossSectionHost::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        fprintf(stderr, "Debug:  MonteRayCrossSectionHost::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
         exit(1);
     }
     assert( infile.good() );

@@ -364,23 +364,23 @@ SUITE( HashLookup_tester ) {
      	delete hash;
      }
 
-    TEST( load_u235_from_file)
+    TEST( hashlookup_load_u235_from_file)
       {
       	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
-      	xs->read( "MonteRayTestFiles/u235_simpleCrossSection.bin");
+      	xs->read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin");
 
       	gpuFloatType_t energy = 2.0;
 
-      	CHECK_EQUAL( 24135, xs->size() );
+      	CHECK_EQUAL( 76525, xs->size() );
       	CHECK_CLOSE( 233.025, xs->getAWR(), 1e-3 );
       	double value = getTotalXS(xs->getXSPtr(), energy);
-      	CHECK_CLOSE( 7.17639378000f, value, 1e-6);
+      	CHECK_CLOSE( 7.14769f, value, 1e-5);
 
       	HashLookupHost* hash = new HashLookupHost(1);
       	hash->addIsotope( xs );
       	unsigned HashBin = getHashBin(hash->getPtr(),energy);
       	value = getTotalXS(xs->getXSPtr(), hash->getPtr(), HashBin, energy);
-      	CHECK_CLOSE( 7.17639378000f, value, 1e-6);
+      	CHECK_CLOSE( 7.14769f, value, 1e-5);
 
       	delete xs;
       	delete hash;

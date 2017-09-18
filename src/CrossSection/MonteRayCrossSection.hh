@@ -7,6 +7,7 @@
 
 #include "MonteRayDefinitions.hh"
 #include "HashLookup.h"
+#include "MonteRayConstants.hh"
 
 namespace MonteRay{
 
@@ -16,7 +17,7 @@ struct MonteRayCrossSection {
     gpuFloatType_t AWR;
     gpuFloatType_t* energies;
     gpuFloatType_t* totalXS;
-
+    ParticleType_t ParticleType;
 };
 
 void ctor(struct MonteRayCrossSection*, unsigned num);
@@ -58,6 +59,12 @@ CUDA_CALLABLE_MEMBER
 gpuFloatType_t getAWR(const struct MonteRayCrossSection* pXS);
 
 CUDA_CALLABLE_MEMBER
+ParticleType_t getParticleType(const struct MonteRayCrossSection* pXS);
+
+CUDA_CALLABLE_MEMBER
+void setParticleType( struct MonteRayCrossSection* pXS, ParticleType_t type);
+
+CUDA_CALLABLE_MEMBER
 int getID(const struct MonteRayCrossSection* pXS);
 
 CUDA_CALLABLE_MEMBER
@@ -79,6 +86,8 @@ public:
     int getID(void) const { return MonteRay::getID( xs ); }
     void setID(unsigned id) { MonteRay::setID( xs, id ); }
     unsigned size(void) const { return xs->numPoints; }
+    ParticleType_t getParticleType(void) const { return xs->ParticleType; }
+    void setParticleType(ParticleType_t type) { xs->ParticleType = type; }
     gpuFloatType_t getEnergy(unsigned i) const { return MonteRay::getEnergy(xs, i); }
     gpuFloatType_t getTotalXSByIndex(unsigned i) const { return MonteRay::getTotalXSByIndex(xs, i); }
     gpuFloatType_t getTotalXSByHashIndex(const struct HashLookup* pHash, unsigned i, gpuFloatType_t E) const;
