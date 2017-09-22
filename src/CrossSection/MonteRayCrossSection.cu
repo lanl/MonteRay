@@ -186,38 +186,24 @@ gpuFloatType_t getAWR(const struct MonteRayCrossSection* pXS) {
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
-	// Assumes energy E is provided in log(E) for photons
-
     gpuFloatType_t lower =  pXS->totalXS[i];
     gpuFloatType_t upper =  pXS->totalXS[i+1];
     gpuFloatType_t deltaE = pXS->energies[i+1] - pXS->energies[i];
 
     gpuFloatType_t value = lower + (upper-lower) * (E - pXS->energies[i])/deltaE;
 
-    if( pXS->ParticleType == photon ) {
-    	value = exp( value );
-    }
-
     return value;
 }
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t E ) {
-	// Assumes energy E is provided in log(E) for photons
-
 	if( E >= pXS->energies[ pXS->numPoints-1] ) {
 		gpuFloatType_t value = pXS->totalXS[ pXS->numPoints-1];
-		if( pXS->ParticleType == photon ) {
-			value = exp( value );
-		}
 		return value;
 	}
 
 	if( E <= pXS->energies[ 0 ] ) {
 		gpuFloatType_t value = pXS->totalXS[ 0 ];
-		if( pXS->ParticleType == photon ) {
-			value = exp( value );
-		}
 		return value;
 	}
 
@@ -273,27 +259,6 @@ launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
 	return -100.0;
 #endif
 }
-
-
-#if !defined( __CUDACC__ )
-#include "ContinuousNeutron.hh"
-void MonteRayCrossSectionHost::load( const ContinuousNeutron& cn){
-    unsigned num = cn.getEnergyGrid().GridSize();
-    dtor( xs );
-    ctor( xs, num );
-
-    gpuFloatType_t ratio = cn.getAWR();
-    setAWR( ratio );
-
-    for( unsigned i=0; i<num; ++i ){
-        gpuFloatType_t energy = (cn.getEnergyGrid())[i];
-        gpuFloatType_t totalXS = cn.TotalXsec( energy, -1.0, i);
-        xs->energies[i] = energy;
-        xs->totalXS[i] = totalXS;
-    }
-
-}
-#endif
 
 MonteRayCrossSectionHost::MonteRayCrossSectionHost(unsigned num){
     xs = (struct MonteRayCrossSection*) malloc( sizeof(struct MonteRayCrossSection) );
@@ -377,15 +342,21 @@ void MonteRayCrossSectionHost::write(std::ostream& outf) const{
 }
 
 void MonteRayCrossSectionHost::read(std::istream& infile) {
+	const bool debug = false;
 	unsigned CrossSectionFileVersion;
 	binaryIO::read(infile, CrossSectionFileVersion);
+	if( debug ) printf("Debug: MonteRayCrossSectionHost::read -- CrossSectionFileVersion=%d\n", CrossSectionFileVersion);
 
-	binaryIO::read(infile, xs->ParticleType );
+	ParticleType_t particleType;
+	binaryIO::read(infile, particleType );
 
     unsigned num;
     binaryIO::read(infile, num);
     dtor( xs );
     ctor( xs, num );
+
+    xs->ParticleType = particleType;
+	if( debug ) printf("Debug: MonteRayCrossSectionHost::read -- ParticleType=%d\n", xs->ParticleType);
 
     binaryIO::read(infile, xs->AWR );
     for( unsigned i=0; i<num; ++i ){
@@ -427,6 +398,116 @@ void MonteRayCrossSectionHost::read( const std::string& filename ) {
     infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
     read(infile);
     infile.close();
+}
+
+
+void
+MonteRayCrossSectionHost::thinGrid(const totalXSFunct_t& xsFunc, linearGrid_t& linearGrid, double max_error) {
+	// thin grid
+	bool done;
+	do {
+		done = true;
+		unsigned i = 0;
+		for( auto previous_itr = linearGrid.begin(); previous_itr != linearGrid.end(); ++previous_itr) {
+			auto itr = previous_itr; ++itr;
+			if( itr == linearGrid.end() ) break;
+			auto next_itr = itr; ++next_itr;
+			if( next_itr == linearGrid.end() ) break;
+
+			// check log mid-point
+			double energy1 = previous_itr->first;
+			double energy2 = next_itr->first;
+			double energy = itr->first;
+
+			// calculated interpolatedXS
+			double lower =  previous_itr->second;
+			double upper =  next_itr->second;
+			double deltaE = energy2 - energy1;
+			double interpolatedXS = lower + (upper-lower) * (energy - energy1)/deltaE;
+
+			// check difference with real xs
+			double totalXS = xsFunc( energy );
+			double percentDiff = std::abs(totalXS - interpolatedXS ) * 100.0 / totalXS;
+//			printf( "Debug: i=%d  E=%f, interp=%f, real=%f diff=%f \n", i, energy, interpolatedXS, totalXS, percentDiff);
+			if( percentDiff < max_error * 0.5 ) {
+				linearGrid.erase(itr);
+				done = false;
+				break;
+			}
+			++i;
+		}
+	} while( !done );
+}
+
+void
+MonteRayCrossSectionHost::addPointsToGrid(const totalXSFunct_t& xsFunc, linearGrid_t& linearGrid, double max_error) const {
+	bool done;
+	// linearize
+	do {
+		done = true;
+		for( auto previous_itr = linearGrid.begin(); previous_itr != linearGrid.end(); ++previous_itr) {
+			auto itr = previous_itr; ++itr;
+			if( itr == linearGrid.end() ) break;
+
+			// check log mid-point
+			double energy1 = previous_itr->first;
+			double energy2 = itr->first;
+			double energy = std::exp(( std::log(energy2) - std::log(energy1) )*0.5 + std::log(energy1));
+
+		    // calculated interpolatedXS
+			double lower =  previous_itr->second;
+			double upper =  itr->second;
+			double deltaE = energy2 - energy1;
+			double interpolatedXS = lower + (upper-lower) * (energy - energy1)/deltaE;
+
+			// check difference with real xs
+			double totalXS = xsFunc( energy );
+			double percentDiff = std::abs(totalXS - interpolatedXS ) * 100.0 / totalXS;
+
+			if( percentDiff > max_error ) {
+				linearGrid.insert(itr, std::make_pair(energy, totalXS));
+				done = false;
+			}
+		}
+
+	} while ( !done );
+}
+
+bool
+MonteRayCrossSectionHost::checkGrid(const totalXSFunct_t& xsFunc, linearGrid_t& linearGrid, double max_error, unsigned nIntermediateBins) const{
+	//	printf( "Debug: MonteRayCrossSectionHost::createLinearGrid - checking linearization\n");
+
+	// check linearization
+	for( auto previous_itr = linearGrid.begin(); previous_itr != linearGrid.end(); ++previous_itr) {
+		auto itr = previous_itr; ++itr;
+		if( itr == linearGrid.end() ) break;
+
+		// check log mid-point
+		double energy1 = previous_itr->first;
+		double energy2 = itr->first;
+		double deltaE = energy2 - energy1;
+
+		double lower =  previous_itr->second;
+		double upper =  itr->second;
+		for( auto j=0; j<nIntermediateBins; ++j) {
+			double energy = energy1 + (deltaE*j)/nIntermediateBins;
+			// calculated interpolatedXS
+			double interpolatedXS = lower + (upper-lower) * (energy - energy1)/deltaE;
+			double totalXS = xsFunc( energy );
+			double percentDiff = std::abs(totalXS - interpolatedXS ) * 100.0 / totalXS;
+
+			if( percentDiff > max_error ) {
+//				printf( "Debug: MonteRayCrossSectionHost::createLinearGrid - linearization failed for E=%f, real XS=%f, interpolated XS=%f, percent diff=%f\n",
+//						energy, totalXS, interpolatedXS, percentDiff );
+				linearGrid.insert(itr, std::make_pair(energy, totalXS));
+				return false;
+			}
+//			printf( "Debug: MonteRayCrossSectionHost::createLinearGrid - linearization passed for E=%f, real XS=%f, interpolated XS=%f, percent diff=%f\n",
+//									energy, totalXS, interpolatedXS, percentDiff );
+		}
+
+	}
+	return true;
 }
 
 }

@@ -196,18 +196,18 @@ void setHashBinBounds(HashLookup* ptr, MonteRayCrossSection* xs, unsigned j ) {
 CUDA_CALLABLE_MEMBER
 unsigned getBinBoundIndex(const HashLookup* ptr, unsigned isotope, unsigned index ){
 	if( isotope > ptr->numIsotopes) {
-		printf("Error: HasLookup::getBinBoundIndex -- isotope ( = %d )  > numIsotopes (= %d), %s %d\n", isotope, ptr->numIsotopes, __FILE__, __LINE__);
+		printf("Error: HasLookup::getBinBoundIndex -- isotope ( = %u )  > numIsotopes (= %u), %s %d\n", isotope, ptr->numIsotopes, __FILE__, __LINE__);
 		ABORT( "HashLookup.cu -- getBinBoundIndex" );
 	}
 	if( index > ptr->N) {
-		printf("Error: HasLookup::getBinBoundIndex -- index ( = %d )  > numBins (= %d), %s %d\n", index, ptr->N, __FILE__, __LINE__);
+		printf("Error: HasLookup::getBinBoundIndex -- index ( = %u )  > numBins (= %u), %s %d\n", index, ptr->N, __FILE__, __LINE__);
 		ABORT( "HashLookup.cu -- getBinBoundIndex" );
 	}
 	unsigned i = isotope + index*ptr->maxNumIsotopes;
 	if( i >= ptr->maxNumIsotopes*ptr->N ){
-		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. isotope = %d, index=%d, %s %d\n", isotope, index, __FILE__, __LINE__);
-		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. i = %d, N*maxNumIsotopes=%d,\n", i, ptr->maxNumIsotopes*ptr->N  );
-		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. N = %d, maxNumIsotopes=%d,\n", ptr->N, ptr->maxNumIsotopes  );
+		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. isotope = %u, index=%u, %s %d\n", isotope, index, __FILE__, __LINE__);
+		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. i = %u, N*maxNumIsotopes=%u,\n", i, ptr->maxNumIsotopes*ptr->N  );
+		printf("Error: HasLookup::getBinBoundIndex -- index outside of range. N = %u, maxNumIsotopes=%u,\n", ptr->N, ptr->maxNumIsotopes  );
 		ABORT( "HashLookup.cu -- getBinBoundIndex" );
 	}
 	return i;

@@ -331,6 +331,39 @@ SUITE( RayListInterface_simple_tests ) {
       	CHECK_EQUAL(304643, points.getIndex(1000) );
 
     }
+
+    TEST( read_next_event_estimator_ray_file ) {
+    	std::cout << "Debug: RayListInterface_tester -- read_next_event_estimator_ray_file \n";
+
+    	std::cout << "Debug:    reading MonteRayTestFiles/U-04p_slab_single_source_ray_collisionFile.bin \n";
+     	RayListInterfaceTester<3> tester;
+
+     	RayListInterface<3> points(2);
+     	points.readToMemory( "MonteRayTestFiles/U-04p_slab_single_source_ray_collisionFile.bin"  );
+     	CHECK_EQUAL(1, points.size() );
+
+     	points.copyToGPU();
+     	tester.setupTimers();
+     	RayListSize_t result = tester.launchGetCapacity(1,1,points);
+     	tester.stopTimers();
+     	CHECK_EQUAL( 1, unsigned(result) );
+
+     	CHECK_CLOSE(-0.001, points.getX(0), 1e-5);
+     	CHECK_CLOSE(0.0, points.getY(0), 1e-5);
+     	CHECK_CLOSE(0.0, points.getZ(0), 1e-5);
+     	CHECK_CLOSE(1.0, points.getU(0), 1e-5);
+     	CHECK_CLOSE(0.0, points.getV(0), 1e-5);
+     	CHECK_CLOSE(0.0, points.getW(0), 1e-5);
+     	CHECK_CLOSE(1.0, points.getEnergy(0,0), 1e-5);
+     	CHECK_CLOSE(0.5, points.getWeight(0,0), 1e-5);
+     	CHECK_CLOSE(0.0, points.getEnergy(0,1), 1e-5);
+     	CHECK_CLOSE(0.0, points.getWeight(0,1), 1e-5);
+     	CHECK_CLOSE(0.0, points.getEnergy(0,2), 1e-5);
+     	CHECK_CLOSE(0.0, points.getWeight(0,2), 1e-5);
+     	CHECK_EQUAL(0, points.getIndex(0) );
+     	CHECK_EQUAL(0, points.getDetectorIndex(0) );
+     	CHECK_EQUAL(1, points.getParticleType(0) );
+    }
 }
 
 SUITE( RayListInterface_bank_tests ) {

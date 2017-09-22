@@ -84,12 +84,34 @@ SUITE( MonteRayCrossSection_tester ) {
     	xs->setParticleType( photon );
     	CHECK_EQUAL( photon, xs->getParticleType() );
 
-    	xs->setTotalXS(0, std::log( 1e-11 ), std::log( 4.0 )  );
-    	xs->setTotalXS(1, std::log(1.0), std::log(3.0) );
-    	xs->setTotalXS(2, std::log(2.0), std::log(2.0) );
-    	xs->setTotalXS(3, std::log(3.0), std::log(1.0) );
+    	xs->setTotalXS(0, 1e-11,  4.0  );
+    	xs->setTotalXS(1, 1.0, 3.0 );
+    	xs->setTotalXS(2, 2.0, 2.0 );
+    	xs->setTotalXS(3, 3.0, 1.0 );
 
-    	CHECK_CLOSE( 2.0, xs->getTotalXS( std::log(2.0) ), 1e-7);
+    	CHECK_CLOSE( 2.0, xs->getTotalXS( 2.0 ), 1e-7);
+
+    	delete xs;
+    }
+
+    TEST_FIXTURE(MonteRayCrossSectionTestHelper, load_1000_04p_from_file)
+    {
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
+    	xs->read( "MonteRayTestFiles/1000-04p_MonteRayCrossSection.bin");
+    	CHECK_EQUAL( photon, xs->getParticleType());
+    	CHECK_CLOSE( 0.211261, xs->getTotalXS( 1.0 ), 1e-6);
+     	CHECK_EQUAL(217, xs->size());
+
+    	delete xs;
+    }
+
+    TEST_FIXTURE(MonteRayCrossSectionTestHelper, load_92000_04p_from_file)
+    {
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
+    	xs->read( "MonteRayTestFiles/92000-04p_MonteRayCrossSection.bin");
+    	CHECK_EQUAL( photon, xs->getParticleType());
+    	CHECK_CLOSE( 30.9887, xs->getTotalXS( 1.0 ), 1e-4);
+     	CHECK_EQUAL(504, xs->size());
 
     	delete xs;
     }

@@ -76,12 +76,13 @@ RayListController<N>::RayListController( unsigned numPointDets, std::string file
         pMatProps( NULL ),
         pTally(NULL)
 {
+	initialize();
 	pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator>( numPointDets );
 	setOutputFileName( filename );
 	usingNextEventEstimator = true;
-	initialize();
 	kernel = [&] ( void ) {
-		throw std::runtime_error( "RayListController<N>::RayListController -- not setup to launch a kernel, file mode only.");
+		// do nothing
+		return;
 	};
 }
 

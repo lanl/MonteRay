@@ -218,23 +218,19 @@ public:
 
 		numberOfCells = cudaRayTrace( pGridBins, cells, crossingDistances, pos, dir, dist, false);
 
-		gpuFloatType_t logEnergies[N];
 		for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
-			logEnergies[energyIndex] = log ( energies[energyIndex] );
-		}
-		for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
-			gpuFloatType_t logEnergy = logEnergies[energyIndex];
+			gpuFloatType_t energy = energies[energyIndex];
 			gpuFloatType_t weight = weights[energyIndex];
 
 			tally_t partialScore = 0.0;
 
 			if( debug ) {
-				printf("Debug: MonteRayNextEventEstimator::calcScore -- energyIndex=%d, energy=%f, weight=%f\n", energyIndex, std::exp( logEnergy ),  weight);
+				printf("Debug: MonteRayNextEventEstimator::calcScore -- energyIndex=%d, energy=%f, weight=%f\n", energyIndex, energy,  weight);
 			}
 			gpuFloatType_t materialXS[MAXNUMMATERIALS];
 			for( unsigned i=0; i < pMatList->numMaterials; ++i ){
 				if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d\n", i);
-				materialXS[i] = getTotalXS( pMatList, i, logEnergy, 1.0);
+				materialXS[i] = getTotalXS( pMatList, i, energy, 1.0);
 				if( debug ) {
 					printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d, materialXS=%f\n", i, materialXS[i]);
 				}

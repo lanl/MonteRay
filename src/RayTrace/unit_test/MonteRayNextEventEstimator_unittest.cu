@@ -227,10 +227,10 @@ SUITE( NextEventEstimator_Tester ) {
 			// setup a material list
 			pXS = std::unique_ptr<MonteRayCrossSectionHost> ( new MonteRayCrossSectionHost(4) );
 			pXS->setParticleType( photon );
-			pXS->setTotalXS(0,  std::log( 1e-11 ), std::log( 1.0 ) );
-			pXS->setTotalXS(1,  std::log( 0.75 ),  std::log( 1.0 ) );
-			pXS->setTotalXS(2,  std::log( 1.00 ),  std::log( 2.0 ) );
-			pXS->setTotalXS(3,  std::log( 3.00 ),  std::log( 4.0 ) );
+			pXS->setTotalXS(0, 1e-11, 1.0 );
+			pXS->setTotalXS(1, 0.75, 1.0 );
+			pXS->setTotalXS(2, 1.00, 2.0 );
+			pXS->setTotalXS(3, 3.00, 4.0 );
 			pXS->setAWR( gpu_AvogadroBarn / gpu_neutron_molar_mass );
 
 			pMat = std::unique_ptr<MonteRayMaterialHost>( new MonteRayMaterialHost(1) );
@@ -266,8 +266,8 @@ SUITE( NextEventEstimator_Tester ) {
 
 #ifndef MEMCHECK
 	TEST_FIXTURE(CalcScore_test, calcScore_vacuum ) {
-		CHECK_CLOSE( 1.0, pXS->getTotalXS( std::log( 0.5 ) ), 1e-6 );
-		CHECK_CLOSE( 1.0, pMat->getTotalXS( std::log( 0.5 ) ), 1e-6 );
+		CHECK_CLOSE( 1.0, pXS->getTotalXS( 0.5 ), 1e-6 );
+		CHECK_CLOSE( 1.0, pMat->getTotalXS( 0.5 ), 1e-6 );
 
         unsigned id = pEstimator->add( 1.0, 0.0, 0.0);
 
@@ -296,8 +296,8 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST_FIXTURE(CalcScore_test, calcScore_thru_material ) {
-		CHECK_CLOSE( 1.0, pXS->getTotalXS( std::log(0.5) ) , 1e-6 );
-		CHECK_CLOSE( 1.0, pMat->getTotalXS( std::log(0.5) ) , 1e-6 );
+		CHECK_CLOSE( 1.0, pXS->getTotalXS( 0.5 ) , 1e-6 );
+		CHECK_CLOSE( 1.0, pMat->getTotalXS( 0.5 ) , 1e-6 );
 
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
 
@@ -353,12 +353,12 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST_FIXTURE(CalcScore_test, calcScore_thru_material_3_probabilities ) {
-		CHECK_CLOSE( 1.0, pXS->getTotalXS( std::log(0.5) ) , 1e-6 );
-		CHECK_CLOSE( 1.0, pMat->getTotalXS( std::log(0.5) ) , 1e-6 );
-		CHECK_CLOSE( 2.0, pXS->getTotalXS( std::log(1.0) ) , 1e-6 );
-		CHECK_CLOSE( 2.0, pMat->getTotalXS( std::log(1.0) ) , 1e-6 );
-		CHECK_CLOSE( 4.0, pXS->getTotalXS( std::log(3.0) ) , 1e-6 );
-		CHECK_CLOSE( 4.0, pMat->getTotalXS( std::log(3.0) ) , 1e-6 );
+		CHECK_CLOSE( 1.0, pXS->getTotalXS( 0.5 ) , 1e-6 );
+		CHECK_CLOSE( 1.0, pMat->getTotalXS( 0.5 ) , 1e-6 );
+		CHECK_CLOSE( 2.0, pXS->getTotalXS( 1.0 ) , 1e-6 );
+		CHECK_CLOSE( 2.0, pMat->getTotalXS( 1.0 ) , 1e-6 );
+		CHECK_CLOSE( 4.0, pXS->getTotalXS( 3.0 ) , 1e-6 );
+		CHECK_CLOSE( 4.0, pMat->getTotalXS( 3.0 ) , 1e-6 );
 
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
         const unsigned N = 3;

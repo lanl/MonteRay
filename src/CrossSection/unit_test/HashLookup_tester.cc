@@ -385,6 +385,32 @@ SUITE( HashLookup_tester ) {
       	delete xs;
       	delete hash;
       }
+
+#if false
+    // Currently the hash table is not used for photon cross-sections
+    TEST( hashlookup_load_photon_Uranium_from_file)
+    {
+    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
+    	xs->read( "MonteRayTestFiles/92000-04p_MonteRayCrossSection.bin");
+
+    	gpuFloatType_t energy = 1.0;
+
+    	CHECK_EQUAL( 504, xs->size() );
+    	CHECK_CLOSE( 235.984, xs->getAWR(), 1e-3 );
+    	double value = getTotalXS(xs->getXSPtr(), energy);
+    	CHECK_CLOSE( 30.9887f, value, 1e-4);
+
+    	HashLookupHost* hash = new HashLookupHost(1);
+    	hash->addIsotope( xs );
+    	unsigned HashBin = getHashBin(hash->getPtr(),energy);
+    	value = getTotalXS(xs->getXSPtr(), hash->getPtr(), HashBin, energy);
+    	CHECK_CLOSE( 7.14769f, value, 1e-5);
+
+    	delete xs;
+    	delete hash;
+    }
+#endif
+
 //    TEST_FIXTURE(MonteRayCrossSectionTestHelper, get_total_xs_from_gpu ) {
 //    	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(4);
 //    	xs->setTotalXS(0, 0.0, 4.0 );

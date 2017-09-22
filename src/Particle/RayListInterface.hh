@@ -39,8 +39,8 @@ public:
     gpuFloatType_t getU(unsigned i) const { return getDirection(i)[0]; }
     gpuFloatType_t getV(unsigned i) const { return getDirection(i)[1]; }
     gpuFloatType_t getW(unsigned i) const { return getDirection(i)[2]; }
-    gpuFloatType_t getEnergy(unsigned i) const { return ptrPoints->getEnergy(i); }
-    gpuFloatType_t getWeight(unsigned i) const { return ptrPoints->getWeight(i); }
+    gpuFloatType_t getEnergy(unsigned i, unsigned index=0) const { return ptrPoints->getEnergy(i,index); }
+    gpuFloatType_t getWeight(unsigned i, unsigned index=0) const { return ptrPoints->getWeight(i,index); }
     unsigned getIndex(unsigned i) const { return ptrPoints->getIndex(i); }
     DetectorIndex_t getDetectorIndex(unsigned i) const { return ptrPoints->getDetectorIndex(i); }
     ParticleType_t getParticleType(unsigned i) const { return ptrPoints->getParticleType(i); }

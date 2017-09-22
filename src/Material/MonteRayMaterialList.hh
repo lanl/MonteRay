@@ -64,9 +64,13 @@ public:
         return MonteRay::getMaterial( pMatList, i );
     }
 
-    gpuFloatType_t getTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const {
-    	unsigned index = pHash->getHashBin(E);
-        return MonteRay::getTotalXS( pMatList, i, pHash->getPtr(), index, E, density);
+    gpuFloatType_t getTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density, ParticleType_t ParticleType = neutron) const {
+    	if( ParticleType == neutron ) {
+    		unsigned index = pHash->getHashBin(E);
+    		return MonteRay::getTotalXS( pMatList, i, pHash->getPtr(), index, E, density);
+    	} else {
+    		return MonteRay::getTotalXS( pMatList, i, E, density);
+    	}
     }
 
     gpuFloatType_t launchGetTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const;
