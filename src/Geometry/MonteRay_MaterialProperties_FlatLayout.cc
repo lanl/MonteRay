@@ -249,4 +249,17 @@ MonteRay_MaterialProperties_FlatLayout::getCell( Cell_Index_t cellID ) const {
     return std::move(cell);
 }
 
+void
+MonteRay_MaterialProperties_FlatLayout::disableReduction() {
+    reductionDisabled = true;
+    singleTemp = false;
+    singleNumComponents = false;
+
+    if( size() > 0 ) {
+        std::stringstream msg;
+        msg << "Disable reduction called after cells have already been added!\n";
+        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : MonteRay_MaterialProperties_FlatLayout::disableReduction\n\n";
+        throw std::runtime_error( msg.str() );
+    }
+}
 } // end namespace

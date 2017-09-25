@@ -61,7 +61,7 @@ RayListController<N>::RayListController(
 	usingNextEventEstimator = true;
 	initialize();
 	kernel = [&] ( void ) {
-		const bool debug = false;
+		const bool debug = true;
 		if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
 		pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads,stream1, currentBank->getPtrPoints());
 	};
@@ -196,7 +196,7 @@ RayListController<N>::flush(bool final){
 	kernel();
 
 	// only uncomment for testing, forces the cpu and gpu to sync
-//	gpuErrchk( cudaPeekAtLastError() );
+	//gpuErrchk( cudaPeekAtLastError() );
 
 	gpuErrchk( cudaEventRecord(stopGPU,stream1) );
 	gpuErrchk( cudaStreamWaitEvent(stream1, stopGPU, 0) );

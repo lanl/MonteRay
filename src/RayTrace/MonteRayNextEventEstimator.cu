@@ -27,7 +27,7 @@ CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator* ptr, c
 #ifdef __CUDACC__
 template<unsigned N>
 void
-MonteRayNextEventEstimator::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t stream, const RayList_t<N>* pRayList ) {
+MonteRayNextEventEstimator::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<N>* pRayList ) {
 	const bool debug = false;
 
 	if( debug ) {
@@ -42,8 +42,8 @@ MonteRayNextEventEstimator::launch_ScoreRayList( unsigned nBlocks, unsigned nThr
 	}
 }
 
-template void MonteRayNextEventEstimator::launch_ScoreRayList<1>( unsigned nBlocks, unsigned nThreads, cudaStream_t stream, const RayList_t<1>* pRayList );
-template void MonteRayNextEventEstimator::launch_ScoreRayList<3>( unsigned nBlocks, unsigned nThreads, cudaStream_t stream, const RayList_t<3>* pRayList );
+template void MonteRayNextEventEstimator::launch_ScoreRayList<1>( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<1>* pRayList );
+template void MonteRayNextEventEstimator::launch_ScoreRayList<3>( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<3>* pRayList );
 #endif
 
 }

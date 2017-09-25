@@ -62,6 +62,9 @@ public:
     template<typename MaterialIDType, typename DensityType, typename TempType>
     void initializeMaterialDescription( const std::vector<MaterialIDType>& IDs, const std::vector<DensityType>& dens, const std::vector<TempType>& temps, const std::size_t nCells);
 
+    template<typename MaterialIDType, typename DensityType, typename TempType>
+    void copyMaterialProperties( size_t nCells, size_t nMatSpecs, const size_t* pOffsetData, const TempType* pTemps, const MaterialIDType* pMatIDs, const DensityType* pDensities);
+
     offset_t getOffset( Cell_Index_t cellID ) const {
         if( singleNumComponents ) {
             return cellID * maxNumComponents;
@@ -169,15 +172,13 @@ public:
     size_t componentMatIDCapacity() const { return componentMatID.capacity(); }
     size_t componentDensityCapacity() const { return componentDensity.capacity(); }
 
-    void disableReduction() {
-        reductionDisabled = true;
-        singleTemp = false;
-        singleNumComponents = false;
-    }
+    void disableReduction();
+    bool isReductionDisabled(void) const { return reductionDisabled; }
 
-    offset_t* getOffsetData(void) {return offset.data(); }
-    MatID_t* getMaterialIDData(void) { return componentMatID.data(); }
-    Density_t* getMaterialDensityData(void) { return componentDensity.data(); }
+    const offset_t* getOffsetData(void) const {return offset.data(); }
+    const Temperature_t* getTemperatureData(void) const { return temperature.data(); }
+    const MatID_t* getMaterialIDData(void) const { return componentMatID.data(); }
+    const Density_t* getMaterialDensityData(void) const { return componentDensity.data(); }
 
 protected:
     std::vector<offset_t> offset; ///< offset[cell] into component arrays with size of numCells+1
@@ -310,6 +311,36 @@ MonteRay_MaterialProperties_FlatLayout::initializeMaterialDescription( const std
     }
     initializeMaterialDescription( IDs, dens, nCells);
     setCellTemperatures(temps);
+}
+
+template<typename MaterialIDType, typename DensityType, typename TempType>
+void
+MonteRay_MaterialProperties_FlatLayout::copyMaterialProperties(
+		size_t nCells, size_t nMatSpecs, const size_t* pOffsetData, const TempType* pTemps,
+		const MaterialIDType* pMatIDs, const DensityType* pDensities)
+{
+	clear();
+	numCells = nCells;
+	totalNumComponents = nMatSpecs;
+    numReservedCells = numCells;
+    reductionDisabled = true;
+
+    offset.resize( nCells + 1 );
+    for( unsigned i=0; i< nCells+1; ++i) {
+    	offset[i] = pOffsetData[i];
+    }
+
+    temperature.resize( nCells );
+    for( unsigned i=0; i< nCells; ++i) {
+    	temperature[i] = pTemps[i];
+    }
+
+    componentMatID.resize( nMatSpecs );
+    componentDensity.resize( nMatSpecs );
+    for( unsigned i=0; i< nMatSpecs; ++i) {
+    	componentMatID[i] = pMatIDs[i];
+    	componentDensity[i] = pDensities[i];
+    }
 }
 
 template<typename TempType>

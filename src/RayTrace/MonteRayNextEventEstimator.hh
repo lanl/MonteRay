@@ -305,7 +305,7 @@ public:
 
 #ifdef __CUDACC__
 	template<unsigned N>
-	void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t stream, const RayList_t<N>* pRayList );
+	void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<N>* pRayList );
 #endif
 
 	CUDAHOST_CALLABLE_MEMBER void setGeometry(const GridBinsHost* pGrid, const MonteRay_MaterialProperties* pMPs) {

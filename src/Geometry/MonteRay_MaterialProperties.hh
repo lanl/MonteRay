@@ -145,12 +145,40 @@ public:
         setupPtrData();
     }
 
+    /// initializer that expects an object like MaterialProperties
+    template<typename MATPROPS_T>
+    void copyMaterialProperties( MATPROPS_T& matprops  ) {
+    	if( ! matprops.isReductionDisabled() ) {
+    		throw std::runtime_error("MonteRay_MaterialProperties::copyMaterialProperties -- original material properties must have memory reduction disabled.");
+    	}
+    	using MAT_T = typename MATPROPS_T::MatID_t;
+    	using DEN_T = typename MATPROPS_T::Density_t;
+    	using TEMP_T = typename MATPROPS_T::Temperature_t;
+        pMemoryLayout->template copyMaterialProperties<MAT_T, DEN_T, TEMP_T >( matprops.size(),
+        		                                                    matprops.numMatSpecs(),
+        		                                                    matprops.getOffsetData(),
+        		                                                    matprops.getTemperatureData(),
+        		                                                    matprops.getMaterialIDData(),
+        		                                                    matprops.getMaterialDensityData()
+        		                                                  );
+        setupPtrData();
+    }
+
     void setupPtrData(void) {
     	ptrData->numCells = size();
     	ptrData->numMaterialComponents = numMatSpecs();
-    	ptrData->offset = getOffsetData();
-    	ptrData->ID = getMaterialIDData();
-    	ptrData->density = getMaterialDensityData();
+    	ptrData->offset = const_cast<offset_t*>(getOffsetData());
+    	ptrData->ID = const_cast<MatID_t*>(getMaterialIDData());
+    	ptrData->density = const_cast<Density_t*>(getMaterialDensityData());
+    }
+
+    template<typename T>
+    void setupPtrData(const T& obj ) {
+    	ptrData->numCells = obj.size();
+    	ptrData->numMaterialComponents = obj.numMatSpecs();
+    	ptrData->offset = const_cast<offset_t*>(obj.getOffsetData());
+    	ptrData->ID = const_cast<MatID_t*>(obj.getMaterialIDData());
+    	ptrData->density = const_cast<Density_t*>(obj.getMaterialDensityData());
     }
 
     template< typename FUNC_T, typename CELLINDEX_T, typename T = double >
@@ -280,11 +308,13 @@ public:
     size_t numEmptyMatSpecs(void) const { return pMemoryLayout->numEmptyMatSpecs(); }
     size_t numMatSpecs(void) const { return pMemoryLayout->componentMatIDSize(); }
 
-    offset_t* getOffsetData(void) { return pMemoryLayout->getOffsetData(); }
-    MatID_t* getMaterialIDData(void) { return pMemoryLayout->getMaterialIDData(); }
-    Density_t* getMaterialDensityData(void) { return pMemoryLayout->getMaterialDensityData(); }
+    const offset_t* getOffsetData(void) const { return pMemoryLayout->getOffsetData(); }
+    const Temperature_t* getTemperatureData(void) const { return pMemoryLayout->getTemperatureData(); }
+    const MatID_t* getMaterialIDData(void) const { return pMemoryLayout->getMaterialIDData(); }
+    const Density_t* getMaterialDensityData(void) const { return pMemoryLayout->getMaterialDensityData(); }
 
     void disableReduction() { pMemoryLayout->disableReduction(); }
+    bool isReductionDisabled(void) const { return pMemoryLayout->isReductionDisabled(); }
 
     Density_t launchSumMatDensity(MatID_t matIndex) const;
     Density_t sumMatDensity( MatID_t matIndex) const;
