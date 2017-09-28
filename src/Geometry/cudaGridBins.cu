@@ -126,16 +126,22 @@ CUDA_CALLABLE_MEMBER int cudaGetDimIndex(const GridBins* const grid, unsigned di
      // index is in the mesh
 	const bool debug = false;
 
-	if( debug ) {
-		printf("cudaGetDimIndex:: Starting cudaGetDimIndex, dim = %d\n", dim);
-		printf("cudaGetDimIndex:: min = %f\n", cudaMin(grid, dim));
-		printf("cudaGetDimIndex:: max = %f\n", cudaMax(grid, dim));
-		printf("cudaGetDimIndex:: isRegular = %d\n", grid->isRegular[dim]);
-	}
-
 	int dim_index;
 	float_t minimum = cudaMin(grid, dim);
 	unsigned numBins = grid->num[dim];
+
+	if( debug ) {
+		printf("cudaGetDimIndex:: Starting cudaGetDimIndex, dim = %d\n", dim);
+		printf("cudaGetDimIndex:: pos = %f\n", pos);
+		printf("cudaGetDimIndex:: num bins = %d\n", numBins);
+		printf("cudaGetDimIndex:: min = %f\n", minimum);
+		printf("cudaGetDimIndex:: max = %f\n", cudaMax(grid, dim));
+		if( grid->isRegular[dim] ) {
+			printf("cudaGetDimIndex:: grid is regular\n");
+		} else {
+			printf("cudaGetDimIndex:: grid is not regular\n");
+		}
+	}
 
 	if( pos <= minimum ) {
 		dim_index = -1;
@@ -148,32 +154,38 @@ CUDA_CALLABLE_MEMBER int cudaGetDimIndex(const GridBins* const grid, unsigned di
 			dim_index = cudaGetIndexBinaryFloat( grid->vertices + grid->offset[dim], numBins+1, pos  );
 		}
 	}
+
+	if( debug ) {
+		printf("cudaGetDimIndex:: dim_index = %d\n", dim_index);
+	}
 	return dim_index;
 }
 
 CUDA_CALLABLE_MEMBER bool cudaIsIndexOutside(const GridBins* const grid, unsigned dim, int i) {
+	const bool debug = false;
+	if( debug ) printf("Debug: cudaGridBins.cc::cudaIsIndexOutside -- dim=%u  i=%d  number of bins=%u\n", dim, i, cudaGetNumBins(grid, dim) );
 	if( i < 0 ||  i >= cudaGetNumBins(grid, dim) ) return true;
 	return false;
 }
 
 CUDA_CALLABLE_MEMBER bool cudaIsOutside(const GridBins* const grid, const int3& indices ) {
 	 if( cudaIsIndexOutside(grid, 0, indices.x) ) return true;
-	 if( cudaIsIndexOutside(grid, 0, indices.y) ) return true;
-	 if( cudaIsIndexOutside(grid, 0, indices.z) ) return true;
+	 if( cudaIsIndexOutside(grid, 1, indices.y) ) return true;
+	 if( cudaIsIndexOutside(grid, 2, indices.z) ) return true;
 	 return false;
 }
 
 CUDA_CALLABLE_MEMBER bool cudaIsOutside(const GridBins* const grid, uint1* indices ) {
 	 if( cudaIsIndexOutside(grid, 0, indices[0].x) ) return true;
-	 if( cudaIsIndexOutside(grid, 0, indices[1].x) ) return true;
-	 if( cudaIsIndexOutside(grid, 0, indices[2].x) ) return true;
+	 if( cudaIsIndexOutside(grid, 1, indices[1].x) ) return true;
+	 if( cudaIsIndexOutside(grid, 2, indices[2].x) ) return true;
 	 return false;
 }
 
 CUDA_CALLABLE_MEMBER bool cudaIsOutside(const GridBins* const grid, int* indices ) {
 	 if( cudaIsIndexOutside(grid, 0, indices[0]) ) return true;
-	 if( cudaIsIndexOutside(grid, 0, indices[1]) ) return true;
-	 if( cudaIsIndexOutside(grid, 0, indices[2]) ) return true;
+	 if( cudaIsIndexOutside(grid, 1, indices[1]) ) return true;
+	 if( cudaIsIndexOutside(grid, 2, indices[2]) ) return true;
 	 return false;
 }
 

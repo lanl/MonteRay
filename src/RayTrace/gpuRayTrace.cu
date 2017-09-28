@@ -142,7 +142,7 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
     indices[0] = cudaindices.x; indices[1] = cudaindices.y; indices[2] = cudaindices.z;
 
     int maxNumCrossings = numCrossings.x + numCrossings.y + numCrossings.z;
-
+    if( debug ) printf("cudaRayTrace::cudaOrderCrossings  maxNumCrossings = %d\n", maxNumCrossings);
     float_t minDistances[3];
 
     bool outside;
@@ -165,11 +165,19 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
                 minDistances[j] = CUDART_NORM_HUGE_F;
             }
         }
+        if( debug ) printf("cudaRayTrace::cudaOrderCrossings  crossing # %d, min dimension = %d, distance = %f\n", i, minDim, minimumDistance);
 
         indices[minDim] =  *((cells+minDim*num) + start[minDim]);
+        if( debug ) printf("cudaRayTrace::cudaOrderCrossings  current indices: i = %d, j = %d, k = %d\n", indices[0], indices[1], indices[2]);
 
         // test for outside of the grid
         outside = cudaIsOutside(grid, indices );
+
+        if( debug ) {
+        	if( outside ) {
+        		printf("cudaRayTrace::cudaOrderCrossings  -- ray is outside the mesh\n");
+        	}
+        }
 
         float_t currentDistance = minimumDistance;
 

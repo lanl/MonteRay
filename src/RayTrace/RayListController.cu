@@ -61,9 +61,11 @@ RayListController<N>::RayListController(
 	usingNextEventEstimator = true;
 	initialize();
 	kernel = [&] ( void ) {
-		const bool debug = true;
-		if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
-		pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads,stream1, currentBank->getPtrPoints());
+		const bool debug = false;
+		if( currentBank->size() > 0 ) {
+			if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
+			pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads,stream1, currentBank->getPtrPoints());
+		}
 	};
 }
 
@@ -176,6 +178,10 @@ RayListController<N>::flush(bool final){
 	if( isSendingToFile() ) { flushToFile(final); }
 
 	if( currentBank->size() == 0 ) {
+		if( final ) {
+			printTotalTime();
+			currentBank->clear();
+		}
 		return;
 	}
 

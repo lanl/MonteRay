@@ -212,15 +212,18 @@ public:
 							  detectorIndex,
 							  x, y, z,
 							  u, v, w );
-
+		if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- distance to detector = %20.12f\n",dist );
 		float3_t pos = make_float3( x, y, z);
 		float3_t dir = make_float3( u, v, w);
 
 		numberOfCells = cudaRayTrace( pGridBins, cells, crossingDistances, pos, dir, dist, false);
 
 		for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
-			gpuFloatType_t energy = energies[energyIndex];
 			gpuFloatType_t weight = weights[energyIndex];
+			if( weight == 0.0 ) continue;
+
+			gpuFloatType_t energy = energies[energyIndex];
+			if( energy <  1.0e-11 ) continue;
 
 			tally_t partialScore = 0.0;
 
@@ -253,11 +256,12 @@ public:
 					gpuFloatType_t xs = materialXS[matID]*density;
 					totalXS += xs;
 					if( debug ) {
-						printf("Debug: MonteRayNextEventEstimator::calcScore -- materialID=%d, density=%f, materialXS=%f, xs=%f, totalxs=%f\n", matID, materialXS[matID], density, xs, totalXS);
+						printf("Debug: MonteRayNextEventEstimator::calcScore -- materialID=%d, density=%f, materialXS=%f, xs=%f, totalxs=%f\n", matID, density, materialXS[matID], xs, totalXS);
 					}
 				}
 
 				opticalThickness += totalXS * cellDistance;
+				if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- optialThickness= %20.12f\n",opticalThickness );
 			}
 
 			partialScore = ( weight / (2.0 * MonteRay::pi * dist*dist)  ) * exp( - opticalThickness);
@@ -291,7 +295,7 @@ public:
 								   pRayList->points[tid].index,
 								   pRayList->points[tid].particleType);
 		if( debug ) {
-			printf("Debug: MonteRayNextEventEstimator::score -- value=%f.\n" , value);
+			printf("Debug: MonteRayNextEventEstimator::score -- value=%e .\n" , value);
 		}
 		gpu_atomicAdd( &tally[pRayList->points[tid].detectorIndex], value );
 	}
