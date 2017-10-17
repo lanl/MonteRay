@@ -47,7 +47,8 @@ attenuateRayTraceOnly(const MonteRayMaterialList* pMatList,
 					  unsigned cell,
 					  gpuFloatType_t distance,
 					  gpuFloatType_t energy,
-					  gpuTallyType_t enteringFraction );
+					  gpuTallyType_t enteringFraction,
+					  ParticleType_t particleType );
 
 template<unsigned N>
 CUDA_CALLABLE_KERNEL

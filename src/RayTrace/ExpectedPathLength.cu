@@ -20,7 +20,11 @@ tallyAttenuation(GridBins* pGrid,
 
 	gpuTallyType_t enteringFraction = p->weight[0];
 	gpuFloatType_t energy = p->energy[0];
-	unsigned HashBin = getHashBin(pHash, energy);
+
+	unsigned HashBin;
+	if( p->particleType == neutron ) {
+		HashBin = getHashBin(pHash, energy);
+	}
 
 	if( energy < 1e-20 ) {
 		return 0.0;
@@ -41,7 +45,7 @@ tallyAttenuation(GridBins* pGrid,
 		gpuFloatType_t distance = crossingDistances[i];
 		if( cell == UINT_MAX ) continue;
 
-		enteringFraction = attenuateRayTraceOnly(pMatList, pMatProps, pHash, HashBin, cell, distance, energy, enteringFraction );
+		enteringFraction = attenuateRayTraceOnly(pMatList, pMatProps, pHash, HashBin, cell, distance, energy, enteringFraction, p->particleType );
 
 		if( enteringFraction < 1e-11 ) {
 			// cut off at 25 mean free paths
@@ -67,7 +71,8 @@ attenuateRayTraceOnly(const MonteRayMaterialList* pMatList,
 		              unsigned cell,
 		              gpuFloatType_t distance,
 		              gpuFloatType_t energy,
-		              gpuTallyType_t enteringFraction )
+		              gpuTallyType_t enteringFraction,
+		              ParticleType_t particleType)
 {
 	gpuTallyType_t totalXS = 0.0;
 	unsigned numMaterials = getNumMats( pMatProps, cell);
@@ -77,7 +82,11 @@ attenuateRayTraceOnly(const MonteRayMaterialList* pMatList,
 		gpuFloatType_t density = getDensity(pMatProps, cell, i );
 		if( density > 1e-5 ) {
 			//unsigned materialIndex = materialIDtoIndex(pMatList, matID);
-			totalXS +=  getTotalXS( pMatList, matID, pHash, HashBin, energy, density);
+			if( particleType == neutron ) {
+				totalXS +=  getTotalXS( pMatList, matID, pHash, HashBin, energy, density);
+			} else {
+				totalXS +=  getTotalXS( pMatList, matID, energy, density);
+			}
 		}
 	}
 
@@ -220,7 +229,11 @@ tallyCollision(GridBins* pGrid,
 	gpuTallyType_t opticalPathLength = 0.0;
 
 	gpuFloatType_t energy = p->energy[0];
-	unsigned HashBin = getHashBin(pHash, energy);
+
+	unsigned HashBin;
+	if( p->particleType == neutron ) {
+		HashBin = getHashBin(pHash, energy);
+	}
 
 	if( energy < 1e-20 ) {
 		return;
@@ -238,7 +251,11 @@ tallyCollision(GridBins* pGrid,
 
 	gpuFloatType_t materialXS[MAXNUMMATERIALS];
 	for( unsigned i=0; i < pMatList->numMaterials; ++i ){
-		materialXS[i] = getTotalXS( pMatList, i, pHash, HashBin, energy, 1.0);
+		if( p->particleType == neutron ) {
+			materialXS[i] = getTotalXS( pMatList, i, pHash, HashBin, energy, 1.0);
+		} else {
+			materialXS[i] = getTotalXS( pMatList, i, energy, 1.0);
+		}
 	}
 
 	for( unsigned i=0; i < numberOfCells; ++i ){

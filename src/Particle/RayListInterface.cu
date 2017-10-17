@@ -12,7 +12,9 @@ namespace MonteRay{
 
 template< unsigned N>
 RayListInterface<N>::~RayListInterface() {
-    delete ptrPoints;
+	if( ptrPoints != NULL ) {
+		delete ptrPoints;
+	}
 
     if( io.is_open() ) {
         if( iomode == "out" ){
