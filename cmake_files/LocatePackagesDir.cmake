@@ -39,9 +39,9 @@ if( NOT EXISTS ${package_dir} )
 endif()
 
 if( NOT EXISTS ${package_dir} OR NOT IS_DIRECTORY ${package_dir} )
-  message( FATAL_ERROR "Unable to locate required package dir." )
+#  message( FATAL_ERROR "Unable to locate required package dir." )
 else()
-    message( "Found toolkit packages in [ ${package_dir} ]" )
+#    message( "Found toolkit packages in [ ${package_dir} ]" )
 endif()
 
 #  ___           _        _ _       _   _             
@@ -70,7 +70,7 @@ if( NOT EXISTS ${install_dir} )
 endif()
 
 if( NOT EXISTS ${install_dir} OR NOT IS_DIRECTORY ${install_dir} )
-    message( FATAL_ERROR "Unable to locate root directory for installation." )
+#    message( FATAL_ERROR "Unable to locate root directory for installation." )
     
 else()
 

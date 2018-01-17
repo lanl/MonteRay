@@ -102,7 +102,7 @@ endforeach()
 
 #    The developer should propagate a list of toolkit headers, but the root include from the
 #    the package directory will always come first (candycorn PGI issues)
-include_directories( ${package_dir}/include )
+#include_directories( ${package_dir}/include )
 
 #  Add the current source dir to the include list
 list( APPEND ${ParentDir}_includes ${RelDirPath}/${TestDirName} )

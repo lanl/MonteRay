@@ -17,8 +17,8 @@ if( UNIX )
     find_library( UnitTest_LIBRARIES 
                   NAMES UnitTest++ 
                   PATHS ${package_dir}/lib
-                        $ENV{UNITTEST_DIR}/lib
-                  PATH_SUFFIXES ${ut_PathSuffixes}
+                        $ENV{UNITTEST_ROOT}/lib
+                        $ENV{UNITTEST_ROOT}/lib/UnitTest++
                   DOC "The UnitTest++ library for System: ${CMAKE_SYSTEM_NAME} Compiler: ${CMAKE_CXX_COMPILER}"
                   NO_DEFAULT_PATH )
     # If this isn't erased, it will still appear in the link line as -L.. and in the rpath!!!
@@ -38,7 +38,7 @@ set( CMAKE_FIND_LIBRARY_SUFFIXES ${_orig_CMAKE_FIND_LIBRARY_SUFFIXES} )
 
 find_path( UnitTest_INCLUDE_DIRS UnitTest++.h 
            PATHS ${package_dir}
-                 $ENV{UNITTEST_DIR}
+                 $ENV{UNITTEST_ROOT}
            PATH_SUFFIXES include/UnitTest++ )
 
 message( "Found UnitTest++ libraries in : ${UnitTest_LIBRARIES}" )
