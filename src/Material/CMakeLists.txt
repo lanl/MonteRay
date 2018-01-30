@@ -2,9 +2,9 @@ file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
 
 include( template_select )
 
-list( APPEND ${UnitName}_packages Utilities )
+list( APPEND ${UnitName}_packages )
 
-set( ToolkitLibs )
+set( ToolkitLibs Utilities )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

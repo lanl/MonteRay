@@ -14,7 +14,15 @@ set( testname ${libname} )
 #  Gather sources
 
 file( GLOB ${libname}_srcs "*.cpp" "*.cc" "*.cu" )
+file( GLOB ${libname}_cuda_srcs "*.cu" )
 file( GLOB ${libname}_headers "*.h" "*.hh" )
+
+if( NOT enable_cuda )
+    foreach( cudaFile ${${libname}_cuda_srcs} )
+       set_source_files_properties( ${cudaFile} PROPERTIES LANGUAGE CXX )
+       set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS "-x c++")
+    endforeach()
+endif()
 
 foreach( configsrc ${config_srcs} )
     configure_file( ${configsrc}.in ${configsrc} )
@@ -49,16 +57,22 @@ if( NSrcs GREATER 0 )
     # Set any flags since this will be placed in a dynamic library
 #    set( CMAKE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} ${CMAKE_CXX_FLAGS} -g -pg" )  #gprof
     set( CMAKE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}" )
-    #cuda_add_library( ${libname} ${${libname}_srcs} ${${libname}_headers} )
-    #install( TARGETS ${libname} EXPORT ${ExportName} DESTINATION ${library_install_prefix} )
+    add_library( ${libname} STATIC ${${libname}_srcs} ${${libname}_headers} )
+    target_compile_features(${libname} PUBLIC cxx_std_11)
+
+    if( enable_cuda )
+        set_target_properties( ${libname} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    endif()
+
+    install( TARGETS ${libname} EXPORT ${ExportName} DESTINATION ${library_install_prefix} )
     # Add this library to the toolkit's main library (libmcatk.so)
     # If this is a rebuild, the name may already be registered, so check first
-    #string( REGEX MATCH "${libname}" alreadyKnown "${Toolkit_libs}" )
-    #if( NOT alreadyKnown AND NOT Excluding_${UnitName} )
-    #    set( Toolkit_libs ${Toolkit_libs} ${libname} CACHE INTERNAL "" )
-    #endif()
+    list( FIND Toolkit_libs ${libname} index )
+    if( index EQUAL -1  AND NOT Excluding_${UnitName} )
+        set( Toolkit_libs ${Toolkit_libs} ${libname} CACHE INTERNAL "" )
+    endif()
     
-    #set_property( TARGET ${libname} APPEND PROPERTY LABELS ${SubProjectName} )
+    set_property( TARGET ${libname} APPEND PROPERTY LABELS ${SubProjectName} )
 
 else()
     unset( libname )

@@ -67,33 +67,26 @@ set( appName ${TestType}${testname} )
 
 
 ########################################
-# CUDA Helper library
-set( testhelper "${UnitName}_${current_dir}_Helperlib" )
-#message ( "Debug: -- ${appName} -- test helper library = ${testhelper} " )
-if( DEFINED enable_cuda )
-   file(GLOB CUDA_TEST_SRCS "*.cu" )
-   cuda_add_library(${testhelper} SHARED ${AllCudaFiles} ${CUDA_TEST_SRCS} )
-   set_property(TARGET ${testhelper} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-else()
-    foreach( cudaFile ${AllCudaFiles} )
-       set_source_files_properties( ${cudaFile} PROPERTIES LANGUAGE CXX )
-       set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS "-x c++")
-    endforeach()
-    set(${AllCudaFiles} ${CudaFileList} PARENT_SCOPE)
-    add_library(${testhelper} STATIC ${AllCudaFiles})
-endif()
+# Tell C++ how to compile files with .cu extension 
+#if( NOT enable_cuda )
+#    foreach( cudaFile ${AllCudaFiles} )
+#       set_source_files_properties( ${cudaFile} PROPERTIES LANGUAGE CXX )
+#       set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS "-x c++")
+#    endforeach()
+#    set(${AllCudaFiles} ${CudaFileList} PARENT_SCOPE)
+#
+#endif()
 
 
 ########################################
 #  Gather test sources
 
-if( enable_cuda ) 
-    # don't include .cu test files - they are added to the test helper CUDA library
-    file( GLOB ${appName}_srcs "*.cpp" "*.cc" )
+file( GLOB ${appName}_srcs "*.cpp" "*.cc" "*.cu" )
+if( enable_cuda )     
     set_source_files_properties( ${appName}_srcs PROPERTIES LANGUAGE CUDA )
 else()
-    file( GLOB ${appName}_srcs "*.cpp" "*.cc" "*.cu" )
     set_source_files_properties( ${appName}_srcs PROPERTIES LANGUAGE CXX )
+    set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS "-x c++")
 endif()
 
 foreach( src ${ExcludeSource} )
@@ -118,10 +111,6 @@ endif()
 foreach( pkg ${${ParentDir}_packages} ) 
 #    message( STATUS "                    -- ${ParentDir}_packages including = ${${pkg}_INCLUDE_DIRS}" )
     include_directories( ${${pkg}_INCLUDE_DIRS} )
-    
-    if( DEFINED enable_cuda )
-      cuda_include_directories( ${${pkg}_INCLUDE_DIRS} )
-    endif()
 
     if( DEFINED ${pkg}_LIBRARY_DIRS )
         link_directories( ${${pkg}_LIBRARY_DIRS} )
@@ -141,9 +130,7 @@ add_definitions(-D${CMAKE_SYSTEM_NAME})
 ########################################
 #  Add the new test
 
-if( enable_cuda )
-  # CUDA language properties
-else()
+if( NOT enable_cuda )
   # std C++ language properties
   foreach( srcname ${${appName}_srcs} )
     set_source_files_properties( ${srcname} PROPERTIES LANGUAGE CXX )
@@ -152,6 +139,11 @@ else()
 endif()
 
 add_executable( ${appName} ${${appName}_srcs} ) 
+
+if( enable_cuda )
+    set_property(TARGET ${appName} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+endif()
+
 set_property(TARGET ${appName} APPEND PROPERTY COMPILE_DEFINITIONS ${CXX11_FEATURE_LIST} )
 
 
@@ -175,22 +167,19 @@ endif()
 #  Toolkit libraries that need to linked in
 
 # Try to add parent directories library - removed in MonteRay
-#if( DEFINED libname )
-#    target_link_libraries( ${appName} ${libname} )
-#endif()
-
-# Add CUDA test helper library
-target_link_libraries( ${appName} ${testhelper} )
+if( DEFINED libname )
+    target_link_libraries( ${appName} PRIVATE ${libname} )
+endif()
 
 # CUDA libraries
-if( DEFINED enable_cuda ) 
-    target_link_libraries( ${appName} cuda )
-    target_link_libraries( ${appName} ${CUDA_LIBRARIES} )
+if( enable_cuda ) 
+    target_link_libraries( ${appName} PRIVATE cuda )
+    target_link_libraries( ${appName} PRIVATE ${CUDA_LIBRARIES} )
 endif()
 
 # Add any additional
 foreach( curLib ${ToolkitLibs} ) 
-    target_link_libraries( ${appName} ${curLib} )
+    target_link_libraries( ${appName} PRIVATE ${curLib} )
 endforeach()
 
 ########################################
@@ -198,22 +187,22 @@ endforeach()
 
 foreach( pkg ${${ParentDir}_packages} ) 
     if( DEFINED ${pkg}_LIBRARIES )
-        target_link_libraries( ${appName} ${${pkg}_LIBRARIES} )
+        target_link_libraries( ${appName} PRIVATE ${${pkg}_LIBRARIES} )
     endif()
 endforeach()
 
 if( CMAKE_SYSTEM MATCHES "Darwin" )
 else()
-    target_link_libraries( ${appName} rt )
+    target_link_libraries( ${appName} PRIVATE rt )
 endif()
 if( Platform STREQUAL "BlueGeneQ" )
-    target_link_libraries( ${appName} pthread )
+    target_link_libraries( ${appName} PRIVATE pthread )
     set( MPIEXEC_PREFLAGS ${MPI_EXECPREFLAGS} --partition=pdebug -t 1:30:00 )
 endif()
 
 # Need to explicitly link in thread library if this is known
 if( CMAKE_THREAD_LIBS_INIT )
-    target_link_libraries( ${appName} ${CMAKE_THREAD_LIBS_INIT} )
+    target_link_libraries( ${appName} PRIVATE ${CMAKE_THREAD_LIBS_INIT} )
 endif()
 
 ######################################################################

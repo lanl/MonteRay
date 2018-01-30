@@ -1,5 +1,5 @@
 # Cmake 3.8 is needed for proper CUDA support
-CMAKE_MINIMUM_REQUIRED(VERSION 3.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.8 FATAL_ERROR)
 
 if( enable_cuda )
     message( "Base CmakeLists.txt - enabling CUDA." ) 
@@ -28,7 +28,7 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts )
 message( STATUS "-- Loading main.cmake")
 include( main )
 
-if( DEFINED enable_cuda )
+if( enable_cuda )
   message( STATUS "-- Building with CUDA.")
   message( STATUS "-- Loading config_nvcc.cmake")
   include(config_nvcc )

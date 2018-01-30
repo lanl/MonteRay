@@ -13,6 +13,7 @@ SUITE( Material_Spec_Tester ) {
 	MaterialSpec Four ( 2, 2.1 );
 
 	TEST( Operator_Tests ){
+		//CHECK(false);
 
 		// Test All the possible combination of comparators for MaterialSpec
 

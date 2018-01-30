@@ -16,6 +16,7 @@ using namespace MonteRay;
 SUITE( Test_Vector3D ) {
 	double epsilon = 1.0e-7;
 	TEST( DefaultCtor ) {
+		//CHECK(false);
 		Vector3D<double> temp;
 		CHECK_CLOSE( temp[0], 0.0, epsilon );
 		CHECK( temp[ 0 ] == temp[ 1 ] && temp[ 0 ] == temp[ 2 ]);

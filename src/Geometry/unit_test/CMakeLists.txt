@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs lnk3dnt Utilities )
+set( ToolkitLibs lnk3dnt Utilities RayTrace CrossSection Material Particle)
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

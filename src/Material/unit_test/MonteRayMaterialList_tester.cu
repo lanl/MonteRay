@@ -5,6 +5,7 @@
 
 SUITE( MonteRayMaterialList_tester ) {
     TEST( ctor ) {
+    	//CHECK(false);
         MonteRayMaterialHost mat(1);
 
         MonteRayCrossSectionHost xs(4);

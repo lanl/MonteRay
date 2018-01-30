@@ -1,8 +1,8 @@
 include( template_select )
 
-file(GLOB LIBRARY_SRCS "*.hh" "*.cc" )
-add_library(lnk3dnt ${LIBRARY_SRCS} )
-set_target_properties(lnk3dnt PROPERTIES LINKER_LANGUAGE CXX) 
+#file(GLOB LIBRARY_SRCS "*.hh" "*.cc" )
+#add_library(lnk3dnt ${LIBRARY_SRCS} )
+#set_target_properties(lnk3dnt PROPERTIES LINKER_LANGUAGE CXX) 
 
 list( APPEND ${UnitName}_packages  )
 

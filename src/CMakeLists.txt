@@ -6,7 +6,7 @@
 #ADD_SUBDIRECTORY(Utilities)
 
 #################################################################################
-if( DEFINED enable_cuda )
+if( enable_cuda )
   # Create MonteRay CUDA library
   set( AllCudaFiles "")
   globCudaFiles( "${TestDirNames}" AllCudaFiles)

@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs Utilities )
+set( ToolkitLibs Utilities GPU_Utilities )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )
