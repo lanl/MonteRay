@@ -3,9 +3,6 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" moduleId="org.eclipse.cdt.core.settings" name="Debug">
-				<macros>
-					<stringMacro name="CUDA" type="VALUE_TEXT" value="true"/>
-				</macros>
 				<externalSettings/>
 				<extensions>
 					<extension id="com.nvidia.cuda.ide.cubin" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -20,11 +17,11 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" name="Debug" parent="com.nvidia.cuda.ide.on_path.configuration.debug">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945" name="Debug" parent="com.nvidia.cuda.ide.on_path.configuration.debug">
 					<folderInfo id="com.nvidia.cuda.ide.on_path.configuration.debug.1204392945." name="/" resourcePath="">
 						<toolChain id="com.nvidia.cuda.tools.toolchain.on_path.exe.debug.1962468529" name="CUDA Toolkit on the path" nonInternalBuilderId="com.nvidia.cuda.ide.builder" superClass="com.nvidia.cuda.tools.toolchain.on_path.exe.debug">
 							<targetPlatform archList="all" binaryParser="com.nvidia.cuda.ide.elf;com.nvidia.cuda.ide.macho;com.nvidia.cuda.ide.cubin" id="com.nvidia.cuda.ide.targetPlatform.2038224067" isAbstract="false" name="Debug Platform" osList="linux,macosx" superClass="com.nvidia.cuda.ide.targetPlatform"/>
-							<builder arguments="--build ${BINARY_DIR} --" buildPath="${git_work_tree}" command="cmake" id="com.nvidia.cuda.ide.builder.1863146371" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="CUDA Toolkit 8.0 Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.nvidia.cuda.ide.builder"/>
+							<builder arguments="--build ${BINARY_DIR} --" buildPath="${git_work_tree}" command="cmake" id="com.nvidia.cuda.ide.builder.1863146371" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="CUDA Toolkit 9.0 Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.nvidia.cuda.ide.builder"/>
 							<tool id="nvcc.compiler.base.79095392" name="NVCC Compiler" superClass="nvcc.compiler.base">
 								<option id="nvcc.compiler.deviceDebug.1246434326" name="Generate device debug information (-G)" superClass="nvcc.compiler.deviceDebug" value="true" valueType="boolean"/>
 								<option id="nvcc.compiler.option.level.791165535" name="Generate host debug information (-g)" superClass="nvcc.compiler.option.level" value="true" valueType="boolean"/>
@@ -34,7 +31,7 @@
 								<option id="nvcc.compiler.def.symbols.2056841840" name="Defined symbols (-D)" superClass="nvcc.compiler.def.symbols"/>
 								<option id="nvcc.compiler.include.paths.2003416334" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/raytrace2/external/gtest}&quot;"/>
-									<listOptionValue builtIn="false" value="/projects/mcatk/packages/rhel7/include/UnitTest++"/>
+									<listOptionValue builtIn="false" value="/projects/mcatk/packages/linux/gcc/6.4.0/unittest-cpp_1.4.0/include/UnitTest++"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1899123923" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.322854213" superClass="nvcc.compiler.input.cpp"/>
@@ -218,10 +215,10 @@
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Release2"/>
-		<configuration configurationName="Release">
+		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/raytrace2"/>
 		</configuration>
-		<configuration configurationName="Debug">
+		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/raytrace2"/>
 		</configuration>
 	</storageModule>
@@ -262,94 +259,6 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
-			<target name="UnitConstants" path="src/Constants" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>UnitConstants</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="UnitGeometry" path="src/Geometry/unit_test" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
-				<buildTarget>UnitGeometry</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="UnitParticle" path="src/Particle/unit_test" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
-				<buildTarget>UnitParticle</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="Unit_Depreciated_Stuff" path="src/_Depreciated_Stuff" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>Unit_Depreciated_Stuff</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="UnitUtilities" path="src/Utilities" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildArguments>-j8</buildArguments>
-				<buildTarget>UnitUtilities</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="UnitGlobal" path="src/Global" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>UnitGlobal</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="UnitOutputControls" path="src/OutputControls" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>UnitOutputControls</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="integrated_tests" path="tests/integrated_tests" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildArguments>-C ${ProjDirPath}/Build VERBOSE=1 -j8</buildArguments>
-				<buildTarget>integrated_tests</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="FIUnitRayTrace" path="src/RayTrace" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j12 -j8</buildArguments>
-				<buildTarget>FIUnitRayTrace</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="UnitRayTrace" path="src/RayTrace" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>UnitRayTrace</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>false</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="NightlyRayTrace" path="src/RayTrace" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>NightlyRayTrace</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>false</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
 			<target name="UnitMath_Functions" path="src/Math_Functions" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
 				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
@@ -358,9 +267,25 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
+			<target name="UnitGPU_Utilities" path="src/GPU_Utilities" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildTarget>UnitGPU_Utilities</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="Unitlnk3dnt" path="src/Geometry/lnk3dnt/unit_test" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
+				<buildTarget>Unitlnk3dnt</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
 			<target name="FIUnitParticle" path="src/Particle" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j20</buildArguments>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
 				<buildTarget>FIUnitParticle</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
@@ -374,18 +299,26 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="UnitMaterial" path="src/Material" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="FIUnitRayTrace" path="src/RayTrace" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j20</buildArguments>
-				<buildTarget>UnitMaterial</buildTarget>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildTarget>FIUnitRayTrace</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="UnitGPU_Utilities" path="src/GPU_Utilities" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="UnitRayTrace" path="src/RayTrace" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
 				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
-				<buildTarget>UnitGPU_Utilities</buildTarget>
+				<buildTarget>UnitRayTrace</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="NightlyRayTrace" path="src/RayTrace" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildTarget>NightlyRayTrace</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
@@ -398,10 +331,18 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="UnitDeviceProperties" path="src/DeviceProperties" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="UnitParticle" path="src/Particle/unit_test" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j12 -j8</buildArguments>
-				<buildTarget>UnitDeviceProperties</buildTarget>
+				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
+				<buildTarget>UnitParticle</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="UnitMaterial" path="src/Material" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j20</buildArguments>
+				<buildTarget>UnitMaterial</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
@@ -452,10 +393,73 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="Unitlnk3dnt" path="src/Geometry/lnk3dnt/unit_test" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="Initiate Build wCUDA" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>-Denable_cuda:BOOL=ON -P cmake_files/Builder.cmake</buildArguments>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="Unit_Depreciated_Stuff" path="src/_Depreciated_Stuff" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildTarget>Unit_Depreciated_Stuff</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="UnitGlobal" path="src/Global" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildTarget>UnitGlobal</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="UnitUtilities" path="src/Utilities" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments>-j8</buildArguments>
+				<buildTarget>UnitUtilities</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="integrated_tests" path="tests/integrated_tests" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments>-C ${ProjDirPath}/Build VERBOSE=1 -j8</buildArguments>
+				<buildTarget>integrated_tests</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="UnitConstants" path="src/Constants" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildTarget>UnitConstants</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="UnitGeometry" path="src/Geometry/unit_test" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
 				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
-				<buildTarget>Unitlnk3dnt</buildTarget>
+				<buildTarget>UnitGeometry</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="UnitOutputControls" path="src/OutputControls" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildTarget>UnitOutputControls</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="UnitDeviceProperties" path="src/DeviceProperties" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cmake</buildCommand>
+				<buildArguments>--build ${BINARY_DIR} -- -j12 -j8</buildArguments>
+				<buildTarget>UnitDeviceProperties</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
