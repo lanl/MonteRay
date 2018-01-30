@@ -7,8 +7,9 @@
 
 namespace MonteRay {
 
-#ifdef CUDA
-__global__ void add_single(unsigned N, float *a, float *b, float *c ) {
+CUDA_CALLABLE_KERNEL void add_single(unsigned N, float *a, float *b, float *c ) {
+
+#ifdef __CUDA_ARCH__
 	int bid = blockIdx.x;
 	int tid = threadIdx.x;
 	if( bid < N ) {
@@ -18,10 +19,22 @@ __global__ void add_single(unsigned N, float *a, float *b, float *c ) {
 			gpu_atomicAdd_single( &c[bid], b[bid] );
 		}
 	}
+#else
+	for( auto bid = 0; bid < N; ++bid ) {
+		for( auto tid = 0; tid < 2; ++tid ) {
+			if( tid == 0 ) {
+				gpu_atomicAdd_single( &c[bid], a[bid] );
+			} else if ( tid == 1 ) {
+				gpu_atomicAdd_single( &c[bid], b[bid] );
+			}
+		}
+	}
+#endif
 }
 
-__global__ void add_double(unsigned N, double *a, double *b, double *c ) {
-//	printf("Debug: GPU_Utilities/unit_test/gpuAddTwoDoubles.cu::add_double **************\n");
+CUDA_CALLABLE_KERNEL void add_double(unsigned N, double *a, double *b, double *c ) {
+//	printf("Debug: GPU_Utilities/unit_test/gpuAddTwoDoubles.cc::add_double **************\n");
+#ifdef __CUDA_ARCH__
 	int bid = blockIdx.x;
 	int tid = threadIdx.x;
 	if( bid < N ) {
@@ -31,8 +44,18 @@ __global__ void add_double(unsigned N, double *a, double *b, double *c ) {
 			gpu_atomicAdd_double( &c[bid], b[bid] );
 		}
 	}
-}
+#else
+	for( auto bid = 0; bid < N; ++bid ) {
+		for( auto tid = 0; tid < 2; ++tid ) {
+			if( tid == 0 ) {
+				gpu_atomicAdd_double( &c[bid], a[bid] );
+			} else if ( tid == 1 ) {
+				gpu_atomicAdd_double( &c[bid], b[bid] );
+			}
+		}
+	}
 #endif
+}
 
 /// Adds two doubles
 double gpuAddTwoDoubles( double A, double B) {
@@ -53,8 +76,8 @@ double gpuAddTwoDoubles( double A, double B) {
 	b_host[0] = B;
 	c_host[0] = 0.0;
 
-#ifdef CUDA
-//	std::cout <<"Debug: GPU_Utilities/unit_test/gpuAddTwoDoubles.cu::gpuAddTwoDoubles - CUDA defined.\n";
+#ifdef __CUDACC__
+//	std::cout <<"Debug: GPU_Utilities/unit_test/gpuAddTwoDoubles.cc::gpuAddTwoDoubles - CUDA defined.\n";
 
 	value_t* pA_device;
 	value_t* pB_device;
@@ -74,15 +97,14 @@ double gpuAddTwoDoubles( double A, double B) {
 	sync.sync();
 
 	cudaMemcpy( c_host, pC_device, allocSize, cudaMemcpyDeviceToHost);
-	C = c_host[0];
 
 	cudaFree( pA_device );
 	cudaFree( pB_device );
 	cudaFree( pC_device );
 #else
-	C = 0.0;
+	add_double(N, a_host, b_host, c_host );
 #endif
-
+	C = c_host[0];
 	return C;
 }
 
@@ -105,7 +127,7 @@ float gpuAddTwoFloats( float A, float B) {
 	b_host[0] = B;
 	c_host[0] = 0.0;
 
-#ifdef CUDA
+#ifdef __CUDACC__
 	value_t* pA_device;
 	value_t* pB_device;
 	value_t* pC_device;
@@ -124,15 +146,15 @@ float gpuAddTwoFloats( float A, float B) {
 	sync.sync();
 
 	cudaMemcpy( c_host, pC_device, allocSize, cudaMemcpyDeviceToHost);
-	C = c_host[0];
+
 
 	cudaFree( pA_device );
 	cudaFree( pB_device );
 	cudaFree( pC_device );
 #else
-	C = 0.0;
+	add_single(N, a_host, b_host, c_host );
 #endif
-
+	C = c_host[0];
 	return C;
 }
 

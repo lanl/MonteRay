@@ -1,10 +1,3 @@
-/*
- * GPUUtilityFunctions.cc
- *
- *  Created on: Mar 20, 2017
- *      Author: jsweezy, jsweezy@lanl.gov
- */
-
 #include <cstdio>
 
 #include "GPUErrorCheck.hh"
@@ -14,13 +7,13 @@
 namespace MonteRay{
 
 void cudaReset(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
 	CUDA_CHECK_RETURN( cudaDeviceReset() );
 #endif
 }
 
 void gpuCheck() {
-#ifdef CUDA
+#ifdef __CUDACC__
 	int deviceCount;
 
 	CUresult result_error = cuInit(0);
@@ -38,7 +31,7 @@ void gpuCheck() {
 }
 
 void gpuInfo() {
-#ifdef CUDA
+#ifdef __CUDACC__
 	int deviceCount;
 
 	CUresult result_error = cuDeviceGetCount(&deviceCount);
@@ -68,7 +61,7 @@ void gpuInfo() {
 int getNumberOfGPUS(void) {
 	int count = 0;
 
-#ifdef CUDA
+#ifdef __CUDACC__
 	cudaGetDeviceCount( &count ) ;
 	count = 1;
 #endif
@@ -76,7 +69,7 @@ int getNumberOfGPUS(void) {
 }
 
 void setCudaPrintBufferSize( size_t size) {
-#ifdef CUDA
+#ifdef __CUDACC__
 	cudaDeviceSetLimit(cudaLimitPrintfFifoSize, size );
 #endif
 }

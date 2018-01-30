@@ -239,9 +239,11 @@ CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pX
 
 gpuFloatType_t
 launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
+	gpuFloatType_t result[1];
+
 #ifdef __CUDACC__
 	gpuFloatType_t* result_device;
-	gpuFloatType_t result[1];
+
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
 
 	cudaEvent_t sync;
@@ -254,10 +256,10 @@ launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
 
 	cudaFree( result_device );
-	return result[0];
 #else
-	return -100.0;
+	kernelGetTotalXS( pXS->getPtr(), energy, result);
 #endif
+	return result[0];
 }
 
 MonteRayCrossSectionHost::MonteRayCrossSectionHost(unsigned num){

@@ -39,7 +39,7 @@ if( GNU_MAJOR_VERSION EQUAL 4 )
     if( GNU_MINOR_VERSION LESS 7 )
         message( FATAL_ERROR "MCATK requires a more recent version of compiler. g++ 4.7 or greater required." )
     endif()
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wno-terminate" )
 endif()
 
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og" CACHE STRING "newly available feature from gcc 4.8.x for faster debug runs" FORCE )
@@ -48,13 +48,13 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og" CACHE STRING "newly av
 if( GNU_MAJOR_VERSION EQUAL 5 )
     # This guarantees that MCATK will still link with other c++ libraries that might NOT have been built with gcc 5.0
     add_definitions( -D_GLIBCXX_USE_CXX11_ABI=1 )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-terminate -Wno-deprecated-declarations" )
 endif()
 
 # GCC 6.X
 if( GNU_MAJOR_VERSION EQUAL 6 )
     add_definitions( -D_GLIBCXX_USE_CXX11_ABI=1 )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations -Wno-placement-new" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-terminate -std=c++11 -Wno-deprecated-declarations -Wno-placement-new" )
 endif()
 
 if( Platform STREQUAL "BlueGeneQ" )

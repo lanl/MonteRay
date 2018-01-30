@@ -295,7 +295,7 @@ SUITE( HashLookup_tester ) {
     	delete xs;
     	delete xs2;
     }
-    TEST_FIXTURE(HashLookupTestHelper, getLowerBoundonGPU ){
+    TEST_FIXTURE(HashLookupTestHelper, getLowerBoundOnGPU ){
     	MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
     	xs->setTotalXS(0, 1.0, 4.0 );
     	xs->setTotalXS(1, 1.25, 4.0 );

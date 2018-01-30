@@ -268,9 +268,11 @@ void MonteRayMaterialHost::add(unsigned index,struct MonteRayCrossSectionHost& x
 
 unsigned MonteRayMaterialHost::launchGetNumIsotopes(void) {
 	typedef unsigned type_t;
-
-	type_t* result_device;
 	type_t result[1];
+
+#ifdef __CUDACC__
+	type_t* result_device;
+
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
 
 	cudaEvent_t sync;
@@ -283,6 +285,10 @@ unsigned MonteRayMaterialHost::launchGetNumIsotopes(void) {
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
 	cudaFree( result_device );
+#else
+	kernelGetNumIsotopes(pMat, result);
+#endif
+
 	return result[0];
 }
 

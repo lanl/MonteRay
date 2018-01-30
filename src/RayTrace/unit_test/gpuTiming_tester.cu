@@ -31,8 +31,10 @@ SUITE( gpuTiming_tester ) {
     TEST( check_send_to_gpu ) {
        	gpuTimingHost timing;
        	timing.setClockStop( timing.getRate() );
+#ifdef __CUDACC__
        	timing.copyToGPU();
-       	timing.setClockStop( 0 );
+       	timing.setClockStop( 0 ); // reset stop
+#endif
        	CHECK_CLOSE( 1.0, timing.getGPUTime(), 1e-6 );
     }
 
@@ -41,16 +43,20 @@ SUITE( gpuTiming_tester ) {
 
        	timing.setClockStart( 0 );
        	timing.setClockStop( 0 );
+#ifdef __CUDACC__
        	timing.copyToGPU();
        	timing.setClockStart( 100 );
        	timing.setClockStop( 0 );
+#endif
        	CHECK_CLOSE( 0.0, timing.getGPUTime(), 1e-6 );
     }
 
     TEST( check_default_zero_time ) {
        	gpuTimingHost timing;
+#ifdef __CUDACC__
        	timing.setClockStart( 100 );
        	timing.setClockStop( 0 );
+#endif
        	CHECK_CLOSE( 0.0, timing.getGPUTime(), 1e-6 );
     }
 

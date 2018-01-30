@@ -2,7 +2,10 @@
 
 #include "MonteRayCopyMemory.hh"
 
+#ifdef __CUDACC__
+
 SUITE( CopyMemory_tester ) {
+
 	using namespace MonteRay;
 
 	class testCopyClass : public CopyMemoryBase<testCopyClass> {
@@ -75,7 +78,7 @@ SUITE( CopyMemory_tester ) {
 		delete test;
 	}
 
-	__global__ void kernelSumAandB(testCopyClass* A, testCopyClass* B, testCopyClass* C) {
+	CUDA_CALLABLE_KERNEL void kernelSumAandB(testCopyClass* A, testCopyClass* B, testCopyClass* C) {
 	    C->A += A->A + B->A;
 	    C->B += A->B + B->B;
 	    return;
@@ -93,11 +96,15 @@ SUITE( CopyMemory_tester ) {
 		test3->A = 1000.0;
 		test3->B = 2000.0;
 
+#ifdef __CUDACC__
 		test1->copyToGPU();
 		test2->copyToGPU();
 		test3->copyToGPU();
 		kernelSumAandB<<<1,1>>>(test1->devicePtr,test2->devicePtr,test3->devicePtr);
 		test3->copyToCPU();
+#else
+		kernelSumAandB(test1,test2,test3);
+#endif
 
 		CHECK_EQUAL(1110, test3->A);
 		CHECK_EQUAL(2220, test3->B);
@@ -169,8 +176,7 @@ SUITE( CopyMemory_tester ) {
 		}
 	};
 
-#ifdef __CUDACC__
-__global__ void kernelSumVectors2(testClassWithArray* A, testClassWithArray* B, testClassWithArray* C) {
+CUDA_CALLABLE_KERNEL void kernelSumVectors2(testClassWithArray* A, testClassWithArray* B, testClassWithArray* C) {
     for( unsigned i=0; i<A->N; ++i) {
     	gpuFloatType_t elementA = A->elements[i] * A->multiple;
     	gpuFloatType_t elementB = B->elements[i] * B->multiple;
@@ -181,7 +187,6 @@ __global__ void kernelSumVectors2(testClassWithArray* A, testClassWithArray* B, 
     C->multiple = 1.0;
     return;
 }
-#endif
 
 TEST( add_vectors_w_copyToCPU ) {
 	testClassWithArray* A = new testClassWithArray(4);
@@ -200,6 +205,7 @@ TEST( add_vectors_w_copyToCPU ) {
 	B->elements[2] = 30.0;
 	B->elements[3] = 40.0;
 
+#ifdef __CUDACC__
 	A->copyToGPU();
 	B->copyToGPU();
 	C->copyToGPU();
@@ -207,6 +213,9 @@ TEST( add_vectors_w_copyToCPU ) {
 	kernelSumVectors2<<<1,1>>>(A->devicePtr,B->devicePtr,C->devicePtr);
 
 	C->copyToCPU();
+#else
+	kernelSumVectors2(A,B,C);
+#endif
 
 	CHECK_EQUAL( 4,C->N);
 	CHECK_CLOSE( 1.0, C->multiple, 1e-6);
@@ -220,4 +229,6 @@ TEST( add_vectors_w_copyToCPU ) {
 	delete C;
 }
 #endif
+
 }
+#endif

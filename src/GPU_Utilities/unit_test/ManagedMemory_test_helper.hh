@@ -34,7 +34,7 @@ public:
 	}
 #else
 	void copyToGPU(void) {
-		throw std::runtime_error( "copyToGPU not valid without CUDA.");
+		throw std::runtime_error( "Non-CUDA code - copyToGPU not valid without CUDA.");
 	}
 #endif
 
@@ -69,7 +69,9 @@ public:
 	void launchSumVectors( testClass* A, testClass* B, testClass* C);
 
 private:
+#ifdef __CUDACC__
 	cudaEvent_t start, stop;
+#endif
 
 };
 

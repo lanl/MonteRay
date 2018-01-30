@@ -243,6 +243,8 @@ public:
     	}
     }
 
+    const MonteRayCrossSection* getPtr() const { return xs; }
+
 private:
     struct MonteRayCrossSection* xs;
     MonteRayCrossSection* temp;

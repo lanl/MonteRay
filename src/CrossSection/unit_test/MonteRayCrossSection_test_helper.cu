@@ -1,4 +1,3 @@
-#include <cuda.h>
 #include "MonteRayDefinitions.hh"
 
 #include "MonteRayCrossSection_test_helper.hh"
@@ -33,20 +32,29 @@ MonteRayCrossSectionTestHelper::~MonteRayCrossSectionTestHelper(){
 }
 
 void MonteRayCrossSectionTestHelper::setupTimers(){
+#ifdef __CUDACC__
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
+#else
+	timer.start();
+#endif
 }
 
 void MonteRayCrossSectionTestHelper::stopTimers(){
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
-
 	float elapsedTime;
 
+#ifdef __CUDACC__
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&elapsedTime, start, stop );
-
 	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
+#else
+	timer.stop();
+	std::cout << "Elapsed time in non-CUDA kernel=" << timer.getTime()*1000.0 << " msec" << std::endl;
+#endif
+
+
 }
 
 

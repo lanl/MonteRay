@@ -13,7 +13,7 @@ SUITE( RayList_simple_tests ) {
 
 	TEST( ParticleRayList_default_ctor ) {
 		ParticleRayList list;
-		// std::cout << "Debug: running RayList_tester.cu -- ctor test\n";
+		// std::cout << "Debug: running RayList_tester.cc -- ctor test\n";
 		CHECK(true);
 	}
 

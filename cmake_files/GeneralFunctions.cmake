@@ -126,7 +126,7 @@ endfunction()
 
 function( globCudaFiles AllSkipDirs AllCudaFiles )
 #    message( STATUS "%%%%%%%%%%DEBUG: Starting cmake_Files/GeneralFunctions :: globCudaFiles ")
-    file( GLOB_RECURSE AllPossibleCudaFiles "*.hh" "*.h" "*.cc" "*.c" "*.cu" "*.cpp" )
+    file( GLOB_RECURSE AllPossibleCudaFiles "*.cc" "*.c" "*.cu" "*.cpp" )
     string( REPLACE ";" "|" SkipDirs "${AllSkipDirs}" )
 #    message( STATUS "%%%%%%%%%%DEBUG: AllSkipDirs=${AllSkipDirs} " )
 #    message( STATUS "%%%%%%%%%%DEBUG: SkipDirs=${SkipDirs} " )

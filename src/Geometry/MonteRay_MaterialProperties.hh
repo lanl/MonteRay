@@ -49,26 +49,15 @@ MonteRay_MaterialProperties_Data::Density_t getDensity(const struct MonteRay_Mat
 CUDA_CALLABLE_MEMBER
 MonteRay_MaterialProperties_Data::MatID_t getMatID(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum );
 
-#ifdef __CUDACC__
-__global__ void kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results );
-#endif
+CUDA_CALLABLE_KERNEL void kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results );
 
-#ifdef __CUDACC__
-__global__ void kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results );
-#endif
+CUDA_CALLABLE_KERNEL void kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results );
 
-#ifdef __CUDACC__
-__global__ void kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results );
-#endif
+CUDA_CALLABLE_KERNEL void kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results );
 
-#ifdef __CUDACC__
-__global__ void kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results );
-#endif
+CUDA_CALLABLE_KERNEL void kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results );
 
-#ifdef __CUDACC__
-__global__ void kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteRay_MaterialProperties_Data::MatID_t matIndex, MonteRay_MaterialProperties_Data::Density_t* results );
-#endif
-
+CUDA_CALLABLE_KERNEL void kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteRay_MaterialProperties_Data::MatID_t matIndex, MonteRay_MaterialProperties_Data::Density_t* results );
 
 ///\brief Stores and retrieves properties such as material densities and IDs.
 
@@ -115,9 +104,7 @@ public:
 
     ///Default Dtor
     virtual ~MonteRay_MaterialProperties(void) {
-#ifdef CUDA
     	cudaDtor();
-#endif
     	delete ptrData;
     }
 

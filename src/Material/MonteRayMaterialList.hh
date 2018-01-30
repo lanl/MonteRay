@@ -93,8 +93,8 @@ public:
     void add( unsigned i, MonteRayMaterial* mat, unsigned id);
 #endif
 
-    MonteRay::MonteRayMaterialList* getPtr(void) const { return pMatList; }
-    MonteRay::HashLookupHost* getHashPtr(void) const { return pHash; }
+    const MonteRay::MonteRayMaterialList* getPtr(void) const { return pMatList; }
+    const MonteRay::HashLookupHost* getHashPtr(void) const { return pHash; }
 
     void write(std::ostream& outfile) const;
     void  read(std::istream& infile);

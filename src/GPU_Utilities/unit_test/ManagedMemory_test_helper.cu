@@ -1,4 +1,3 @@
-#include <cuda.h>
 
 #include <iostream>
 
@@ -8,8 +7,7 @@
 #include "ManagedMemory_test_helper.hh"
 
 
-#ifdef __CUDACC__
-__global__ void kernelSumVectors(testClass* A, testClass* B, testClass* C) {
+CUDA_CALLABLE_KERNEL void kernelSumVectors(testClass* A, testClass* B, testClass* C) {
     for( unsigned i=0; i<A->N; ++i) {
     	gpuFloatType_t elementA = A->elements[i] * A->multiple;
     	gpuFloatType_t elementB = B->elements[i] * B->multiple;
@@ -20,7 +18,6 @@ __global__ void kernelSumVectors(testClass* A, testClass* B, testClass* C) {
     C->multiple = 1.0;
     return;
 }
-#endif
 
 void
 ManagedMemoryTestHelper::launchSumVectors( testClass* A, testClass* B, testClass* C){
@@ -33,6 +30,8 @@ ManagedMemoryTestHelper::launchSumVectors( testClass* A, testClass* B, testClass
 	gpuErrchk( cudaPeekAtLastError() );
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
+#else
+	kernelSumVectors( A, B, C);
 #endif
 }
 

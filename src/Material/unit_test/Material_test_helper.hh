@@ -1,12 +1,8 @@
 #ifndef MATERIAL_UNITTEST_HELPER_HH_
 #define MATERIAL_UNITTEST_HELPER_HH_
 
+#include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
-#include "driver_types.h" // cuda driver types
-
-#ifdef CUDA
-#include <cuda.h>
-#endif
 
 using namespace MonteRay;
 
@@ -23,7 +19,9 @@ public:
 	void stopTimers();
 
 private:
+#ifdef __CUDACC__
 	cudaEvent_t start, stop;
+#endif
 
 };
 #endif /* MATERIAL_UNITTEST_HELPER_HH_ */

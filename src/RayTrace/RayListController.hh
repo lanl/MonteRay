@@ -107,10 +107,13 @@ private:
 	RayListInterface<N>* bank2;
 	unsigned nFlushs;
 
+#ifdef __CUDACC__
 	cudaStream_t stream1;
 	cudaEvent_t startGPU, stopGPU, start, stop;
 	cudaEvent_t copySync1, copySync2;
 	cudaEvent_t* currentCopySync;
+#endif
+
 	cpuTimer timer;
 	double cpuTime, gpuTime, wallTime;
 	bool toFile;

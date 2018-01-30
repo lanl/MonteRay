@@ -9,7 +9,7 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_binaryIO.hh"
 
-#ifndef CUDA
+#ifdef MCATK_INLINED
 #include "ReadLnk3dnt.hh"
 #endif
 
@@ -326,8 +326,6 @@ void GridBinsHost::copyToGPU(void) {
 	cudaCopyMade = true;
 	CUDA_CHECK_RETURN( cudaMalloc( &ptr_device, sizeof(GridBins) ));
 	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof(GridBins), cudaMemcpyHostToDevice ));
-#else
-	throw std::runtime_error("GridBinsHost::copyToGPU -- Can not copy to GPU without CUDA.")
 #endif
 }
 
@@ -437,7 +435,7 @@ void GridBinsHost::read( const std::string& filename ) {
     infile.close();
 }
 
-#ifndef CUDA
+#ifdef MCATK_INLINED
 void GridBinsHost::loadFromLnk3dnt( const std::string& filename ){
     ReadLnk3dnt file( filename);
     if( file.getGeometryString() != "XYZ" )  {

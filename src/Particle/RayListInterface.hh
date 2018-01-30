@@ -98,7 +98,7 @@ public:
     void debugPrint() const;
     void printParticle(unsigned i, const RAY_T& particle ) const;
 
-    const RAYLIST_T* getPtrPoints() { return ptrPoints; }
+    const RAYLIST_T* getPtrPoints() const { return ptrPoints; }
 
 private:
 

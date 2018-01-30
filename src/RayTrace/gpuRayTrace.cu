@@ -1,10 +1,15 @@
-#include <cuda.h>
+#include "gpuRayTrace.hh"
+
 #include <iostream>
 #include <math.h>
-#include <math_constants.h>
 
+#include "MonteRayDefinitions.hh"
+#include "MonteRayConstants.hh"
 #include "cudaGridBins.h"
-#include "gpuRayTrace.h"
+
+#ifdef __CUDACC__
+#include "math_constants.h"
+#endif
 
 namespace MonteRay{
 
@@ -13,6 +18,12 @@ cudaCalcCrossings(const float_t* const vertices, unsigned nVertices, int* cells,
 				  float_t* distances, float_t pos, float_t dir, float_t distance,
 				  int index ){
 	const bool debug = false;
+
+#ifdef __CUDACC__
+	constexpr float_t minFloat = CUDART_TWO_TO_M126_F;
+#else
+	constexpr float_t minFloat = 1.175494351e-38f;
+#endif
 
 	unsigned nDistances = 0;
 
@@ -24,7 +35,7 @@ cudaCalcCrossings(const float_t* const vertices, unsigned nVertices, int* cells,
 	}
 
 	//if( abs(1/dir) >= CUDART_NORM_HUGE_F )
-    if( abs(dir) <= CUDART_TWO_TO_M126_F )  // CUDART_TWO_TO_M126_F    1.175494351e-38f
+    if( abs(dir) <= minFloat )  // CUDART_TWO_TO_M126_F    1.175494351e-38f
     {
     	return nDistances;
     }
@@ -131,6 +142,13 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
 
 	const bool debug = false;
 
+#ifdef __CUDACC__
+	constexpr float_t maxFloat = CUDART_NORM_HUGE_F;
+#else
+	constexpr float_t maxFloat = 3.402823466e38f;
+#endif
+
+
 	if( debug ) {
 		printf("cudaRayTrace:: Starting cudaOrderCrossings %%%%%%%%%%%%%%%%%%%%%%\n");
 		printf("cudaRayTrace:: cudaindices.x = %d, cudaindices.y = %d, cudaindices.z = %d,\n", cudaindices.x, cudaindices.y, cudaindices.z);
@@ -153,7 +171,7 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
     for( unsigned i=0; i<maxNumCrossings; ++i){
 
     	unsigned minDim;
-    	float_t minimumDistance = CUDART_NORM_HUGE_F;
+    	float_t minimumDistance = maxFloat;
         for( unsigned j = 0; j<3; ++j) {
             if( start[j] < end[j] ) {
             	minDistances[j] = *((crossingDistances+j*num)+start[j]);
@@ -162,7 +180,7 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
             		minDim = j;
             	}
             } else {
-                minDistances[j] = CUDART_NORM_HUGE_F;
+                minDistances[j] = maxFloat;
             }
         }
         if( debug ) printf("cudaRayTrace::cudaOrderCrossings  crossing # %d, min dimension = %d, distance = %f\n", i, minDim, minimumDistance);
@@ -332,13 +350,19 @@ kernelCudaRayTraceToAllCenters(
 	GridBins* grid = (GridBins*) ptrGrid;
 	float_t* distances = (float_t*) ptrDistances;
 
+#ifdef __CUDACC__
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+#else
+	int tid = 0;
+#endif
 
 	if( debug ) {
 		printf("kernelCudaRayTraceToAllCenters:: tid=%d\n", tid );
+#ifdef __CUDACC__
 		printf("kernelCudaRayTraceToAllCenters:: threadIdx.x=%d\n", threadIdx.x );
 		printf("kernelCudaRayTraceToAllCenters::  blockIdx.x=%d\n", blockIdx.x );
 		printf("kernelCudaRayTraceToAllCenters::  blockDim.x=%d\n", blockDim.x );
+#endif
 	}
 
 	int N = grid->numXY*grid->num[2];
@@ -421,7 +445,11 @@ kernelCudaRayTraceToAllCenters(
 			printf("------------------------------------------" );
 		}
 
+#ifdef __CUDACC__
 		tid += blockDim.x*gridDim.x;
+#else
+		++tid;
+#endif
 		//if( tid >= 10 ) return;
 
 	}

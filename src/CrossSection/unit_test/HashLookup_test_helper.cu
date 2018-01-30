@@ -1,5 +1,3 @@
-#include <cuda.h>
-
 #include <iostream>
 
 #include "MonteRayDefinitions.hh"
@@ -7,18 +5,17 @@
 
 #include "HashLookup_test_helper.hh"
 
-
-#ifdef CUDA
-__global__ void kernelGetLowerBoundbyIndex(HashLookup* pHash, unsigned isotope, unsigned bin, unsigned* result){
+CUDA_CALLABLE_KERNEL void kernelGetLowerBoundbyIndex(const HashLookup* pHash, unsigned isotope, unsigned bin, unsigned* result){
     result[0] = getLowerBoundbyIndex( pHash, isotope, bin);
     return;
 }
-#endif
 
 unsigned
-HashLookupTestHelper::launchGetLowerBoundbyIndex( HashLookupHost* pHash, unsigned isotope, unsigned bin){
-	unsigned* result_device;
+HashLookupTestHelper::launchGetLowerBoundbyIndex( const HashLookupHost* pHash, unsigned isotope, unsigned bin){
 	unsigned result[1];
+
+#ifdef __CUDACC__
+	unsigned* result_device;
 	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( unsigned) * 1 ));
 
 	cudaEvent_t sync;
@@ -31,6 +28,10 @@ HashLookupTestHelper::launchGetLowerBoundbyIndex( HashLookupHost* pHash, unsigne
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(unsigned)*1, cudaMemcpyDeviceToHost));
 
 	cudaFree( result_device );
+#else
+	kernelGetLowerBoundbyIndex( pHash->getPtr(), isotope, bin, result);
+#endif
+
 	return result[0];
 }
 
@@ -44,20 +45,29 @@ HashLookupTestHelper::~HashLookupTestHelper(){
 }
 
 void HashLookupTestHelper::setupTimers(){
+#ifdef __CUDACC__
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
+#else
+	timer.start();
+#endif
 }
 
 void HashLookupTestHelper::stopTimers(){
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
-
 	float elapsedTime;
 
+#ifdef __CUDACC__
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&elapsedTime, start, stop );
-
 	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
+#else
+	timer.stop();
+	std::cout << "Elapsed time in non-CUDA kernel=" << timer.getTime()*1000.0 << " msec" << std::endl;
+#endif
+
+
 }
 
 

@@ -5,16 +5,15 @@
 
 #include "GPUUtilityFunctions.hh"
 
-#include "gpuTally.h"
-#include "ExpectedPathLength.h"
+#include "gpuTally.hh"
+#include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
+#include "RayListInterface.hh"
 #include "RayListController.hh"
 #include "GridBins.h"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
-#include "gpuTally.h"
-#include "RayListInterface.hh"
 
 namespace RayListController_fi_tester {
 

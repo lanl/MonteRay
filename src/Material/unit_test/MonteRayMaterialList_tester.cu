@@ -194,7 +194,7 @@ SUITE( MonteRayMaterialList_tester ) {
     	MonteRayMaterialListHost matList(1,1,10);
     	matList.add(0, mat, 9);
 
-    	HashLookupHost* hash = matList.getHashPtr();
+    	const HashLookupHost* hash = matList.getHashPtr();
 
     	CHECK_EQUAL( 0, xs->getID());
     	CHECK_EQUAL( 1, hash->getNumIsotopes() );

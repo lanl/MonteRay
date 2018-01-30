@@ -2,12 +2,12 @@
 #define GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 
 #include "MonteRayConstants.hh"
+#include "MonteRayDefinitions.hh"
 
 #include "HashLookup.h"
 
-#ifdef CUDA
-#include <cuda.h>
-#include "driver_types.h" // cuda driver types
+#ifndef __CUDACC__
+#include "MonteRay_timer.hh"
 #endif
 
 using namespace MonteRay;
@@ -24,10 +24,14 @@ public:
 
 	void stopTimers();
 
-	unsigned launchGetLowerBoundbyIndex( HashLookupHost* pHash, unsigned isotope, unsigned bin);
+	unsigned launchGetLowerBoundbyIndex( const HashLookupHost* pHash, unsigned isotope, unsigned bin);
 
 private:
+#ifdef __CUDACC__
 	cudaEvent_t start, stop;
+#else
+	cpuTimer timer;
+#endif
 
 };
 

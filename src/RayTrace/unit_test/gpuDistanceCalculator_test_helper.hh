@@ -1,14 +1,11 @@
 #ifndef GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 #define GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 
+#include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
 #include "GridBins.h"
-
-#ifdef CUDA
-#include <cuda.h>
-#include "driver_types.h" // cuda driver types
-#include "gpuRayTrace.h"
-#endif
+#include "gpuRayTrace.hh"
+#include "MonteRay_timer.hh"
 
 namespace MonteRay{
 
@@ -42,7 +39,11 @@ private:
 
 	unsigned nCells;
 
+#ifdef __CUDACC__
 	cudaEvent_t start, stop;
+#else
+	cpuTimer timer;
+#endif
 
 };
 

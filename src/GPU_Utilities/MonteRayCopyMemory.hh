@@ -12,6 +12,7 @@ class CopyMemoryBase {
 public:
 
 	CUDAHOST_CALLABLE_MEMBER CopyMemoryBase(){
+#ifdef __CUDACC__
 		if( debug ) {
 			std::cout << "Debug: CopyMemoryBase::CopyMemoryBase() -- allocating " << sizeof( Derived ) << " bytes\n";
 		}
@@ -19,15 +20,18 @@ public:
 		intermediatePtr = (Derived*) MONTERAYHOSTALLOC(sizeof( Derived ), isManagedMemory, intermediatePtr->Derived::className() + std::string("::intermediatePtr"));
 		intermediatePtr->Derived::init();
 		intermediatePtr->isCudaIntermediate = true;
+#endif
 	}
 
 	CUDAHOST_CALLABLE_MEMBER virtual ~CopyMemoryBase(){
+#ifdef __CUDACC__
 		if( ! isCudaIntermediate ) {
 			if( debug ) std::cout << "Debug: CopyMemoryBase::~CopyMemoryBase() -- calling intermediatePtr->Derived::~Derived()\n";
 			intermediatePtr->Derived::~Derived();
 			if( debug ) std::cout << "Debug: CopyMemoryBase::~CopyMemoryBase() -- calling deleteGPUMemory()\n";
 			deleteGPUMemory();
 		}
+#endif
 	}
 
 	CUDAHOST_CALLABLE_MEMBER virtual void init() = 0;
@@ -64,8 +68,6 @@ public:
 		intermediatePtr->isCudaIntermediate = false;
 		CUDA_CHECK_RETURN( cudaMemcpy(devicePtr, intermediatePtr, sizeof(Derived), cudaMemcpyHostToDevice));
 		intermediatePtr->isCudaIntermediate = true;
-#else
-		throw std::runtime_error( "CopyMemoryBase::copyToGPU -- not valid without CUDA.");
 #endif
 	}
 
@@ -75,8 +77,6 @@ public:
 		intermediatePtr->isCudaIntermediate = true;
 		Derived* ptr = ( Derived* ) this;
 		ptr->Derived::copy( intermediatePtr );
-#else
-		throw std::runtime_error( "CopyMemoryBase::copyToGPU -- not valid without CUDA.");
 #endif
 	}
 

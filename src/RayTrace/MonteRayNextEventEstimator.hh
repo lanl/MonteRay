@@ -9,11 +9,11 @@
 #include "GPUAtomicAdd.hh"
 #include "RayList.hh"
 
-#include "gpuRayTrace.h"
+#include "gpuRayTrace.hh"
 #include "GridBins.h"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRayMaterialList.hh"
-#include "ExpectedPathLength.h"
+#include "ExpectedPathLength.hh"
 
 namespace MonteRay {
 
@@ -79,6 +79,7 @@ public:
 	}
 
 	CUDAHOST_CALLABLE_MEMBER void copy(const MonteRayNextEventEstimator* rhs) {
+#ifdef __CUDACC__
 		if( Base::debug ) {
 			std::cout << "Debug: MonteRayNextEventEstimator::copy (const MonteRayNextEventEstimator* rhs) \n";
 		}
@@ -134,6 +135,9 @@ public:
 		if( Base::debug ) {
 			std::cout << "Debug: MonteRayNextEventEstimator::copy -- exitting." << std::endl;
 		}
+#else
+
+#endif
 	}
 
 	CUDAHOST_CALLABLE_MEMBER unsigned add( position_t xarg, position_t yarg, position_t zarg) {
@@ -283,7 +287,8 @@ public:
 		// Neutrons are not yet supported
 		if( pRayList->points[tid].particleType == neutron ) return;
 
-		tally_t value = calcScore<N>( pRayList->points[tid].detectorIndex,
+		tally_t value = calcScore<N>(
+				                   pRayList->points[tid].detectorIndex,
 								   pRayList->points[tid].pos[0],
 								   pRayList->points[tid].pos[1],
 								   pRayList->points[tid].pos[2],
@@ -310,6 +315,9 @@ public:
 #ifdef __CUDACC__
 	template<unsigned N>
 	void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<N>* pRayList );
+#else
+	template<unsigned N>
+	void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList );
 #endif
 
 	CUDAHOST_CALLABLE_MEMBER void setGeometry(const GridBinsHost* pGrid, const MonteRay_MaterialProperties* pMPs) {
@@ -347,10 +355,8 @@ private:
 	const HashLookup* pHash;
 };
 
-#ifdef __CUDACC__
 template<unsigned N>
 CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator* ptr, const RayList_t<N>* pRayList );
-#endif
 
 } /* namespace MonteRay */
 

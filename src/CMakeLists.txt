@@ -6,13 +6,19 @@
 #ADD_SUBDIRECTORY(Utilities)
 
 #################################################################################
-# Create MonteRay CUDA library
-set( AllCudaFiles "")
-globCudaFiles( "${TestDirNames}" AllCudaFiles)
-cuda_add_library(MonteRay SHARED ${AllCudaFiles} )
-CUDA_COMPILE( MONTERAY_O ${AllCudaFiles} )
-#message(STATUS "src/CMakeLists.txt :: MONTERAY_O=${MONTERAY_O}")
-install( TARGETS MonteRay EXPORT MonteRay DESTINATION ${library_install_prefix} )
+if( DEFINED enable_cuda )
+  # Create MonteRay CUDA library
+  set( AllCudaFiles "")
+  globCudaFiles( "${TestDirNames}" AllCudaFiles)
+  set_source_files_properties( ${AllCudaFiles} PROPERTIES LANGUAGE CUDA )
+  cuda_add_library(MonteRay SHARED ${AllCudaFiles} )
+  CUDA_COMPILE( MONTERAY_O ${AllCudaFiles} )
+  #message(STATUS "src/CMakeLists.txt :: MONTERAY_O=${MONTERAY_O}")
+  install( TARGETS MonteRay EXPORT MonteRay DESTINATION ${library_install_prefix} )
+else()
+  set( AllCudaFiles "")
+  globCudaFiles( "${TestDirNames}" AllCudaFiles)
+endif()
 #################################################################################
 
 ############################################

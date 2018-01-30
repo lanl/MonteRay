@@ -120,7 +120,7 @@ public:
 //    }
 //
 //    void add( unsigned i, MonteRayMaterialHost& mat, unsigned id);
-//#ifndef CUDA
+//#ifndef __CUDACC__
 //    void add( unsigned i, MonteRayMaterial* mat, unsigned id);
 //#endif
 //

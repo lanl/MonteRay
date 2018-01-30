@@ -1,13 +1,12 @@
 #ifndef GPUADDTWODOUBLES_HH_
 #define GPUADDTWODOUBLES_HH_
 
+#include "MonteRayDefinitions.hh"
+
 namespace MonteRay {
 
-#ifdef CUDA
-__global__ void add_double(unsigned N, int *a, int *b, int *c );
-__global__ void add_single(unsigned N, int *a, int *b, int *c );
-#endif
-
+CUDA_CALLABLE_KERNEL void add_double(unsigned N, int *a, int *b, int *c );
+CUDA_CALLABLE_KERNEL void add_single(unsigned N, int *a, int *b, int *c );
 
 double gpuAddTwoDoubles( double, double );
 float  gpuAddTwoFloats(  float, float );

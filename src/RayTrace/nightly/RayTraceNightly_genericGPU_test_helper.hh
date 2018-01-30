@@ -1,18 +1,18 @@
 #ifndef FI_TEST_GENERICGPU_TEST_HELPER_HH_
 #define FI_TEST_GENERICGPU_TEST_HELPER_HH_
 
+#include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
-
-#ifdef __CUDACC__
-#include <cuda.h>
-#include "driver_types.h" // cuda driver types
-#endif
 
 #include "RayListInterface.hh"
 #include "MonteRayCrossSection.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "GridBins.h"
+
+#ifndef __CUDACC__
+#include "MonteRay_timer.hh"
+#endif
 
 using namespace MonteRay;
 
@@ -30,7 +30,11 @@ public:
 	void stopTimers();
 
 private:
+#ifdef __CUDACC__
 	cudaEvent_t start, stop;
+#else
+	cpuTimer timer;
+#endif
 
 };
 

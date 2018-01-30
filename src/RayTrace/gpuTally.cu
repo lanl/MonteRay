@@ -1,4 +1,4 @@
-#include "gpuTally.h"
+#include "gpuTally.hh"
 
 #include <stdexcept>
 #include <fstream>
@@ -30,28 +30,32 @@ void dtor(struct gpuTally* ptr){
     }
 }
 
-#ifdef CUDA
-void cudaCtor(gpuTally* ptr, unsigned num) {
 
+void cudaCtor(gpuTally* ptr, unsigned num) {
+#ifdef __CUDACC__
      ptr->size = num;
      unsigned allocSize = sizeof( gpuTallyType_t ) * num;
 
      CUDA_CHECK_RETURN( cudaMalloc(&ptr->tally, allocSize ));
+#endif
 }
 
 void cudaCtor(gpuTally* pCopy, gpuTally* pOrig) {
+#ifdef __CUDACC__
 	unsigned num = pOrig->size;
 	cudaCtor( pCopy, num);
 
 	unsigned allocSize = sizeof( gpuTallyType_t ) * num;
 
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->tally, pOrig->tally, allocSize, cudaMemcpyHostToDevice));
+#endif
 }
 
 void cudaDtor(gpuTally* ptr) {
+#ifdef __CUDACC__
     cudaFree( ptr->tally );
-}
 #endif
+}
 
 
 void copy(struct gpuTally* pCopy, struct gpuTally* pOrig) {
@@ -64,9 +68,7 @@ void copy(struct gpuTally* pCopy, struct gpuTally* pOrig) {
     }
 }
 
-#ifdef CUDA
-__device__
-#endif
+CUDA_CALLABLE_MEMBER
 void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value ) {
 	gpu_atomicAdd( &(ptr->tally[cell]), value);
 }
@@ -93,7 +95,7 @@ void gpuTallyHost::dtor() {
     if( cudaCopyMade ) {
     	cudaDtor( temp );
     	delete temp;
-#ifdef CUDA
+#ifdef __CUDACC__
     	cudaFree( ptr_device );
 #endif
     }
@@ -108,7 +110,7 @@ void gpuTallyHost::clear(void) {
 	for( unsigned i=0; i< size(); ++i ) {
 		ptr->tally[i] = 0.0;
 	}
-#ifdef CUDA
+#ifdef __CUDACC__
 	unsigned num = ptr->size;
 	unsigned allocSize = sizeof( gpuTallyType_t ) * num;
 
@@ -118,7 +120,7 @@ void gpuTallyHost::clear(void) {
 }
 
 void gpuTallyHost::copyToGPU(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
     CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( gpuTally) ));
 
 	cudaCopyMade = true;
@@ -135,11 +137,11 @@ void gpuTallyHost::copyToGPU(void) {
 }
 
 void gpuTallyHost::copyToCPU(void) {
+#ifdef __CUDACC__
 	if( ! cudaCopyMade ) {
 		throw std::runtime_error( "Error: gpuTallyHost::copyToCPU -- no copy to GPU made so can not copy from GPU" );
 	}
 
-#ifdef CUDA
 	unsigned num = ptr->size;
 	unsigned allocSize = sizeof( gpuTallyType_t ) * num;
 

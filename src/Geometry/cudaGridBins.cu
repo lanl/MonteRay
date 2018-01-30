@@ -1,8 +1,7 @@
-#include <cuda.h>
+#include "cudaGridBins.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "cudaGridBins.h"
 
 namespace MonteRay{
 
@@ -54,12 +53,12 @@ CUDA_CALLABLE_MEMBER float_t cudaGetDistance( float3_t& pos1, float3_t& pos2) {
 
 
 CUDADEVICE_CALLABLE_MEMBER void cudaGetDistancesToAllCenters2(const GridBins* const grid, float_t* distances, float3_t pos) {
-
-	int tid = threadIdx.x + blockIdx.x*blockDim.x;
-
 	unsigned N = grid->numXY*grid->num[2];
 	float3 pixelPoint;
 	uint3 indices;
+
+#ifdef __CUDA__
+	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 	while( tid < N ) {
 		cudaCalcIJK(grid, tid, indices );
@@ -67,6 +66,15 @@ CUDADEVICE_CALLABLE_MEMBER void cudaGetDistancesToAllCenters2(const GridBins* co
 		distances[tid] = cudaGetDistance( pixelPoint, pos );
 		tid += blockDim.x*gridDim.x;
 	}
+#else
+	int tid = 0;
+	while( tid < N ) {
+		cudaCalcIJK(grid, tid, indices );
+		cudaGetCenterPointByIndices(grid, indices, pixelPoint);
+		distances[tid] = cudaGetDistance( pixelPoint, pos );
+		tid += 1;
+	}
+#endif
 
 }
 

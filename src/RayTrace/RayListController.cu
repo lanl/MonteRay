@@ -5,9 +5,9 @@
 #include "GridBins.h"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
-#include "gpuTally.h"
+#include "gpuTally.hh"
 #include "RayListInterface.hh"
-#include "ExpectedPathLength.h"
+#include "ExpectedPathLength.hh"
 #include "GPUErrorCheck.hh"
 #include "GPUSync.hh"
 #include "MonteRayNextEventEstimator.hh"
@@ -33,10 +33,17 @@ RayListController<N>::RayListController(
 	pNextEventEstimator.reset();
 	initialize();
 	kernel = [&] ( void ) {
+#ifdef __CUDACC__
 		rayTraceTally<<<nBlocks,nThreads,0,stream1>>>(pGrid->ptr_device,
 				currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device,
 				pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
 				pTally->temp->tally);
+#else
+		rayTraceTally(pGrid->getPtr(),
+						currentBank->getPtrPoints(), pMatList->getPtr(),
+						pMatProps->getPtr(), pMatList->getHashPtr()->getPtr(),
+						pTally->getPtr()->tally );
+#endif
 	};
 
 }
@@ -64,7 +71,11 @@ RayListController<N>::RayListController(
 		const bool debug = false;
 		if( currentBank->size() > 0 ) {
 			if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
+#ifdef __CUDACC__
 			pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads,stream1, currentBank->getPtrPoints());
+#else
+			pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads,currentBank->getPtrPoints());
+#endif
 		}
 	};
 }
@@ -100,6 +111,7 @@ RayListController<N>::initialize(){
 	bank1 = new RayListInterface<N>(1000000); // default 1 millions
 	bank2 = new RayListInterface<N>(1000000); // default 1 millions
 
+#ifdef __CUDACC__
 	cudaStreamCreate( &stream1 );
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
@@ -107,9 +119,13 @@ RayListController<N>::initialize(){
 	cudaEventCreate(&stopGPU);
 	cudaEventCreate(&copySync1);
 	cudaEventCreate(&copySync2);
+#endif
 
 	currentBank = bank1;
+
+#ifdef __CUDACC__
 	currentCopySync = &copySync1;
+#endif
 }
 
 template<unsigned N >
@@ -117,7 +133,9 @@ RayListController<N>::~RayListController(){
 	delete bank1;
 	delete bank2;
 
+#ifdef __CUDACC
 	cudaStreamDestroy(stream1);
+#endif
 }
 
 template<unsigned N >
@@ -194,9 +212,12 @@ RayListController<N>::flush(bool final){
 	startTimers();
 
 	++nFlushs;
+
+#ifdef __CUDACC__
 	currentBank->copyToGPU();
 	gpuErrchk( cudaEventRecord(*currentCopySync, 0) );
 	gpuErrchk( cudaEventSynchronize(*currentCopySync) );
+#endif
 
 	// launch kernel
 	kernel();
@@ -204,8 +225,10 @@ RayListController<N>::flush(bool final){
 	// only uncomment for testing, forces the cpu and gpu to sync
 	//gpuErrchk( cudaPeekAtLastError() );
 
+#ifdef __CUDACC__
 	gpuErrchk( cudaEventRecord(stopGPU,stream1) );
 	gpuErrchk( cudaStreamWaitEvent(stream1, stopGPU, 0) );
+#endif
 
 	if( final ) {
 		std::cout << "Debug: final flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n";
@@ -294,8 +317,10 @@ void
 RayListController<N>::startTimers(){
 	// start timers
 	timer.start();
+#ifdef __CUDACC__
 	gpuErrchk( cudaEventRecord(start,0) );
 	gpuErrchk( cudaEventRecord(startGPU,stream1) );
+#endif
 }
 
 template<unsigned N >
@@ -307,6 +332,7 @@ RayListController<N>::stopTimers(){
 	float_t cpuCycleTime = timer.getTime();
 	cpuTime += cpuCycleTime;
 
+#ifdef __CUDACC__
 	gpuErrchk( cudaStreamSynchronize( stream1 ) );
 	gpuErrchk( cudaEventRecord(stop, 0) );
 	gpuErrchk( cudaEventSynchronize(stop) );
@@ -323,8 +349,11 @@ RayListController<N>::stopTimers(){
 	gpuErrchk( cudaEventElapsedTime(&totalCycleTime, start, stop ) );
 	totalCycleTime /= 1000.0;
 	wallTime += totalCycleTime;
-
 	printCycleTime(cpuCycleTime, gpuCycleTime , totalCycleTime);
+#else
+	printCycleTime(cpuCycleTime, cpuCycleTime , cpuCycleTime);
+#endif
+
 }
 
 template<unsigned N >
@@ -333,13 +362,19 @@ RayListController<N>::swapBanks(){
 	// Swap banks
 	if( currentBank == bank1 ) {
 		currentBank = bank2;
+#ifdef __CUDACC__
 		currentCopySync = &copySync2;
+#endif
 	} else {
 		currentBank = bank1;
+#ifdef __CUDACC__
 		currentCopySync = &copySync1;
+#endif
 	}
 
+#ifdef __CUDACC__
 	cudaEventSynchronize(*currentCopySync);
+#endif
 	currentBank->clear();
 }
 

@@ -1,12 +1,6 @@
-SET(CUDA_SEPARABLE_COMPILATION ON)
-file(GLOB CUDA_TEST_SRCS "*.cu")
-cuda_add_library(RayTraceNightlyTestHelper SHARED ${CUDA_TEST_SRCS} ${AllCudaFiles} )
-
 include( template_select )
 
-list( APPEND ${UnitName}_packages CUDA)
-
-set( ToolkitLibs RayTraceNightlyTestHelper cuda rt)
+set( ToolkitLibs Utilities)
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

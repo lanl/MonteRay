@@ -1,14 +1,8 @@
 #ifndef RAYLISTINTERFACE_TEST_HELPER_HH_
 #define RAYLISTINTERFACE_TEST_HELPER_HH_
 
-#include "MonteRayConstants.hh"
-#include "driver_types.h" // cuda driver types
-
-#ifdef CUDA
-#include <cuda.h>
-#endif
-
 #include "RayListInterface.hh"
+#include "MonteRayConstants.hh"
 
 namespace MonteRay {
 
@@ -29,7 +23,9 @@ public:
 	gpuFloatType_t launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs);
 
 private:
+#ifdef __CUDACC__
 	cudaEvent_t start, stop;
+#endif
 
 };
 

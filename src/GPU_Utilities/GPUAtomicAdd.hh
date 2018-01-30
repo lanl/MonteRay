@@ -1,15 +1,11 @@
 #ifndef GPUATOMICADD_HH_
 #define GPUATOMICADD_HH_
 
-#include <cuda.h>
 #include <stdio.h>
 
 #include "MonteRayDefinitions.hh"
 
 namespace MonteRay{
-
-#ifdef __CUDACC__
-
 
 CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd_single( float *address, float value ) {
 #ifdef __CUDA_ARCH__
@@ -44,8 +40,6 @@ CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd(gpuTallyType_t *address, gpuTally
 	gpu_atomicAdd_double( address,value);
 #endif /* TALLY_DOUBLEPRECISION < 1 */
 }
-
-#endif /* CUDA */
 
 } /* namespace MonteRay*/
 

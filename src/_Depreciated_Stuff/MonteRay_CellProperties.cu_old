@@ -42,7 +42,7 @@ void ctor(CellProperties* ptr, unsigned num ) {
     }
 }
 
-#ifdef CUDA
+#ifdef __CUDACC__
 void cudaCtor(CellProperties* pCopy, unsigned num) {
 	pCopy->numCells = num;
 
@@ -64,7 +64,7 @@ void dtor(struct CellProperties* ptr){
     }
 }
 
-#ifdef CUDA
+#ifdef __CUDACC__
 void cudaDtor(CellProperties* ptr) {
 	cudaFree( ptr->props );
 }
@@ -85,7 +85,7 @@ CellPropertiesHost::~CellPropertiesHost() {
         ptr = 0;
     }
 
-#ifdef CUDA
+#ifdef __CUDACC__
     if( cudaCopyMade ) {
         cudaFree( ptr_device );
         cudaDtor( temp );
@@ -96,7 +96,7 @@ CellPropertiesHost::~CellPropertiesHost() {
 
 
 void CellPropertiesHost::copyToGPU(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
 	cudaCopyMade = true;
 	temp = new CellProperties;
 	temp->numCells = ptr->numCells;
@@ -129,41 +129,41 @@ void copy(struct CellProperties* pCopy, struct CellProperties* pOrig) {
     }
 }
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 unsigned getNumCells(struct CellProperties* ptr ) {
     return ptr->numCells;
 }
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 unsigned getNumMats(struct CellProperties* ptr, unsigned i ){
     return ptr->props[i].numMats;
 }
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 gpuFloatType_t getDensity(struct CellProperties* ptr, unsigned cellNum, unsigned matNum ){
     return ptr->props[cellNum].density[matNum];
 }
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 gpuFloatType_t getMatID(struct CellProperties* ptr, unsigned cellNum, unsigned matNum ){
     return ptr->props[cellNum].matID[matNum];
 }
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelGetNumCells(CellProperties* mp, unsigned* results ) {
      results[0] = getNumCells(mp);
 }
 #endif
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelSumMatDensity(CellProperties* mp, unsigned matIndex, gpuFloatType_t* results ) {
     gpuFloatType_t sum = 0.0f;
     for( unsigned cell=0; cell < getNumCells(mp); ++cell) {
@@ -195,7 +195,7 @@ void addDensityAndID(struct CellProperties* ptr, unsigned cellNum, gpuFloatType_
     ptr->props[cellNum].numMats += 1;
 }
 
-#ifndef CUDA
+#ifndef __CUDACC__
 #include "ReadLnk3dnt.hh"
 void CellPropertiesHost::loadFromLnk3dnt(const std::string& filename ) {
     ReadLnk3dnt file( filename);
@@ -226,7 +226,7 @@ void CellPropertiesHost::loadFromLnk3dnt(const std::string& filename ) {
 #endif
 
 unsigned CellPropertiesHost::launchGetNumCells(void) const{
-#ifdef CUDA
+#ifdef __CUDACC__
 	typedef unsigned type_t;
 
 	type_t* result_device;
@@ -248,7 +248,7 @@ unsigned CellPropertiesHost::launchGetNumCells(void) const{
 }
 
 unsigned CellPropertiesHost::launchSumMatDensity(unsigned matID) const{
-#ifdef CUDA
+#ifdef __CUDACC__
 	typedef gpuFloatType_t type_t;
 
 	type_t* result_device;

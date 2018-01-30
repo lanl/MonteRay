@@ -1,13 +1,15 @@
 #include "gpuTally_test_helper.hh"
 #include "GPUErrorCheck.hh"
 
+namespace MonteRay{
+
 GPUTallyTestHelper::GPUTallyTestHelper(){
 }
 
 GPUTallyTestHelper::~GPUTallyTestHelper(){
 }
 
-__global__ void kernelAddTally(struct MonteRay::gpuTally* pTally, unsigned i, float_t a, float_t b){
+CUDA_CALLABLE_KERNEL void kernelAddTally(struct MonteRay::gpuTally* pTally, unsigned i, float_t a, float_t b){
     pTally->tally[i] =  a + b;
     return;
 }
@@ -16,12 +18,18 @@ void GPUTallyTestHelper::launchAddTally( MonteRay::gpuTallyHost* tally, unsigned
 
 	tally->copyToGPU();
 
+#ifdef __CUDACC__
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelAddTally<<<1,1>>>( tally->ptr_device, i, a, b);
 	MONTERAY_PEAKATLASTERROR(true);
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
+#else
+	kernelAddTally( tally->getPtr(), i, a, b);
+#endif
 
     tally->copyToCPU();
 }
+
+} // end namespace

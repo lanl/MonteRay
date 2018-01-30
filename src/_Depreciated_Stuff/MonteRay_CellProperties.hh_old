@@ -30,36 +30,36 @@ void copy(IndividualCellProperties& theCopy, const IndividualCellProperties& the
 void copy(IndividualCellProperties* pCopy, const IndividualCellProperties* pOrig);
 
 
-#ifdef CUDA
+#ifdef __CUDACC__
 void cudaCtor(struct CellProperties*,struct CellProperties*);
 void cudaDtor(struct CellProperties*);
 #endif
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 unsigned getNumCells(struct CellProperties* ptr );
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 unsigned getNumMats(struct CellProperties* ptr, unsigned i );
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 gpuFloatType_t getDensity(struct CellProperties* ptr, unsigned cellNum, unsigned matNum );
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __device__ __host__
 #endif
 gpuFloatType_t getMatID(struct CellProperties* ptr, unsigned cellNum, unsigned matNum );
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelGetNumCells(CellProperties* mp, unsigned* results );
 #endif
 
-#ifdef CUDA
+#ifdef __CUDACC__
 __global__ void kernelSumMatDensity(CellProperties* mp, unsigned matIndex, gpuFloatType_t* results );
 #endif
 
@@ -97,7 +97,7 @@ public:
          return MonteRay::getMatID( ptr, cell, matNum );
      }
 
-#ifndef CUDA
+#ifndef __CUDACC__
     void loadFromLnk3dnt(const std::string& filename );
 #endif
 

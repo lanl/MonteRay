@@ -214,7 +214,7 @@ RayListInterface<N>::printParticle(unsigned i, const RAY_T& particle ) const {
 }
 
 template< unsigned N>
-RayListInterface<N>::RAY_T
+typename RayListInterface<N>::RAY_T
 RayListInterface<N>::readParticle(void){
     ++currentParticlePos;
     if( currentParticlePos > numCollisionOnFile ) {

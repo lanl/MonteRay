@@ -4,6 +4,7 @@
 
 #include "GPUSync.hh"
 #include "GPUUtilityFunctions.hh"
+
 #include "MonteRayCrossSection.hh"
 #include "MonteRayConstants.hh"
 

@@ -13,7 +13,7 @@ SUITE( Ray_simple_tests ) {
 
 	TEST( ray_ctor ) {
 		Ray_t<> ray;
-		// std::cout << "Debug: running Ray_tester.cu -- ctor test\n";
+		// std::cout << "Debug: running Ray_tester.cc -- ctor test\n";
 		CHECK(true);
 	}
 

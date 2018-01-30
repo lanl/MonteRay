@@ -6,8 +6,8 @@
 #include "fi_genericGPU_test_helper.hh"
 
 #include "GPUUtilityFunctions.hh"
-#include "gpuTally.h"
-#include "ExpectedPathLength.h"
+#include "gpuTally.hh"
+#include "ExpectedPathLength.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"
@@ -16,6 +16,8 @@
 SUITE( RayListInterface_fi_tester ) {
 
 	TEST( setup ) {
+		std::cout << "Debug: starting - RayListInterface_fi_tester\n";
+		//CHECK(false);
 		gpuCheck();
 	}
 
@@ -433,7 +435,8 @@ SUITE( Collision_fi_looping_tester ) {
      	while(true){
      		bank1.copyToGPU();
      		if( end ) { last = true; }
-     		MonteRay::tripleTime time = launchRayTraceTally(cpuWork1,
+     		MonteRay::tripleTime time = launchRayTraceTally(
+     				cpuWork1,
      				256,
      				256,
      				&grid,
@@ -442,14 +445,19 @@ SUITE( Collision_fi_looping_tester ) {
      				&mp,
      				&tally);
 
+#ifdef __CUDACC__
         	std::cout << "Debug: Time in GPU raytrace kernel=" << time.gpuTime << " secs.\n";
+#else
+        	std::cout << "Debug: Time in CPU raytrace kernel=" << time.gpuTime << " secs.\n";
+#endif
         	std::cout << "Debug: Time in CPU work =" << time.cpuTime << " secs.\n";
         	std::cout << "Debug: Time total time =" << time.totalTime << " secs.\n\n";
         	if( last ) { break; }
 
           	bank2.copyToGPU();
         	if( end ) { last = true; }
-     		time = launchRayTraceTally(cpuWork2,
+     		time = launchRayTraceTally(
+     				cpuWork2,
      				256,
      				256,
      				&grid,
@@ -458,7 +466,11 @@ SUITE( Collision_fi_looping_tester ) {
      				&mp,
      				&tally);
 
+#ifdef __CUDACC__
         	std::cout << "Debug: Time in GPU raytrace kernel=" << time.gpuTime << " secs.\n";
+#else
+        	std::cout << "Debug: Time in CPU raytrace kernel=" << time.gpuTime << " secs.\n";
+#endif
         	std::cout << "Debug: Time in CPU work =" << time.cpuTime << " secs.\n";
         	std::cout << "Debug: Time total time =" << time.totalTime << " secs.\n\n";
         	if( last ) { break; }

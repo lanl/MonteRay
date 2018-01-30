@@ -5,7 +5,7 @@
 
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
-#include "gpuTally.h"
+#include "gpuTally.hh"
 
 #include "genericGPU_test_helper.hh"
 #include "gpuTally_test_helper.hh"
@@ -33,9 +33,11 @@ SUITE( gpuTally_tester ) {
     TEST( send_to_gpu ) {
         gpuTallyHost tally(5);
         tally.setTally(0, 99.0);
+#ifdef __CUDACC__
         tally.copyToGPU();
         tally.setTally(0, 0.0);
         tally.copyToCPU();
+#endif
         CHECK_CLOSE( 99.0, tally.getTally(0), 1e-4 );
     }
     TEST( get_default_values_from_gpu ) {
@@ -55,6 +57,7 @@ SUITE( gpuTally_tester ) {
          tally.setTally(2, 99.0);
          tally.setTally(3, 99.0);
          tally.setTally(4, 99.0);
+#ifdef __CUDACC__
          tally.copyToGPU();
          tally.setTally(0, 0.0);
          tally.setTally(1, 0.0);
@@ -62,6 +65,7 @@ SUITE( gpuTally_tester ) {
          tally.setTally(3, 0.0);
          tally.setTally(4, 0.0);
          tally.copyToCPU();
+#endif
          CHECK_CLOSE( 99.0, tally.getTally(0), 1e-4 );
          CHECK_CLOSE( 99.0, tally.getTally(1), 1e-4 );
          CHECK_CLOSE( 99.0, tally.getTally(2), 1e-4 );

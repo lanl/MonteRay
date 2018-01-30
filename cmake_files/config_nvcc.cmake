@@ -82,16 +82,16 @@ if(DEFINED ENV{CUDA_ROOT})
     message( STATUS "config_nvcc.cmake -- Environment variable CUDA_ROOT=${CUDA_ROOT}" )
 endif()
 
-SET(CUDA_SEPARABLE_COMPILATION ON)
+#SET(CUDA_SEPARABLE_COMPILATION ON)
 #SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-device-code=true;--cudart static)
 SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA;-Xcompiler -fPIC;--relocatable-device-code=true;--cudart shared)
-
 
 # Titan X -arch=sm_52
 # K40 -arch=compute_35 -code=sm_35
 # Moonlight Tesla M2090 -arch=compute_20 -code=sm_20
 # Quadro K420 - 3.0
-list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
+#list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
+add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
 
 #if( CMAKE_BUILD_TYPE STREQUAL "Debug" ) 
 #    list(APPEND CUDA_NVCC_FLAGS "-G")
@@ -102,6 +102,6 @@ list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
 #endif()
 list(APPEND CUDA_NVCC_FLAGS "-O3")
 list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
-
+#list(APPEND CUDA_NVCC_FLAGS "--x cu")
 
 message( STATUS "Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")

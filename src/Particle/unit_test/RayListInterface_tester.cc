@@ -15,7 +15,7 @@ SUITE( RayListInterface_simple_tests ) {
 
 	TEST( test_setup ) {
 		gpuCheck();
-		//CHECK(false);
+//		CHECK(false);
 	}
     TEST( setup_host ) {
     	RayListInterface<1> points(10);

@@ -5,14 +5,14 @@
 #include <cmath>
 
 #include "GPUUtilityFunctions.hh"
-#include "gpuTally.h"
-#include "ExpectedPathLength.h"
+#include "gpuTally.hh"
+#include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
 #include "GridBins.h"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
-#include "gpuTally.h"
+#include "gpuTally.hh"
 #include "RayListInterface.hh"
 
 namespace RayListController_unit_tester{

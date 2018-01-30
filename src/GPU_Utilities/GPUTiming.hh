@@ -6,6 +6,10 @@
 #include "MonteRayDefinitions.hh"
 #include "GPUErrorCheck.hh"
 
+#ifndef __CUDACC__
+#include <ctime>
+#endif
+
 namespace MonteRay{
 
 struct gpuTiming {
@@ -36,9 +40,11 @@ public:
 	    ptr_device = NULL;
 
 	    rate = 0;
-#ifdef CUDA
+#ifdef __CUDACC__
 	    setRate( gpuTimingHost::getCyclesPerSecond() );
 	    copyToGPU();
+#else
+	    setRate( CLOCKS_PER_SEC );
 #endif
 	}
 
@@ -49,15 +55,15 @@ public:
             ptr = 0;
         }
 
+#ifdef __CUDACC__
         if( cudaCopyMade ) {
-#ifdef CUDA
         	cudaFree( ptr_device );
-#endif
         }
+#endif
     }
 
     void copyToGPU(void){
-#ifdef CUDA
+#ifdef __CUDACC__
     	if(cudaCopyMade != true ) {
     		cudaCopyMade = true;
 
@@ -71,7 +77,7 @@ public:
     }
 
     void copyToCPU(void) {
-#ifdef CUDA
+#ifdef __CUDACC__
     	cudaCopyMade = true;
 
     	// copy data
@@ -83,7 +89,7 @@ public:
     static clock64_t getCyclesPerSecond() {
     	clock64_t Hz = 0;
         // Get device frequency in Hz
-    #ifdef CUDA
+    #ifdef __CUDACC__
         cudaDeviceProp prop;
         CUDA_CHECK_RETURN( cudaGetDeviceProperties(&prop, 0));
         Hz = clock64_t(prop.clockRate) * 1000;
@@ -103,10 +109,12 @@ public:
     	if( rate == 0 ) {
     		throw std::runtime_error( "GPU rate not set." );
     	}
+#ifdef __CUDACC__
     	if( !cudaCopyMade ){
     		throw std::runtime_error( "gpuTiming not sent to GPU." );
     	}
     	copyToCPU();
+#endif
 
     	clock64_t deltaT;
     	clock64_t start = ptr->start;
@@ -115,6 +123,8 @@ public:
 
     	return double(deltaT) / rate;
     }
+
+    gpuTiming* getPtr(void) const { return ptr; }
 
 private:
     struct gpuTiming* ptr;

@@ -1,11 +1,9 @@
-#include <cuda.h>
-
+#include "MonteRayDefinitions.hh"
 #include "cudaGridBins.h"
 #include "MonteRayConstants.hh"
 
 namespace MonteRay{
 
-#ifdef __CUDACC__
 CUDA_CALLABLE_MEMBER unsigned
 cudaCalcCrossings(const float_t* const vertices, unsigned nVertices,
 				int* cells, float_t* distances, float_t pos, float_t dir,
@@ -36,6 +34,5 @@ CUDA_CALLABLE_KERNEL void kernelCudaRayTraceToAllCenters(
 		                           void* ptrGrid,
 		                           void* ptrDistances,
 		                           float_t x, float_t y, float_t z);
-#endif
 
 }

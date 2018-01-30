@@ -27,24 +27,20 @@ public:
 		return MONTERAYHOSTALLOC(len, isManagedMemory, std::string("ManagedMemoryBase::new[]"));
 	}
 
-	CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
 #ifdef __CUDACC__
+	CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
 		cudaMemAdvise(this, sizeof(*this), cudaMemAdviseSetReadMostly, device.deviceID);
 		if( device.deviceProps.concurrentManagedAccess ) {
 			cudaMemPrefetchAsync(this, sizeof(*this), device.deviceID, NULL );
 		}
-#else
-		throw std::runtime_error( "AllocBase::copyToGPU -- not valid without CUDA.");
-#endif
 	}
+#endif
 
-	CUDAHOST_CALLABLE_MEMBER void copyToCPU(cudaStream_t stream = NULL) {
 #ifdef __CUDACC__
+	CUDAHOST_CALLABLE_MEMBER void copyToCPU(cudaStream_t stream = NULL) {
 		cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, NULL );
-#else
-		throw std::runtime_error( "AllocBase::copyToCPU -- not valid without CUDA.");
-#endif
 	}
+#endif
 
 	CUDAHOST_CALLABLE_MEMBER static void operator delete(void* ptr) {
 

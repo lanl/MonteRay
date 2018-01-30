@@ -91,7 +91,7 @@ public:
 		return points[nUsed];
 	}
 
-	CUDA_CALLABLE_MEMBER RAY_T getParticle(RayListSize_t i) {
+	CUDA_CALLABLE_MEMBER RAY_T getParticle(RayListSize_t i) const {
 #if !defined( RELEASE )
 		if( i >= nUsed ) {
 			printf("RayList::getParticle -- index exceeds size.  %s %d\n", __FILE__, __LINE__);

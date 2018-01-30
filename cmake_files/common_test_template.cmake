@@ -65,10 +65,36 @@ endif()
 
 set( appName ${TestType}${testname} )
 
-########################################
-#  Gather sources
 
-file( GLOB ${appName}_srcs "*.cpp" "*.cc" "*.cu" )
+########################################
+# CUDA Helper library
+set( testhelper "${UnitName}_${current_dir}_Helperlib" )
+#message ( "Debug: -- ${appName} -- test helper library = ${testhelper} " )
+if( DEFINED enable_cuda )
+   file(GLOB CUDA_TEST_SRCS "*.cu" )
+   cuda_add_library(${testhelper} SHARED ${AllCudaFiles} ${CUDA_TEST_SRCS} )
+   set_property(TARGET ${testhelper} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+else()
+    foreach( cudaFile ${AllCudaFiles} )
+       set_source_files_properties( ${cudaFile} PROPERTIES LANGUAGE CXX )
+       set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS "-x c++")
+    endforeach()
+    set(${AllCudaFiles} ${CudaFileList} PARENT_SCOPE)
+    add_library(${testhelper} STATIC ${AllCudaFiles})
+endif()
+
+
+########################################
+#  Gather test sources
+
+if( enable_cuda ) 
+    # don't include .cu test files - they are added to the test helper CUDA library
+    file( GLOB ${appName}_srcs "*.cpp" "*.cc" )
+    set_source_files_properties( ${appName}_srcs PROPERTIES LANGUAGE CUDA )
+else()
+    file( GLOB ${appName}_srcs "*.cpp" "*.cc" "*.cu" )
+    set_source_files_properties( ${appName}_srcs PROPERTIES LANGUAGE CXX )
+endif()
 
 foreach( src ${ExcludeSource} )
     list( REMOVE_ITEM ${appName}_srcs ${CMAKE_CURRENT_SOURCE_DIR}/${src} )
@@ -92,7 +118,10 @@ endif()
 foreach( pkg ${${ParentDir}_packages} ) 
 #    message( STATUS "                    -- ${ParentDir}_packages including = ${${pkg}_INCLUDE_DIRS}" )
     include_directories( ${${pkg}_INCLUDE_DIRS} )
-    cuda_include_directories( ${${pkg}_INCLUDE_DIRS} )
+    
+    if( DEFINED enable_cuda )
+      cuda_include_directories( ${${pkg}_INCLUDE_DIRS} )
+    endif()
 
     if( DEFINED ${pkg}_LIBRARY_DIRS )
         link_directories( ${${pkg}_LIBRARY_DIRS} )
@@ -112,9 +141,19 @@ add_definitions(-D${CMAKE_SYSTEM_NAME})
 ########################################
 #  Add the new test
 
-add_executable( ${appName} ${${appName}_srcs} )
+if( enable_cuda )
+  # CUDA language properties
+else()
+  # std C++ language properties
+  foreach( srcname ${${appName}_srcs} )
+    set_source_files_properties( ${srcname} PROPERTIES LANGUAGE CXX )
+    set_source_files_properties( ${srcname} PROPERTIES COMPILE_FLAGS "-x c++")
+  endforeach()
+endif()
 
+add_executable( ${appName} ${${appName}_srcs} ) 
 set_property(TARGET ${appName} APPEND PROPERTY COMPILE_DEFINITIONS ${CXX11_FEATURE_LIST} )
+
 
 ########################################
 #  Collect the suite names defined for these tests
@@ -140,6 +179,15 @@ endif()
 #    target_link_libraries( ${appName} ${libname} )
 #endif()
 
+# Add CUDA test helper library
+target_link_libraries( ${appName} ${testhelper} )
+
+# CUDA libraries
+if( DEFINED enable_cuda ) 
+    target_link_libraries( ${appName} cuda )
+    target_link_libraries( ${appName} ${CUDA_LIBRARIES} )
+endif()
+
 # Add any additional
 foreach( curLib ${ToolkitLibs} ) 
     target_link_libraries( ${appName} ${curLib} )
@@ -153,6 +201,7 @@ foreach( pkg ${${ParentDir}_packages} )
         target_link_libraries( ${appName} ${${pkg}_LIBRARIES} )
     endif()
 endforeach()
+
 if( CMAKE_SYSTEM MATCHES "Darwin" )
 else()
     target_link_libraries( ${appName} rt )

@@ -16,15 +16,11 @@ void ctor(struct gpuTally*);
 void dtor(struct gpuTally*);
 void copy(struct gpuTally* pCopy, struct gpuTally* pOrig);
 
-#ifdef CUDA
 void cudaDtor(gpuTally*);
 void cudaCtor(gpuTally*, unsigned num);
 void cudaCtor(gpuTally*, gpuTally*);
-#endif
 
-#ifdef CUDA
-__device__
-#endif
+CUDA_CALLABLE_MEMBER
 void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value );
 
 class gpuTallyHost {
@@ -48,6 +44,8 @@ public:
 
     void write( std::string filename ) const;
     void read( std::string filename );
+
+    gpuTally* getPtr(void) { return ptr; }
 
 private:
     gpuTally* ptr;

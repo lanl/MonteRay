@@ -1,12 +1,7 @@
-#include <cuda.h>
-#include <stdio.h>
-#include <stdlib.h>
-
+#include "MonteRayDefinitions.hh"
 #include "GridBins.h"
 
 namespace MonteRay{
-
-#ifdef __CUDACC__
 
 CUDA_CALLABLE_MEMBER unsigned cudaCalcIndex(const GridBins* const grid, uint3& indices);
 CUDA_CALLABLE_MEMBER unsigned cudaCalcIndex(const GridBins* const grid, unsigned* indices);
@@ -47,6 +42,5 @@ CUDA_CALLABLE_MEMBER bool cudaIsOutside(const GridBins* const grid, int* indices
 
 
 CUDA_CALLABLE_MEMBER unsigned cudaGetIndex(const GridBins* const grid, const float3_t& pos);
-#endif
 
 }

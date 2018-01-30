@@ -128,7 +128,7 @@ public:
     unsigned getNumCells(void) const { return MonteRay::getNumCells(ptr); }
     unsigned getIndex(float_t x, float_t y, float_t z) const;
 
-#ifndef CUDA
+#ifndef __CUDACC__
     void loadFromLnk3dnt( const std::string& filename );
 #endif
 

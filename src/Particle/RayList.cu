@@ -41,20 +41,22 @@ RayList_t<N>::RayList_t(const RayList_t<N>& rhs) :
 template<unsigned N>
 CUDAHOST_CALLABLE_MEMBER void
 RayList_t<N>::copy(const RayList_t<N>* rhs) {
+
+#ifdef __CUDACC__
 	if( Base::debug ) {
-		std::cout << "Debug: RayList_t::operator= (const RayList_t<N>& rhs) \n";
+		std::cout << "Debug: RayList_t::copy (const RayList_t<N>& rhs) \n";
 	}
 
 	if( Base::isCudaIntermediate && rhs->isCudaIntermediate ) {
-		throw std::runtime_error("RayList_t::operator= -- can NOT copy CUDA intermediate to CUDA intermediate.");
+		throw std::runtime_error("RayList_t::copy -- can NOT copy CUDA intermediate to CUDA intermediate.");
 	}
 
 	if( !Base::isCudaIntermediate && !rhs->isCudaIntermediate ) {
-		throw std::runtime_error("RayList_t::operator= -- can NOT copy CUDA non-intermediate to CUDA non-intermediate.");
+		throw std::runtime_error("RayList_t::copy -- can NOT copy CUDA non-intermediate to CUDA non-intermediate.");
 	}
 
 	if( nAllocated > 0 && nAllocated != rhs->nAllocated) {
-		throw std::runtime_error("RayList_t::operator= -- can NOT change the size of the RayList.");
+		throw std::runtime_error("RayList_t::copy -- can NOT change the size of the RayList.");
 	}
 
 	if( Base::isCudaIntermediate ) {
@@ -70,6 +72,9 @@ RayList_t<N>::copy(const RayList_t<N>* rhs) {
 
 	nAllocated = rhs->nAllocated;
 	nUsed = rhs->nUsed;
+#else
+	throw std::runtime_error("RayList_t::copy -- Only valid when compiling with CUDA.");
+#endif
 }
 
 } // end namespace

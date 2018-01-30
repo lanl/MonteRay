@@ -193,14 +193,15 @@ CUDA_CALLABLE_KERNEL void kernelGetTotalXS(struct MonteRayMaterialList* pMatList
 }
 
 gpuFloatType_t MonteRayMaterialListHost::launchGetTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const {
-#ifdef __CUDACC__
+
 	typedef gpuFloatType_t type_t;
-
-	type_t* result_device;
 	type_t result[1];
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
-
 	unsigned HashBin = getHashBin( pHash->getPtr(), E);
+
+#ifdef __CUDACC__
+	type_t* result_device;
+
+	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
 
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
@@ -212,8 +213,11 @@ gpuFloatType_t MonteRayMaterialListHost::launchGetTotalXS(unsigned i, gpuFloatTy
 	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
 	cudaFree( result_device );
-	return result[0];
+
+#else
+	kernelGetTotalXS(pMatList, i, pHash->getPtr(), HashBin, E, density, result);
 #endif
+	return result[0];
 }
 
 
@@ -249,7 +253,7 @@ void MonteRayMaterialListHost::add( unsigned index, MonteRayMaterial* mat, unsig
     pMatList->materialID[index] = id;
     pMatList->materials[index] = mat;
 
-    for( i = 0; i < getNumIsotopes(mat); ++i ){
+    for( auto i = 0; i < getNumIsotopes(mat); ++i ){
     	int currentID = getID(mat, i);
     	if( currentID < 0 ) {
     		pHash->addIsotope( mat->xs[i] );

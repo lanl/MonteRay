@@ -2,7 +2,7 @@
 
 #include "MonteRayConstants.hh"
 #include "GridBins.h"
-#include "cpuRayTrace.h"
+#include "cpuRayTrace.hh"
 
 using namespace MonteRay;
 

@@ -1,6 +1,7 @@
 #ifndef MONTERAY_MATERIALSPEC_HH_
 #define MONTERAY_MATERIALSPEC_HH_
 
+#include <cstddef>
 #include <limits>
 
 #include "MonteRayDefinitions.hh"

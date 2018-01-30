@@ -10,11 +10,8 @@
 #include <vector>
 #include <mutex>
 
-#ifdef __CUDACC__
-#include "cuda_runtime_api.h"
 #include "MonteRayDefinitions.hh"
 #include "GPUErrorCheck.hh"
-#endif
 
 namespace MonteRay {
 
@@ -305,13 +302,12 @@ inline void MonteRayDeviceFree(void* ptr) noexcept {
 #endif
 }
 
-inline void MonteRayMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind){
 #ifdef __CUDACC__
+inline void MonteRayMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind){
 	CUDA_CHECK_RETURN( cudaMemcpy(dst, src, count, kind) );
-#else
-	throw std::runtime_error( "MonteRayMemcpy -- can NOT use cudaMemcpy without CUDA." );
-#endif
 }
+#endif
+
 } // end namespace
 
 

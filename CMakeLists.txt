@@ -1,7 +1,16 @@
 # Cmake 3.8 is needed for proper CUDA support
 CMAKE_MINIMUM_REQUIRED(VERSION 3.8)
 
-PROJECT(MonteRayProject)
+if( enable_cuda )
+    message( "Base CmakeLists.txt - enabling CUDA." ) 
+    enable_language(CUDA)
+#    set(CMAKE_CXX_IGNORE_EXTENSIONS cu )
+#    set(CMAKE_CUDA_SOURCE_FILE_EXTENSIONS cu )
+    PROJECT(MonteRayProject LANGUAGES CXX CUDA )
+else()
+    enable_language(CXX)
+    PROJECT(MonteRayProject LANGUAGES CXX )
+endif()
 
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -19,8 +28,13 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts )
 message( STATUS "-- Loading main.cmake")
 include( main )
 
-message( STATUS "-- Loading config_nvcc.cmake")
-include(config_nvcc )
+if( DEFINED enable_cuda )
+  message( STATUS "-- Building with CUDA.")
+  message( STATUS "-- Loading config_nvcc.cmake")
+  include(config_nvcc )
+else()
+  message( STATUS "-- Building without CUDA.")
+endif()
 
 set( SubProjectName "MonteRayLib" )
 

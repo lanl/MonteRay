@@ -66,6 +66,8 @@ SUITE( ManagedMemory_tester ) {
 		B->elements[2] = 30.0;
 		B->elements[3] = 40.0;
 
+#ifdef __CUDACC__
+		std::cout << "Debug:  ManangedMemory_tester.cu -- add_vectors_w_copyToCPU -- CUDA calling launchSumVectors" << std::endl;
 		A->copyToGPU();
 		B->copyToGPU();
 		C->copyToGPU();
@@ -73,6 +75,10 @@ SUITE( ManagedMemory_tester ) {
 		launchSumVectors(A,B,C);
 
 		C->copyToCPU();
+#else
+		std::cout << "Debug:  ManangedMemory_tester.cu -- add_vectors_w_copyToCPU -- CPU calling launchSumVectors" << std::endl;
+		launchSumVectors(A,B,C);
+#endif
 
 		CHECK_EQUAL( 4,C->N);
 		CHECK_CLOSE( 1.0, C->multiple, 1e-6);

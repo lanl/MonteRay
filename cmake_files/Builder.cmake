@@ -32,6 +32,10 @@ if( Standalone )
     set( StandaloneFlag "-DStandalone=ON" )
 endif()
 
+if( enable_cuda )
+    set( CudaFlag "-Denable_cuda=ON" )
+endif()
+
 if( DISABLE_NDATK_MT71X ) 
 	set( DISABLE_NDATK_MT71X_Flag "-DDISABLE_NDATK_MT71X=ON" )
 endif()
@@ -72,8 +76,8 @@ endif()
 message( "Building with CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}, Debug level=${DEBUG_LEVEL_DEFAULT} " )
 set( DebugOptions ${DEBUG_LEVEL} ${DebugOption} )
 
-message( "Executing COMMAND=${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${UnityBuildFlag} ${VersionFlag} ${StandaloneFlag}  ${FortranOffFlag} ${NDATK_Flags} ${MonteRayFlags} $ENV{PWD} in directory ${buildDir}" )
-execute_process( COMMAND ${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${UnityBuildFlag} ${VersionFlag} ${StandaloneFlag} ${FortranOffFlag} ${NDATK_Flags} ${MonteRayFlags} $ENV{PWD}
+message( "Executing COMMAND=${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${UnityBuildFlag} ${VersionFlag} ${StandaloneFlag} ${CudaFlag} ${FortranOffFlag} ${NDATK_Flags} ${MonteRayFlags} $ENV{PWD} in directory ${buildDir}" )
+execute_process( COMMAND ${CMAKE_COMMAND} ${DebugOption} ${BatchFlag} ${UnityBuildFlag} ${VersionFlag} ${StandaloneFlag} ${CudaFlag} ${FortranOffFlag} ${NDATK_Flags} ${MonteRayFlags} $ENV{PWD}
                  WORKING_DIRECTORY ${buildDir}
                  RESULT_VARIABLE result_var
                  )

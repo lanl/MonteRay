@@ -456,7 +456,7 @@ SUITE( NextEventEstimator_Tester ) {
 #endif
 	TEST_FIXTURE(CalcScore_test, calc_with_rayList_on_GPU ) {
 //		std::cout << "Debug: **********************\n";
-//		std::cout << "Debug: MonteRayNextEventEstimator_unittest.cu -- TEST calc_with_rayList_on_GPU\n";
+//		std::cout << "Debug: MonteRayNextEventEstimator_unittest.cc -- TEST calc_with_rayList_on_GPU\n";
 		const unsigned N = 3;
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
 
@@ -497,6 +497,7 @@ SUITE( NextEventEstimator_Tester ) {
 		pBank->add( ray );
 		pBank->add( ray );
 
+#ifdef __CUDACC__
 		cudaEvent_t start, stop;
 		cudaEventCreate(&start);
 
@@ -516,6 +517,9 @@ SUITE( NextEventEstimator_Tester ) {
     	cudaEventSynchronize(stop);
 
         pEstimator->copyToCPU();
+#else
+        pEstimator->launch_ScoreRayList(1,1,pBank.get());
+#endif
         gpuTallyType_t value = pEstimator->getTally(0);
 
         gpuFloatType_t expected1 = ( 0.3f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*1.0 );

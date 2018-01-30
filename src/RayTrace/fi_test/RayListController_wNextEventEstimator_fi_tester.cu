@@ -6,7 +6,7 @@
 
 #include "GPUUtilityFunctions.hh"
 
-#include "gpuTally.h"
+#include "gpuTally.hh"
 
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
@@ -14,7 +14,6 @@
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
-#include "gpuTally.h"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRayNextEventEstimator.hh"
@@ -124,6 +123,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
  				                             pMatList,
  				                             pMatProps,
  				                             numPointDets );
+
     	controller.setCapacity(10);
 
     	CHECK_EQUAL( true, controller.isUsingNextEventEstimator() );
@@ -171,7 +171,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
         CHECK_EQUAL(10, controller.capacity());
 
 //        std::cout << "Debug: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \n";
-//        std::cout << "Debug: RayListController_wNexteVentEstimator_fi_tester.cu:: testOnGPU - flushing \n";
+//        std::cout << "Debug: RayListController_wNexteVentEstimator_fi_tester.cc:: testOnGPU - flushing \n";
         controller.sync();
         controller.flush(true);
         controller.sync();

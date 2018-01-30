@@ -1,7 +1,7 @@
 #include <iostream>
 #include <math.h>
 
-#include "cpuRayTrace.h"
+#include "cpuRayTrace.hh"
 #include "GridBins.h"
 
 namespace MonteRay{
