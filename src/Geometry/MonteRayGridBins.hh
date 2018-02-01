@@ -169,10 +169,10 @@ public:
 
     // returns -1 for one neg side of mesh
     // and number of bins on the pos side of the mesh
-    CUDA_CALLABLE_MEMBER int getLinearIndex(gpuFloatType_t pos, bool equal_spacing=false ) const;
+    CUDA_CALLABLE_MEMBER int getLinearIndex(gpuFloatType_t pos) const;
 
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuFloatType_t r, bool equal_spacing=false) const { MONTERAY_ASSERT( r >= 0.0 ); return getRadialIndexFromRSq( r*r, equal_spacing); }
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuFloatType_t rSq, bool equal_spacing=false) const;
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuFloatType_t r) const { MONTERAY_ASSERT( r >= 0.0 ); return getRadialIndexFromRSq( r*r ); }
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuFloatType_t rSq) const;
 
     CUDA_CALLABLE_MEMBER bool isIndexOutside( int i) const { if( i < 0 ||  i >= getNumBins() ) return true; return false; }
 

@@ -198,7 +198,7 @@ MonteRayGridBins::read_v0(std::istream& infile){
 }
 
 CUDA_CALLABLE_MEMBER int
-MonteRayGridBins::getLinearIndex(gpuFloatType_t pos, bool equal_spacing ) const {
+MonteRayGridBins::getLinearIndex(gpuFloatType_t pos) const {
     // returns -1 for one neg side of mesh
     // and number of bins on the pos side of the mesh
     // need to call isIndexOutside(dim, grid, index) to check if the
@@ -210,19 +210,14 @@ MonteRayGridBins::getLinearIndex(gpuFloatType_t pos, bool equal_spacing ) const 
     } else if( pos >= maxVertex ) {
         dim_index = getNumBins();
     } else {
-        if( equal_spacing ) {
-            dim_index = ( pos -  minVertex ) / delta;
-        } else {
-        	dim_index = LowerBoundIndex( vertices, nVertices, pos);
-        }
+       	dim_index = LowerBoundIndex( vertices, nVertices, pos);
     }
     return dim_index;
 }
 
 CUDA_CALLABLE_MEMBER int
-MonteRayGridBins::getRadialIndexFromRSq( gpuFloatType_t rSq, bool equal_spacing) const {
+MonteRayGridBins::getRadialIndexFromRSq( gpuFloatType_t rSq) const {
 	MONTERAY_ASSERT( rSq >= 0.0 );
-	MONTERAY_ASSERT( !equal_spacing ); // TODO: Equal spacing not yet supported
 	MONTERAY_ASSERT( radialModified );
 
     gpuFloatType_t max = verticesSq[nVerticesSq-1];
