@@ -2,8 +2,6 @@
 
 #include "MonteRayCopyMemory.hh"
 
-#ifdef __CUDACC__
-
 SUITE( CopyMemory_tester ) {
 
 	using namespace MonteRay;
@@ -228,7 +226,6 @@ TEST( add_vectors_w_copyToCPU ) {
 	delete B;
 	delete C;
 }
-#endif
 
 }
 #endif
