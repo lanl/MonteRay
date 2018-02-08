@@ -1,5 +1,5 @@
 /*
- * MonteRayGridBins.hh
+ * MonteRay_GridBins.hh
  *
  *  Created on: Jan 30, 2018
  *      Author: jsweezy
@@ -7,8 +7,8 @@
  *  A port of MCATK's GridBins class to MonteRay/CUDA
  */
 
-#ifndef MONTERAYGRIDBINS_HH_
-#define MONTERAYGRIDBINS_HH_
+#ifndef MonteRay_GridBins_HH_
+#define MonteRay_GridBins_HH_
 
 #ifndef __CUDA_ARCH__
 #include <vector>
@@ -19,40 +19,42 @@
 #include "MonteRayVector3D.hh"
 #include "GPUErrorCheck.hh"
 
+#define MAXNUMVERTICES 1001
+
 namespace MonteRay {
 
-class MonteRayGridBins : public CopyMemoryBase<MonteRayGridBins>{
+class MonteRay_GridBins : public CopyMemoryBase<MonteRay_GridBins>{
 public:
-	using Base = MonteRay::CopyMemoryBase<MonteRayGridBins> ;
-    //typedef MonteRayGridBins[3] gridInfoArray_t;
+	using Base = MonteRay::CopyMemoryBase<MonteRay_GridBins> ;
+    //typedef MonteRay_GridBins[3] gridInfoArray_t;
     typedef MonteRay::Vector3D<gpuFloatType_t> Position_t;
     typedef MonteRay::Vector3D<gpuFloatType_t> Direction_t;
 
     enum coordinate_t{ LINEAR, RADIAL };
 
-    CUDAHOST_CALLABLE_MEMBER MonteRayGridBins(void) {
+    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins(void) {
     	init();
     }
 
 
-    CUDAHOST_CALLABLE_MEMBER MonteRayGridBins( gpuFloatType_t min, gpuFloatType_t max, unsigned nBins) : CopyMemoryBase<MonteRayGridBins>()  {
+    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( gpuFloatType_t min, gpuFloatType_t max, unsigned nBins) : CopyMemoryBase<MonteRay_GridBins>()  {
     	init();
         initialize( min, max, nBins );
     }
 
-    CUDAHOST_CALLABLE_MEMBER MonteRayGridBins( const std::vector<gpuFloatType_t>& bins ) {
+    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( const std::vector<gpuFloatType_t>& bins ) {
     	init();
         initialize( bins );
     }
 
-    //MonteRayGridBins(const MonteRayGridBins&);
+    //MonteRay_GridBins(const MonteRay_GridBins&);
 
-    //MonteRayGridBins& operator=( const MonteRayGridBins& rhs );
+    //MonteRay_GridBins& operator=( const MonteRay_GridBins& rhs );
 
-    CUDAHOST_CALLABLE_MEMBER ~MonteRayGridBins(void){
+    CUDAHOST_CALLABLE_MEMBER ~MonteRay_GridBins(void){
 
 		if( Base::isCudaIntermediate ) {
-			//std::cout << "Debug: MonteRayGridBins::~MonteRayGridBins -- isCudaIntermediate \n";
+			//std::cout << "Debug: MonteRay_GridBins::~MonteRay_GridBins -- isCudaIntermediate \n";
 			MonteRayDeviceFree( vertices );
 			MonteRayDeviceFree( verticesSq );
 		} else {
@@ -71,7 +73,7 @@ public:
 		}
     }
 
-    CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRayGridBins");}
+    CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRay_GridBins");}
 
     CUDAHOST_CALLABLE_MEMBER void init() {
 		nVertices = 0;
@@ -90,41 +92,41 @@ public:
 	}
 
     CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
-    	if( debug ) std::cout << "Debug: MonteRayGridBins::copyToGPU \n";
+    	//if( debug ) std::cout << "Debug: MonteRay_GridBins::copyToGPU \n";
 		Base::copyToGPU();
 	}
 
-    CUDAHOST_CALLABLE_MEMBER void copy(const MonteRayGridBins* rhs) {
-		if( debug ) {
-			std::cout << "Debug: MonteRayGridBins::copy(const MonteRayGridBins* rhs) \n";
-		}
+    CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_GridBins* rhs) {
+//		if( debug ) {
+//			std::cout << "Debug: MonteRay_GridBins::copy(const MonteRay_GridBins* rhs) \n";
+//		}
 
 #ifdef __CUDACC__
 		if( nVertices != 0 && (nVertices != rhs->nVertices) ) {
-			std::cout << "Error: MonteRayGridBins::copy -- can't change size of nVertices after initialization.\n";
-			std::cout << "Error: MonteRayGridBins::copy -- nVertices = " << nVertices << " \n";
-			std::cout << "Error: MonteRayGridBins::copy -- rhs->nVertices = " << rhs->nVertices << " \n";
-			std::cout << "Error: MonteRayGridBins::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
-			std::cout << "Error: MonteRayGridBins::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
-			throw std::runtime_error("MonteRayGridBins::copy -- can't change size after initialization.");
+			std::cout << "Error: MonteRay_GridBins::copy -- can't change size of nVertices after initialization.\n";
+			std::cout << "Error: MonteRay_GridBins::copy -- nVertices = " << nVertices << " \n";
+			std::cout << "Error: MonteRay_GridBins::copy -- rhs->nVertices = " << rhs->nVertices << " \n";
+			std::cout << "Error: MonteRay_GridBins::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
+			std::cout << "Error: MonteRay_GridBins::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
+			throw std::runtime_error("MonteRay_GridBins::copy -- can't change size after initialization.");
 		}
 
 		if( nVerticesSq != 0 && (nVerticesSq != rhs->nVerticesSq) ) {
-			std::cout << "Error: MonteRayGridBins::copy -- can't change size of nVerticesSq after initialization.\n";
-			std::cout << "Error: MonteRayGridBins::copy -- nVerticesSq = " << nVerticesSq << " \n";
-			std::cout << "Error: MonteRayGridBins::copy -- rhs->nVerticesSq = " << rhs->nVerticesSq << " \n";
-			std::cout << "Error: MonteRayGridBins::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
-			std::cout << "Error: MonteRayGridBins::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
-			throw std::runtime_error("MonteRayGridBins::copy -- can't change size after initialization.");
+			std::cout << "Error: MonteRay_GridBins::copy -- can't change size of nVerticesSq after initialization.\n";
+			std::cout << "Error: MonteRay_GridBins::copy -- nVerticesSq = " << nVerticesSq << " \n";
+			std::cout << "Error: MonteRay_GridBins::copy -- rhs->nVerticesSq = " << rhs->nVerticesSq << " \n";
+			std::cout << "Error: MonteRay_GridBins::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
+			std::cout << "Error: MonteRay_GridBins::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
+			throw std::runtime_error("MonteRay_GridBins::copy -- can't change size after initialization.");
 		}
 
 		if( isCudaIntermediate ) {
 			// host to device
-			if( nVertices == 0 ) {
-				vertices = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVertices*sizeof(gpuFloatType_t), std::string("device - MonteRayGridBins::vertices") );
+			if( nVertices == 0 && rhs->nVertices > 0 ) {
+				vertices = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVertices*sizeof(gpuFloatType_t), std::string("device - MonteRay_GridBins::vertices") );
 			}
-			if( nVerticesSq == 0 ) {
-				verticesSq = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVerticesSq*sizeof(gpuFloatType_t), std::string("device - MonteRayGridBins::verticesSq") );
+			if( nVerticesSq == 0 && rhs->nVerticesSq > 0) {
+				verticesSq = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVerticesSq*sizeof(gpuFloatType_t), std::string("device - MonteRay_GridBins::verticesSq") );
 			}
 			MonteRayMemcpy( vertices,   rhs->vertices,   rhs->nVertices*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
 			MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
@@ -143,7 +145,7 @@ public:
 		type = rhs->type;
 		radialModified = rhs->radialModified;
 #else
-		throw std::runtime_error("MonteRayGridBins::copy -- can NOT copy between host and device without CUDA.");
+		throw std::runtime_error("MonteRay_GridBins::copy -- can NOT copy between host and device without CUDA.");
 #endif
 	}
 
@@ -153,7 +155,10 @@ public:
 
     void setup(void);
 
-    CUDA_CALLABLE_MEMBER unsigned getNumBins(void) const { return numBins;  }
+    CUDA_CALLABLE_MEMBER unsigned getNumBins(void) const {
+    	//if( debug ) printf("Debug: MonteRay_GridBins::getNumBins -- \n");
+    	return numBins;
+    }
     CUDA_CALLABLE_MEMBER gpuFloatType_t getMinVertex(void) const {return minVertex; }
     CUDA_CALLABLE_MEMBER gpuFloatType_t getMaxVertex(void) const {return maxVertex; }
     CUDA_CALLABLE_MEMBER unsigned getNumVertices(void) const { return nVertices; }
@@ -198,6 +203,8 @@ private:
 
     void validate();
 
+    const bool debug = false;
+
 public:
     void write(std::ostream& outfile) const;
 
@@ -208,4 +215,4 @@ public:
 
 } /* namespace MonteRay */
 
-#endif /* MONTERAYGRIDBINS_HH_ */
+#endif /* MonteRay_GridBins_HH_ */

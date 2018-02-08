@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 
-#include "MonteRayGridBins.hh"
+#include "MonteRay_GridBins.hh"
 #include "GPUSync.hh"
 
 using namespace MonteRay;
@@ -9,18 +9,18 @@ SUITE( MonteRay_GridBins_Tester ) {
 
 	TEST( ctor ) {
 		CHECK(true);
-        std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins() );
+        std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
     }
 
 	TEST( ctor_takes_min_and_max ) {
-        std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+        std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_CLOSE( -10.0, pGridInfo->getMinVertex(), 1e-11 );
         CHECK_CLOSE( 10.0, pGridInfo->getMaxVertex(), 1e-11 );
         CHECK_CLOSE( 1.0, pGridInfo->delta, 1e-11 );
 	}
 
 	TEST( initialize ) {
-        std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins() );
+        std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
         pGridInfo->initialize( -10, 10, 20);
         CHECK_CLOSE( -10.0, pGridInfo->getMinVertex(), 1e-11 );
         CHECK_CLOSE( 10.0, pGridInfo->getMaxVertex(), 1e-11 );
@@ -35,7 +35,7 @@ SUITE( MonteRay_GridBins_Tester ) {
         		  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10
         };
 
-        std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(vertices) );
+        std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(vertices) );
 
         CHECK_CLOSE( -10.0, pGridInfo->getMinVertex(), 1e-11 );
         CHECK_CLOSE( 10.0, pGridInfo->getMaxVertex(), 1e-11 );
@@ -92,7 +92,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 	};
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetNumBins(MonteRayGridBins* pGridBins, resultClass<gpuFloatType_t>* pResult) {
+	CUDA_CALLABLE_KERNEL void kernelGetNumBins(MonteRay_GridBins* pGridBins, resultClass<gpuFloatType_t>* pResult) {
 		pResult->v = pGridBins->getNumBins();
 		printf( "kernelGetNumBins -- value = %d\n",  pResult->v );
 		return;
@@ -104,7 +104,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 		        		  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10
 		        };
 
-		MonteRayGridBins* pGridInfo = new MonteRayGridBins(vertices);
+		MonteRay_GridBins* pGridInfo = new MonteRay_GridBins(vertices);
 		resultClass<gpuFloatType_t>* pResult = new resultClass<gpuFloatType_t>();
 //
 #ifdef __CUDACC__
@@ -132,51 +132,51 @@ SUITE( MonteRay_GridBins_Tester ) {
 
 
     TEST( getLinearIndex_NonequalSpacing_off_neg_side ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( -1, pGridInfo->getLinearIndex( -10.5 ) );
     }
     TEST( getLinearIndex_NonequalSpacing_off_pos_side ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( 20, pGridInfo->getLinearIndex( 10.5 ) );
     }
     TEST( getLinearIndex_NonequalSpacing_first_index ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( 0, pGridInfo->getLinearIndex( -9.5 ) );
     }
     TEST( getLinearIndex_NonequalSpacing_second_index ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( 1, pGridInfo->getLinearIndex( -8.5  ) );
     }
     TEST( getLinearIndex_NonequalSpacing_last_index ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( 19, pGridInfo->getLinearIndex( 9.5 ) );
     }
 
     TEST( isIndexOutside_neg_side ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( true, pGridInfo->isIndexOutside( -1 ) );
     }
     TEST( isIndexOutside_pos_side ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( true, pGridInfo->isIndexOutside( 20 ) );
     }
     TEST( isIndexOutside_false_start ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( false, pGridInfo->isIndexOutside( 0 ) );
     }
     TEST( isIndexOutside_false_1 ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( false, pGridInfo->isIndexOutside( 1 ) );
     }
     TEST( isIndexOutside_false_end ) {
-    	std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
         CHECK_EQUAL( false, pGridInfo->isIndexOutside( 19 ) );
     }
 
     TEST( getRadialIndexFromR ) {
          std::vector<gpuFloatType_t> Rverts = { 1.0, 2.0, 3.0 };
 
-         std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins( Rverts ) );
+         std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins( Rverts ) );
          pGridInfo->initialize( Rverts );
          pGridInfo->modifyForRadial();
 
@@ -190,7 +190,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     TEST( getRadialIndexFromRSq ) {
         std::vector<gpuFloatType_t> Rverts = { 1.0, 2.0, 3.0 };
 
-        std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins( Rverts ) );
+        std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins( Rverts ) );
         pGridInfo->initialize( Rverts );
         pGridInfo->modifyForRadial();
 
@@ -202,7 +202,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetLinearIndex(MonteRayGridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t r) {
+	CUDA_CALLABLE_KERNEL void kernelGetLinearIndex(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t r) {
 		pResult->v = pGridBins->getLinearIndex(r);
 		//printf( "kernelGetNumBins -- value = %d\n",  pResult->v );
 		return;
@@ -210,7 +210,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 
 	int launchKernelGetLinearIndex( gpuFloatType_t r ) {
 
-		std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+		std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
 	    std::unique_ptr<resultClass<int>> pResult = std::unique_ptr<resultClass<int>>( new resultClass<int>() );
 #ifdef __CUDACC__
 	    pGridInfo->copyToGPU();
@@ -242,14 +242,14 @@ SUITE( MonteRay_GridBins_Tester ) {
 	}
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void isIndexOutside(MonteRayGridBins* pGridBins, resultClass<bool>* pResult, int i) {
+	CUDA_CALLABLE_KERNEL void isIndexOutside(MonteRay_GridBins* pGridBins, resultClass<bool>* pResult, int i) {
 		pResult->v = pGridBins->isIndexOutside(i);
 		return;
 	}
 
 	bool launchKernelGetIsIndexOutside( int i ) {
 
-		std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins(-10, 10, 20 ) );
+		std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
 	    std::unique_ptr<resultClass<bool>> pResult = std::unique_ptr<resultClass<bool>>( new resultClass<bool>() );
 #ifdef __CUDACC__
 	    pGridInfo->copyToGPU();
@@ -281,14 +281,14 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromR(MonteRayGridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t r) {
+	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromR(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t r) {
 		pResult->v = pGridBins->getRadialIndexFromR(r);
 		return;
 	}
 
 	int launchKernelGetRadialIndexFromR( gpuFloatType_t r ) {
         std::vector<gpuFloatType_t> Rverts= { 1.0, 2.0, 3.0 };
-		std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins() );
+		std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
 		pGridInfo->initialize( Rverts );
 		pGridInfo->modifyForRadial();
 
@@ -323,14 +323,14 @@ SUITE( MonteRay_GridBins_Tester ) {
 	}
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromRSq(MonteRayGridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t rSq) {
+	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromRSq(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t rSq) {
 		pResult->v = pGridBins->getRadialIndexFromRSq(rSq);
 		return;
 	}
 
 	int launchKernelGetRadialIndexFromRSq( gpuFloatType_t rSq ) {
         std::vector<gpuFloatType_t> Rverts= { 1.0, 2.0, 3.0 };
-		std::unique_ptr<MonteRayGridBins> pGridInfo = std::unique_ptr<MonteRayGridBins>( new MonteRayGridBins() );
+		std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
 		pGridInfo->initialize( Rverts );
 		pGridInfo->modifyForRadial();
 

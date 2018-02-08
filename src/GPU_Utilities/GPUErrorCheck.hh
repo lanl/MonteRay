@@ -109,16 +109,16 @@ CUDAHOST_CALLABLE_MEMBER inline void MonteRayAbort( const char* message, const c
 
 #define ABORT(message) { MonteRay::MonteRayAbort(message, __FILE__, __LINE__); }
 
-#ifndef NDEBUG
 CUDA_CALLABLE_MEMBER inline void MonteRayAssert( bool test, const char *file, int line){
 	if( test != true ) {
 		MonteRayAbort( "MonteRay ERROR:", file, line );
 	}
 }
 
-#define MONTERAY_ASSERT(message) { MonteRay::MonteRayAssert(message, __FILE__, __LINE__); }
+#ifndef NDEBUG
+#define MONTERAY_ASSERT(test) { MonteRayAssert(test, __FILE__, __LINE__); }
 #else
-#define MONTERAY_ASSERT(message) { message; }
+#define MONTERAY_ASSERT(test) { test; }
 #endif
 
 CUDA_CALLABLE_MEMBER inline void MonteRayVerify( bool test, const char* message, const char *file, int line){
