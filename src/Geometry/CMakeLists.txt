@@ -4,7 +4,7 @@ include( template_select )
 
 list( APPEND ${UnitName}_packages Utilities )
 
-set( ToolkitLibs )
+set( ToolkitLibs Math_Functions)
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

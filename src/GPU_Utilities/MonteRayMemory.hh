@@ -94,17 +94,22 @@ public:
 	bool hostmemory;
 };
 
+static std::mutex allocationMutex;
+
 class AllocationTracker {
 public:
 	typedef size_t alloc_id_t;
+
 	static AllocationTracker& getInstance() {
 		static AllocationTracker instance;
 		return instance;
 	}
 	~AllocationTracker() { reportLeakedMemory(); }
 
-	void reportLeakedMemory(void) const {
-		if( alloc_id == 0 ) return;
+	void reportLeakedMemory(void) {
+		std::lock_guard<std::mutex> lock(allocationMutex);
+
+		if( allocationList.size() == 0 ) return;
 		printf("*****************************************************\n");
 		printf("************ MonteRay Memory Report *****************\n\n");
 		printf(" Maximum memory used on the host   = %12.6f MB\n", (float) maxCPUMemory / 1000000.0 );
@@ -124,11 +129,11 @@ public:
 		printf("*****************************************************\n");
 	}
 private:
-	AllocationTracker() :
-		allocationMutex()
+	AllocationTracker()
+		// : allocationMutex()
 	{
-		alloc_id = 0;
-		allocationList.resize(1000);
+		std::lock_guard<std::mutex> lock(allocationMutex);
+		allocationList.reserve(100);
 		currentCPUMemory = 0;
 		maxCPUMemory = 0;
 		currentGPUMemory = 0;
@@ -139,36 +144,37 @@ public:
 	void operator=( AllocationTracker const & )    = delete;
 
 	alloc_id_t increment(std::string name, void* ptr, size_t numBytes, bool cpuMemory) {
-		std::lock_guard<std::mutex> lock(allocationMutex);
-		if( alloc_id >= allocationList.size() ) {
-			throw std::runtime_error("AllocationTracker::increment -- allocation list is full!");
-		}
-		alloc_id_t id = alloc_id++;
 
-		allocationList[id].name = name;
-		allocationList[id].size = numBytes;
-		allocationList[id].ptr = ptr;
-		allocationList[id].allocated = true;
-		allocationList[id].hostmemory = cpuMemory;
+		allocationInfo_t newAllocation;
+		newAllocation.name = name;
+		newAllocation.size = numBytes;
+		newAllocation.ptr = ptr;
+		newAllocation.allocated = true;
+		newAllocation.hostmemory = cpuMemory;
 
 		if( cpuMemory ) {
-			allocationList[id].hostmemory = true;
+			newAllocation.hostmemory = true;
 			currentCPUMemory += numBytes;
 			if( currentCPUMemory > maxCPUMemory ) {
 				maxCPUMemory = currentCPUMemory;
 			}
 		} else {
-			allocationList[id].hostmemory = false;
+			newAllocation.hostmemory = false;
 			currentGPUMemory += numBytes;
 			if( currentGPUMemory > maxGPUMemory ) {
 				maxGPUMemory = currentGPUMemory;
 			}
 		}
 
+		std::lock_guard<std::mutex> lock(allocationMutex);
+		allocationList.push_back( newAllocation );
+		alloc_id_t id = allocationList.size()-1;
+
 		return id;
 	}
 
 	void decrement( alloc_id_t id ) {
+		std::lock_guard<std::mutex> lock(allocationMutex);
 		size_t len = allocationList[id].size;
 		allocationList[id].allocated = false;
 		if( allocationList[id].hostmemory ) {
@@ -179,13 +185,11 @@ public:
 	}
 
 public:
-	std::atomic<alloc_id_t> alloc_id;
 	std::vector<allocationInfo_t> allocationList;
 	std::atomic<size_t> currentCPUMemory;
 	size_t maxCPUMemory;
 	std::atomic<size_t> currentGPUMemory;
 	size_t maxGPUMemory;
-	std::mutex allocationMutex;
 };
 
 inline void* MonteRayHostAlloc(size_t len, bool managed = true, std::string name = std::string(""), const char *file = "", int line = -1 ) {

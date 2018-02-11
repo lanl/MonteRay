@@ -47,6 +47,24 @@ public:
         initialize( bins );
     }
 
+    MonteRay_GridBins&
+    operator=( MonteRay_GridBins& rhs ) {
+    	nVertices = rhs.nVertices;
+    	nVerticesSq = rhs.nVerticesSq;
+    	vertices = rhs.vertices;
+    	verticesSq = rhs.verticesSq;
+    	delta = rhs.delta;
+    	minVertex = rhs.minVertex;
+    	maxVertex = rhs.maxVertex;
+    	numBins = rhs.numBins;
+    	type = rhs.type;
+    	radialModified = rhs.radialModified;
+
+    	verticesVec = nullptr;
+    	verticesSqVec = nullptr;
+    	return *this;
+    }
+
     //MonteRay_GridBins(const MonteRay_GridBins&);
 
     //MonteRay_GridBins& operator=( const MonteRay_GridBins& rhs );
@@ -63,11 +81,11 @@ public:
 			// MonteRayHostFree( vertices, Base::isManagedMemory );
 			// MonteRayHostFree( verticesSq, Base::isManagedMemory );
 		}
-		if( verticesVec != NULL ) {
+		if( verticesVec ) {
 			verticesVec->clear();
 			delete verticesVec;
 		}
-		if( verticesSqVec != NULL ) {
+		if( verticesSqVec ) {
 			verticesSqVec->clear();
 			delete verticesSqVec;
 		}
@@ -165,6 +183,8 @@ public:
 
     CUDA_CALLABLE_MEMBER gpuFloatType_t getDelta(void) const { return delta; }
 
+    CUDA_CALLABLE_MEMBER const gpuFloatType_t* getVerticesData(void) const {return vertices;}
+
     void removeVertex(unsigned i);
 
     void modifyForRadial(void);
@@ -186,8 +206,8 @@ public:
     unsigned nVertices;
     unsigned nVerticesSq;
 
-    std::vector<gpuFloatType_t>* verticesVec;
-    std::vector<gpuFloatType_t>* verticesSqVec;
+    std::vector<gpuFloatType_t>* verticesVec = nullptr;
+    std::vector<gpuFloatType_t>* verticesSqVec = nullptr;
 
     gpuFloatType_t* vertices;
     gpuFloatType_t* verticesSq;
@@ -206,10 +226,13 @@ private:
     const bool debug = false;
 
 public:
+    void write( const std::string& fileName );
+    void read( const std::string& fileName );
+
     void write(std::ostream& outfile) const;
 
-    void  read(std::istream& infile);
-    void  read_v0(std::istream& infile);
+    void read(std::istream& infile);
+    void read_v0(std::istream& infile);
 
 };
 

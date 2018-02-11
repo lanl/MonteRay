@@ -42,7 +42,6 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
         	delete pGridInfo[X];
         	delete pGridInfo[Y];
         	delete pGridInfo[Z];
-
         }
 
         pArrayOfpGridInfo_t pGridInfo;

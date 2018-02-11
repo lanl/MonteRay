@@ -25,6 +25,15 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         printf( "Debug: Starting GridSystemInterface::orderCrossings\n");
     }
 
+    if( debug )  {
+    	for( unsigned d = 0; d<DIM; ++d) {
+    		printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d\n",d);
+    		for( unsigned i = 0; i<distances[d].size(); ++i) {
+    			printf( "Debug: ----------------------------------- -- distances[%d].id[%d]=%d, distances[%d].dist[%d]=%f\n", d,i, distances[d].id(i), d,i, distances[d].dist(i));
+    		}
+    	}
+    }
+
     unsigned   end[3] = {0, 0, 0}; //    last location in the distance[i] vector
 
     unsigned maxNumCrossings = 0;
@@ -32,6 +41,8 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         end[i] = distances[i].size();
         maxNumCrossings += end[i];
     }
+
+    if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- maxNumCrossings=%d\n",maxNumCrossings);
 
     // reset raylist
     rayTraceList.reset();
@@ -51,6 +62,12 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
             }
         }
 
+        if( debug )  {
+        	for( unsigned d = 0; d<DIM; ++d) {
+        		printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d, minDistance[%d]=%f\n",d, minDistances[d]);
+        	}
+        }
+
         //unsigned minDim = std::distance(minDistances, std::min_element(minDistances,minDistances+DIM) );
         unsigned minDim = 0;
         gpuFloatType_t minDist = minDistances[0];
@@ -60,6 +77,9 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         		minDist = minDistances[i];
         	}
         }
+
+        if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- minDim=%d\n",minDim);
+        if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- minDist=%f\n",minDist);
 
         //indices[minDim] = distances[minDim][start[minDim]].first;
         indices[minDim] = distances[minDim].id( start[minDim] );

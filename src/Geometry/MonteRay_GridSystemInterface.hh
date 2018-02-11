@@ -19,7 +19,7 @@ namespace MonteRay {
 
 class singleDimRayTraceMap_t {
 private:
-	int N;
+	int N = 0;
 	int CellId[MAXNUMVERTICES]; // negative indicates outside mesh
 	gpuFloatType_t distance[MAXNUMVERTICES];
 
@@ -29,10 +29,10 @@ public:
 
 	CUDA_CALLABLE_MEMBER
 	void add( int cell, gpuFloatType_t dist) {
-		++N;
-		MONTERAY_ASSERT( N < MAXNUMVERTICES);
+		MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
 		CellId[N] = cell;
 		distance[N] = dist;
+		++N;
 	}
 
 	CUDA_CALLABLE_MEMBER void clear() { reset(); }
@@ -55,10 +55,10 @@ public:
 
 	CUDA_CALLABLE_MEMBER
 	void add( unsigned cell, gpuFloatType_t dist) {
-		++N;
-		MONTERAY_ASSERT( N < MAXNUMVERTICES);
+		MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
 		CellId[N] = cell;
 		distance[N] = dist;
+		++N;
 	}
 
 	CUDA_CALLABLE_MEMBER void clear() { reset(); }

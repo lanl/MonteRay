@@ -13,6 +13,8 @@
 #include <sstream>
 #endif
 
+#include <fstream>
+
 #include "BinarySearch.hh"
 
 namespace MonteRay {
@@ -30,13 +32,20 @@ MonteRay_GridBins::initialize( const std::vector<gpuFloatType_t>& bins ) {
 void
 MonteRay_GridBins::initialize( gpuFloatType_t min, gpuFloatType_t max, unsigned nBins){
 #ifndef __CUDA_ARCH__
-	verticesVec = new std::vector<gpuFloatType_t>;
+	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- min =%f\n", min);
+	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- max =%f\n", max);
+	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- nBins =%d\n", nBins);
+	verticesVec = new std::vector<gpuFloatType_t>();
+	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- verticesVec =%d\n", verticesVec);
 	delta = (max-min)/nBins;
-    double vertex = min;
+	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- delta=%f\n", delta);
+    gpuFloatType_t vertex = min;
     for( unsigned i = 0; i<nBins+1; ++i ) {
+    	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- vertex[%d]=%f\n",i, vertex);
     	verticesVec->push_back( vertex );
         vertex += delta;
     }
+    if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- calling setup()\n");
     setup();
 #endif
 }
@@ -52,6 +61,7 @@ MonteRay_GridBins::removeVertex(unsigned i) {
 void
 MonteRay_GridBins::setup(void) {
 #ifndef __CUDA_ARCH__
+	if( debug ) printf( "Debug: MonteRay_GridBins::setup -- verticesVec->size() = %d\n", verticesVec->size());
 	if( verticesVec->size() == 1 ) {
 		minVertex = 0.0;
 		maxVertex = verticesVec->front();
@@ -94,7 +104,7 @@ MonteRay_GridBins::modifyForRadial(void) {
     // store the vertices values squared
     verticesSqVec = new std::vector<gpuFloatType_t>;
     for( unsigned i=0; i< verticesVec->size(); ++i) {
-        double value = verticesVec->at(i);
+        gpuFloatType_t value = verticesVec->at(i);
         verticesSqVec->push_back( value*value );
     }
     numBins = verticesVec->size();
@@ -143,10 +153,40 @@ MonteRay_GridBins::validate() {
 #endif
 }
 
+void MonteRay_GridBins::write( const std::string& filename ) {
+    std::ofstream outfile;
+
+    outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
+    if( ! outfile.is_open() ) {
+        fprintf(stderr, "MonteRay_GridBins::write -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        exit(1);
+    }
+    assert( outfile.good() );
+    outfile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    write( outfile );
+    outfile.close();
+}
+
+void MonteRay_GridBins::read( const std::string& filename ) {
+    std::ifstream infile;
+    if( infile.is_open() ) {
+        infile.close();
+    }
+    infile.open( filename.c_str(), std::ios::binary | std::ios::in);
+
+    if( ! infile.is_open() ) {
+        fprintf(stderr, "Debug:  MonteRay_GridBins::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        exit(1);
+    }
+    assert( infile.good() );
+    infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    read(infile);
+    infile.close();
+}
+
 void
 MonteRay_GridBins::write(std::ostream& outf) const {
 	unsigned version = 0;
-	binaryIO::write(outf, version );
 
 	binaryIO::write(outf, version );
 	binaryIO::write(outf, minVertex);
@@ -176,6 +216,7 @@ MonteRay_GridBins::read(std::istream& infile) {
 	if( version == 0 ) {
 		read_v0(infile);
 	}
+	validate();
 }
 
 void
@@ -186,13 +227,27 @@ MonteRay_GridBins::read_v0(std::istream& infile){
 	binaryIO::read(infile, delta );
 
 	binaryIO::read(infile, nVertices );
+	if( verticesVec ) {
+		verticesVec->clear();
+		delete verticesVec;
+	}
+	verticesVec = new std::vector<gpuFloatType_t>;
 	for( unsigned i=0; i< nVertices; ++i ){
-		binaryIO::read(infile, vertices[i] );
+		gpuFloatType_t vertex;
+		binaryIO::read(infile, vertex );
+		verticesVec->push_back( vertex );
 	}
 
 	binaryIO::read(infile, nVerticesSq );
+	if( verticesSqVec ) {
+		verticesSqVec->clear();
+		delete verticesSqVec;
+	}
+	verticesSqVec = new std::vector<gpuFloatType_t>;
 	for( unsigned i=0; i< nVerticesSq; ++i ){
-		binaryIO::read(infile, verticesSq[i] );
+		gpuFloatType_t vertexSq;
+		binaryIO::read(infile, vertexSq );
+		verticesSqVec->push_back( vertexSq );
 	}
 
 	binaryIO::read(infile, type );

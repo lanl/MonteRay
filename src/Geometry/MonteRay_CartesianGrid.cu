@@ -146,6 +146,7 @@ MonteRay_CartesianGrid::isOutside( const int i[] ) const {
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_direction, gpuFloatType_t distance,  bool outsideDistances) const{
+	if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
 	rayTraceList.reset();
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
@@ -154,7 +155,12 @@ MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
     	distances[d].reset();
 
         indices[d] = getDimIndex(d, particle_pos[d] );
+
+        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, index=%d\n", d, indices[d]);
+
         planarCrossingDistance( distances[d],*(pGridBins[d]),particle_pos[d],particle_direction[d],distance,indices[d]);
+
+        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, number of planar crossings = %d\n", d, distances[d].size() );
 
         // if outside and ray doesn't move inside then ray never enters the grid
         if( isIndexOutside(d,indices[d]) && distances[d].size() == 0  ) {
@@ -163,6 +169,8 @@ MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
     }
 
     orderCrossings( rayTraceList, distances, indices, distance, outsideDistances );
+
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- number of total crossings = %d\n", rayTraceList.size() );
     return;
 }
 

@@ -121,6 +121,18 @@ CUDA_CALLABLE_MEMBER inline void MonteRayAssert( bool test, const char *file, in
 #define MONTERAY_ASSERT(test) { test; }
 #endif
 
+CUDA_CALLABLE_MEMBER inline void MonteRayAssertMsg( bool test, const char* message, const char *file, int line){
+	if( test != true ) {
+		MonteRayAbort( message, file, line );
+	}
+}
+
+#ifndef NDEBUG
+#define MONTERAY_ASSERT_MSG(test, message) { MonteRayAssertMsg(test, message, __FILE__, __LINE__); }
+#else
+#define MONTERAY_ASSERT_MSG(test, message) { test; }
+#endif
+
 CUDA_CALLABLE_MEMBER inline void MonteRayVerify( bool test, const char* message, const char *file, int line){
 	if( test != true ) {
 		MonteRayAbort( message, file, line );
