@@ -51,8 +51,7 @@ using namespace MonteRay;
    		pResult->v = pSpatialGrid->getIndex(p);
    	}
 
-//   	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult, Position_t pos, Position_t dir, gpuFloatType_t distance);
-  	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, Position_t pos, Position_t dir, gpuFloatType_t distance);
+  	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult, Position_t pos, Position_t dir, gpuFloatType_t distance);
 
    	class SpatialGridGPUTester {
    	public:
@@ -237,8 +236,7 @@ using namespace MonteRay;
 
    	   		std::cout << "Debug: MonteRay_SpatialGrid_GPU_helper -- rayTrace - 2\n";
    	   		cudaDeviceSynchronize();
-   	   		//kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, pos, dir, distance );
-   	   	    kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pos, dir, distance );
+   	   		kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, pos, dir, distance );
    	   		cudaDeviceSynchronize();
 
    	   		std::cout << "Debug: MonteRay_SpatialGrid_GPU_helper -- rayTrace - 3\n";

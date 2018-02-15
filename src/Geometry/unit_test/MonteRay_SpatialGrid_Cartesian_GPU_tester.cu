@@ -256,9 +256,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
     	}
 
     }
-
 #if false
-
     TEST_FIXTURE(SpatialGridGPUTester,  rayTrace_1D_external_to_internal_posX_pos_and_dir ) {
          setDimension( 3 );
          setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
