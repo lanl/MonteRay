@@ -130,26 +130,26 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
 
     	//printf( "Debug: devicePtr = %d\n", devicePtr );
 
-    	kernelCartesianGridGetNumBins<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, 0);
+    	kernelCartesianGridGetNumBins<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, 0);
     	gpuErrchk( cudaPeekAtLastError() );
     	pResult->copyToCPU();
     	CHECK_EQUAL( 20, pResult->v );
     	pResult->v = 0;
 
 
-		kernelCartesianGridGetNumBins<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, 0);
+		kernelCartesianGridGetNumBins<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, 0);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 20, pResult->v );
     	pResult->v = 0;
 
-		kernelCartesianGridGetNumBins<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, 1);
+		kernelCartesianGridGetNumBins<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, 1);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 20, pResult->v );
     	pResult->v = 0;
 
-		kernelCartesianGridGetNumBins<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, 2);
+		kernelCartesianGridGetNumBins<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, 2);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 20, pResult->v );
@@ -178,31 +178,31 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
         Position_t pos4( -9.5, -9.5, -8.5 );
         Position_t pos5( -9.5, -7.5, -9.5 );
 
-        kernelCartesianGridGetIndex<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, pos1);
+        kernelCartesianGridGetIndex<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, pos1);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 0, pResult->v );
     	pResult->v = 0;
 
-        kernelCartesianGridGetIndex<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, pos2);
+        kernelCartesianGridGetIndex<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, pos2);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 1, pResult->v );
     	pResult->v = 0;
 
-        kernelCartesianGridGetIndex<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, pos3);
+        kernelCartesianGridGetIndex<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, pos3);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 20, pResult->v );
     	pResult->v = 0;
 
-        kernelCartesianGridGetIndex<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, pos5);
+        kernelCartesianGridGetIndex<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, pos5);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 40, pResult->v );
     	pResult->v = 0;
 
-        kernelCartesianGridGetIndex<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, pos4);
+        kernelCartesianGridGetIndex<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, pos4);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
     	CHECK_EQUAL( 400, pResult->v );
@@ -217,8 +217,12 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
         delete pResult;
     }
 
-   	CUDA_CALLABLE_KERNEL void kernelGetDimIndex(Grid_t** pCart, resultClass<int>* pResult, unsigned d, gpuFloatType_t pos) {
-   		pResult->v = (*pCart)->getDimIndex(d,pos);
+   	CUDA_CALLABLE_KERNEL void kernelGetDimIndex(Grid_t** pPtrCart, resultClass<int>* pResult, unsigned d, gpuFloatType_t pos) {
+   		pResult->v = (*pPtrCart)->getDimIndex(d,pos);
+	}
+
+   	CUDA_CALLABLE_KERNEL void kernelGetDimIndexDirect(Grid_t* pCart, resultClass<int>* pResult, unsigned d, gpuFloatType_t pos) {
+   		pResult->v = pCart->getDimIndex(d,pos);
 	}
 
    	CUDA_CALLABLE_KERNEL void kernelCartesianGridIsIndexOutside(Grid_t** pCart, resultClass<bool>* pResult, unsigned d, int index) {
@@ -243,7 +247,18 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
    	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   	    pResult->copyToGPU();
 
-   	   	    kernelGetDimIndex<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, d, pos);
+   	   	    kernelGetDimIndex<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, d, pos);
+   	   		gpuErrchk( cudaPeekAtLastError() );
+   	   		pResult->copyToCPU();
+   	   		return pResult->v;
+   	   	}
+
+   	   	int getDimIndexDirect( unsigned d, gpuFloatType_t pos) {
+   	   		using result_t = resultClass<int>;
+   	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+   	   	    pResult->copyToGPU();
+
+   	   	    kernelGetDimIndexDirect<<<1,1>>>( pCart->getDeviceInstancePtr(), pResult->devicePtr, d, pos);
    	   		gpuErrchk( cudaPeekAtLastError() );
    	   		pResult->copyToCPU();
    	   		return pResult->v;
@@ -254,7 +269,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
    	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   	    pResult->copyToGPU();
 
-   	   	    kernelCartesianGridGetIndex<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, pos);
+   	   	    kernelCartesianGridGetIndex<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, pos);
    	   		gpuErrchk( cudaPeekAtLastError() );
    	   		pResult->copyToCPU();
    	   		return pResult->v;
@@ -265,7 +280,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
    	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   	    pResult->copyToGPU();
 
-   	   	    kernelCartesianGridIsIndexOutside<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, d, index);
+   	   	    kernelCartesianGridIsIndexOutside<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, d, index);
    	   		gpuErrchk( cudaPeekAtLastError() );
    	   		pResult->copyToCPU();
    	   		return pResult->v;
@@ -276,7 +291,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
    	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   	    pResult->copyToGPU();
 
-   	   	    kernelCartesianGridIsOutside<<<1,1>>>( pCart->devicePtr, pResult->devicePtr, indices[0], indices[1], indices[2]);
+   	   	    kernelCartesianGridIsOutside<<<1,1>>>( pCart->ptrDevicePtr, pResult->devicePtr, indices[0], indices[1], indices[2]);
    	   		gpuErrchk( cudaPeekAtLastError() );
    	   		pResult->copyToCPU();
    	   		return pResult->v;
@@ -300,6 +315,10 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
     TEST_FIXTURE(CartesianGridGPUTester, getDimIndex_inside_posSide_X ) {
         CHECK_EQUAL( 19, getDimIndex( 0, 9.5 ) );
     }
+
+    TEST_FIXTURE(CartesianGridGPUTester, getDimIndex_posX_direct ) {
+         CHECK_EQUAL( 20, getDimIndexDirect( 0, 10.5 ) );
+     }
 
     TEST_FIXTURE(CartesianGridGPUTester, getDimIndex_negY ) {
         CHECK_EQUAL( -1, getDimIndex( 1, -10.5 ) );
@@ -430,7 +449,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
     	 std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
     	 pResult->copyToGPU();
 
-    	 kernelCartesianGridGetVolume<<<1,1>>>( grid.devicePtr, pResult->devicePtr, i);
+    	 kernelCartesianGridGetVolume<<<1,1>>>( grid.ptrDevicePtr, pResult->devicePtr, i);
     	 gpuErrchk( cudaPeekAtLastError() );
     	 pResult->copyToCPU();
     	 return pResult->v;

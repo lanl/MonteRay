@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs Utilities OutputControls Geometry)
+set( ToolkitLibs Utilities Math_Functions OutputControls Geometry)
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

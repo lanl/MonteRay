@@ -19,7 +19,7 @@ namespace MonteRay {
 
 class singleDimRayTraceMap_t {
 private:
-	int N = 0;
+	unsigned N = 0;
 	int CellId[MAXNUMVERTICES]; // negative indicates outside mesh
 	gpuFloatType_t distance[MAXNUMVERTICES];
 
@@ -45,12 +45,13 @@ public:
 
 struct rayTraceList_t {
 private:
-	int N;
+	unsigned N;
 	unsigned CellId[MAXNUMVERTICES*2];
 	gpuFloatType_t distance[MAXNUMVERTICES*2];
 
 public:
 	CUDA_CALLABLE_MEMBER rayTraceList_t() : N(0) {}
+	CUDA_CALLABLE_MEMBER rayTraceList_t(unsigned n) : N(n) {}
 	CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
 
 	CUDA_CALLABLE_MEMBER
@@ -74,21 +75,24 @@ public:
 	CUDA_CALLABLE_MEMBER multiDimRayTraceMap_t(){}
 	CUDA_CALLABLE_MEMBER ~multiDimRayTraceMap_t(){}
 
-	const int N = 3 ;  // hardcoded to 3D for now.
+	const unsigned N = 3 ;  // hardcoded to 3D for now.
 	singleDimRayTraceMap_t traceMapList[3];
 
-	CUDA_CALLABLE_MEMBER const singleDimRayTraceMap_t& operator[] (size_t i ) const { return traceMapList[i];}
 	CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t& operator[] (size_t i ) { return traceMapList[i];}
+	CUDA_CALLABLE_MEMBER const singleDimRayTraceMap_t& operator[] (size_t i ) const { return traceMapList[i];}
+
 };
 
 class MonteRay_GridSystemInterface {
 
+#define OUTSIDE_INDEX UINT_MAX;
 public:
 //    typedef std::vector<std::pair<int,gpuFloatType_t>> singleDimRayTraceMap_t;
 //    typedef std::vector<singleDimRayTraceMap_t> multiDimRayTraceMap_t;
 //    typedef std::vector<std::pair<unsigned, gpuFloatType_t>> rayTraceList_t;
 	using GridBins_t = MonteRay_GridBins;
     typedef GridBins_t* pGridBins_t;
+    //static const unsigned OUTSIDE = UINT_MAX;
 
     CUDA_CALLABLE_MEMBER MonteRay_GridSystemInterface(unsigned dim) : DIM(dim) {}
     CUDA_CALLABLE_MEMBER virtual ~MonteRay_GridSystemInterface(){};
@@ -114,6 +118,11 @@ public:
     CUDA_CALLABLE_MEMBER
     unsigned getDimension(void) const { return DIM; }
 
+    CUDAHOST_CALLABLE_MEMBER
+    virtual void copyToGPU(void) = 0;
+
+    CUDAHOST_CALLABLE_MEMBER
+    virtual MonteRay_GridSystemInterface* getDeviceInstancePtr(void) = 0;
 
 protected:
     CUDA_CALLABLE_MEMBER

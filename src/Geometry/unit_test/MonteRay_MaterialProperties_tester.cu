@@ -680,7 +680,6 @@ SUITE( MaterialProperties_tests ) {
         mp.add( cell );
         CHECK_EQUAL( 2, mp.getNumMaterials(0) );
 
-        unsigned cellID = 0;
         mp.addCellMaterial( 0, 3, 0.3);
 
         CHECK_EQUAL( 3, mp.getNumMaterials(0) );
@@ -698,7 +697,6 @@ SUITE( MaterialProperties_tests ) {
         mp.add( cell );
         CHECK_EQUAL( 2, mp.getNumMaterials(0) );
 
-        unsigned cellID = 0;
 #ifdef BOOST_ENABLE_ASSERT_HANDLE
         CHECK_THROW( mp.addCellMaterial( 1, 3, 0.3), std::runtime_error );
 #endif

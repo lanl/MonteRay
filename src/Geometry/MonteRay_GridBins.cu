@@ -148,7 +148,7 @@ MonteRay_GridBins::validate() {
 
     if( verticesSqVec ) {
     	verticesSq = const_cast<gpuFloatType_t*>( verticesSqVec->data() );
-    	nVerticesSq = verticesVec->size();
+    	nVerticesSq = verticesSqVec->size();
     }
 #endif
 }
@@ -231,7 +231,9 @@ MonteRay_GridBins::read_v0(std::istream& infile){
 		verticesVec->clear();
 		delete verticesVec;
 	}
-	verticesVec = new std::vector<gpuFloatType_t>;
+	if( nVertices > 0 ) {
+		verticesVec = new std::vector<gpuFloatType_t>;
+	}
 	for( unsigned i=0; i< nVertices; ++i ){
 		gpuFloatType_t vertex;
 		binaryIO::read(infile, vertex );
@@ -243,7 +245,10 @@ MonteRay_GridBins::read_v0(std::istream& infile){
 		verticesSqVec->clear();
 		delete verticesSqVec;
 	}
-	verticesSqVec = new std::vector<gpuFloatType_t>;
+
+	if( nVerticesSq > 0 ) {
+		verticesSqVec = new std::vector<gpuFloatType_t>;
+	}
 	for( unsigned i=0; i< nVerticesSq; ++i ){
 		gpuFloatType_t vertexSq;
 		binaryIO::read(infile, vertexSq );

@@ -13,6 +13,7 @@
 namespace MonteRay {
 
 void cudaReset(void);
+void gpuReset();
 void gpuCheck();
 void gpuInfo();
 int getNumberOfGPUS(void);

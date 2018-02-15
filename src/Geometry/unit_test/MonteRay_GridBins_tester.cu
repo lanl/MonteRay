@@ -201,18 +201,27 @@ SUITE( MonteRay_GridBins_Tester ) {
         CHECK_EQUAL(   3, pGridInfo->getRadialIndexFromRSq( 30.5*30.5 ) );
     }
 
-    TEST( read_write ) {
+    TEST( read_write_radial ) {
          std::vector<gpuFloatType_t> Rverts = { 1.0, 2.0, 3.0 };
 
-         std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins( Rverts ) );
+         std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
          pGridInfo->initialize( Rverts );
          pGridInfo->modifyForRadial();
 
-         pGridInfo->write( "MonteRay_GridBins_test1.bin" );
+         CHECK_EQUAL( 3, pGridInfo->getNumVertices() );
+         CHECK_EQUAL( 3, pGridInfo->getNumVerticesSq() );
+         CHECK_EQUAL( 3, pGridInfo->getNumBins() );
+         CHECK_EQUAL( false, pGridInfo->isLinear() );
+         CHECK_EQUAL( true, pGridInfo->isRadial() );
+
+         pGridInfo->write( "MonteRay_GridBins_test1_radial.bin" );
 
          MonteRay_GridBins readBins;
-         readBins.read( "MonteRay_GridBins_test1.bin" );
+         readBins.read( "MonteRay_GridBins_test1_radial.bin" );
 
+         CHECK_EQUAL( 3, readBins.getNumVertices() );
+         CHECK_EQUAL( 3, readBins.getNumVerticesSq() );
+         CHECK_EQUAL( 3, readBins.getNumBins() );
          CHECK_EQUAL( false, readBins.isLinear() );
          CHECK_EQUAL( true, readBins.isRadial() );
 
@@ -223,12 +232,58 @@ SUITE( MonteRay_GridBins_Tester ) {
          CHECK_EQUAL(   3, readBins.getRadialIndexFromR( 30.5 ) );
      }
 
+    TEST( read_write_linear ) {
+    	std::vector<gpuFloatType_t> Xverts = { 1.0, 2.0, 3.0, 4.0 };
+
+    	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
+    	pGridInfo->initialize( Xverts );
+
+    	CHECK_EQUAL( 4, pGridInfo->getNumVertices() );
+    	CHECK_EQUAL( 0, pGridInfo->getNumVerticesSq() );
+    	CHECK_EQUAL( 3, pGridInfo->getNumBins() );
+    	CHECK_EQUAL( true, pGridInfo->isLinear() );
+    	CHECK_EQUAL( false, pGridInfo->isRadial() );
+
+    	pGridInfo->write( "MonteRay_GridBins_test1_radial.bin" );
+
+    	MonteRay_GridBins readBins;
+    	readBins.read( "MonteRay_GridBins_test1_radial.bin" );
+
+    	CHECK_EQUAL( 4, readBins.getNumVertices() );
+    	CHECK_EQUAL( 0, readBins.getNumVerticesSq() );
+    	CHECK_EQUAL( 3, readBins.getNumBins() );
+    	CHECK_EQUAL( true, readBins.isLinear() );
+    	CHECK_EQUAL( false, readBins.isRadial() );
+
+    }
+
+
 	// kernal call
 	CUDA_CALLABLE_KERNEL void kernelGetLinearIndex(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t r) {
 		pResult->v = pGridBins->getLinearIndex(r);
 		//printf( "kernelGetNumBins -- value = %d\n",  pResult->v );
 		return;
 	}
+
+    TEST( read_access_on_GPU ) {
+    	std::unique_ptr<MonteRay_GridBins> pReadBins = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
+    	std::unique_ptr<resultClass<int>> pResult = std::unique_ptr<resultClass<int>>( new resultClass<int>() );
+    	pReadBins->read( "MonteRay_GridBins_test1.bin" );
+    	pReadBins->copyToGPU();
+    	pResult->copyToGPU();
+    	cudaDeviceSynchronize();
+
+    	kernelGetLinearIndex<<<1,1>>>( pReadBins->devicePtr, pResult->devicePtr, 0.5);
+    	cudaDeviceSynchronize();
+    	pResult->copyToCPU();
+    	CHECK_EQUAL(-1, pResult->v );
+
+    	kernelGetLinearIndex<<<1,1>>>( pReadBins->devicePtr, pResult->devicePtr, 1.5);
+    	cudaDeviceSynchronize();
+    	pResult->copyToCPU();
+    	CHECK_EQUAL(0, pResult->v );
+
+     }
 
 	int launchKernelGetLinearIndex( gpuFloatType_t r ) {
 

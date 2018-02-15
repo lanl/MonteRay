@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include "MonteRayDefinitions.hh"
+
 namespace MonteRay{
 
 /// Class Vector3D (From MCATK)

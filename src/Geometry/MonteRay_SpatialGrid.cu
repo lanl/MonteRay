@@ -21,7 +21,9 @@ namespace MonteRay {
 
 const unsigned MonteRay_SpatialGrid::OUTSIDE_MESH = UINT_MAX;
 
+CUDAHOST_CALLABLE_MEMBER
 MonteRay_SpatialGrid::MonteRay_SpatialGrid() :
+	CopyMemoryBase<MonteRay_SpatialGrid>(),
     CoordinateSystem(TransportMeshTypeEnum::NONE),
     dimension( 0 ),
     initialized( false )
@@ -29,9 +31,12 @@ MonteRay_SpatialGrid::MonteRay_SpatialGrid() :
 		pGridInfo[0] = nullptr;
 		pGridInfo[1] = nullptr;
 		pGridInfo[2] = nullptr;
+		pGridSystem = nullptr;
 }
 
+CUDAHOST_CALLABLE_MEMBER
 MonteRay_SpatialGrid::MonteRay_SpatialGrid( const MonteRay_SpatialGrid& rhs ) :
+		CopyMemoryBase<MonteRay_SpatialGrid>(),
         CoordinateSystem( rhs.CoordinateSystem ),
         dimension( rhs.dimension ),
         initialized( false )
@@ -40,6 +45,7 @@ MonteRay_SpatialGrid::MonteRay_SpatialGrid( const MonteRay_SpatialGrid& rhs ) :
 	pGridInfo[0] = rhs.pGridInfo[0];
 	pGridInfo[1] = rhs.pGridInfo[1];
 	pGridInfo[2] = rhs.pGridInfo[2];
+	pGridSystem = rhs.pGridSystem;
     if( rhs.initialized ) {
         initialize();
     }
@@ -73,6 +79,7 @@ MonteRay_SpatialGrid::MonteRay_SpatialGrid( const MonteRay_SpatialGrid& rhs ) :
 //    return *this;
 //}
 
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::setCoordinateSystem(TransportMeshTypeEnum::TransportMeshTypeEnum_t system) {
     if( !( system < TransportMeshTypeEnum::MAX ) ) {
@@ -91,6 +98,7 @@ MonteRay_SpatialGrid::setCoordinateSystem(TransportMeshTypeEnum::TransportMeshTy
     CoordinateSystem=system;
 }
 
+CUDAHOST_CALLABLE_MEMBER
 void MonteRay_SpatialGrid::initialize(void) {
     if( initialized ) {
 #ifndef __CUDA_ARCH__
@@ -174,7 +182,7 @@ void MonteRay_SpatialGrid::initialize(void) {
 
         case TransportMeshTypeEnum::Cartesian:
         	if( pGridSystem ) delete pGridSystem;
-            pGridSystem = new MonteRay_CartesianGrid(3,pGridInfo);
+        	pGridSystem = new MonteRay_CartesianGrid(3,pGridInfo);
             break;
 
 //        case TransportMeshTypeEnum::Cylindrical:
@@ -216,13 +224,14 @@ void MonteRay_SpatialGrid::initialize(void) {
     getNumCells();
 }
 
-
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::setDimension( unsigned dim) {
     checkDim( dim );
     dimension = dim;
 }
 
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::setGrid( unsigned index, gpuFloatType_t min, gpuFloatType_t max, unsigned numBins ) {
     checkDim( index+1 );
@@ -232,6 +241,7 @@ MonteRay_SpatialGrid::setGrid( unsigned index, gpuFloatType_t min, gpuFloatType_
     pGridInfo[index]->initialize( min, max, numBins);
 }
 
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::setGrid( unsigned index, const std::vector<gpuFloatType_t>& vertices ) {
     checkDim( index+1 );
@@ -240,30 +250,41 @@ MonteRay_SpatialGrid::setGrid( unsigned index, const std::vector<gpuFloatType_t>
     pGridInfo[index]->initialize( vertices );
 }
 
+CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_SpatialGrid::getNumGridBins( unsigned index ) const {
     checkDim( index+1 );
+#ifdef __CUDA_ARCH__
+    //if( debug ) printf("Debug: MonteRay_SpatialGrid::getNumGridBins -- Device pGridInfo[%d]=%p\n",index, pGridInfo[index]);
+#else
+    //if( debug ) printf("Debug: MonteRay_SpatialGrid::getNumGridBins -- Host pGridInfo[%d]=%p\n",index, pGridInfo[index]);
+#endif
+
     return pGridInfo[index]->getNumBins();
 }
 
+CUDA_CALLABLE_MEMBER
 gpuFloatType_t
 MonteRay_SpatialGrid::getMinVertex( unsigned index ) const {
     checkDim( index+1 );
     return pGridInfo[index]->getMinVertex();
 }
 
+CUDA_CALLABLE_MEMBER
 gpuFloatType_t
 MonteRay_SpatialGrid::getMaxVertex( unsigned index ) const {
     checkDim( index+1 );
     return pGridInfo[index]->getMaxVertex();
 }
 
+CUDA_CALLABLE_MEMBER
 gpuFloatType_t
 MonteRay_SpatialGrid::getDelta(unsigned index) const {
     checkDim( index+1 );
     return pGridInfo[index]->getDelta();
 }
 
+CUDA_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::checkDim( unsigned dim ) const {
     if( dim == 0 ) {
@@ -294,6 +315,7 @@ MonteRay_SpatialGrid::checkDim( unsigned dim ) const {
 
 }
 
+CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_SpatialGrid::getNumCells(void) const {
     if( dimension == 0 ) {
@@ -347,6 +369,7 @@ MonteRay_SpatialGrid::getNumCells(void) const {
 //    return nullptr;
 //}
 
+CUDA_CALLABLE_MEMBER
 gpuFloatType_t
 MonteRay_SpatialGrid::getVertex(unsigned d, unsigned i ) const {
     if( d > dimension ) {
@@ -362,6 +385,16 @@ MonteRay_SpatialGrid::getVertex(unsigned d, unsigned i ) const {
 #endif
     }
     return pGridInfo[d]->vertices[i];
+}
+
+CUDA_CALLABLE_MEMBER
+size_t MonteRay_SpatialGrid::getNumVertices(unsigned i) const {
+	return pGridInfo[i]->getNumVertices();
+}
+
+CUDA_CALLABLE_MEMBER
+size_t MonteRay_SpatialGrid::getNumVerticesSq(unsigned i) const{
+	return pGridInfo[i]->getNumVerticesSq();
 }
 
 void MonteRay_SpatialGrid::write( const std::string& filename ) {

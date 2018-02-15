@@ -7,20 +7,29 @@
 
 #include "MonteRay_CartesianGrid.hh"
 
-namespace MonteRay {
+#include <float.h>
 
+namespace MonteRay {
 
 #ifdef __CUDACC__
     CUDA_CALLABLE_KERNEL
-    void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
+    void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
     		*pPtrInstance = new MonteRay_CartesianGrid( 3, pGridX, pGridY, pGridZ );
+    		pResult->v = *pPtrInstance;
     		//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
     }
 
     CUDA_CALLABLE_KERNEL
-    void deleteDeviceInstance(MonteRay_CartesianGrid* pInstance) {
-    	delete pInstance;
+    void deleteDeviceInstance(MonteRay_CartesianGrid** pPtrInstance) {
+    	delete *pPtrInstance;
     }
+
+    CUDAHOST_CALLABLE_MEMBER
+    MonteRay_CartesianGrid*
+    MonteRay_CartesianGrid::getDeviceInstancePtr() {
+    	return devicePtr;
+    }
+
 #endif
 
 CUDA_CALLABLE_MEMBER
@@ -61,7 +70,7 @@ MonteRay_CartesianGrid::getIndex( const GridBins_t::Position_t& particle_pos) co
 
         // outside the grid
         if( isIndexOutside(d, indices[d] ) ) {
-        	return UINT_MAX;
+        	return OUTSIDE_INDEX;
         }
     }
 

@@ -12,6 +12,10 @@ void cudaReset(void) {
 #endif
 }
 
+void gpuReset() {
+	cudaReset();
+}
+
 void gpuCheck() {
 #ifdef __CUDACC__
 	int deviceCount;

@@ -110,7 +110,7 @@ public:
 	}
 
     CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
-    	//if( debug ) std::cout << "Debug: MonteRay_GridBins::copyToGPU \n";
+//    	std::cout << "Debug: MonteRay_GridBins::copyToGPU \n";
 		Base::copyToGPU();
 	}
 
@@ -142,12 +142,13 @@ public:
 			// host to device
 			if( nVertices == 0 && rhs->nVertices > 0 ) {
 				vertices = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVertices*sizeof(gpuFloatType_t), std::string("device - MonteRay_GridBins::vertices") );
+				MonteRayMemcpy( vertices,   rhs->vertices,   rhs->nVertices*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
 			}
 			if( nVerticesSq == 0 && rhs->nVerticesSq > 0) {
 				verticesSq = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVerticesSq*sizeof(gpuFloatType_t), std::string("device - MonteRay_GridBins::verticesSq") );
+				MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
 			}
-			MonteRayMemcpy( vertices,   rhs->vertices,   rhs->nVertices*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
-			MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
+
 		} else {
 			// device to host
 //			MonteRayMemcpy( vertices, rhs->vertices, rhs->nVertices*sizeof(gpuFloatType_t), cudaMemcpyDeviceToHost );
@@ -162,6 +163,7 @@ public:
 		numBins = rhs->numBins;
 		type = rhs->type;
 		radialModified = rhs->radialModified;
+
 #else
 		throw std::runtime_error("MonteRay_GridBins::copy -- can NOT copy between host and device without CUDA.");
 #endif
@@ -180,6 +182,7 @@ public:
     CUDA_CALLABLE_MEMBER gpuFloatType_t getMinVertex(void) const {return minVertex; }
     CUDA_CALLABLE_MEMBER gpuFloatType_t getMaxVertex(void) const {return maxVertex; }
     CUDA_CALLABLE_MEMBER unsigned getNumVertices(void) const { return nVertices; }
+    CUDA_CALLABLE_MEMBER unsigned getNumVerticesSq(void) const { return nVerticesSq; }
 
     CUDA_CALLABLE_MEMBER gpuFloatType_t getDelta(void) const { return delta; }
 

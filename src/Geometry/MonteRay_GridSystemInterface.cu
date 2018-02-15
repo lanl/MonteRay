@@ -153,8 +153,13 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance, int index) const {
-//	constexpr gpuFloatType_t epsilon = std::numeric_limits<gpuFloatType_t>::epsilon();
+	const bool debug = false;
+
+	//	constexpr gpuFloatType_t epsilon = std::numeric_limits<gpuFloatType_t>::epsilon();
     if( abs(dir) <= FLT_EPSILON ) { return; }
+
+    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
+    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance  -- Bins=%p \n", &Bins );
 
     int start_index = index;
     int cell_index = start_index;
@@ -166,6 +171,7 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
     }
 
     int nBins = Bins.getNumBins();
+    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - nBins=%d\n", nBins );
     if( start_index >= nBins ) {
         if( dir > 0.0 ) {
             return;
@@ -173,6 +179,7 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
     }
 
     unsigned offset = int(std::signbit(-dir));
+    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - offset=%d\n", offset );
     int end_index = offset*(nBins-1);;
 
 #ifdef __CUDA_ARCH__

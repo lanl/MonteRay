@@ -11,6 +11,7 @@ namespace MonteRay_CartesianGrid_rayTrace_tests{
 using namespace MonteRay;
 
 SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
+
 	typedef Vector3D<gpuFloatType_t> Position_t;
 	using GridBins_t = MonteRay_GridBins;
 	enum coord {X,Y,Z,DIM};
@@ -56,7 +57,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		gpuFloatType_t distance = 1.0;
 
 		rayTraceList_t distances;
-		cart.rayTrace( distances, position, direction, distance);
+		cart.rayTrace(distances, position, direction, distance);
 
 		CHECK_EQUAL( 2, distances.size() );
 		CHECK_EQUAL( 0, distances.id(0) );

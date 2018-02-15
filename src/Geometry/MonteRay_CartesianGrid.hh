@@ -10,17 +10,21 @@
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "MonteRay_SingleValueCopyMemory.hh"
 
 namespace MonteRay {
 
 #ifdef __CUDACC__
 class MonteRay_CartesianGrid;
 
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ );
+using ptrCartesianGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CartesianGrid*>;
 
 CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_CartesianGrid* pInstance);
+void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ );
+
+
+CUDA_CALLABLE_KERNEL
+void deleteDeviceInstance(MonteRay_CartesianGrid** pInstance);
 #endif
 
 class MonteRay_CartesianGrid : public MonteRay_GridSystemInterface {
@@ -37,23 +41,36 @@ public:
 
     CUDA_CALLABLE_MEMBER virtual ~MonteRay_CartesianGrid(void){
 #ifndef __CUDA_ARCH__
-//    	if( devicePtr ) {
-//    		deleteDeviceInstance<<<1,1>>>( devicePtr );
-//    	}
+    	if( ptrDevicePtr ) {
+    		deleteDeviceInstance<<<1,1>>>( ptrDevicePtr );
+    		cudaDeviceSynchronize();
+    	}
+    	MonteRayDeviceFree( ptrDevicePtr );
 #endif
     }
 
     CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
     	if( debug ) std::cout << "Debug: MonteRay_CartesianGrid::copyToGPU \n";
 #ifdef __CUDACC__
-    	cudaMalloc(&devicePtr, sizeof(MonteRay_CartesianGrid*) );
+    	ptrDevicePtr = (MonteRay_CartesianGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CartesianGrid*), std::string("device - MonteRay_CarteisanGrid::ptrDevicePtr") );
 
     	pGridBins[0]->copyToGPU();
     	pGridBins[1]->copyToGPU();
     	pGridBins[2]->copyToGPU();
-    	createDeviceInstance<<<1,1>>>( devicePtr, pGridBins[0]->devicePtr, pGridBins[1]->devicePtr, pGridBins[2]->devicePtr );
+
+    	std::unique_ptr<ptrCartesianGrid_result_t> ptrResult = std::unique_ptr<ptrCartesianGrid_result_t>( new ptrCartesianGrid_result_t() );
+    	ptrResult->copyToGPU();
+
+    	createDeviceInstance<<<1,1>>>( ptrDevicePtr, ptrResult->devicePtr, pGridBins[0]->devicePtr, pGridBins[1]->devicePtr, pGridBins[2]->devicePtr );
+    	cudaDeviceSynchronize();
+    	ptrResult->copyToCPU();
+    	devicePtr = ptrResult->v;
+
 #endif
 	}
+
+    CUDAHOST_CALLABLE_MEMBER
+    MonteRay_CartesianGrid* getDeviceInstancePtr();
 
     CUDA_CALLABLE_MEMBER unsigned getIndex( const GridBins_t::Position_t& particle_pos) const;
 
@@ -85,7 +102,8 @@ public:
     crossingDistance(singleDimRayTraceMap_t&, const GridBins_t& Bins, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance, bool equal_spacing=false) const;
 
 public:
-    MonteRay_CartesianGrid** devicePtr;
+    MonteRay_CartesianGrid** ptrDevicePtr = nullptr;
+    MonteRay_CartesianGrid* devicePtr = nullptr;
 
 private:
     pArrayOfpGridInfo_t pGridBins;

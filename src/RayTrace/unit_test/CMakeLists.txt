@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs Utilities GPU_Utilities CrossSection Material Geometry Particle )
+set( ToolkitLibs Utilities Math_Functions GPU_Utilities CrossSection Material Geometry Particle )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )
