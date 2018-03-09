@@ -51,12 +51,26 @@ using namespace MonteRay;
    		pResult->v = pSpatialGrid->getIndex(p);
    	}
 
-  	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult, Position_t pos, Position_t dir, gpuFloatType_t distance);
+  	//CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuFloatType_t distance);
+  	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+  	   			gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z, gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
+  	   			gpuFloatType_t distance, bool outside = false);
+
+  	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+  			unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance );
+
+   	template<class Particle>
+   	CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+   			Particle p,
+   			gpuFloatType_t distance, bool outside = false) {
+   		pSpatialGrid->rayTrace( pResult->v, p, distance, outside);
+   	}
 
    	class SpatialGridGPUTester {
    	public:
    		SpatialGridGPUTester(){
    			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+   	    	cudaDeviceSetLimit( cudaLimitStackSize, 40960 );
    		}
 
    		~SpatialGridGPUTester(){}
@@ -83,6 +97,10 @@ using namespace MonteRay;
 
    		void setGrid(unsigned index, const std::vector<gpuFloatType_t>& vertices ) {
    			pGridInfo->setGrid(index, vertices);
+   		}
+
+   		void setGrid(unsigned index, gpuFloatType_t min, gpuFloatType_t max, unsigned numBins ) {
+   			pGridInfo->setGrid(index, min, max, numBins);
    		}
 
    		void setCoordinateSystem(TransportMeshTypeEnum::TransportMeshTypeEnum_t system) {
@@ -226,28 +244,58 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuFloatType_t distance ) {
-   	   		std::cout << "Debug: MonteRay_SpatialGrid_GPU_helper -- rayTrace - 1\n";
+   	   	rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuFloatType_t distance, bool outside=false ) {
 
    	   		using result_t = resultClass<rayTraceList_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
-   	   		pGridInfo->copyToGPU();
 
-   	   		std::cout << "Debug: MonteRay_SpatialGrid_GPU_helper -- rayTrace - 2\n";
    	   		cudaDeviceSynchronize();
-   	   		kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, pos, dir, distance );
+   	   		kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+   	   				                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
    	   		cudaDeviceSynchronize();
-
-   	   		std::cout << "Debug: MonteRay_SpatialGrid_GPU_helper -- rayTrace - 3\n";
 
    	   		gpuErrchk( cudaPeekAtLastError() );
 
-   	   		std::cout << "Debug: MonteRay_SpatialGrid_GPU_helper -- rayTrace - 4\n";
+   	   		pResult->copyToCPU();
+
+   	   		return pResult->v;
+   	   	}
+
+   	   	singleDimRayTraceMap_t crossingDistance( unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance  ) {
+
+   	   		using result_t = resultClass<singleDimRayTraceMap_t>;
+   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+   	   		pResult->copyToGPU();
+
+   	   		cudaDeviceSynchronize();
+   	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+   	   				                 d, pos, dir, distance );
+   	   		cudaDeviceSynchronize();
+
+   	   		gpuErrchk( cudaPeekAtLastError() );
 
    	   		pResult->copyToCPU();
 
-   	   		std::cout << "Debug: MonteRay_SpatialGrid_GPU_helper -- rayTrace - 5\n";
+   	   		return pResult->v;
+   	   	}
+
+   	   	template<typename particle>
+  	   	rayTraceList_t rayTrace( particle& p, gpuFloatType_t distance, bool outside = false) {
+
+   	   		using result_t = resultClass<rayTraceList_t>;
+   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+   	   		pResult->copyToGPU();
+
+   	   		cudaDeviceSynchronize();
+   	   		kernelRayTraceParticle<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+   	   				                 p, distance, outside );
+   	   		cudaDeviceSynchronize();
+
+   	   		gpuErrchk( cudaPeekAtLastError() );
+
+   	   		pResult->copyToCPU();
+
    	   		return pResult->v;
    	   	}
 

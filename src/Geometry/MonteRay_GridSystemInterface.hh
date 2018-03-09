@@ -25,6 +25,7 @@ private:
 
 public:
 	CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t() : N(0) {}
+	CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(unsigned n) : N(n) {}
 	CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
 
 	CUDA_CALLABLE_MEMBER
@@ -102,6 +103,10 @@ public:
     CUDA_CALLABLE_MEMBER
     virtual void
     rayTrace( rayTraceList_t&, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_dir, gpuFloatType_t distance, bool outsideDistances=false ) const = 0;
+
+    CUDA_CALLABLE_MEMBER
+    virtual void
+    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance ) const = 0;
 
     CUDA_CALLABLE_MEMBER
     virtual gpuFloatType_t getVolume( unsigned index ) const = 0;

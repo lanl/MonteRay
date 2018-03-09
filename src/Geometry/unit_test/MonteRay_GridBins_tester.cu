@@ -244,10 +244,10 @@ SUITE( MonteRay_GridBins_Tester ) {
     	CHECK_EQUAL( true, pGridInfo->isLinear() );
     	CHECK_EQUAL( false, pGridInfo->isRadial() );
 
-    	pGridInfo->write( "MonteRay_GridBins_test1_radial.bin" );
+    	pGridInfo->write( "MonteRay_GridBins_test1_linear.bin" );
 
     	MonteRay_GridBins readBins;
-    	readBins.read( "MonteRay_GridBins_test1_radial.bin" );
+    	readBins.read( "MonteRay_GridBins_test1_linear.bin" );
 
     	CHECK_EQUAL( 4, readBins.getNumVertices() );
     	CHECK_EQUAL( 0, readBins.getNumVerticesSq() );
@@ -268,7 +268,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     TEST( read_access_on_GPU ) {
     	std::unique_ptr<MonteRay_GridBins> pReadBins = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
     	std::unique_ptr<resultClass<int>> pResult = std::unique_ptr<resultClass<int>>( new resultClass<int>() );
-    	pReadBins->read( "MonteRay_GridBins_test1.bin" );
+    	pReadBins->read( "MonteRay_GridBins_test1_linear.bin" );
     	pReadBins->copyToGPU();
     	pResult->copyToGPU();
     	cudaDeviceSynchronize();

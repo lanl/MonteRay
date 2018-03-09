@@ -50,12 +50,24 @@ using namespace MonteRay;
    		pResult->v = pSpatialGrid->getVolume(index);
    	}
 
-   	CUDA_CALLABLE_KERNEL void kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos) {
+   	CUDA_CALLABLE_KERNEL void kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos ) {
    		pResult->v = pSpatialGrid->getIndex(pos);
    	}
 
-   	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult, Position_t pos, Position_t dir, gpuFloatType_t distance) {
-   		pSpatialGrid->rayTrace(pResult->v, pos, dir, distance);
+//   	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuFloatType_t distance) {
+//   		pResult->v = pSpatialGrid->rayTrace( pos, dir, distance);
+//   	}
+   	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+   			gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z, gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
+   			gpuFloatType_t distance, bool outside) {
+   		Position_t pos = Position_t( x,y,z);
+   		Position_t dir = Position_t( u,v,w);
+   		pSpatialGrid->rayTrace( pResult->v, pos, dir, distance, outside);
+   	}
+
+   	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+   	  			unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance ) {
+   		pSpatialGrid->crossingDistance( pResult->v, d, pos, dir, distance);
    	}
 
 }

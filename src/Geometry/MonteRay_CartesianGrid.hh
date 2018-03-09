@@ -88,7 +88,6 @@ public:
 
     CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const;
 
-
     CUDA_CALLABLE_MEMBER
     void
     rayTrace( rayTraceList_t&, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuFloatType_t distance,  bool outsideDistances=false) const;

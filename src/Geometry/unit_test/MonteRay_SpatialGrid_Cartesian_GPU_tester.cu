@@ -256,7 +256,8 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
     	}
 
     }
-#if false
+
+#if true
     TEST_FIXTURE(SpatialGridGPUTester,  rayTrace_1D_external_to_internal_posX_pos_and_dir ) {
          setDimension( 3 );
          setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
@@ -269,7 +270,6 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
          setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
          setGrid( MonteRay_SpatialGrid::CART_Z, Zvertices);
 
-         std::cout << "Debug: MonteRay_SpatialGrid_Cartesian_GPU_tester -- rayTrace_1D_external_to_internal_posX_pos_and_dir - 1\n";
          initialize();
          copyToGPU();
 
@@ -277,17 +277,12 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
          CHECK_EQUAL( 2, getNumGridBins(1) );
          CHECK_EQUAL( 2, getNumGridBins(2) );
 
-         std::cout << "Debug: MonteRay_SpatialGrid_Cartesian_GPU_tester -- rayTrace_1D_external_to_internal_posX_pos_and_dir - 2\n";
-
          Grid_t::Position_t position (  -1.5, -0.5, -0.5 );
          Grid_t::Position_t direction(    1,   0,    0 );
          direction.normalize();
          gpuFloatType_t distance = 2.0;
 
-         std::cout << "Debug: MonteRay_SpatialGrid_Cartesian_GPU_tester -- rayTrace_1D_external_to_internal_posX_pos_and_dir - 3\n";
          rayTraceList_t distances = rayTrace( position, direction, distance);
-
-         std::cout << "Debug: MonteRay_SpatialGrid_Cartesian_GPU_tester -- rayTrace_1D_external_to_internal_posX_pos_and_dir - 4\n";
 
          CHECK_EQUAL( 2, distances.size() );
          CHECK_EQUAL( 0, distances.id(0) );
@@ -295,21 +290,24 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
          CHECK_EQUAL( 1, distances.id(1) );
          CHECK_CLOSE( 0.5, distances.dist(1), 1e-11 );
      }
+#endif
 
-    TEST( rayTrace_1D_external_to_internal_posX_particle ) {
-        Grid_t grid;
-        grid.setDimension( 3 );
-        grid.setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
+#if true
+
+    TEST_FIXTURE(SpatialGridGPUTester, rayTrace_1D_external_to_internal_posX_particle ) {
+        setDimension( 3 );
+        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
         std::vector<gpuFloatType_t> Xvertices = { -1, 0, 1 };
         std::vector<gpuFloatType_t> Yvertices = { -1, 0, 1 };
         std::vector<gpuFloatType_t> Zvertices = { -1, 0, 1 };
 
-        grid.setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
-        grid.setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
-        grid.setGrid( MonteRay_SpatialGrid::CART_Z, Zvertices);
+        setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
+        setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
+        setGrid( MonteRay_SpatialGrid::CART_Z, Zvertices);
 
-        grid.initialize();
+        initialize();
+        copyToGPU();
 
         Grid_t::Position_t position (  -1.5, -0.5, -0.5 );
         Grid_t::Position_t direction(    1,   0,    0 );
@@ -320,7 +318,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         p.pos = position;
         p.dir = direction;
 
-        rayTraceList_t distances = grid.rayTrace( p, distance);
+        rayTraceList_t distances = rayTrace( p, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -367,6 +365,10 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
 //        CHECK_CLOSE( 0.5, distances[1].second, 1e-11 );
 //    }
 #endif
+
+  	TEST( cleanup ) {
+   		gpuReset();
+   	}
 
 }
 

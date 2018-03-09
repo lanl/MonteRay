@@ -228,7 +228,7 @@ public:
     CUDA_CALLABLE_MEMBER
     void
     rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuFloatType_t distance, bool OutsideDistances=false) const {
-    	if( debug ) printf( "Debug: MonteRay_SpatialGrid::rayTrace -- \n");
+    	//if( debug ) printf( "Debug: MonteRay_SpatialGrid::rayTrace -- \n");
     	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
 //        if( transform ) {
@@ -236,6 +236,19 @@ public:
 //            dir = (*transform).counterTransformDir( dir );
 //        }
     	pGridSystem->rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
+        return;
+    }
+
+    CUDA_CALLABLE_MEMBER
+    void
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance) const {
+    	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
+
+//        if( transform ) {
+//            pos = (*transform).counterTransformPos( pos );
+//            dir = (*transform).counterTransformDir( dir );
+//        }
+    	pGridSystem->crossingDistance(rayTraceMap, d, pos, dir, distance );
         return;
     }
 

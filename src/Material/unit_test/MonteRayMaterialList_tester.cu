@@ -132,8 +132,8 @@ SUITE( MonteRayMaterialList_tester ) {
     	matList.add( 0, mat1, 0 );
     	matList.add( 1, mat2, 1 );
 
-    	gpuFloatType_t energy=2.0;
-    	gpuFloatType_t density = 1.0;
+//    	gpuFloatType_t energy=2.0;
+//    	gpuFloatType_t density = 1.0;
 
     	CHECK_EQUAL(0, u235s.getID() );
     	CHECK_EQUAL(1, h1s.getID() );
