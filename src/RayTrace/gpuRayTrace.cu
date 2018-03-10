@@ -5,7 +5,7 @@
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
-#include "cudaGridBins.h"
+#include "cudaGridBins.hh"
 
 #ifdef __CUDACC__
 #include "math_constants.h"
@@ -14,15 +14,22 @@
 namespace MonteRay{
 
 CUDA_CALLABLE_MEMBER unsigned
-cudaCalcCrossings(const float_t* const vertices, unsigned nVertices, int* cells,
-				  float_t* distances, float_t pos, float_t dir, float_t distance,
-				  int index ){
+cudaCalcCrossings(
+		const float_t* const vertices,
+		unsigned nVertices,
+		int* cells,
+		gpuRayFloat_t* distances,
+		gpuRayFloat_t pos,
+		gpuRayFloat_t dir,
+		gpuRayFloat_t distance,
+		int index )
+{
 	const bool debug = false;
 
 #ifdef __CUDACC__
-	constexpr float_t minFloat = CUDART_TWO_TO_M126_F;
+	constexpr gpuRayFloat_t minFloat = CUDART_TWO_TO_M126_F;
 #else
-	constexpr float_t minFloat = 1.175494351e-38f;
+	constexpr gpuRayFloat_t minFloat = 1.175494351e-38f;
 #endif
 
 	unsigned nDistances = 0;
@@ -75,11 +82,11 @@ cudaCalcCrossings(const float_t* const vertices, unsigned nVertices, int* cells,
     int current_index = start_index;
 
     // Calculate boundary crossing distances
-    float_t invDir = 1/dir;
+    gpuRayFloat_t invDir = 1/dir;
     bool rayTerminated = false;
     for( int i = 0; i < num_indices ; ++i ) {
 
-    	float_t minDistance = ( vertices[current_index + offset] - pos) * invDir;
+    	gpuRayFloat_t minDistance = ( gpuRayFloat_t(vertices[current_index + offset]) - pos) * invDir;
 
         if( minDistance >= distance ) {
         	cells[nDistances] = cell_index;
@@ -133,19 +140,26 @@ cudaCalcCrossings(const float_t* const vertices, unsigned nVertices, int* cells,
 }
 
 CUDA_CALLABLE_MEMBER unsigned
-cudaOrderCrossings(const GridBins* const grid, int* global_indices,
-				   float_t* distances, unsigned num, const int* const cells,
-				   const float_t* const crossingDistances,
-				   const uint3& numCrossings, const int3& cudaindices,
-				   float_t distance, bool outsideDistances ){
+cudaOrderCrossings(
+		const GridBins* const grid,
+		int* global_indices,
+		gpuRayFloat_t* distances,
+		unsigned num,
+		const int* const cells,
+		const gpuRayFloat_t* const crossingDistances,
+		const uint3& numCrossings,
+		const int3& cudaindices,
+		gpuRayFloat_t distance,
+		bool outsideDistances )
+{
     // Order the distance crossings to provide a rayTrace
 
 	const bool debug = false;
 
 #ifdef __CUDACC__
-	constexpr float_t maxFloat = CUDART_NORM_HUGE_F;
+	constexpr gpuRayFloat_t maxFloat = CUDART_NORM_HUGE_F;
 #else
-	constexpr float_t maxFloat = 3.402823466e38f;
+	constexpr gpuRayFloat_t maxFloat = 3.402823466e38f;
 #endif
 
 
@@ -161,17 +175,17 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
 
     int maxNumCrossings = numCrossings.x + numCrossings.y + numCrossings.z;
     if( debug ) printf("cudaRayTrace::cudaOrderCrossings  maxNumCrossings = %d\n", maxNumCrossings);
-    float_t minDistances[3];
+    gpuRayFloat_t minDistances[3];
 
     bool outside;
-    float_t priorDistance = 0.0;
+    gpuRayFloat_t priorDistance = 0.0;
     unsigned start[3] = {0, 0, 0}; // current location in the distance[i] vector
 
     unsigned numRayCrossings = 0;
     for( unsigned i=0; i<maxNumCrossings; ++i){
 
     	unsigned minDim;
-    	float_t minimumDistance = maxFloat;
+    	gpuRayFloat_t minimumDistance = maxFloat;
         for( unsigned j = 0; j<3; ++j) {
             if( start[j] < end[j] ) {
             	minDistances[j] = *((crossingDistances+j*num)+start[j]);
@@ -197,10 +211,10 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
         	}
         }
 
-        float_t currentDistance = minimumDistance;
+        gpuRayFloat_t currentDistance = minimumDistance;
 
         if( !outside || outsideDistances ) {
-        	float_t deltaDistance = currentDistance - priorDistance;
+        	gpuRayFloat_t deltaDistance = currentDistance - priorDistance;
 
             if( deltaDistance > 0.0  ) {
                 unsigned global_index;
@@ -244,10 +258,10 @@ cudaOrderCrossings(const GridBins* const grid, int* global_indices,
 
 CUDA_CALLABLE_MEMBER unsigned cudaRayTrace(const GridBins* const grid,
 		                         int* global_indices,
-		                         float_t* distances,
+		                         gpuRayFloat_t* distances,
 		                         const float3_t& pos,
 		                         const float3_t& dir,
-		                         float_t distance,
+		                         gpuRayFloat_t distance,
 		                         bool outsideDistances)
 {
 	const bool debug = false;
@@ -259,7 +273,7 @@ CUDA_CALLABLE_MEMBER unsigned cudaRayTrace(const GridBins* const grid,
 	int3 current_indices;
 
     int cells[3][MAXNUMVERTICES];
-    float_t crossingDistances[3][MAXNUMVERTICES];
+    gpuRayFloat_t crossingDistances[3][MAXNUMVERTICES];
     uint3 numCrossings;
 
     current_indices.x = cudaGetDimIndex(grid, 0, pos.x );
@@ -301,6 +315,65 @@ CUDA_CALLABLE_MEMBER unsigned cudaRayTrace(const GridBins* const grid,
     return numRayCrossings;
 }
 
+CUDA_CALLABLE_MEMBER unsigned cudaRayTrace(const GridBins* const grid,
+		                         int* global_indices,
+		                         gpuRayFloat_t* distances,
+		                         const MonteRay::Vector3D<gpuRayFloat_t>& pos,
+		                         const MonteRay::Vector3D<gpuRayFloat_t>& dir,
+		                         gpuRayFloat_t distance,
+		                         bool outsideDistances)
+{
+	const bool debug = false;
+
+	if( debug ) {
+		printf("cudaRayTrace:: Starting cudaRayTrace ******************\n");
+	}
+
+	int3 current_indices;
+
+    int cells[3][MAXNUMVERTICES];
+    gpuRayFloat_t crossingDistances[3][MAXNUMVERTICES];
+    uint3 numCrossings;
+
+    current_indices.x = cudaGetDimIndex(grid, 0, pos[0] );
+	numCrossings.x = cudaCalcCrossings( grid->vertices + grid->offset[0], grid->num[0]+1, cells[0], crossingDistances[0], pos[0], dir[0], distance, current_indices.x);
+
+	if( debug ) {
+		printf("cudaRayTrace:: current_indices.x =%d\n", current_indices.x );
+		printf("cudaRayTrace:: numCrossings.x =%d\n", numCrossings.x );
+	}
+
+	if( cudaIsIndexOutside(grid, 0, current_indices.x ) && numCrossings.x == 0  ) {return 0U;}
+
+    current_indices.y = cudaGetDimIndex(grid, 1, pos[1] );
+	numCrossings.y = cudaCalcCrossings( grid->vertices + grid->offset[1], grid->num[1]+1, cells[1], crossingDistances[1], pos[1], dir[1], distance, current_indices.y);
+
+	if( debug ) {
+		printf("cudaRayTrace:: current_indices.y =%d\n", current_indices.y );
+		printf("cudaRayTrace:: numCrossings.y =%d\n", numCrossings.y );
+	}
+
+	if( cudaIsIndexOutside(grid, 1, current_indices.y ) && numCrossings.y == 0  ) {return 0U;}
+
+	current_indices.z = cudaGetDimIndex(grid, 2, pos[2] );
+	numCrossings.z = cudaCalcCrossings( grid->vertices + grid->offset[2], grid->num[2]+1, cells[2], crossingDistances[2], pos[2], dir[2], distance, current_indices.z);
+
+	if( debug ) {
+		printf("cudaRayTrace:: current_indices.z =%d\n", current_indices.z );
+		printf("cudaRayTrace:: numCrossings.z =%d\n", numCrossings.z );
+	}
+
+	if( cudaIsIndexOutside(grid, 2, current_indices.z ) && numCrossings.z == 0  ) {return 0U;}
+
+    unsigned numRayCrossings = cudaOrderCrossings(grid, global_indices, distances, MAXNUMVERTICES, cells[0], crossingDistances[0], numCrossings, current_indices, distance, outsideDistances);
+
+	if( debug ) {
+		printf("cudaRayTrace:: numRayCrossings=%d\n", numRayCrossings );
+	}
+
+    return numRayCrossings;
+}
+
 CUDA_CALLABLE_KERNEL
 void
 kernelCudaRayTrace(void* ptrNumCrossings,
@@ -321,10 +394,12 @@ kernelCudaRayTrace(void* ptrNumCrossings,
 	unsigned* numCrossings = (unsigned*) ptrNumCrossings;
 	GridBins* grid = (GridBins*) ptrGrid;
 	int* cells = (int*) ptrCells;
-	float_t* distances = (float_t*) ptrDistances;
+	gpuRayFloat_t* distances = (gpuRayFloat_t*) ptrDistances;
 
-	float3_t pos = make_float3( x, y, z);
-	float3_t dir = make_float3( u, v, w);
+//	float3_t pos = make_float3( x, y, z);
+//	float3_t dir = make_float3( u, v, w);
+	MonteRay::Vector3D<gpuRayFloat_t> pos( x, y, z );
+	MonteRay::Vector3D<gpuRayFloat_t> dir( u, v, w );
 
 	numCrossings[0] = cudaRayTrace( grid, cells, distances, pos, dir, distance, outsideDistances);
 
@@ -348,7 +423,7 @@ kernelCudaRayTraceToAllCenters(
 	}
 
 	GridBins* grid = (GridBins*) ptrGrid;
-	float_t* distances = (float_t*) ptrDistances;
+	gpuRayFloat_t* distances = (gpuRayFloat_t*) ptrDistances;
 
 #ifdef __CUDACC__
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -372,13 +447,18 @@ kernelCudaRayTraceToAllCenters(
 	}
 
 	uint3 indices;
-	float3_t pos1 = make_float3( x, y, z);
-	float3_t pos2;
 
-	float3 dir;
+	//float3_t pos1 = make_float3( x, y, z);
+	MonteRay::Vector3D<gpuRayFloat_t> pos1( x, y, z );
+
+	//float3_t pos2;
+	MonteRay::Vector3D<gpuRayFloat_t> pos2;
+
+	//float3 dir;
+	MonteRay::Vector3D<gpuRayFloat_t> dir;
 
 	int cells[2*MAXNUMVERTICES];
-	float_t crossingDistances[2*MAXNUMVERTICES];
+	gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
 
 	while( tid < N ) {
 
@@ -390,31 +470,25 @@ kernelCudaRayTraceToAllCenters(
 		cudaCalcIJK(grid, tid, indices );
 		cudaGetCenterPointByIndices(grid, indices, pos2);
 
-	    dir.x = ( pos2.x - pos1.x);
-	    dir.y = ( pos2.y - pos1.y);
-	    dir.z = ( pos2.z - pos1.z);
-
-		float3_t deltaSq;
-		deltaSq.x = dir.x*dir.x;
-		deltaSq.y = dir.y*dir.y;
-		deltaSq.z = dir.z*dir.z;
-
-		float_t length = sqrtf( deltaSq.x + deltaSq.y + deltaSq.z );
+	    dir = pos2 - pos1;
+	    gpuRayFloat_t length = dir.magnitude();
 
 		if( debug ) {
 			printf("kernelCudaRayTraceToAllCenters:: length=%f\n", length );
 		}
 
-		dir.x = length / dir.x;
-		dir.y = length / dir.y;
-		dir.z = length / dir.z;
+		dir[0] = length / dir[0];
+		dir[1] = length / dir[1];
+		dir[2] = length / dir[2];
+
+
 		if( length > 0.0 ) {
 //			dir.x /= length;
 //			dir.y /= length;
 //			dir.z /= length;
 
 			if( debug ) {
-				printf("kernelCudaRayTraceToAllCenters:: u=%f v=%f w=%f\n",dir.x,dir.y,dir.z );
+				printf("kernelCudaRayTraceToAllCenters:: u=%f v=%f w=%f\n",dir[0],dir[1],dir[2]);
 			}
 
 			unsigned numCrossings;
@@ -429,7 +503,7 @@ kernelCudaRayTraceToAllCenters(
 //			}
 //			return;
 
-			float_t length2 = 0.0f;
+			gpuRayFloat_t length2 = 0.0f;
 			for( unsigned i=0; i < numCrossings; ++i){
 				length2 += crossingDistances[i];
 				//length2 += cells[i]*crossingDistances[i];

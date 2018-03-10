@@ -31,18 +31,20 @@ tallyAttenuation(GridBins* pGrid,
 	}
 
 	int cells[2*MAXNUMVERTICES];
-	gpuFloatType_t crossingDistances[2*MAXNUMVERTICES];
+	gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
 
 	unsigned numberOfCells;
 
-	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
-	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
+//	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
+//	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
+	MonteRay::Vector3D<gpuRayFloat_t> pos(p->pos[0], p->pos[1], p->pos[2]);
+	MonteRay::Vector3D<gpuRayFloat_t> dir(p->dir[0], p->dir[1], p->dir[2]);
 
-	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
+	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6, false);
 
 	for( unsigned i=0; i < numberOfCells; ++i ){
 		int cell = cells[i];
-		gpuFloatType_t distance = crossingDistances[i];
+		gpuRayFloat_t distance = crossingDistances[i];
 		if( cell == UINT_MAX ) continue;
 
 		enteringFraction = attenuateRayTraceOnly(pMatList, pMatProps, pHash, HashBin, cell, distance, energy, enteringFraction, p->particleType );
@@ -106,7 +108,7 @@ tallyCellSegment( const MonteRayMaterialList* pMatList,
 		          const gpuFloatType_t* materialXS,
 		                gpuTallyType_t* tally,
 		                unsigned cell,
-		                gpuFloatType_t distance,
+		                gpuRayFloat_t distance,
 		                gpuFloatType_t energy,
 		                gpuFloatType_t weight,
 		                gpuTallyType_t opticalPathLength ) {
@@ -256,12 +258,14 @@ tallyCollision(const GridBins* pGrid,
 	}
 
 	int cells[2*MAXNUMVERTICES];
-	gpuFloatType_t crossingDistances[2*MAXNUMVERTICES];
+	gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
 
 	unsigned numberOfCells;
 
-	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
-	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
+//	gpuRayFloat_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
+//	gpuRayFloat_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
+	MonteRay::Vector3D<gpuRayFloat_t> pos( p->pos[0], p->pos[1], p->pos[2] );
+	MonteRay::Vector3D<gpuRayFloat_t> dir( p->dir[0], p->dir[1], p->dir[2] );
 
 	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
 
@@ -276,7 +280,7 @@ tallyCollision(const GridBins* pGrid,
 
 	for( unsigned i=0; i < numberOfCells; ++i ){
 		int cell = cells[i];
-		gpuFloatType_t distance = crossingDistances[i];
+		gpuRayFloat_t distance = crossingDistances[i];
 		if( cell == UINT_MAX ) continue;
 
 		opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally,

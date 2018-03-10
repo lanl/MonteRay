@@ -24,10 +24,10 @@ public:
 	void stopTimers();
 
 	void launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos);
-	void launchRayTrace( const Position_t& pos, const Direction_t& dir, float_t distance, bool);
+	void launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool);
 
 	void copyGridtoGPU( GridBins* );
-	void copyDistancesFromGPU( float_t* );
+	void copyDistancesFromGPU( gpuRayFloat_t* );
 	void copyCellsFromCPU( int* );
 	unsigned getNumCrossingsFromGPU(void);
 

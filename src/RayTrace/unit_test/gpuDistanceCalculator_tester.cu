@@ -28,7 +28,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			finalize(grid_host);
 
 			numCells = getNumCells(grid_host);
-			distances = (float_t*) malloc( sizeof(float_t) * numCells );
+			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
@@ -41,7 +41,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		GridBins* grid_host;
 
-		float_t* distances;
+		gpuRayFloat_t* distances;
 		int* cells;
 		unsigned numCells;
 	};
@@ -61,12 +61,12 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		tester.stopTimers();
 		tester.copyDistancesFromGPU(distances);
 
-		float_t distance0 = sqrt( 4.5f*4.5f*3.0f );
+		gpuRayFloat_t distance0 = sqrt( 4.5f*4.5f*3.0f );
 //		std::cout << "Debug: distances[0]=" << std::setprecision(10) << distances[0] << "\n";
 //		std::cout << "Debug: distances0=" << std::setprecision(10) << distance0 << "\n";
 		CHECK_CLOSE( distance0, distances[0], 1e-6 );
 
-		float_t distance1 = sqrt( 4.5f*4.5f*3 );
+		gpuRayFloat_t distance1 = sqrt( 4.5f*4.5f*3 );
 		CHECK_CLOSE( distance1, distances[numCells-1], 1e-6 );
 	}
 
@@ -74,7 +74,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		gpuDistanceCalculatorTestHelper tester;
 		Position_t pos( -0.5, 0.5, 0.5 );
 		Direction_t dir( 1.0, 0.0, 0.0);
-		float_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -95,7 +95,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		gpuDistanceCalculatorTestHelper tester;
 		Position_t pos( -0.5, 0.5, 0.5 );
 		Direction_t dir( 1.0, 0.0, 0.0);
-		float_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -118,7 +118,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 		gpuDistanceCalculatorTestHelper tester;
 		Position_t pos(  8.5, 0.5, 0.5 );
 		Direction_t dir( 1.0, 0.0, 0.0);
-		float_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -150,7 +150,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			finalize(grid_host);
 
 			numCells = getNumCells(grid_host);
-			distances = (float_t*) malloc( sizeof(float_t) * numCells );
+			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
@@ -162,7 +162,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		GridBins* grid_host;
 
-		float_t* distances;
+		gpuRayFloat_t* distances;
 		int* cells;
 		unsigned numCells;
 	};
@@ -172,7 +172,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position ( -9.5, -9.5,  -9.5 );
         Position_t direction(    1,   0,    0 );
-        double distance = 1.0;
+        gpuRayFloat_t distance = 1.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -194,7 +194,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		Position_t position ( -8.5, -9.5,  -9.5 );
 		Position_t direction(    -1,   0,    0 );
-		double distance = 1.0;
+		gpuRayFloat_t distance = 1.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -216,7 +216,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position ( -10.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
-        double distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -234,7 +234,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
-        double distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -251,7 +251,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position ( -10.5, -9.5,  -9.5 );
         Position_t direction(    1,   0,    0 );
-        double distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -273,7 +273,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position (  10.5, -9.5,  -9.5 );
         Position_t direction(    -1,   0,    0 );
-        double distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -295,7 +295,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position (  -10.5, -9.5,  -9.5 );
         Position_t direction(    1,   0,    0 );
-        double distance = 21.0;
+        gpuRayFloat_t distance = 21.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -323,7 +323,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position (  -8.5, -9.5,  -9.5 );
         Position_t direction(    -1,   0,    0 );
-        double distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -345,7 +345,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position (  8.5, -9.5, -9.5 );
         Position_t direction(    1,   0,    0 );
-        double distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -377,7 +377,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			finalize(grid_host);
 
 			numCells = getNumCells(grid_host);
-			distances = (float_t*) malloc( sizeof(float_t) * numCells );
+			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
@@ -389,7 +389,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		GridBins* grid_host;
 
-		float_t* distances;
+		gpuRayFloat_t* distances;
 		int* cells;
 		unsigned numCells;
 	};
@@ -400,7 +400,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  -0.5, -.25, -0.5 );
         Position_t direction(    1,   1,    0 );
         direction.normalize();
-        double distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -412,11 +412,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		CHECK_EQUAL( 3, numCrossings);
 		CHECK_EQUAL( 0, cells[0]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[0], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0], 1e-6 );
 		CHECK_EQUAL( 2, cells[1]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[1], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[1], 1e-6 );
 		CHECK_EQUAL( 3, cells[2]);
-		CHECK_CLOSE( 0.75f*std::sqrt(2.0f), distances[2], 1e-11 );
+		CHECK_CLOSE( 0.75*std::sqrt(2.0), distances[2], 1e-6 );
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_to_external_negX_negY ) {
@@ -425,7 +425,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  0.25, 0.5, -0.5 );
         Position_t direction(  -1.0, -1.0,  0.0 );
         direction.normalize();
-        double distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -437,11 +437,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		CHECK_EQUAL( 3, numCrossings);
 		CHECK_EQUAL( 3, cells[0]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[0], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0], 1e-6 );
 		CHECK_EQUAL( 2, cells[1]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[1], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[1], 1e-6 );
 		CHECK_EQUAL( 0, cells[2]);
-		CHECK_CLOSE( 0.75f*std::sqrt(2.0f), distances[2], 1e-11 );
+		CHECK_CLOSE( 0.75*std::sqrt(2.0), distances[2], 1e-6 );
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_to_internal_posX_posY ) {
@@ -450,7 +450,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  -0.5, -.25, -0.5 );
         Position_t direction(    1,   1,    0 );
         direction.normalize();
-        double distance = (0.5+0.25+0.25)*std::sqrt(2.0);
+        gpuRayFloat_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -462,11 +462,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		CHECK_EQUAL( 3, numCrossings);
 		CHECK_EQUAL( 0, cells[0]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[0], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0], 1e-6 );
 		CHECK_EQUAL( 2, cells[1]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[1], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[1], 1e-6 );
 		CHECK_EQUAL( 3, cells[2]);
-		CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[2], 1e-11 );
+		CHECK_CLOSE( 0.50*std::sqrt(2.0), distances[2], 1e-6 );
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_to_internal_negX_negY ) {
@@ -475,7 +475,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  0.25, 0.5, -0.5 );
         Position_t direction(  -1.0, -1.0,  0.0 );
         direction.normalize();
-        double distance = (0.5+0.25+0.25)*std::sqrt(2.0);
+        gpuRayFloat_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -487,11 +487,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		CHECK_EQUAL( 3, numCrossings);
 		CHECK_EQUAL( 3, cells[0]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[0], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[0], 1e-6 );
 		CHECK_EQUAL( 2, cells[1]);
-		CHECK_CLOSE( 0.25f*std::sqrt(2.0f), distances[1], 1e-11 );
+		CHECK_CLOSE( 0.25*std::sqrt(2.0), distances[1], 1e-6 );
 		CHECK_EQUAL( 0, cells[2]);
-		CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[2], 1e-11 );
+		CHECK_CLOSE( 0.50*std::sqrt(2.0), distances[2], 1e-6 );
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_external_to_external_posX_posY ) {
@@ -500,7 +500,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  -1.5, -1.25, -0.5 );
         Position_t direction(  1.0, 1.0,  0.0 );
         direction.normalize();
-        double distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -525,7 +525,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  1.25, 1.50, -0.5 );
         Position_t direction(  -1.0, -1.0,  0.0 );
         direction.normalize();
-        double distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -549,7 +549,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position (  -1.5, -.5, -1.5 );
         Position_t direction(  1.0,  0.0,  0.0 );
-        double distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -567,7 +567,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
         Position_t position (  1.5, -.5, -1.5 );
         Position_t direction(  1.0,  0.0,  0.0 );
-        double distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -586,7 +586,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  -.5, -.5, -.5 );
         Position_t direction(  1.0,  1.0,  0.0 );
         direction.normalize();
-        double distance = 1.0*std::sqrt(2.0);
+        gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -609,7 +609,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  .5, .5, -.5 );
         Position_t direction(  -1.0,  -1.0,  0.0 );
         direction.normalize();
-        double distance = 1.0*std::sqrt(2.0);
+        gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -632,7 +632,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (   0.0, -.5, -.5 );
         Position_t direction(   1.0,  0.0,  0.0 );
         direction.normalize();
-        double distance = 1.5;
+        gpuRayFloat_t distance = 1.5;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -652,7 +652,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (   0.0, -.5, -.5 );
         Position_t direction(  -1.0,  0.0,  0.0 );
         direction.normalize();
-        double distance = 1.5;
+        gpuRayFloat_t distance = 1.5;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -726,7 +726,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			finalize(grid_host);
 
 			numCells = getNumCells(grid_host);
-			distances = (float_t*) malloc( sizeof(float_t) * numCells );
+			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
@@ -738,7 +738,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		GridBins* grid_host;
 
-		float_t* distances;
+		gpuRayFloat_t* distances;
 		int* cells;
 		unsigned numCells;
 	};
@@ -749,7 +749,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (  1.0, 1.0, 0.5 );
         Position_t direction(  1.0, 1.0,  0.0 );
         direction.normalize();
-        double distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();
@@ -1125,7 +1125,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			finalize(grid_host);
 
 			numCells = getNumCells(grid_host);
-			distances = (float_t*) malloc( sizeof(float_t) * numCells );
+			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
@@ -1137,7 +1137,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 		GridBins* grid_host;
 
-		float_t* distances;
+		gpuRayFloat_t* distances;
 		int* cells;
 		unsigned numCells;
 	};
@@ -1148,7 +1148,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t position (    0.5,  0.5,  0.5 );
         Position_t direction(    1.0,  0.0,  0.0 );
         direction.normalize();
-        double distance = 1000.0;
+        gpuRayFloat_t distance = 1000.0;
 
 		tester.copyGridtoGPU(grid_host);
 		tester.setupTimers();

@@ -15,8 +15,8 @@
 namespace MonteRay{
 
 typedef gpuFloatType_t float_t;
-typedef MonteRay::Vector3D<double> Position_t;
-typedef MonteRay::Vector3D<double> Direction_t;
+typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
+typedef MonteRay::Vector3D<gpuRayFloat_t> Direction_t;
 
 struct GridBins {
 	float_t vertices[MAXNUMVERTICES*3];

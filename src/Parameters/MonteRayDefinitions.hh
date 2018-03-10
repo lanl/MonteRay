@@ -16,6 +16,7 @@
 #include "MonteRayPreprocessorDefinitions.hh"
 
 #define TALLY_DOUBLEPRECISION 1 // turn on (1) and off (0) for double precision tally array and compute
+#define RAY_DOUBLEPRECISION 1 // turn on (1) and off (0) for double precision tally array and compute
 
 namespace MonteRay{
 
@@ -35,6 +36,11 @@ namespace MonteRay{
 typedef float float_t;
 typedef float gpuFloatType_t;
 
+#if RAY_DOUBLEPRECISION < 1
+typedef float gpuRayFloat_t;
+#else
+typedef double gpuRayFloat_t;
+#endif
 
 
 #if TALLY_DOUBLEPRECISION < 1

@@ -68,11 +68,9 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( 3.0, 3.0, 3.0);
 		gpuFloatType_t expectedDistance = std::sqrt( (3.0f*3.0f)*3 );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
 
-		gpuFloatType_t distance = estimator.distance( 0, x, y, z );
+		gpuFloatType_t distance = estimator.distance( 0, pos );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
 	}
@@ -82,17 +80,13 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( 3.0, 0.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
-		gpuFloatType_t u;
-		gpuFloatType_t v;
-		gpuFloatType_t w;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+		MonteRay::Vector3D<gpuRayFloat_t> dir;
 
-		gpuFloatType_t distance = estimator.getDistanceDirection( 0, x, y, z, u, v, w );
+		gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-		CHECK_CLOSE( 1.0, u, 1e-6 );
+		CHECK_CLOSE( 1.0, dir[0], 1e-6 );
 	}
 
 	TEST( getDistanceDirection_NegU ) {
@@ -100,17 +94,13 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( -3.0, 0.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
-		gpuFloatType_t u;
-		gpuFloatType_t v;
-		gpuFloatType_t w;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+		MonteRay::Vector3D<gpuRayFloat_t> dir;
 
-		gpuFloatType_t distance = estimator.getDistanceDirection( 0, x, y, z, u, v, w );
+		gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-		CHECK_CLOSE( -1.0, u, 1e-6 );
+		CHECK_CLOSE( -1.0, dir[0], 1e-6 );
 	}
 
 	TEST( getDistanceDirection_PosV ) {
@@ -118,17 +108,13 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( 0.0, 3.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
-		gpuFloatType_t u;
-		gpuFloatType_t v;
-		gpuFloatType_t w;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+		MonteRay::Vector3D<gpuRayFloat_t> dir;
 
-		gpuFloatType_t distance = estimator.getDistanceDirection( 0, x, y, z, u, v, w );
+		gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-		CHECK_CLOSE( 1.0, v, 1e-6 );
+		CHECK_CLOSE( 1.0, dir[1], 1e-6 );
 	}
 
 	TEST( getDistanceDirection_NegV ) {
@@ -136,17 +122,13 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( 0.0, -3.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
-		gpuFloatType_t u;
-		gpuFloatType_t v;
-		gpuFloatType_t w;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+		MonteRay::Vector3D<gpuRayFloat_t> dir;
 
-		gpuFloatType_t distance = estimator.getDistanceDirection( 0, x, y, z, u, v, w );
+		gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-		CHECK_CLOSE( -1.0, v, 1e-6 );
+		CHECK_CLOSE( -1.0, dir[1], 1e-6 );
 	}
 
 	TEST( getDistanceDirection_PosW ) {
@@ -154,17 +136,13 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( 0.0, 0.0, 3.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
-		gpuFloatType_t u;
-		gpuFloatType_t v;
-		gpuFloatType_t w;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+		MonteRay::Vector3D<gpuRayFloat_t> dir;
 
-		gpuFloatType_t distance = estimator.getDistanceDirection( 0, x, y, z, u, v, w );
+		gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-		CHECK_CLOSE( 1.0, w, 1e-6 );
+		CHECK_CLOSE( 1.0, dir[2], 1e-6 );
 	}
 
 	TEST( getDistanceDirection_NegW ) {
@@ -172,17 +150,13 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( 0.0, 0.0, -3.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
-		gpuFloatType_t u;
-		gpuFloatType_t v;
-		gpuFloatType_t w;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+		MonteRay::Vector3D<gpuRayFloat_t> dir;
 
-		gpuFloatType_t distance = estimator.getDistanceDirection( 0, x, y, z, u, v, w );
+		gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-		CHECK_CLOSE( -1.0, w, 1e-6 );
+		CHECK_CLOSE( -1.0, dir[2], 1e-6 );
 	}
 
 	TEST( getDistanceDirection_PosUV ) {
@@ -190,18 +164,14 @@ SUITE( NextEventEstimator_Tester ) {
 		unsigned id = estimator.add( 3.0, 3.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( (3.0f*3.0f)*2 );
 
-		gpuFloatType_t x = 0.0;
-		gpuFloatType_t y = 0.0;
-		gpuFloatType_t z = 0.0;
-		gpuFloatType_t u;
-		gpuFloatType_t v;
-		gpuFloatType_t w;
+		MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+		MonteRay::Vector3D<gpuRayFloat_t> dir;
 
-		gpuFloatType_t distance = estimator.getDistanceDirection( 0, x, y, z, u, v, w );
+		gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
 
 		CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-		CHECK_CLOSE( 1.0/sqrt(2.0), u, 1e-6 );
-		CHECK_CLOSE( 1.0/sqrt(2.0), v, 1e-6 );
+		CHECK_CLOSE( 1.0/sqrt(2.0), dir[0], 1e-6 );
+		CHECK_CLOSE( 1.0/sqrt(2.0), dir[1], 1e-6 );
 	}
 #endif
 

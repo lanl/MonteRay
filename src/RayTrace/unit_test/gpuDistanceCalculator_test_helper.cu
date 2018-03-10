@@ -5,15 +5,15 @@
 #include "GPUUtilityFunctions.hh"
 
 #include "gpuDistanceCalculator_test_helper.hh"
-#include "cudaGridBins.h"
+#include "cudaGridBins.hh"
 
 namespace MonteRay{
 
 void
 gpuDistanceCalculatorTestHelper::launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos) {
-	float_t x = pos[0];
-	float_t y = pos[1];
-	float_t z = pos[2];
+	gpuRayFloat_t x = pos[0];
+	gpuRayFloat_t y = pos[1];
+	gpuRayFloat_t z = pos[2];
 
 #ifdef __CUDACC__
 	cudaEvent_t sync;
@@ -30,7 +30,7 @@ gpuDistanceCalculatorTestHelper::launchGetDistancesToAllCenters( unsigned nBlock
 }
 
 void
-gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Direction_t& dir, float_t distance, bool outsideDistances) {
+gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outsideDistances) {
 
 #ifdef __CUDACC__
 	cudaEvent_t sync;
@@ -118,7 +118,7 @@ void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 	CUDA_CHECK_RETURN( cudaMemcpy(grid_device, grid, sizeof(GridBins), cudaMemcpyHostToDevice ));
 
 	// allocate the distances
-	CUDA_CHECK_RETURN(cudaMalloc((void**) &distances_device, sizeof(float_t) * nCells ));
+	CUDA_CHECK_RETURN(cudaMalloc((void**) &distances_device, sizeof(gpuRayFloat_t) * nCells ));
 
 	// allocate the cells
 	CUDA_CHECK_RETURN(cudaMalloc((void**) &cells_device, sizeof(int) * nCells ));
@@ -136,12 +136,12 @@ void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 #endif
 }
 
-void gpuDistanceCalculatorTestHelper::copyDistancesFromGPU( float_t* distances){
+void gpuDistanceCalculatorTestHelper::copyDistancesFromGPU( gpuRayFloat_t* distances){
 	// copy distances back to the host
 #ifdef __CUDACC__
-	CUDA_CHECK_RETURN(cudaMemcpy(distances, distances_device, sizeof(float_t) * nCells, cudaMemcpyDeviceToHost));
+	CUDA_CHECK_RETURN(cudaMemcpy(distances, distances_device, sizeof(gpuRayFloat_t) * nCells, cudaMemcpyDeviceToHost));
 #else
-	memcpy(distances, distances_device, sizeof(float_t) * nCells);
+	memcpy(distances, distances_device, sizeof(gpuRayFloat_t) * nCells);
 #endif
 }
 

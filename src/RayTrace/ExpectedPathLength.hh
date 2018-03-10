@@ -34,7 +34,7 @@ tallyCellSegment(const MonteRayMaterialList* pMatList,
 		         const gpuFloatType_t* materialXS,
 		               gpuTallyType_t* tally,
 		               unsigned cell,
-		               gpuFloatType_t distance,
+		               gpuRayFloat_t distance,
 	 	               gpuFloatType_t energy,
 	 	               gpuFloatType_t weight,
 	 	               gpuTallyType_t opticalPathLength);

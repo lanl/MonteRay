@@ -20,7 +20,7 @@ namespace MonteRay {
 class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator> {
 public:
 	typedef gpuTallyType_t tally_t;
-	typedef gpuFloatType_t position_t;
+	typedef gpuRayFloat_t position_t;
 	using Base = MonteRay::CopyMemoryBase<MonteRayNextEventEstimator> ;
 
 	CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRayNextEventEstimator");}
@@ -162,32 +162,30 @@ public:
 
 	CUDA_CALLABLE_MEMBER tally_t getTally(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return tally[i]; }
 
-	CUDA_CALLABLE_MEMBER position_t distance(unsigned i, position_t x,  position_t y, position_t z ) const {
+	CUDA_CALLABLE_MEMBER position_t distance(unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos ) const {
 		using namespace std;
 		MONTERAY_ASSERT(i<nUsed);
-		return sqrt( pow(getX(i) - x,2) +
-					 pow(getY(i) - y,2) +
-				     pow(getZ(i) - z,2)
-				);
+		MonteRay::Vector3D<gpuRayFloat_t> pos2( getX(i), getY(i), getZ(i) );
+		MonteRay::Vector3D<gpuRayFloat_t> dir = pos2 - pos;
+
+		return dir.magnitude();
 	}
 
 	CUDA_CALLABLE_MEMBER position_t getDistanceDirection(
 			unsigned i,
-			position_t  x, position_t  y, position_t  z,
-			position_t& u, position_t& v, position_t& w
+			MonteRay::Vector3D<gpuRayFloat_t>& pos,
+			MonteRay::Vector3D<gpuRayFloat_t>& dir
 			) const
 	{
 		using namespace std;
 		MONTERAY_ASSERT(i<nUsed);
-		u = getX(i) - x;
-		v = getY(i) - y;
-		w = getZ(i) - z;
 
-		position_t dist = distance(i,x,y,z);
+		MonteRay::Vector3D<gpuRayFloat_t> pos2( getX(i), getY(i), getZ(i) );
+		dir = pos2 - pos;
+
+		position_t dist = distance(i,pos);
 		position_t invDistance = 1/ dist;
-		u *= invDistance;
-		v *= invDistance;
-		w *= invDistance;
+		dir *= invDistance;
 
 		return dist;
 	}
@@ -208,17 +206,22 @@ public:
 		tally_t score = 0.0;
 
 		int cells[2*MAXNUMVERTICES];
-		gpuFloatType_t crossingDistances[2*MAXNUMVERTICES];
+		gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
 
 		unsigned numberOfCells;
 
-		gpuFloatType_t dist = getDistanceDirection(
+		MonteRay::Vector3D<gpuRayFloat_t> pos(x, y, z);
+		MonteRay::Vector3D<gpuRayFloat_t> dir(u, v, w);
+
+		gpuRayFloat_t dist = getDistanceDirection(
 							  detectorIndex,
-							  x, y, z,
-							  u, v, w );
+							  pos,
+							  dir );
 		if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- distance to detector = %20.12f\n",dist );
-		float3_t pos = make_float3( x, y, z);
-		float3_t dir = make_float3( u, v, w);
+
+//		float3_t pos = make_float3( x, y, z);
+//		float3_t dir = make_float3( u, v, w);
+
 
 		numberOfCells = cudaRayTrace( pGridBins, cells, crossingDistances, pos, dir, dist, false);
 
@@ -246,7 +249,7 @@ public:
 			tally_t opticalThickness = 0.0;
 			for( unsigned i=0; i < numberOfCells; ++i ){
 				int cell = cells[i];
-				gpuFloatType_t cellDistance = crossingDistances[i];
+				gpuRayFloat_t cellDistance = crossingDistances[i];
 				if( cell == UINT_MAX ) continue;
 
 				gpuFloatType_t totalXS = 0.0;

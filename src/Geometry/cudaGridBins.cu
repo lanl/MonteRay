@@ -1,4 +1,4 @@
-#include "cudaGridBins.h"
+#include "cudaGridBins.hh"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,25 +36,22 @@ CUDA_CALLABLE_MEMBER float_t cudaGetVertex(const GridBins* const grid, unsigned 
 	return grid->vertices[ grid->offset[dim] + index ];
 }
 
-CUDA_CALLABLE_MEMBER  void cudaGetCenterPointByIndices(const GridBins* const grid, uint3& indices,  float3_t& pos ){
-	pos.x = ( cudaGetVertex(grid, 0, indices.x) + cudaGetVertex(grid, 0, indices.x+1)) / 2.0f ;
-	pos.y = ( cudaGetVertex(grid, 1, indices.y) + cudaGetVertex(grid, 1, indices.y+1)) / 2.0f ;
-	pos.z = ( cudaGetVertex(grid, 2, indices.z) + cudaGetVertex(grid, 2, indices.z+1)) / 2.0f ;
+CUDA_CALLABLE_MEMBER  void cudaGetCenterPointByIndices(const GridBins* const grid, uint3& indices, MonteRay::Vector3D<gpuRayFloat_t>& pos ){
+	pos[0] = ( cudaGetVertex(grid, 0, indices.x) + cudaGetVertex(grid, 0, indices.x+1)) / 2.0 ;
+	pos[1] = ( cudaGetVertex(grid, 1, indices.y) + cudaGetVertex(grid, 1, indices.y+1)) / 2.0 ;
+	pos[2] = ( cudaGetVertex(grid, 2, indices.z) + cudaGetVertex(grid, 2, indices.z+1)) / 2.0 ;
 }
 
 
-CUDA_CALLABLE_MEMBER float_t cudaGetDistance( float3_t& pos1, float3_t& pos2) {
-	float3_t deltaSq;
-	deltaSq.x = (pos1.x - pos2.x)*(pos1.x - pos2.x);
-	deltaSq.y = (pos1.y - pos2.y)*(pos1.y - pos2.y);
-	deltaSq.z = (pos1.z - pos2.z)*(pos1.z - pos2.z);
-	return sqrtf( deltaSq.x + deltaSq.y + deltaSq.z );
+CUDA_CALLABLE_MEMBER float_t cudaGetDistance( MonteRay::Vector3D<gpuRayFloat_t>& pos1, MonteRay::Vector3D<gpuRayFloat_t>& pos2) {
+	MonteRay::Vector3D<gpuRayFloat_t> delta = pos1 - pos2;
+	return delta.magnitude();
 }
 
 
-CUDADEVICE_CALLABLE_MEMBER void cudaGetDistancesToAllCenters2(const GridBins* const grid, float_t* distances, float3_t pos) {
+CUDADEVICE_CALLABLE_MEMBER void cudaGetDistancesToAllCenters2(const GridBins* const grid, gpuRayFloat_t* distances, MonteRay::Vector3D<gpuRayFloat_t> pos) {
 	unsigned N = grid->numXY*grid->num[2];
-	float3 pixelPoint;
+	MonteRay::Vector3D<gpuRayFloat_t> pixelPoint;
 	uint3 indices;
 
 #ifdef __CUDA__
@@ -79,10 +76,10 @@ CUDADEVICE_CALLABLE_MEMBER void cudaGetDistancesToAllCenters2(const GridBins* co
 }
 
 
-CUDA_CALLABLE_KERNEL void kernelGetDistancesToAllCenters(void* ptrGrid,  void* ptrDistances, float_t x, float_t y, float_t z) {
-	float3_t pos = make_float3(x,y,z);
+CUDA_CALLABLE_KERNEL void kernelGetDistancesToAllCenters(void* ptrGrid,  void* ptrDistances, gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z) {
+	MonteRay::Vector3D<gpuRayFloat_t> pos(x,y,z);
 	GridBins* grid = (GridBins*) ptrGrid;
-	float_t* distances = (float_t*) ptrDistances;
+	gpuRayFloat_t* distances = (gpuRayFloat_t*) ptrDistances;
 	cudaGetDistancesToAllCenters2(grid, distances, pos);
 }
 
@@ -107,7 +104,8 @@ CUDA_CALLABLE_MEMBER unsigned cudaGetNumBins(const GridBins* const grid, unsigne
 	return grid->num[dim];
 }
 
-CUDA_CALLABLE_MEMBER unsigned cudaGetIndexBinaryFloat(const float_t* const values, unsigned count, float_t value ) {
+template<typename T1,typename T2>
+CUDA_CALLABLE_MEMBER unsigned cudaGetIndexBinaryFloat(const T1* const values, unsigned count, T2 value ) {
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
     unsigned it, step;
     unsigned first = 0U;
@@ -116,7 +114,7 @@ CUDA_CALLABLE_MEMBER unsigned cudaGetIndexBinaryFloat(const float_t* const value
         it = first;
         step = count / 2U;
         it += step;
-        if(!(value < values[it])) {
+        if(!(value < T2(values[it])) ) {
             first = ++it;
             count -= step + 1;
         } else {
@@ -126,8 +124,12 @@ CUDA_CALLABLE_MEMBER unsigned cudaGetIndexBinaryFloat(const float_t* const value
     if( first > 0U ) { --first; }
     return first;
 }
+template CUDA_CALLABLE_MEMBER unsigned cudaGetIndexBinaryFloat(const float_t* const values, unsigned count, float_t value );
+template CUDA_CALLABLE_MEMBER unsigned cudaGetIndexBinaryFloat(const float_t* const values, unsigned count, double_t value );
+template CUDA_CALLABLE_MEMBER unsigned cudaGetIndexBinaryFloat(const double_t* const values, unsigned count, double_t value );
 
-CUDA_CALLABLE_MEMBER int cudaGetDimIndex(const GridBins* const grid, unsigned dim, float_t pos ) {
+
+CUDA_CALLABLE_MEMBER int cudaGetDimIndex(const GridBins* const grid, unsigned dim, gpuRayFloat_t pos ) {
      // returns -1 for one neg side of mesh
      // and number of bins on the pos side of the mesh
      // need to call isIndexOutside(dim, grid, index) to check if the
@@ -135,7 +137,7 @@ CUDA_CALLABLE_MEMBER int cudaGetDimIndex(const GridBins* const grid, unsigned di
 	const bool debug = false;
 
 	int dim_index;
-	float_t minimum = cudaMin(grid, dim);
+	gpuRayFloat_t minimum = cudaMin(grid, dim);
 	unsigned numBins = grid->num[dim];
 
 	if( debug ) {
@@ -157,7 +159,7 @@ CUDA_CALLABLE_MEMBER int cudaGetDimIndex(const GridBins* const grid, unsigned di
 		dim_index = numBins;
 	} else {
 		if( grid->isRegular[dim] ) {
-			dim_index = ( pos -  minimum ) / grid->delta[dim];
+			dim_index = ( pos -  minimum ) / gpuRayFloat_t(grid->delta[dim]);
 		} else {
 			dim_index = cudaGetIndexBinaryFloat( grid->vertices + grid->offset[dim], numBins+1, pos  );
 		}
@@ -198,17 +200,17 @@ CUDA_CALLABLE_MEMBER bool cudaIsOutside(const GridBins* const grid, int* indices
 }
 
 
-CUDA_CALLABLE_MEMBER unsigned cudaGetIndex(const GridBins* const grid, const float3_t& pos) {
+CUDA_CALLABLE_MEMBER unsigned cudaGetIndex(const GridBins* const grid, const MonteRay::Vector3D<gpuRayFloat_t>& pos) {
 
 	uint3 indices;
 
-	indices.x = cudaGetDimIndex(grid, 0, pos.x);
+	indices.x = cudaGetDimIndex(grid, 0, pos[0]);
 	if( cudaIsIndexOutside(grid, 0, indices.x) ) { return UINT_MAX; }
 
-	indices.y = cudaGetDimIndex(grid, 1, pos.y);
+	indices.y = cudaGetDimIndex(grid, 1, pos[1]);
 	if( cudaIsIndexOutside(grid, 1, indices.y) ) { return UINT_MAX; }
 
-	indices.z = cudaGetDimIndex(grid, 2, pos.z);
+	indices.z = cudaGetDimIndex(grid, 2, pos[2]);
 	if( cudaIsIndexOutside(grid, 2, indices.z) ) { return UINT_MAX; }
 
     return cudaCalcIndex(grid, indices );

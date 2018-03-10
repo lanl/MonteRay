@@ -1,25 +1,57 @@
 #include "MonteRayDefinitions.hh"
-#include "cudaGridBins.h"
+#include "cudaGridBins.hh"
 #include "MonteRayConstants.hh"
+#include "MonteRayVector3D.hh"
 
 namespace MonteRay{
 
 CUDA_CALLABLE_MEMBER unsigned
-cudaCalcCrossings(const float_t* const vertices, unsigned nVertices,
-				int* cells, float_t* distances, float_t pos, float_t dir,
-				float_t distance, int index );
+cudaCalcCrossings(
+		const float_t* const vertices,
+		unsigned nVertices,
+		int* cells,
+		gpuRayFloat_t* distances,
+		gpuRayFloat_t pos,
+		gpuRayFloat_t dir,
+		gpuRayFloat_t distance,
+		int index
+);
 
 CUDA_CALLABLE_MEMBER unsigned
-cudaOrderCrossings(const GridBins* const grid, int* global_indices,
-		float_t* distances, unsigned num, const int* const cells,
-		const float_t* const crossingDistances, const uint3& numCrossings,
-		const int3& cudaindices, float_t distance,
-		bool outsideDistances );
+cudaOrderCrossings(
+		const GridBins* const grid,
+		int* global_indices,
+		gpuRayFloat_t* distances,
+		unsigned num,
+		const int* const cells,
+		const gpuRayFloat_t* const crossingDistances,
+		const uint3& numCrossings,
+		const int3& cudaindices,
+		gpuRayFloat_t distance,
+		bool outsideDistances
+);
 
 CUDA_CALLABLE_MEMBER unsigned
-cudaRayTrace(const GridBins* const grid, int* global_indices, float_t* distances,
-		const float3_t& pos, const float3_t& dir, float_t distance,
-		bool outsideDistances);
+cudaRayTrace(
+		const GridBins* const grid,
+		int* global_indices,
+		gpuRayFloat_t* distances,
+		const float3_t& pos,
+		const float3_t& dir,
+		gpuRayFloat_t distance,
+		bool outsideDistances
+);
+
+CUDA_CALLABLE_MEMBER unsigned
+cudaRayTrace(
+		const GridBins* const grid,
+		int* global_indices,
+		gpuRayFloat_t* distances,
+		const MonteRay::Vector3D<gpuRayFloat_t>& pos,
+		const MonteRay::Vector3D<gpuRayFloat_t>& dir,
+		gpuRayFloat_t distance,
+		bool outsideDistances
+);
 
 CUDA_CALLABLE_KERNEL void kernelCudaRayTrace(void* ptrNumCrossings,
 		                           void* ptrGrid,
