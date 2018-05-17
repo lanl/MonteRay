@@ -33,8 +33,8 @@ public:
     using pGridInfo_t = GridBins_t*;
     using pArrayOfpGridInfo_t = pGridInfo_t[3];
 
-    typedef Vector3D<gpuFloatType_t> Position_t;
-    typedef Vector3D<gpuFloatType_t> Direction_t;
+    typedef Vector3D<gpuRayFloat_t> Position_t;
+    typedef Vector3D<gpuRayFloat_t> Direction_t;
     // rayTraceList_t -- defined in GridSystemInterface
 
 	//TRA/JES Move to GridBins -- ?
@@ -142,26 +142,26 @@ public:
     void setDimension( unsigned dim);
 
     CUDAHOST_CALLABLE_MEMBER
-    void setGrid( unsigned index, gpuFloatType_t min, gpuFloatType_t max, unsigned numBins );
+    void setGrid( unsigned index, gpuRayFloat_t min, gpuRayFloat_t max, unsigned numBins );
 
     CUDAHOST_CALLABLE_MEMBER
-    void setGrid( unsigned index, const std::vector<gpuFloatType_t>& vertices );
+    void setGrid( unsigned index, const std::vector<gpuRayFloat_t>& vertices );
 
     CUDA_CALLABLE_MEMBER
     unsigned getNumGridBins( unsigned index ) const;
 
     CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getMinVertex( unsigned index ) const;
+    gpuRayFloat_t getMinVertex( unsigned index ) const;
 
     CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getMaxVertex( unsigned index ) const;
+    gpuRayFloat_t getMaxVertex( unsigned index ) const;
 
     CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getDelta(unsigned index) const;
+    gpuRayFloat_t getDelta(unsigned index) const;
 
     CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getVertex(unsigned d, unsigned i ) const;
-    //const std::vector<gpuFloatType_t>& getVertices( unsigned d) const { return gridInfo.at(d).vertices; }
+    gpuRayFloat_t getVertex(unsigned d, unsigned i ) const;
+    //const std::vector<gpuRayFloat_t>& getVertices( unsigned d) const { return gridInfo.at(d).vertices; }
 
     CUDA_CALLABLE_MEMBER
     unsigned getNumCells(void) const;
@@ -210,10 +210,10 @@ public:
     }
 
     CUDA_CALLABLE_MEMBER
-    gpuFloatType_t returnCellVolume( unsigned index ) const { return getVolume( index ); }
+    gpuRayFloat_t returnCellVolume( unsigned index ) const { return getVolume( index ); }
 
     CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getVolume( unsigned index ) const {
+    gpuRayFloat_t getVolume( unsigned index ) const {
         MONTERAY_ASSERT( pGridSystem );
         return pGridSystem->getVolume( index );
     }
@@ -221,13 +221,13 @@ public:
     template<class Particle>
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace(rayTraceList_t& rayTraceList, const Particle& p, gpuFloatType_t distance, bool OutsideDistances=false) const {
+    rayTrace(rayTraceList_t& rayTraceList, const Particle& p, gpuRayFloat_t distance, bool OutsideDistances=false) const {
         return rayTrace( rayTraceList, p.getPosition(), p.getDirection(), distance, OutsideDistances );
     }
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuFloatType_t distance, bool OutsideDistances=false) const {
+    rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const {
     	//if( debug ) printf( "Debug: MonteRay_SpatialGrid::rayTrace -- \n");
     	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
@@ -241,7 +241,7 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance) const {
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance) const {
     	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
 //        if( transform ) {

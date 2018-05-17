@@ -7,6 +7,7 @@
 
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRay_CartesianGrid.hh"
+#include "MonteRay_SphericalGrid.hh"
 #include "MonteRay_binaryIO.hh"
 
 #ifndef __CUDA_ARCH__
@@ -153,7 +154,6 @@ void MonteRay_SpatialGrid::initialize(void) {
 #else
             ABORT( "MonteRay_SpatialGrid:: initialize -- Grid data is not allocated!!!\n" );
 #endif
-            break;
         }
     }
 
@@ -169,7 +169,6 @@ void MonteRay_SpatialGrid::initialize(void) {
 #else
             ABORT( "MonteRay_SpatialGrid:: initialize -- Grid vertices is not set!!!\n" );
 #endif
-            break;
         }
     }
 
@@ -202,9 +201,10 @@ void MonteRay_SpatialGrid::initialize(void) {
 //                break;
 //            }
 
-//        case TransportMeshTypeEnum::Spherical:
-//            pGridSystem.reset( new MonteRay_SphericalGrid(1,gridInfo) );
-//            break;
+        case TransportMeshTypeEnum::Spherical:
+        	if( pGridSystem ) delete pGridSystem;
+            pGridSystem = new MonteRay_SphericalGrid(1,pGridInfo);
+            break;
 
         default:
 #ifndef __CUDA_ARCH__
@@ -217,7 +217,6 @@ void MonteRay_SpatialGrid::initialize(void) {
 #else
             ABORT( "MonteRay_SpatialGrid:: initialize -- Unknown coordinate system or coordinate system is not set!!!\n" );
 #endif
-            break;
     }
 
     // Test for too many cells
@@ -233,7 +232,7 @@ MonteRay_SpatialGrid::setDimension( unsigned dim) {
 
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRay_SpatialGrid::setGrid( unsigned index, gpuFloatType_t min, gpuFloatType_t max, unsigned numBins ) {
+MonteRay_SpatialGrid::setGrid( unsigned index, gpuRayFloat_t min, gpuRayFloat_t max, unsigned numBins ) {
     checkDim( index+1 );
     if( debug ) printf( "Debug: MonteRay_SpatialGrid::setGrid -- index =%d\n", index);
     if( pGridInfo[index] ) delete pGridInfo[index];
@@ -243,7 +242,7 @@ MonteRay_SpatialGrid::setGrid( unsigned index, gpuFloatType_t min, gpuFloatType_
 
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRay_SpatialGrid::setGrid( unsigned index, const std::vector<gpuFloatType_t>& vertices ) {
+MonteRay_SpatialGrid::setGrid( unsigned index, const std::vector<gpuRayFloat_t>& vertices ) {
     checkDim( index+1 );
     if( pGridInfo[index] ) delete pGridInfo[index];
     pGridInfo[index] = new GridBins_t();
@@ -264,21 +263,21 @@ MonteRay_SpatialGrid::getNumGridBins( unsigned index ) const {
 }
 
 CUDA_CALLABLE_MEMBER
-gpuFloatType_t
+gpuRayFloat_t
 MonteRay_SpatialGrid::getMinVertex( unsigned index ) const {
     checkDim( index+1 );
     return pGridInfo[index]->getMinVertex();
 }
 
 CUDA_CALLABLE_MEMBER
-gpuFloatType_t
+gpuRayFloat_t
 MonteRay_SpatialGrid::getMaxVertex( unsigned index ) const {
     checkDim( index+1 );
     return pGridInfo[index]->getMaxVertex();
 }
 
 CUDA_CALLABLE_MEMBER
-gpuFloatType_t
+gpuRayFloat_t
 MonteRay_SpatialGrid::getDelta(unsigned index) const {
     checkDim( index+1 );
     return pGridInfo[index]->getDelta();
@@ -370,7 +369,7 @@ MonteRay_SpatialGrid::getNumCells(void) const {
 //}
 
 CUDA_CALLABLE_MEMBER
-gpuFloatType_t
+gpuRayFloat_t
 MonteRay_SpatialGrid::getVertex(unsigned d, unsigned i ) const {
     if( d > dimension ) {
 #ifndef __CUDA_ARCH__
