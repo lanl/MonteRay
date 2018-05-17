@@ -14,11 +14,11 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
 
    	TEST_FIXTURE(SpatialGridGPUTester, set_Vertices ){
         //CHECK(false);
-        std::vector<gpuFloatType_t> vertices= {
+        std::vector<gpuRayFloat_t> vertices= {
         		    -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
                       0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
-        std::vector<gpuFloatType_t> verticesZ= {
+        std::vector<gpuRayFloat_t> verticesZ= {
         		-10,  -1,  0,  1, 10};
 
         setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
@@ -41,7 +41,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         grid.setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
         grid.setDimension( 3 );
 
-        std::vector<gpuFloatType_t> vertices= {
+        std::vector<gpuRayFloat_t> vertices= {
                 		    -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
                               0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
         grid.setGrid( MonteRay_SpatialGrid::CART_X, vertices);
@@ -74,9 +74,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
         setDimension( 3 );
 
-        std::vector<gpuFloatType_t> Xvertices = { -10, -1, 1, 10 };
-        std::vector<gpuFloatType_t> Yvertices = { -20, -1, 0, 1, 10 };
-        std::vector<gpuFloatType_t> Zvertices = { -30, -2, -1, 0, 1, 2, 30 };
+        std::vector<gpuRayFloat_t> Xvertices = { -10, -1, 1, 10 };
+        std::vector<gpuRayFloat_t> Yvertices = { -20, -1, 0, 1, 10 };
+        std::vector<gpuRayFloat_t> Zvertices = { -30, -2, -1, 0, 1, 2, 30 };
 
         setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
         setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -101,9 +101,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         setDimension( 3 );
         setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
-        std::vector<gpuFloatType_t> Xvertices = { -10, -1, 1, 10 };
-        std::vector<gpuFloatType_t> Yvertices = { -20, -1, 0, 1, 10 };
-        std::vector<gpuFloatType_t> Zvertices = { -30, -2, -1, 0, 1, 2, 30 };
+        std::vector<gpuRayFloat_t> Xvertices = { -10, -1, 1, 10 };
+        std::vector<gpuRayFloat_t> Yvertices = { -20, -1, 0, 1, 10 };
+        std::vector<gpuRayFloat_t> Zvertices = { -30, -2, -1, 0, 1, 2, 30 };
 
         setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
         setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -118,9 +118,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
          setDimension( 3 );
          setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
-         std::vector<gpuFloatType_t> Xvertices = { -10, -1, 1, 10 };
-         std::vector<gpuFloatType_t> Yvertices = { -10, -1, 1, 10 };
-         std::vector<gpuFloatType_t> Zvertices = { -10, -1, 1, 10 };
+         std::vector<gpuRayFloat_t> Xvertices = { -10, -1, 1, 10 };
+         std::vector<gpuRayFloat_t> Yvertices = { -10, -1, 1, 10 };
+         std::vector<gpuRayFloat_t> Zvertices = { -10, -1, 1, 10 };
 
          setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
          setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -146,9 +146,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         setDimension( 3 );
         setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
-        std::vector<gpuFloatType_t> Xvertices = { -10, -1, 1, 10 };
-        std::vector<gpuFloatType_t> Yvertices = {  -2, -1, 1,  2 };
-        std::vector<gpuFloatType_t> Zvertices = { -10, -1, 1, 20 };
+        std::vector<gpuRayFloat_t> Xvertices = { -10, -1, 1, 10 };
+        std::vector<gpuRayFloat_t> Yvertices = {  -2, -1, 1,  2 };
+        std::vector<gpuRayFloat_t> Zvertices = { -10, -1, 1, 20 };
 
         setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
         setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -183,9 +183,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         setDimension( 3 );
         setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
-        std::vector<gpuFloatType_t> Xvertices = { -10, -1, 1, 10 };
-        std::vector<gpuFloatType_t> Yvertices = { -10, -1, 1, 10 };
-        std::vector<gpuFloatType_t> Zvertices = { -10, -1, 1, 10 };
+        std::vector<gpuRayFloat_t> Xvertices = { -10, -1, 1, 10 };
+        std::vector<gpuRayFloat_t> Yvertices = { -10, -1, 1, 10 };
+        std::vector<gpuRayFloat_t> Zvertices = { -10, -1, 1, 10 };
 
         setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
         setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -219,9 +219,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
     	grid.setDimension( 3 );
     	grid.setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
-    	std::vector<gpuFloatType_t> Xvertices = { -10, -1, 1, 10 };
-    	std::vector<gpuFloatType_t> Yvertices = { -10, -1, 1, 10 };
-    	std::vector<gpuFloatType_t> Zvertices = { -10, -1, 1, 10 };
+    	std::vector<gpuRayFloat_t> Xvertices = { -10, -1, 1, 10 };
+    	std::vector<gpuRayFloat_t> Yvertices = { -10, -1, 1, 10 };
+    	std::vector<gpuRayFloat_t> Zvertices = { -10, -1, 1, 10 };
 
     	grid.setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
     	grid.setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -262,9 +262,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
          setDimension( 3 );
          setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
-         std::vector<gpuFloatType_t> Xvertices = { -1, 0, 1 };
-         std::vector<gpuFloatType_t> Yvertices = { -1, 0, 1 };
-         std::vector<gpuFloatType_t> Zvertices = { -1, 0, 1 };
+         std::vector<gpuRayFloat_t> Xvertices = { -1, 0, 1 };
+         std::vector<gpuRayFloat_t> Yvertices = { -1, 0, 1 };
+         std::vector<gpuRayFloat_t> Zvertices = { -1, 0, 1 };
 
          setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
          setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -280,7 +280,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
          Grid_t::Position_t position (  -1.5, -0.5, -0.5 );
          Grid_t::Position_t direction(    1,   0,    0 );
          direction.normalize();
-         gpuFloatType_t distance = 2.0;
+         gpuRayFloat_t distance = 2.0;
 
          rayTraceList_t distances = rayTrace( position, direction, distance);
 
@@ -298,9 +298,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         setDimension( 3 );
         setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 
-        std::vector<gpuFloatType_t> Xvertices = { -1, 0, 1 };
-        std::vector<gpuFloatType_t> Yvertices = { -1, 0, 1 };
-        std::vector<gpuFloatType_t> Zvertices = { -1, 0, 1 };
+        std::vector<gpuRayFloat_t> Xvertices = { -1, 0, 1 };
+        std::vector<gpuRayFloat_t> Yvertices = { -1, 0, 1 };
+        std::vector<gpuRayFloat_t> Zvertices = { -1, 0, 1 };
 
         setGrid( MonteRay_SpatialGrid::CART_X, Xvertices);
         setGrid( MonteRay_SpatialGrid::CART_Y, Yvertices);
@@ -312,7 +312,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         Grid_t::Position_t position (  -1.5, -0.5, -0.5 );
         Grid_t::Position_t direction(    1,   0,    0 );
         direction.normalize();
-        gpuFloatType_t distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
         particle p;
         p.pos = position;

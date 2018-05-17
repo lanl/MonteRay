@@ -12,7 +12,7 @@ using namespace MonteRay;
 
 SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
-	typedef Vector3D<gpuFloatType_t> Position_t;
+	typedef Vector3D<gpuRayFloat_t> Position_t;
 	using GridBins_t = MonteRay_GridBins;
 	enum coord {X,Y,Z,DIM};
 
@@ -20,7 +20,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 	public:
 
 		gridTestData(){
-			std::vector<gpuFloatType_t> vertices{
+			std::vector<gpuRayFloat_t> vertices{
 				-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 				0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -54,7 +54,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position ( -9.5, -9.5,  -9.5 );
 		Position_t direction(    1,   0,    0 );
-		gpuFloatType_t distance = 1.0;
+		gpuRayFloat_t distance = 1.0;
 
 		rayTraceList_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -73,7 +73,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position ( -8.5, -9.5,  -9.5 );
 		Position_t direction(    -1,   0,    0 );
-		gpuFloatType_t distance = 1.0;
+		gpuRayFloat_t distance = 1.0;
 
 		rayTrace_t distances;
 		cart.rayTrace( distances, position, direction, distance);
@@ -91,7 +91,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position ( -10.5, 0.5,  0.5 );
 		Position_t direction(    -1,   0,    0 );
-		gpuFloatType_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		rayTrace_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -105,7 +105,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position (  10.5, 0.5,  0.5 );
 		Position_t direction(    1,   0,    0 );
-		gpuFloatType_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		rayTrace_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -119,7 +119,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position ( -10.5, -9.5,  -9.5 );
 		Position_t direction(    1,   0,    0 );
-		gpuFloatType_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		rayTrace_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -139,7 +139,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position (  10.5, -9.5,  -9.5 );
 		Position_t direction(    -1,   0,    0 );
-		gpuFloatType_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		rayTrace_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -157,7 +157,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position (  -10.5, -9.5,  -9.5 );
 		Position_t direction(    1,   0,    0 );
-		gpuFloatType_t distance = 21.0;
+		gpuRayFloat_t distance = 21.0;
 
 		rayTrace_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -180,7 +180,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position (  -8.5, -9.5,  -9.5 );
 		Position_t direction(    -1,   0,    0 );
-		gpuFloatType_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		rayTrace_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -197,7 +197,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position (  8.5, -9.5, -9.5 );
 		Position_t direction(    1,   0,    0 );
-		gpuFloatType_t distance = 2.0;
+		gpuRayFloat_t distance = 2.0;
 
 		rayTrace_t distances;
 		cart.rayTrace(distances, position, direction, distance);
@@ -224,7 +224,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 			delete data[Z];
 		}
 
-		void initialize( coord d, gpuFloatType_t min, gpuFloatType_t max, unsigned nBins ){
+		void initialize( coord d, gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins ){
 			data[d]->initialize( min, max, nBins );
 		}
 
@@ -243,7 +243,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  -0.5, -.25, -0.5 );
 		Position_t direction(    1,   1,    0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -268,7 +268,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  0.25, 0.5, -0.5 );
 		Position_t direction(  -1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -293,7 +293,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  -0.5, -.25, -0.5 );
 		Position_t direction(    1,   1,    0 );
 		direction.normalize();
-		gpuFloatType_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
+		gpuRayFloat_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -317,7 +317,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  0.25, 0.5, -0.5 );
 		Position_t direction(  -1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
+		gpuRayFloat_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -342,7 +342,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  -1.5, -1.25, -0.5 );
 		Position_t direction(  1.0, 1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -368,7 +368,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  1.25, 1.50, -0.5 );
 		Position_t direction(  -1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -392,7 +392,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position (  -1.5, -.5, -1.5 );
 		Position_t direction(  1.0,  0.0,  0.0 );
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -410,7 +410,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		Position_t position (  1.5, -.5, -1.5 );
 		Position_t direction(  1.0,  0.0,  0.0 );
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -430,7 +430,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  -.5, -.5, -.5 );
 		Position_t direction(  1.0,  1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 1.0*std::sqrt(2.0);
+		gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -454,7 +454,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  .5, .5, -.5 );
 		Position_t direction(  -1.0,  -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 1.0*std::sqrt(2.0);
+		gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -478,7 +478,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   0.0, -.5, -.5 );
 		Position_t direction(   1.0,  0.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 1.5;
+		gpuRayFloat_t distance = 1.5;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -500,7 +500,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   0.0, -.5, -.5 );
 		Position_t direction(  -1.0,  0.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 1.5;
+		gpuRayFloat_t distance = 1.5;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -522,7 +522,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position ( -1.0, -.5, -.5 );
 		Position_t direction(  1.0,  0.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 1.5;
+		gpuRayFloat_t distance = 1.5;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -546,7 +546,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  1.0, -.5, -.5 );
 		Position_t direction( -1.0,  0.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 1.5;
+		gpuRayFloat_t distance = 1.5;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -569,7 +569,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  1.0, 1.0, 0.5 );
 		Position_t direction(  1.0, 1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -586,9 +586,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 	}
 
 
-	const gpuFloatType_t s2 = std::sqrt(2.0);
+	const gpuRayFloat_t s2 = std::sqrt(2.0);
 	void checkDistances( const std::vector<unsigned>& expectedIndex,
-			const std::vector<gpuFloatType_t>& expectedDistance, const rayTrace_t& distances )
+			const std::vector<gpuRayFloat_t>& expectedDistance, const rayTrace_t& distances )
 	{
 		CHECK_EQUAL( expectedIndex.size(), expectedDistance.size() );
 		CHECK_EQUAL( expectedIndex.size(), distances.size() );
@@ -609,7 +609,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  2.0, 2.0, 0.5 );
 		Position_t direction(  -1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -618,7 +618,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
 		CHECK_EQUAL( 5, distances.size() );
 		std::vector<unsigned> expectedIndex{ 8, 7, 4, 3, 0 };
-		std::vector<gpuFloatType_t> expectedDistance{ 0, 0, s2, 0, s2 };
+		std::vector<gpuRayFloat_t> expectedDistance{ 0, 0, s2, 0, s2 };
 		checkDistances( expectedIndex, expectedDistance, distances );
 	}
 
@@ -632,7 +632,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   1.0, 2.0, 0.5 );
 		Position_t direction(   1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -652,7 +652,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   2.0, 1.0, 0.5 );
 		Position_t direction(  -1.0, 1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -673,7 +673,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   0.0, 0.0, 0.5 );
 		Position_t direction(   1.0, 1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -693,7 +693,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   3.0,  3.0, 0.5 );
 		Position_t direction(  -1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -713,7 +713,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   3.0,  0.0, 0.5 );
 		Position_t direction(  -1.0,  1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -733,7 +733,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   0.0,  3.0, 0.5 );
 		Position_t direction(   1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -743,7 +743,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		CHECK_EQUAL( 5, distances.size() );
 		checkDistances( {6,7,4,5,2}, {s2,0,s2,0,s2}, distances );
 	}
-	const gpuFloatType_t s3 = std::sqrt(3.0);
+	const gpuRayFloat_t s3 = std::sqrt(3.0);
 	TEST( rayTrace_3D_start_on_an_external_corner_posX_posY_posZ ) {
 		//         std::cout << "Debug: ---------------------------------------" << std::endl;
 		gridInfoTestData pGridInfo;
@@ -754,7 +754,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   0.0, 0.0, 0.0 );
 		Position_t direction(   1.0, 1.0, 1.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -774,7 +774,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  -1.0, -1.0, 0.5 );
 		Position_t direction(   1.0, 1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -795,7 +795,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  -1.0, 4.0, 0.5 );
 		Position_t direction(   1.0,-1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -815,7 +815,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   4.0,-1.0, 0.5 );
 		Position_t direction(  -1.0, 1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -836,7 +836,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (   4.0,  4.0, 0.5 );
 		Position_t direction(  -1.0, -1.0,  0.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -857,7 +857,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (  -1.0, -1.0, -1.0 );
 		Position_t direction(   1.0, 1.0, 1.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -878,7 +878,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (    4.0,  4.0,  4.0 );
 		Position_t direction(   -1.0, -1.0, -1.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 
@@ -899,7 +899,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 		Position_t position (    4.0,  4.0,  4.0 );
 		Position_t direction(   -1.0, -1.0, -1.0 );
 		direction.normalize();
-		gpuFloatType_t distance = 10.0;
+		gpuRayFloat_t distance = 10.0;
 
 		CartesianGrid cart(3,pGridInfo.data);
 

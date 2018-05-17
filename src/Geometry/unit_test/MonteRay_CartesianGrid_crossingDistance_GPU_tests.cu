@@ -12,7 +12,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     typedef singleDimRayTraceMap_t distances_t;
     typedef singleDimRayTraceMap_t rayTraceMap_t;
     TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_in_1D_PosXDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -26,7 +26,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position ( -9.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
-        gpuFloatType_t distance = 1.0;
+        gpuRayFloat_t distance = 1.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -39,7 +39,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
 
     TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_in_1D_NegXDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -53,7 +53,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position ( -8.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
-        gpuFloatType_t distance = 1.0;
+        gpuRayFloat_t distance = 1.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -65,7 +65,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Outside_negSide_negDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -79,7 +79,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position ( -10.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
-        gpuFloatType_t distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -87,7 +87,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Outside_posSide_posDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -101,7 +101,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
-        gpuFloatType_t distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -109,7 +109,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Outside_negSide_posDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -123,7 +123,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position ( -10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
-        gpuFloatType_t distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -137,7 +137,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Outside_posSide_negDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -151,7 +151,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
-        gpuFloatType_t distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -165,7 +165,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -179,7 +179,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position (  -10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
-        gpuFloatType_t distance = 21.0;
+        gpuRayFloat_t distance = 21.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -202,7 +202,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Crossing_entire_grid_starting_outside_finish_outside_neg_dir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -216,7 +216,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(   -1,   0,    0 );
-        gpuFloatType_t distance = 21.0;
+        gpuRayFloat_t distance = 21.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -238,7 +238,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Inside_cross_out_negDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -252,7 +252,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position (  -8.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
-        gpuFloatType_t distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -266,7 +266,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Inside_cross_out_posDir ) {
-		std::vector<gpuFloatType_t> vertices= {
+		std::vector<gpuRayFloat_t> vertices= {
 		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
@@ -280,7 +280,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         Position_t position (  8.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
-        gpuFloatType_t distance = 2.0;
+        gpuRayFloat_t distance = 2.0;
 
         distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
 
@@ -305,7 +305,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         Position_t position (  -.5, -.5, -.5 );
         Position_t direction(  1.0,  1.0,  0.0 );
         direction.normalize();
-        gpuFloatType_t distance = 1.0*std::sqrt(2.0);
+        gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
         unsigned dim = 0;
         distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
@@ -340,7 +340,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         Position_t position (  0.0, 0.0, 0.5 );
         Position_t direction(  1.0,  1.0,  0.0 );
         direction.normalize();
-        gpuFloatType_t distance = 10.0;
+        gpuRayFloat_t distance = 10.0;
 
         unsigned dim = 0;
         distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
@@ -386,7 +386,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     	Position_t position (  3.0,  3.0, 0.5 );
     	Position_t direction( -1.0, -1.0, 0.0 );
     	direction.normalize();
-    	gpuFloatType_t distance = 10.0;
+    	gpuRayFloat_t distance = 10.0;
 
     	unsigned dim = 0;
     	distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
@@ -432,7 +432,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     	Position_t position ( -1.0, -1.0, 0.5 );
     	Position_t direction(  1.0,  1.0, 0.0 );
     	direction.normalize();
-    	gpuFloatType_t distance = 10.0;
+    	gpuRayFloat_t distance = 10.0;
 
     	unsigned dim = 0;
     	distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
@@ -479,7 +479,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     	Position_t position (  4.0,  4.0, 0.5 );
     	Position_t direction( -1.0, -1.0, 0.0 );
     	direction.normalize();
-    	gpuFloatType_t distance = 10.0;
+    	gpuRayFloat_t distance = 10.0;
 
     	unsigned dim = 0;
     	distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);

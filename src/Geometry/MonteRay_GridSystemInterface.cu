@@ -15,7 +15,7 @@ namespace MonteRay {
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t& distances, int indices[], gpuFloatType_t distance, bool outsideDistances ) const {
+MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances ) const {
     // Order the distance crossings to provide a rayTrace
 
     const bool debug = false;
@@ -47,10 +47,10 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
     // reset raylist
     rayTraceList.reset();
 
-    gpuFloatType_t minDistances[MAXDIM];
+    gpuRayFloat_t minDistances[MAXDIM];
 
     bool outside;
-    gpuFloatType_t priorDistance = 0.0;
+    gpuRayFloat_t priorDistance = 0.0;
     unsigned start[3] = {0, 0, 0}; // current location in the distance[i] vector
     for( unsigned i=0; i<maxNumCrossings; ++i){
 
@@ -70,7 +70,7 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
 
         //unsigned minDim = std::distance(minDistances, std::min_element(minDistances,minDistances+DIM) );
         unsigned minDim = 0;
-        gpuFloatType_t minDist = minDistances[0];
+        gpuRayFloat_t minDist = minDistances[0];
         for( unsigned i = 1; i<DIM; ++i){
         	if( minDistances[i] < minDist ) {
         		minDim = i;
@@ -92,11 +92,11 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
             if( !outside ) printf( "Debug: ray is inside \n" );
         }
 
-        //gpuFloatType_t currentDistance = distances[minDim][start[minDim]].second;
-        gpuFloatType_t currentDistance = distances[minDim].dist( start[minDim] );
+        //gpuRayFloat_t currentDistance = distances[minDim][start[minDim]].second;
+        gpuRayFloat_t currentDistance = distances[minDim].dist( start[minDim] );
 
         if( !outside || outsideDistances ) {
-        	gpuFloatType_t deltaDistance = currentDistance - priorDistance;
+        	gpuRayFloat_t deltaDistance = currentDistance - priorDistance;
 
                 unsigned global_index;
                 if( !outside ) {
@@ -152,10 +152,10 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance, int index) const {
+MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, int index) const {
 	const bool debug = false;
 
-	//	constexpr gpuFloatType_t epsilon = std::numeric_limits<gpuFloatType_t>::epsilon();
+	//	constexpr gpuRayFloat_t epsilon = std::numeric_limits<gpuRayFloat_t>::epsilon();
     if( abs(dir) <= FLT_EPSILON ) { return; }
 
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
@@ -193,14 +193,14 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
     int current_index = start_index;
 
     // Calculate boundary crossing distances
-    gpuFloatType_t invDir = 1/dir;
+    gpuRayFloat_t invDir = 1/dir;
     bool rayTerminated = false;
     for( int i = 0; i < num_indices ; ++i ) {
 
     	//MONTERAY_ASSERT( (current_index + offset) >= 0 );
     	MONTERAY_ASSERT( (current_index + offset) < Bins.getNumBins()+1 );
 
-        gpuFloatType_t minDistance = ( Bins.vertices[current_index + offset] - pos) * invDir;
+        gpuRayFloat_t minDistance = ( Bins.vertices[current_index + offset] - pos) * invDir;
 
         //if( rayDistance == inf ) {
         //    // ray doesn't cross plane
@@ -230,7 +230,7 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
 
 CUDA_CALLABLE_MEMBER
 bool
-MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuFloatType_t particle_R2, gpuFloatType_t A, gpuFloatType_t B, gpuFloatType_t distance, int index, bool outward ) const {
+MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index, bool outward ) const {
 
     // If outside and moving out then return
     if( outward && index >= Bins.getNumBins() ) {
@@ -270,12 +270,12 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
     	MONTERAY_ASSERT( (current_index + offset) >= 0 );
     	MONTERAY_ASSERT( (current_index + offset) < Bins.getNumBins() );
 
-        gpuFloatType_t RadiusSq = Bins.verticesSq[current_index + offset ];
-        gpuFloatType_t C = particle_R2 - RadiusSq;
+        gpuRayFloat_t RadiusSq = Bins.verticesSq[current_index + offset ];
+        gpuRayFloat_t C = particle_R2 - RadiusSq;
 
         Roots rayDistances = FindPositiveRoots(A,B,C);
-        gpuFloatType_t minDistance;
-        gpuFloatType_t maxDistance;
+        gpuRayFloat_t minDistance;
+        gpuRayFloat_t maxDistance;
         if( rayDistances.R1 < rayDistances.R2 ) {
             minDistance = rayDistances.R1;
             maxDistance = rayDistances.R2;
