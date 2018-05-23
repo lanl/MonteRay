@@ -88,6 +88,16 @@ using namespace MonteRay;
    			pGridInfo->copyToGPU();
    		}
 
+   		void sphericalGrid1_setup(void) {
+   			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+   			pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Spherical );
+   			pGridInfo->setDimension( 1 );
+   			pGridInfo->setGrid( MonteRay_SpatialGrid::SPH_R, 0.0, 10.0, 100);
+   			pGridInfo->initialize();
+
+   			pGridInfo->copyToGPU();
+   		}
+
    		void initialize() {
    			pGridInfo->initialize();
    		}
