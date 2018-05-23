@@ -20,18 +20,17 @@
 namespace MonteRay {
 
 
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_GridBins::initialize( const std::vector<gpuRayFloat_t>& bins ) {
-#ifndef __CUDA_ARCH__
 	verticesVec = new std::vector<gpuRayFloat_t>;
 	*verticesVec = bins;
     setup();
-#endif
 }
 
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_GridBins::initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins){
-#ifndef __CUDA_ARCH__
 	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- min =%f\n", min);
 	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- max =%f\n", max);
 	if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- nBins =%d\n", nBins);
@@ -47,7 +46,6 @@ MonteRay_GridBins::initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nB
     }
     if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- calling setup()\n");
     setup();
-#endif
 }
 
 void
@@ -58,9 +56,9 @@ MonteRay_GridBins::removeVertex(unsigned i) {
 #endif
 }
 
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_GridBins::setup(void) {
-#ifndef __CUDA_ARCH__
 	if( debug ) printf( "Debug: MonteRay_GridBins::setup -- verticesVec->size() = %d\n", verticesVec->size());
 	if( verticesVec->size() == 1 ) {
 		minVertex = 0.0;
@@ -75,25 +73,18 @@ MonteRay_GridBins::setup(void) {
 	MONTERAY_VERIFY( verticesVec->size() <= MAXNUMVERTICES, "MonteRay_GridBins::setup -- number of vertices exceeds the max size: MAXNUMVERTICES" )
 
     validate();
-#endif
 }
 
+CUDA_CALLABLE_MEMBER
 void
 MonteRay_GridBins::modifyForRadial(void) {
-#ifndef __CUDA_ARCH__
     if( radialModified ) return;
     radialModified = true;
     type = RADIAL;
 
     // test for negative
     for( unsigned i=0; i< verticesVec->size(); ++i) {
-        if( verticesVec->at(i) < 0.0 ) {
-            std::stringstream msg;
-            msg << " Radial bin edge values must be non-negative!!! " << std::endl
-                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_GridBins::modifyForRadial" << std::endl << std::endl;
-
-            throw std::runtime_error( msg.str() );
-        }
+    	MONTERAY_VERIFY( verticesVec->at(i) >= 0.0, "MonteRay_GridBins::modifyForRadial -- Radial bin edge values must be non-negative!!! " );
     }
 
     // Remove any zero entry
@@ -109,36 +100,18 @@ MonteRay_GridBins::modifyForRadial(void) {
     }
     numBins = verticesVec->size();
     validate();
-#endif
 }
 
+CUDA_CALLABLE_MEMBER
 void
 MonteRay_GridBins::validate() {
-#ifndef __CUDA_ARCH__
-    if( minVertex >= maxVertex ) {
-        std::stringstream msg;
-        msg << " The minimum vertex must be less than the maximum vertex !!! " << std::endl
-            << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_GridBins::modifyForRadial"  << std::endl << std::endl;
 
-        throw std::runtime_error( msg.str() );
-    }
-    if( numBins == 0 ) {
-        std::stringstream msg;
-        msg << " The number of bins must be greater than 0 !!! " << std::endl
-            << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_GridBins::modifyForRadial"  << std::endl << std::endl;
-
-        throw std::runtime_error( msg.str() );
-    }
+	MONTERAY_VERIFY( minVertex < maxVertex, "MonteRay_GridBins::validate -- The minimum vertex must be less than the maximum vertex !!!\n" );
+	MONTERAY_VERIFY( numBins > 0, "MonteRay_GridBins::validate -- The number of bins must be greater than 0 !!!\n" );
 
     // test ascending
     for( unsigned i=1; i< verticesVec->size(); ++i) {
-        if( verticesVec->at(i) <= verticesVec->at(i-1) ) {
-            std::stringstream msg;
-            msg << " The bin edge values must be ascending!!! " << std::endl
-                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_GridBins::modifyForRadial"  << std::endl << std::endl;
-
-            throw std::runtime_error( msg.str() );
-        }
+    	MONTERAY_VERIFY( verticesVec->at(i) > verticesVec->at(i-1), "MonteRay_GridBins::validate -- The number of bins must be greater than 0 !!!\n" );
     }
 
     if( verticesVec ) {
@@ -150,7 +123,6 @@ MonteRay_GridBins::validate() {
     	verticesSq = const_cast<gpuRayFloat_t*>( verticesSqVec->data() );
     	nVerticesSq = verticesSqVec->size();
     }
-#endif
 }
 
 void MonteRay_GridBins::write( const std::string& filename ) {
@@ -282,9 +254,11 @@ MonteRay_GridBins::getRadialIndexFromRSq( gpuRayFloat_t rSq) const {
 	MONTERAY_ASSERT( rSq >= 0.0 );
 	MONTERAY_ASSERT( radialModified );
 
+	printf("%f\n", rSq);
+
     gpuRayFloat_t max = verticesSq[nVerticesSq-1];
 
-    int radialIndex;
+    int radialIndex=0;
     if( rSq >= max ) {
         radialIndex = getNumBins();
     } else {

@@ -173,7 +173,7 @@ public:
 
     void initialize( const std::vector<gpuRayFloat_t>& bins );
 
-    void setup(void);
+    CUDAHOST_CALLABLE_MEMBER void setup(void);
 
     CUDA_CALLABLE_MEMBER unsigned getNumBins(void) const {
     	//if( debug ) printf("Debug: MonteRay_GridBins::getNumBins -- \n");
@@ -190,7 +190,7 @@ public:
 
     void removeVertex(unsigned i);
 
-    void modifyForRadial(void);
+    CUDA_CALLABLE_MEMBER void modifyForRadial(void);
 
     CUDA_CALLABLE_MEMBER bool isLinear(void) const { if( type == LINEAR) return true; return false; }
     CUDA_CALLABLE_MEMBER bool isRadial(void) const { if( type == RADIAL) return true; return false; }
@@ -199,7 +199,11 @@ public:
     // and number of bins on the pos side of the mesh
     CUDA_CALLABLE_MEMBER int getLinearIndex(gpuRayFloat_t pos) const;
 
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const { MONTERAY_ASSERT( r >= 0.0 ); return getRadialIndexFromRSq( r*r ); }
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const {
+    	printf("%f\n", r);
+    	MONTERAY_ASSERT( r >= 0.0 );
+    	return getRadialIndexFromRSq( r*r );
+    }
     CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t rSq) const;
 
     CUDA_CALLABLE_MEMBER bool isIndexOutside( int i) const { if( i < 0 ||  i >= getNumBins() ) return true; return false; }
@@ -224,7 +228,7 @@ private:
     coordinate_t type;
     bool radialModified;
 
-    void validate();
+    CUDA_CALLABLE_MEMBER void validate();
 
     const bool debug = false;
 
