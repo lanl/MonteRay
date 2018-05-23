@@ -37,20 +37,22 @@ CUDA_CALLABLE_MEMBER
 MonteRay_SphericalGrid::MonteRay_SphericalGrid(unsigned dim, pArrayOfpGridInfo_t pBins) :
     MonteRay_GridSystemInterface(dim)
 {
-	MONTERAY_VERIFY( dim == DimMax, "MonteRay_SphericalGrid::ctor -- only 1-D is allowed" ); // No greater than 3-D.
+	MONTERAY_VERIFY( dim == DimMax, "MonteRay_SphericalGrid::ctor -- only 1-D is allowed" ); // No greater than 1-D.
 
 	DIM = 1;
 	pRVertices = pBins[0];
+	validate();
 }
 
 CUDA_CALLABLE_MEMBER
 MonteRay_SphericalGrid::MonteRay_SphericalGrid(unsigned dim, GridBins_t* pGridR ) :
     MonteRay_GridSystemInterface(dim)
 {
-	MONTERAY_VERIFY( dim == DimMax, "MonteRay_SphericalGrid::ctor -- only 1-D is allowed" ); // No greater than 3-D.
+	MONTERAY_VERIFY( dim == DimMax, "MonteRay_SphericalGrid::ctor -- only 1-D is allowed" ); // No greater than 1-D.
 
 	DIM = 1;
 	pRVertices = pGridR;
+	validate();
 }
 
 
@@ -66,10 +68,7 @@ void
 MonteRay_SphericalGrid::validateR(void) {
     // Test for negative R
 	for( int i=0; i<pRVertices->nVertices; ++i ){
-    	std::stringstream msg;
-    	msg << "Can't have negative values for radius!!! " << "\n"
-    			<< "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << __func__ << "\n" << std::endl;
-        MONTERAY_VERIFY( pRVertices->vertices[i] >= 0.0, msg.str().c_str() );
+        MONTERAY_VERIFY( pRVertices->vertices[i] >= 0.0, "MonteRay_SphericalGrid::validateR -- Can't have negative values for radius!!!" );
     }
 
     pRVertices->modifyForRadial();
@@ -89,12 +88,13 @@ MonteRay_SphericalGrid::convertFromCartesian( const Position_t& pos) const {
 
 CUDA_CALLABLE_MEMBER
 unsigned
-MonteRay_SphericalGrid::getIndex( const GridBins_t::Position_t& particle_pos) const{
+MonteRay_SphericalGrid::getIndex( const Position_t& particle_pos) const{
 	if( debug ) printf("Debug: MonteRay_SphericalGrid::getIndex -- starting\n");
 
     int index = 0;
     Position_t pos = convertFromCartesian( particle_pos );
 
+    printf("%i\n", pRVertices->isRadial() );
     index = pRVertices->getRadialIndexFromR( pos[R] );
     if( isIndexOutside(R, index ) ) { return UINT_MAX; }
 

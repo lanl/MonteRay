@@ -202,6 +202,8 @@ void MonteRay_SpatialGrid::initialize(void) {
 //            }
 
         case TransportMeshTypeEnum::Spherical:
+        	pGridInfo[1] = new GridBins_t();
+        	pGridInfo[2] = new GridBins_t();
         	if( pGridSystem ) delete pGridSystem;
             pGridSystem = new MonteRay_SphericalGrid(1,pGridInfo);
             break;
@@ -332,6 +334,9 @@ MonteRay_SpatialGrid::getNumCells(void) const {
 
     unsigned long long int nCells = 1;
     for( auto d=0; d < dimension; ++d  ){
+    	if( CoordinateSystem == TransportMeshTypeEnum::Spherical && d > 0 ){
+            ABORT( "MonteRay_SpatialGrid::getNumCells -- Number of dimensions is greater than 1 !!!\n" );
+    	}
         nCells *= getNumGridBins(d);
     }
     if( nCells > UINT_MAX ) {

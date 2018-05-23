@@ -73,12 +73,13 @@ public:
     		throw std::runtime_error("MonteRay_SpatialGrid::copy -- MonteRay_SpatialGrid object has not been initialized.");
     	}
 
-		pGridInfo[0]->copyToGPU();
-		pGridInfo[1]->copyToGPU();
-		pGridInfo[2]->copyToGPU();
-		pGridSystem->copyToGPU();
+    	pGridInfo[0]->copyToGPU();
+    	pGridInfo[1]->copyToGPU();
+    	pGridInfo[2]->copyToGPU();
 
-		Base::copyToGPU();
+    	pGridSystem->copyToGPU();
+
+    	Base::copyToGPU();
 	}
 
     CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_SpatialGrid* rhs) {
@@ -206,7 +207,7 @@ public:
 //            particle_pos = (*transform).counterTransformPos( particle_pos );
 //        }
 
-        return  pGridSystem->getIndex( particle_pos );
+    	return  pGridSystem->getIndex( particle_pos );
     }
 
     CUDA_CALLABLE_MEMBER
