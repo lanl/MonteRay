@@ -132,7 +132,7 @@ MonteRay_SphericalGrid::getVolume( unsigned index ) const {
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_SphericalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance,  bool outsideDistances/*=false*/) const {
-	if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
+	if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- \n");
 	rayTraceList.reset();
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
@@ -144,11 +144,11 @@ MonteRay_SphericalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
         gpuRayFloat_t particleRSq = calcParticleRSq( pos );
         indices[R] = pRVertices->getRadialIndexFromRSq(particleRSq);
 
-        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, index=%d\n", R, indices[R]);
+        if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- dimension=%d, index=%d\n", R, indices[R]);
 
         radialCrossingDistances( distances[R], pos, dir, indices[R], distance );
 
-        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, number of planar crossings = %d\n", R, distances[R].size() );
+        if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- dimension=%d, number of radial crossings = %d\n", R, distances[R].size() );
 
         // if outside and ray doesn't move inside then ray never enters the grid
         if( isIndexOutside(R,indices[R]) && distances[R].size() == 0   ) {
@@ -158,7 +158,7 @@ MonteRay_SphericalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
 
     orderCrossings( rayTraceList, distances, indices, distance, outsideDistances );
 
-    if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- number of total crossings = %d\n", rayTraceList.size() );
+    if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- number of total crossings = %d\n", rayTraceList.size() );
     return;
 }
 

@@ -232,6 +232,9 @@ CUDA_CALLABLE_MEMBER
 bool
 MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index, bool outward ) const {
 	const bool debug = false;
+	if( debug ){
+        printf("Debug: MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection -- \n");
+	}
 
     // If outside and moving out then return
     if( outward && index >= Bins.getNumBins() ) {
