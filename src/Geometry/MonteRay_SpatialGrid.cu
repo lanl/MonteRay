@@ -301,16 +301,24 @@ MonteRay_SpatialGrid::checkDim( unsigned dim ) const {
 #endif
     }
 
-    if( dim > MaxDim ) {
+    unsigned maxDim;
+    if( dimension > 0 ){
+    	maxDim = dimension;
+    } else {
+    	maxDim = MaxDim;
+    }
+//    maxDim = MaxDim;
+    if( dim > maxDim ) {
 #ifndef __CUDA_ARCH__
          std::stringstream msg;
-         msg << " Dimension greater than MaxDim = 3 !!! " << std::endl
+         msg << " Dimension greater than MaxDim = " << maxDim << "!!! " << std::endl
              << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::checkDim" << std::endl << std::endl;
 
          //throw SpatialGridException( SpatialGridException::INVALID_DIM_INDEX, msg);
          throw std::runtime_error( msg.str() );
 #else
-         ABORT( "MonteRay_SpatialGrid::checkDim -- Dimension greater than MaxDim = 3 !!!\n" );
+
+         ABORT( "MonteRay_SpatialGrid::checkDim -- Dimension index is greater than the specified dimension of the grid!!!\n" );
 #endif
      }
 
