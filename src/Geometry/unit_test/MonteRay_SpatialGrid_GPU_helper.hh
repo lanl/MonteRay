@@ -71,7 +71,7 @@ using namespace MonteRay;
    	public:
    		SpatialGridGPUTester(){
    			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
-   	    	cudaDeviceSetLimit( cudaLimitStackSize, 40960 );
+   			cudaDeviceSetLimit( cudaLimitStackSize, 50000 );
    		}
 
    		~SpatialGridGPUTester(){}
@@ -256,7 +256,6 @@ using namespace MonteRay;
    	   	}
 
    	   	rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
-
    	   		using result_t = resultClass<rayTraceList_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
