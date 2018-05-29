@@ -131,85 +131,107 @@ MonteRay_SphericalGrid::getVolume( unsigned index ) const {
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_SphericalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuRayFloat_t distance,  bool outsideDistances/*=false*/) const {
+MonteRay_SphericalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance,  bool outsideDistances/*=false*/) const {
+	if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
+	rayTraceList.reset();
+    int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
+    multiDimRayTraceMap_t distances;
+
+    // Crossing distance in R direction
+    {
+    	distances[R].reset();
+        gpuRayFloat_t particleRSq = calcParticleRSq( pos );
+        indices[R] = pRVertices->getRadialIndexFromRSq(particleRSq);
+
+        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, index=%d\n", R, indices[R]);
+
+        radialCrossingDistances( distances[R], pos, dir, indices[R], distance );
+
+        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, number of planar crossings = %d\n", R, distances[R].size() );
+
+        // if outside and ray doesn't move inside then ray never enters the grid
+        if( isIndexOutside(R,indices[R]) && distances[R].size() == 0   ) {
+            return;
+        }
+    }
+
+    orderCrossings( rayTraceList, distances, indices, distance, outsideDistances );
+
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- number of total crossings = %d\n", rayTraceList.size() );
+    return;
 }
 
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_SphericalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
-
+	radialCrossingDistances(rayTraceMap, pos, dir, distance);
+    return;
 }
 
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_SphericalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing/*=false*/) const {
-
+    int index = Bins.getRadialIndexFromRSq(calcParticleRSq(pos));
+    radialCrossingDistances( rayTraceMap, pos, dir, distance, index);
+    return;
 }
 
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_SphericalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, unsigned rIndex, gpuRayFloat_t distance ) const {
+    //------ Distance to Sphere's Radial-boundary
+    if( debug ) {
+        printf("Debug: MonteRay_SphericalGrid::radialCrossingDistances -- \n");
+    }
 
+    gpuRayFloat_t particleRSq = calcParticleRSq( pos );
+
+    gpuRayFloat_t           A = calcQuadraticA( dir );
+    gpuRayFloat_t           B = calcQuadraticB( pos, dir);
+
+    // trace inward
+    bool rayTerminated = radialCrossingDistanceSingleDirection(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex, false);
+
+    if( debug ) {
+        printf("Debug: Inward ray trace size=%d\n",rayTraceMap.size());
+        if( rayTerminated ) {
+        	printf("Debug: - ray terminated!\n");
+        } else {
+        	printf("Debug: - ray not terminated!\n");
+        }
+    }
+
+    // trace outward
+    if( ! rayTerminated ) {
+        if( !isIndexOutside(R, rIndex) ) {
+            radialCrossingDistanceSingleDirection(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex, true);
+        } else {
+        	rayTraceMap.add(rIndex, distance);
+        }
+    }
 }
 
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_SphericalGrid::radialCrossingDistances( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance ) const {
-
+	gpuRayFloat_t particleRSq = calcParticleRSq( pos );
+    unsigned rIndex = pRVertices->getRadialIndexFromRSq(particleRSq);
+    radialCrossingDistances( rayTraceMap, pos, dir, rIndex, distance );
 }
 
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outward ) const {
+    // helper function to wrap generalized radialCrossingDistancesSingleDirection
+	gpuRayFloat_t particleRSq = calcParticleRSq( pos );
+    unsigned rIndex = pRVertices->getRadialIndexFromRSq(particleRSq);
 
+    gpuRayFloat_t A = calcQuadraticA( dir );
+    gpuRayFloat_t B = calcQuadraticB( pos, dir);
+
+    // ray-trace
+    radialCrossingDistanceSingleDirection(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex, outward);
 }
-
-//CUDA_CALLABLE_MEMBER
-//void
-//MonteRay_SphericalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_direction, gpuFloatType_t distance,  bool outsideDistances) const{
-//	if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- \n");
-//	rayTraceList.reset();
-//    int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
-//
-//    multiDimRayTraceMap_t distances;
-//    for( unsigned d=0; d<DIM; ++d){
-//    	distances[d].reset();
-//
-//        indices[d] = getDimIndex(d, particle_pos[d] );
-//
-//        if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- dimension=%d, index=%d\n", d, indices[d]);
-//
-//        planarCrossingDistance( distances[d],*(pGridBins[d]),particle_pos[d],particle_direction[d],distance,indices[d]);
-//
-//        if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- dimension=%d, number of planar crossings = %d\n", d, distances[d].size() );
-//
-//        // if outside and ray doesn't move inside then ray never enters the grid
-//        if( isIndexOutside(d,indices[d]) && distances[d].size() == 0  ) {
-//            return;
-//        }
-//    }
-//
-//    orderCrossings( rayTraceList, distances, indices, distance, outsideDistances );
-//
-//    if( debug ) printf( "Debug: MonteRay_SphericalGrid::rayTrace -- number of total crossings = %d\n", rayTraceList.size() );
-//    return;
-//}
-//
-//CUDA_CALLABLE_MEMBER
-//void
-//MonteRay_SphericalGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance ) const {
-//    crossingDistance(rayTraceMap, *(pGridBins[d]), pos, dir, distance, false);
-//    return;
-//}
-//
-//CUDA_CALLABLE_MEMBER
-//void
-//MonteRay_SphericalGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance, bool equal_spacing) const {
-//    int index = Bins.getLinearIndex(pos);
-//    planarCrossingDistance( rayTraceMap, Bins, pos, dir, distance, index);
-//    return;
-//}
-
 
 } /* namespace MonteRay */
