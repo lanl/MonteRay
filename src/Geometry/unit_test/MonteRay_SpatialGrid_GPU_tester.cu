@@ -139,25 +139,17 @@ SUITE( MonteRay_SpatialGrid_GPU_Tests_Spherical ) {
 	TEST_FIXTURE(SpatialGridGPUTester, getNumberOfGridBins ) {
 		sphericalGrid1_setup();
         CHECK_EQUAL( 100, getNumGridBins(0) );
-        CHECK_EQUAL( 0, getNumGridBins(1) );
-        CHECK_EQUAL( 0, getNumGridBins(2) );
     }
 
 	TEST_FIXTURE(SpatialGridGPUTester, getMinMaxVertices ) {
 		sphericalGrid1_setup();
         CHECK_CLOSE(  0.1, getMinVertex(0), 1e-4 ); // 0 vertex is removed by MonteRay_GridBins::modifyForRadial
         CHECK_CLOSE( 10.0, getMaxVertex(0), 1e-4 );
-        CHECK_CLOSE(  0.0, getMinVertex(1), 1e-4 );
-        CHECK_CLOSE(  0.0, getMaxVertex(1), 1e-4 );
-        CHECK_CLOSE(  0.0, getMinVertex(2), 1e-4 );
-        CHECK_CLOSE(  0.0, getMaxVertex(2), 1e-4 );
     }
 
 	TEST_FIXTURE(SpatialGridGPUTester, getDelta ) {
 		sphericalGrid1_setup();
         CHECK_CLOSE(  0.1, getDelta(0), 1e-4 );
-        CHECK_CLOSE(  0.0, getDelta(1), 1e-4 );
-        CHECK_CLOSE(  0.0, getDelta(2), 1e-4 );
     }
 
 	TEST_FIXTURE(SpatialGridGPUTester, getVertex ) {
