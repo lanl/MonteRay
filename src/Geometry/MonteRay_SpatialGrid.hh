@@ -125,7 +125,7 @@ public:
     //  Disable assignment operator until needed
 //    MonteRay_SpatialGrid& operator=( const MonteRay_SpatialGrid& );
 
-    CUDA_CALLABLE_MEMBER
+    CUDAHOST_CALLABLE_MEMBER
     void initialize(void);
 
     CUDA_CALLABLE_MEMBER
@@ -229,7 +229,6 @@ public:
     CUDA_CALLABLE_MEMBER
     void
     rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const {
-    	//if( debug ) printf( "Debug: MonteRay_SpatialGrid::rayTrace -- \n");
     	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
 //        if( transform ) {
