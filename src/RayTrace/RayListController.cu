@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "GridBins.h"
+#include "GridBins.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.hh"

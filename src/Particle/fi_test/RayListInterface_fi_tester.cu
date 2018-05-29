@@ -244,13 +244,11 @@ SUITE( RayListInterface_fi_tester ) {
     {
     	cudaReset();
 
-    	GridBins* grid_host;
-    	grid_host = (GridBins*) malloc( sizeof(GridBins) );
-    	ctor( grid_host );
-    	setVertices(grid_host, 0, -33.5, 33.5, 100);
-    	setVertices(grid_host, 1, -33.5, 33.5, 100);
-    	setVertices(grid_host, 2, -33.5, 33.5, 100);
-    	finalize(grid_host);
+    	GridBins* grid_host = new GridBins;
+    	grid_host->setVertices( 0, -33.5, 33.5, 100);
+    	grid_host->setVertices( 1, -33.5, 33.5, 100);
+    	grid_host->setVertices( 2, -33.5, 33.5, 100);
+    	grid_host->finalize();
 
     	FIGenericGPUTestHelper<1> helper( 0 );
     	helper.copyGridtoGPU(grid_host);
@@ -327,7 +325,7 @@ SUITE( RayListInterface_fi_tester ) {
 //    			std::cout << "i = " << i << " tally = " << helper.getTally(i) << "\n";
 //    		}
 //    	}
-    	free(grid_host);
+    	delete grid_host;
     }
 }
 

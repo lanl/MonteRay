@@ -20,21 +20,19 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			distances = NULL;
 			cells = NULL;
 
-			grid_host = (GridBins*) malloc( sizeof(GridBins) );
-			ctor( grid_host );
-			setVertices(grid_host, 0, 0.0, 10.0, 10);
-			setVertices(grid_host, 1, 0.0, 10.0, 10);
-			setVertices(grid_host, 2, 0.0, 10.0, 10);
-			finalize(grid_host);
+			grid_host = new GridBins;
+			grid_host->setVertices(0, 0.0, 10.0, 10);
+			grid_host->setVertices(1, 0.0, 10.0, 10);
+			grid_host->setVertices(2, 0.0, 10.0, 10);
+			grid_host->finalize();
 
-			numCells = getNumCells(grid_host);
+			numCells = grid_host->getNumCells();
 			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
 		~DistanceCalculatorGPUTest(){
-//			std::cout << "Debug: ~DistanceCalculatorGPUTest()" << std::endl;
-			free( grid_host );
+			delete grid_host;
 			free( distances );
 			free( cells );
 		}
@@ -48,26 +46,6 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 
 	TEST( setup ) {
 		gpuCheck();
-	}
-
-	TEST_FIXTURE(DistanceCalculatorGPUTest, distance_to_centers ) {
-		gpuDistanceCalculatorTestHelper tester;
-		Position_t originalPos(5.0, 5.0, 5.0);
-
-		tester.copyGridtoGPU(grid_host);
-		tester.setupTimers();
-		tester.launchGetDistancesToAllCenters(1,1,originalPos);
-
-		tester.stopTimers();
-		tester.copyDistancesFromGPU(distances);
-
-		gpuRayFloat_t distance0 = sqrt( 4.5f*4.5f*3.0f );
-//		std::cout << "Debug: distances[0]=" << std::setprecision(10) << distances[0] << "\n";
-//		std::cout << "Debug: distances0=" << std::setprecision(10) << distance0 << "\n";
-		CHECK_CLOSE( distance0, distances[0], 1e-6 );
-
-		gpuRayFloat_t distance1 = sqrt( 4.5f*4.5f*3 );
-		CHECK_CLOSE( distance1, distances[numCells-1], 1e-6 );
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest, rayTrace_outside_to_inside_posDir_one_crossing ) {
@@ -142,20 +120,19 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			distances = NULL;
 			cells = NULL;
 
-			grid_host = (GridBins*) malloc( sizeof(GridBins) );
-			ctor( grid_host );
-			setVertices(grid_host, 0, -10.0, 10.0, 20);
-			setVertices(grid_host, 1, -10.0, 10.0, 20);
-			setVertices(grid_host, 2, -10.0, 10.0, 20);
-			finalize(grid_host);
+			grid_host = new GridBins;
+			grid_host->setVertices(0, -10.0, 10.0, 20);
+			grid_host->setVertices(1, -10.0, 10.0, 20);
+			grid_host->setVertices(2, -10.0, 10.0, 20);
+			grid_host->finalize();
 
-			numCells = getNumCells(grid_host);
+			numCells = grid_host->getNumCells();
 			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
 		~DistanceCalculatorGPUTest2(){
-			free( grid_host );
+			delete grid_host;
 			free( distances );
 			free( cells );
 		}
@@ -369,20 +346,19 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			distances = NULL;
 			cells = NULL;
 
-			grid_host = (GridBins*) malloc( sizeof(GridBins) );
-			ctor( grid_host );
-			setVertices(grid_host, 0, -1.0, 1.0, 2);
-			setVertices(grid_host, 1, -1.0, 1.0, 2);
-			setVertices(grid_host, 2, -1.0, 1.0, 2);
-			finalize(grid_host);
+			grid_host = new GridBins;
+			grid_host->setVertices(0, -1.0, 1.0, 2);
+			grid_host->setVertices(1, -1.0, 1.0, 2);
+			grid_host->setVertices(2, -1.0, 1.0, 2);
+			grid_host->finalize();
 
-			numCells = getNumCells(grid_host);
+			numCells = grid_host->getNumCells();
 			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
 		~DistanceCalculatorGPUTest3(){
-			free( grid_host );
+			delete grid_host;
 			free( distances );
 			free( cells );
 		}
@@ -718,20 +694,19 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			distances = NULL;
 			cells = NULL;
 
-			grid_host = (GridBins*) malloc( sizeof(GridBins) );
-			ctor( grid_host );
-			setVertices(grid_host, 0, 0.0, 3.0, 3);
-			setVertices(grid_host, 1, 0.0, 3.0, 3);
-			setVertices(grid_host, 2, 0.0, 3.0, 3);
-			finalize(grid_host);
+			grid_host = new GridBins;
+			grid_host->setVertices( 0, 0.0, 3.0, 3);
+			grid_host->setVertices( 1, 0.0, 3.0, 3);
+			grid_host->setVertices( 2, 0.0, 3.0, 3);
+			grid_host->finalize();
 
-			numCells = getNumCells(grid_host);
+			numCells = grid_host->getNumCells();
 			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
 		~DistanceCalculatorGPUTest4(){
-			free( grid_host );
+			delete grid_host;
 			free( distances );
 			free( cells );
 		}
@@ -1117,20 +1092,19 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 			distances = NULL;
 			cells = NULL;
 
-			grid_host = (GridBins*) malloc( sizeof(GridBins) );
-			ctor( grid_host );
-			setVertices(grid_host, 0, -5.0, 5.0, 10);
-			setVertices(grid_host, 1, -5.0, 5.0, 10);
-			setVertices(grid_host, 2, -5.0, 5.0, 10);
-			finalize(grid_host);
+			grid_host =  new GridBins;
+			grid_host->setVertices( 0, -5.0, 5.0, 10);
+			grid_host->setVertices( 1, -5.0, 5.0, 10);
+			grid_host->setVertices( 2, -5.0, 5.0, 10);
+			grid_host->finalize();
 
-			numCells = getNumCells(grid_host);
+			numCells = grid_host->getNumCells();
 			distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
 			cells = (int*) malloc( sizeof(int) * numCells );
 		}
 
 		~DistanceCalculatorGPUTest5(){
-			free( grid_host );
+			delete grid_host;
 			free( distances );
 			free( cells );
 		}

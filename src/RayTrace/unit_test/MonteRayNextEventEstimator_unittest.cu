@@ -9,7 +9,7 @@
 
 #include "Ray.hh"
 
-#include "GridBins.h"
+#include "GridBins.hh"
 #include "MonteRay_MaterialProperties.hh"
 // #define MEMCHECK 1
 

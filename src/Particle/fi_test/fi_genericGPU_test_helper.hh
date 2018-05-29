@@ -8,7 +8,7 @@
 #include "MonteRayCrossSection.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
-#include "GridBins.h"
+#include "GridBins.hh"
 
 #ifndef __CUDACC__
 #include "MonteRay_timer.hh"

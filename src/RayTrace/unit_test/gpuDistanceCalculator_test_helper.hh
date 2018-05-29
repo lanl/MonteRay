@@ -3,7 +3,7 @@
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
-#include "GridBins.h"
+#include "GridBins.hh"
 #include "gpuRayTrace.hh"
 #include "MonteRay_timer.hh"
 
@@ -23,7 +23,7 @@ public:
 
 	void stopTimers();
 
-	void launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos);
+//	void launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos);
 	void launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool);
 
 	void copyGridtoGPU( GridBins* );
@@ -32,10 +32,10 @@ public:
 	unsigned getNumCrossingsFromGPU(void);
 
 private:
-	void* grid_device;
-	void* distances_device;
-	void* cells_device;
-	void* numCrossings_device;
+	GridBins* grid_device;
+	gpuRayFloat_t* distances_device;
+	int* cells_device;
+	int* numCrossings_device;
 
 	unsigned nCells;
 

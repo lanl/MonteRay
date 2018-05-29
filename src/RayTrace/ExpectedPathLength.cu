@@ -2,7 +2,7 @@
 
 #include <math.h>
 
-#include "GridBins.h"
+#include "GridBins.hh"
 #include "GPUTiming.hh"
 #include "MonteRayDefinitions.hh"
 #include "GPUAtomicAdd.hh"
@@ -40,7 +40,7 @@ tallyAttenuation(GridBins* pGrid,
 	MonteRay::Vector3D<gpuRayFloat_t> pos(p->pos[0], p->pos[1], p->pos[2]);
 	MonteRay::Vector3D<gpuRayFloat_t> dir(p->dir[0], p->dir[1], p->dir[2]);
 
-	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6, false);
+	numberOfCells = pGrid->rayTrace( cells, crossingDistances, pos, dir, 1.0e6, false);
 
 	for( unsigned i=0; i < numberOfCells; ++i ){
 		int cell = cells[i];
@@ -264,10 +264,10 @@ tallyCollision(const GridBins* pGrid,
 
 //	gpuRayFloat_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
 //	gpuRayFloat_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
-	MonteRay::Vector3D<gpuRayFloat_t> pos( p->pos[0], p->pos[1], p->pos[2] );
-	MonteRay::Vector3D<gpuRayFloat_t> dir( p->dir[0], p->dir[1], p->dir[2] );
+	Position_t pos( p->pos[0], p->pos[1], p->pos[2] );
+	Direction_t dir( p->dir[0], p->dir[1], p->dir[2] );
 
-	numberOfCells = cudaRayTrace( pGrid, cells, crossingDistances, pos, dir, 1.0e6f, false);
+	numberOfCells = pGrid->rayTrace( cells, crossingDistances, pos, dir, 1.0e6f, false);
 
 	gpuFloatType_t materialXS[MAXNUMMATERIALS];
 	for( unsigned i=0; i < pMatList->numMaterials; ++i ){

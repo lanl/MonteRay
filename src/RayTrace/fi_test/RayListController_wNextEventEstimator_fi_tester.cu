@@ -10,7 +10,7 @@
 
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
-#include "GridBins.h"
+#include "GridBins.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"

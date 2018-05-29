@@ -9,7 +9,7 @@
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
-#include "GridBins.h"
+#include "GridBins.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
@@ -61,12 +61,12 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 			pGrid = new GridBinsHost(readerObject);
 			CHECK_EQUAL( 2000000, pGrid->getNumCells() );
 
-			CHECK_CLOSE( -600.0, MonteRay::min(pGrid->getPtr(),0), 1e-2 );
-			CHECK_CLOSE( -600.0, MonteRay::min(pGrid->getPtr(),1), 1e-2 );
-			CHECK_CLOSE( -250.0, MonteRay::min(pGrid->getPtr(),2), 1e-2 );
-			CHECK_CLOSE(  600.0, MonteRay::max(pGrid->getPtr(),0), 1e-2 );
-			CHECK_CLOSE(  600.0, MonteRay::max(pGrid->getPtr(),1), 1e-2 );
-			CHECK_CLOSE(  250.0, MonteRay::max(pGrid->getPtr(),2), 1e-2 );
+			CHECK_CLOSE( -600.0, pGrid->min(0), 1e-2 );
+			CHECK_CLOSE( -600.0, pGrid->min(1), 1e-2 );
+			CHECK_CLOSE( -250.0, pGrid->min(2), 1e-2 );
+			CHECK_CLOSE(  600.0, pGrid->max(0), 1e-2 );
+			CHECK_CLOSE(  600.0, pGrid->max(1), 1e-2 );
+			CHECK_CLOSE(  250.0, pGrid->max(2), 1e-2 );
 
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 

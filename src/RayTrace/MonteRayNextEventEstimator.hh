@@ -10,7 +10,7 @@
 #include "RayList.hh"
 
 #include "gpuRayTrace.hh"
-#include "GridBins.h"
+#include "GridBins.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRayMaterialList.hh"
 #include "ExpectedPathLength.hh"
@@ -223,7 +223,7 @@ public:
 //		float3_t dir = make_float3( u, v, w);
 
 
-		numberOfCells = cudaRayTrace( pGridBins, cells, crossingDistances, pos, dir, dist, false);
+		numberOfCells = pGridBins->rayTrace( cells, crossingDistances, pos, dir, dist, false);
 
 		for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
 			gpuFloatType_t weight = weights[energyIndex];

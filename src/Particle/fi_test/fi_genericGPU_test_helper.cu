@@ -464,7 +464,7 @@ void FIGenericGPUTestHelper<N>::copyGridtoGPU( const GridBins* grid){
 	memcpy( grid_device, grid, sizeof(GridBins) );
 #endif
 
-	nCells = getNumCells(grid);
+	nCells = grid->getNumCells();
 }
 
 template class FIGenericGPUTestHelper<1>;

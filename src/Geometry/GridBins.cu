@@ -1,13 +1,14 @@
-#include "GridBins.h"
+#include "GridBins.hh"
 
 #include <iostream>
 #include <fstream>
 #include <ostream>
-#include <limits>
 
 #include "GPUErrorCheck.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_binaryIO.hh"
+#include "BinarySearch.hh"
+#include "MonteRayConstants.hh"
 
 #ifdef MCATK_INLINED
 #include "ReadLnk3dnt.hh"
@@ -15,137 +16,70 @@
 
 namespace MonteRay{
 
-void ctor(GridBins* grid){
-	grid->offset[0] = 0;
-	grid->offset[1] = MAXNUMVERTICES;
-	grid->offset[2] = MAXNUMVERTICES*2;
-	grid->num[0] = 0;
-	grid->num[1] = 0;
-	grid->num[2] = 0;
-	grid->numXY = 0;
-	grid->isRegular[0] = true;
-	grid->isRegular[1] = true;
-	grid->isRegular[2] = true;
-};
+CUDA_CALLABLE_MEMBER
+void GridBins::setVertices( unsigned dim, float_t min, float_t max, unsigned numBins ) {
 
-unsigned getNumVertices(const GridBins* const grid, unsigned dim) {
-	return grid->num[dim] + 1;
-}
+	minMax[dim*2] = min;
+	minMax[dim*2+1] = max;
 
-unsigned getNumXY(const GridBins* const grid) {
-	return grid->numXY;
-}
-
-unsigned getNumBins(const GridBins* const grid, unsigned dim) {
-	return grid->num[dim];
-}
-
-unsigned getNumBins(const GridBins* const grid, unsigned dim, unsigned index) {
-	return grid->num[dim];
-}
-
-float_t getVertex(const GridBins* const grid, unsigned dim, unsigned index ) {
-	return grid->vertices[ grid->offset[dim] + index ];
-}
-
-bool isRegular(const GridBins* const grid, unsigned dim) {
-	if( grid->isRegular[dim] ) {
-		return true;
-	}
-	return false;
-}
-
-float_t min(const GridBins* const grid, unsigned dim) {
-	return grid->minMax[dim*2];
-}
-
-float_t max(const GridBins* const grid, unsigned dim) {
-	return grid->minMax[dim*2+1];
-}
-
-void setVertices( GridBins* grid, unsigned dim, float_t min, float_t max, unsigned numBins ) {
-
-	grid->minMax[dim*2] = min;
-	grid->minMax[dim*2+1] = max;
-
-	grid->delta[dim] = (max - min) / numBins;
-	grid->num[dim] = numBins;
+	delta[dim] = (max - min) / numBins;
+	num[dim] = numBins;
 
 	if( numBins+1 > MAXNUMVERTICES ) {
-		perror("GridBins::setVertices -- exceeding max number of vertices.");
-		exit(1);
+		ABORT("GridBins::setVertices -- exceeding max number of vertices.");
 	}
 
-	grid->vertices[ grid->offset[dim] ] = min;
+	vertices[ offset[dim] ] = min;
 
 	//global::float_t location;
 	for( unsigned i = 1; i<numBins+1; ++i) {
-		grid->vertices[ i+ grid->offset[dim]] = grid->vertices[i-1 + grid->offset[dim]] + grid->delta[dim];
+		vertices[ i+ offset[dim]] = vertices[ i - 1 + offset[dim] ] + delta[dim];
 	}
-	grid->isRegular[dim] = true;
+	regular[dim] = true;
 }
 
-void setVertices( GridBins* grid, unsigned dim, std::vector<double> vertices) {
-	grid->minMax[dim*2] = vertices.front();
-	grid->minMax[dim*2+1] = vertices.back();
-
-	grid->delta[dim] = -1.0;
-	unsigned numBins = vertices.size()-1;
-	grid->num[dim] = numBins;
-
-	if( numBins+1 > MAXNUMVERTICES ) {
-		perror("GridBins::setVertices -- exceeding max number of vertices.");
-		exit(1);
-	}
-
-	for( unsigned i = 0; i<numBins+1; ++i) {
-		double vertex = vertices.at(i);
-		grid->vertices[ i+ grid->offset[dim]] = vertex;
-	}
-
-	grid->isRegular[dim] = false;
-}
-
-void finalize(GridBins* grid) {
+CUDA_CALLABLE_MEMBER
+void GridBins::finalize() {
 	for( unsigned dim = 0; dim < 3; ++dim) {
-		if( grid->num[dim] == 0 ) {
-			perror("GridBins::finalize -- vertices not set.");
-		    exit(1);
+		if( num[dim] == 0 ) {
+			ABORT("GridBins::finalize -- vertices not set.");
 		}
 	}
 
 	// move y data
 	unsigned int pad = 1;
 
-	unsigned new_offset = grid->num[0] + pad;
-	for( unsigned i = 0; i < grid->num[1]+1; ++i) {
-		grid->vertices[i + new_offset] = grid->vertices[i+grid->offset[1]];
-		grid->vertices[i+grid->offset[1]] = -1.0;
+	unsigned new_offset = num[0] + pad;
+	for( unsigned i = 0; i < num[1]+1; ++i) {
+		vertices[i + new_offset] = vertices[i+offset[1]];
+		vertices[i+offset[1]] = -1.0;
 	}
-	grid->offset[1] = grid->num[0] + pad;
+	offset[1] = num[0] + pad;
 
 	// move z data
-	new_offset = grid->num[0] + grid->num[1] + pad + pad;
-	for( unsigned i = 0; i < grid->num[2]+1; ++i) {
-		grid->vertices[i + new_offset] = grid->vertices[i+grid->offset[2]];
-		grid->vertices[i+grid->offset[2]] = -1.0;
+	new_offset = num[0] + num[1] + pad + pad;
+	for( unsigned i = 0; i < num[2]+1; ++i) {
+		vertices[i + new_offset] = vertices[i+offset[2]];
+		vertices[i+offset[2]] = -1.0;
 	}
-	grid->offset[2] = grid->num[0] + grid->num[1] + pad + pad;
+	offset[2] = num[0] + num[1] + pad + pad;
 
-	grid->numXY = grid->num[0]*grid->num[1];
+	numXY = num[0]*num[1];
 }
 
-unsigned calcIndex(const GridBins* const grid, const int* const indices ) {
-    return indices[0] + indices[1]*getNumBins(grid,0) + indices[2]*getNumBins(grid,0)*getNumBins(grid,1);
+CUDA_CALLABLE_MEMBER
+unsigned
+GridBins::calcIndex(const int* const indices ) const {
+    return indices[0] + indices[1]*getNumBins(0) + indices[2]*getNumBins(0)*getNumBins(1);
 }
 
-void calcIJK(const GridBins* const grid, unsigned index, unsigned* indices ) {
+void GridBins::calcIJK(unsigned index, unsigned* indices ) const {
     indices[0] = 0; indices[1] = 0; indices[2] = 0;
 
     unsigned offsets[3];
     offsets[0] = 1;
-    offsets[1] = getNumBins(grid,0);
-    offsets[2] = getNumBins(grid,0)*getNumBins(grid,1);
+    offsets[1] = getNumBins(0);
+    offsets[2] = getNumBins(0)*getNumBins(1);
 
     for( int d = 2; d > -1; --d ) {
         unsigned current_offset = offsets[ d ];
@@ -154,96 +88,73 @@ void calcIJK(const GridBins* const grid, unsigned index, unsigned* indices ) {
     }
 }
 
-
-unsigned getIndexBinaryFloat(const float_t* const values, unsigned count, float_t value ) {
-    // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
-    unsigned it, step;
-    unsigned first = 0U;
-
-    while (count > 0U) {
-        it = first;
-        step = count / 2;
-        it += step;
-        if(!(value < values[it])) {
-            first = ++it;
-            count -= step + 1;
-        } else {
-            count = step;
-        }
-    }
-    if( first > 0 ) { --first; }
-    return first;
-}
-
-int getDimIndex(const GridBins* const grid, unsigned dim, double pos ) {
+CUDA_CALLABLE_MEMBER
+int
+GridBins::getDimIndex(const unsigned dim, const gpuRayFloat_t pos ) const {
      // returns -1 for one neg side of mesh
      // and number of bins on the pos side of the mesh
      // need to call isIndexOutside(dim, grid, index) to check if the
      // index is in the mesh
-
 	int dim_index;
-	float_t minimum = min(grid, dim);
-	unsigned numBins = grid->num[dim];
+	gpuFloatType_t minimum = min(dim);
+	unsigned numBins = getNumBins(dim);
 
 	if( pos <= minimum ) {
 		dim_index = -1;
-	} else if( pos >= max(grid, dim)  ) {
+	} else if( pos >= max(dim)  ) {
 		dim_index = numBins;
 	} else {
-		if( grid->isRegular[dim] ) {
-			dim_index = ( pos -  minimum ) / grid->delta[dim];
+		if( regular[dim] ) {
+			dim_index = ( pos -  minimum ) / delta[dim];
 		} else {
-			dim_index = getIndexBinaryFloat( grid->vertices + grid->offset[dim], numBins+1, pos  );
+			dim_index = LowerBoundIndex( vertices + offset[dim], numBins+1, pos  );
 		}
 	}
 	return dim_index;
 }
 
-bool isIndexOutside(const GridBins* const grid, unsigned dim, int i) {
-	if( i < 0 ||  i >= getNumBins(grid, dim) ) return true;
-	return false;
+CUDA_CALLABLE_MEMBER
+bool GridBins::isIndexOutside( unsigned dim, int i) const {
+	return ( (i < 0 ||  i >= getNumBins(dim)) ? true : false);
 }
 
-bool isOutside(const GridBins* const grid, const int* indices ) {
-    for( unsigned d=0; d<3; ++d){
-       if( isIndexOutside(grid, d, indices[d]) ) return true;
-    }
+CUDA_CALLABLE_MEMBER
+bool GridBins::isOutside(const int* indices ) const {
+    if( isIndexOutside(0, indices[0]) ) return true;
+    if( isIndexOutside(1, indices[1]) ) return true;
+    if( isIndexOutside(2, indices[2]) ) return true;
     return false;
 }
 
-unsigned getIndex(const GridBins* const grid, const Position_t& particle_pos) {
+CUDA_CALLABLE_MEMBER
+unsigned
+GridBins::getIndex(const Position_t& particle_pos) {
 
     int indices[3]= {0, 0, 0};
     for( unsigned d = 0; d < 3; ++d ) {
-        indices[d] = getDimIndex(grid, d, particle_pos[d] );
+        indices[d] = getDimIndex(d, particle_pos[d] );
 
         // outside the grid
-        if( isIndexOutside(grid, d, indices[d] ) ) { return UINT_MAX; }
+        if( isIndexOutside( d, indices[d] ) ) { return UINT_MAX; }
     }
 
-    return calcIndex(grid, indices );
+    return calcIndex( indices );
 }
 
-unsigned getMaxNumVertices(const GridBins* const grid) {
-	return MAXNUMVERTICES;
-}
-
-unsigned getNumCells( const GridBins* const grid ) {
-	return grid->num[0]*grid->num[1]*grid->num[2];
-}
-
-void getCenterPointByIndices(const GridBins* const grid, unsigned* indices,  Position_t& pos ){
+Position_t GridBins::getCenterPointByIndices( const unsigned* const indices ) const{
+	Position_t pos;
 	for( unsigned i=0; i<3; ++i) {
-		pos[i] = (getVertex(grid, i, indices[i]) + getVertex(grid, i, indices[i]+1)) / 2.0f ;
+		const unsigned vertexIndex = indices[i];
+		pos[i] = (getVertex(i, vertexIndex) + getVertex(i, vertexIndex+1)) / 2.0f ;
 	}
+	return pos;
 }
 
-
-void getCenterPointByIndex(const GridBins* const grid, unsigned index, Position_t& pos ){
+Position_t GridBins::getCenterPointByIndex(unsigned index ) const{
 	unsigned indices[3];
-	calcIJK(grid, index, indices);
+	calcIJK(index, indices);
 
-	getCenterPointByIndices( grid, indices, pos);
+	return getCenterPointByIndices( indices );
 }
 
 float_t getDistance( Position_t& pos1, Position_t& pos2) {
@@ -254,27 +165,8 @@ float_t getDistance( Position_t& pos1, Position_t& pos2) {
 	return sqrt( deltaSq[0] + deltaSq[1] + deltaSq[2]);
 }
 
-void getDistancesToAllCenters(const GridBins* const grid, Position_t& pos, float_t* distances) {
-	unsigned index = 0;
-	unsigned indices[3];
-	for( unsigned i = 0; i < grid->num[0]; ++i ) {
-		indices[0] = i;
-		for( unsigned j = 0; j < grid->num[1]; ++j ) {
-			indices[1] = j;
-			for( unsigned k = 0; k < grid->num[2]; ++k ) {
-				indices[2] = k;
-				Position_t pixelPoint;
-				getCenterPointByIndices(grid, indices, pixelPoint);
-				distances[index] = getDistance( pixelPoint, pos );
-				++index;
-			}
-		}
-	}
-}
-
 GridBinsHost::GridBinsHost(){
-	ptr = (GridBins*) malloc( sizeof(GridBins) );
-	ctor(ptr);
+	ptr = new GridBins;
 	ptr_device = NULL;
 	temp = NULL;
 	cudaCopyMade = false;
@@ -283,13 +175,12 @@ GridBinsHost::GridBinsHost(){
 GridBinsHost::GridBinsHost( float_t negX, float_t posX, unsigned nX,
 	                        float_t negY, float_t posY, unsigned nY,
 	                        float_t negZ, float_t posZ, unsigned nZ){
-	ptr = (GridBins*) malloc( sizeof(GridBins) );
-	ctor(ptr);
+	ptr = new GridBins;
 
-	MonteRay::setVertices(ptr, 0, negX, posX, nX);
-	MonteRay::setVertices(ptr, 1, negY, posY, nY);
-	MonteRay::setVertices(ptr, 2, negZ, posZ, nZ);
-	MonteRay::finalize(ptr);
+	ptr->setVertices( 0, negX, posX, nX);
+	ptr->setVertices( 1, negY, posY, nY);
+	ptr->setVertices( 2, negZ, posZ, nZ);
+	ptr->finalize();
 
 	ptr_device = NULL;
 	temp = NULL;
@@ -297,8 +188,7 @@ GridBinsHost::GridBinsHost( float_t negX, float_t posX, unsigned nX,
 }
 
 GridBinsHost::GridBinsHost( std::vector<double> x, std::vector<double> y, std::vector<double> z) {
-	ptr = (GridBins*) malloc( sizeof(GridBins) );
-	ctor(ptr);
+	ptr = new GridBins;
 
     setVertices(0, x );
     setVertices(1, y );
@@ -311,7 +201,7 @@ GridBinsHost::GridBinsHost( std::vector<double> x, std::vector<double> y, std::v
 }
 
 GridBinsHost::~GridBinsHost(){
-	free( ptr );
+	delete ptr;
 #ifdef __CUDACC__
 	if( cudaCopyMade ) {
 		if( ptr_device != NULL ) {
@@ -331,8 +221,7 @@ void GridBinsHost::copyToGPU(void) {
 
 
 unsigned GridBinsHost::getIndex(float_t x, float_t y, float_t z) const {
-	Position_t pos(x,y,z);
-	return MonteRay::getIndex( ptr, pos);
+	return ptr->getIndex( Position_t(x,y,z) );
 }
 
 
@@ -359,9 +248,9 @@ void GridBinsHost::write(std::ostream& outf) const{
     binaryIO::write(outf, ptr->offset[0] );
     binaryIO::write(outf, ptr->offset[1] );
     binaryIO::write(outf, ptr->offset[2] );
-    binaryIO::write(outf, ptr->isRegular[0] );
-    binaryIO::write(outf, ptr->isRegular[1] );
-    binaryIO::write(outf, ptr->isRegular[2] );
+    binaryIO::write(outf, ptr->regular[0] );
+    binaryIO::write(outf, ptr->regular[1] );
+    binaryIO::write(outf, ptr->regular[2] );
     binaryIO::write(outf, ptr->delta[0] );
     binaryIO::write(outf, ptr->delta[1] );
     binaryIO::write(outf, ptr->delta[2] );
@@ -385,9 +274,9 @@ void GridBinsHost::read(std::istream& infile) {
     binaryIO::read(infile, ptr->offset[0] );
     binaryIO::read(infile, ptr->offset[1] );
     binaryIO::read(infile, ptr->offset[2] );
-    binaryIO::read(infile, ptr->isRegular[0] );
-    binaryIO::read(infile, ptr->isRegular[1] );
-    binaryIO::read(infile, ptr->isRegular[2] );
+    binaryIO::read(infile, ptr->regular[0] );
+    binaryIO::read(infile, ptr->regular[1] );
+    binaryIO::read(infile, ptr->regular[2] );
     binaryIO::read(infile, ptr->delta[0] );
     binaryIO::read(infile, ptr->delta[1] );
     binaryIO::read(infile, ptr->delta[2] );
@@ -450,32 +339,256 @@ void GridBinsHost::loadFromLnk3dnt( const std::string& filename ){
 }
 #endif
 
-void GridBinsHost::setVertices(unsigned dim, std::vector<double> vertices ){
+CUDA_CALLABLE_MEMBER
+unsigned GridBins::rayTrace( int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const {
+	const bool debug = false;
 
-  	double delta = 0.0;
-  	double lastDelta = 99.0;
-  	bool uniform = true;
-  	for( unsigned i = 1; i< vertices.size(); ++i){
-  		delta = vertices.at(i) - vertices.at(i-1);
-  		if( i > 1 ) {
-//  			std::cout << "Debug:: i = " << i << " delta = " << delta << " lastdelta = " << lastDelta << "\n";
-  			double epsilon = 10.0*(std::nextafter( lastDelta,  std::numeric_limits<double>::infinity() ) - lastDelta);
-  			if( std::abs(delta-lastDelta) > epsilon ) {
-//   				std::cout << "Debug:: delta - lastDelta > epsilon -- diff = " << std::abs(delta-lastDelta) << " epsilon = " << epsilon << "\n";
-  				uniform = false;
-  				break;
-  			}
+    int current_indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
-  		}
-  		lastDelta = delta;
-  	}
+    if( debug ){
+    	printf( "GridBins::rayTrace --------------------------------\n");
+    }
 
-  	if( uniform ) {
-  		MonteRay::setVertices( ptr, dim, vertices.front(), vertices.back(), vertices.size()-1 );
-  	} else {
-  		MonteRay::setVertices( ptr, dim, vertices );
-  	}
-  }
+    int cells[3][MAXNUMVERTICES];
+    gpuRayFloat_t crossingDistances[3][MAXNUMVERTICES];
+    unsigned numCrossings[3];
+
+    for( unsigned i=0; i<3; ++i){
+    	current_indices[i] = getDimIndex(i, pos[i] );
+
+    	numCrossings[i] = calcCrossings( vertices + offset[i], num[i]+1, cells[i], crossingDistances[i], pos[i], dir[i], distance, current_indices[i]);
+
+    	if( debug ){
+    		printf( "GridBins::rayTrace -- current_indices[i]=%d\n", current_indices[i] );
+    		printf( "GridBins::rayTrace -- numCrossings[i]=%d\n", numCrossings[i] );
+    	}
+
+        // if outside and ray doesn't move inside then ray never enters the grid
+        if( isIndexOutside(i,current_indices[i]) && numCrossings[i] == 0  ) {
+            return 0U;
+        }
+    }
+
+    if( debug ){
+    	printf( "GridBins::rayTrace -- numCrossings[0]=%d\n", numCrossings[0] );
+    	printf( "GridBins::rayTrace -- numCrossings[1]=%d\n", numCrossings[1] );
+    	printf( "GridBins::rayTrace -- numCrossings[2]=%d\n", numCrossings[2] );
+    }
+
+    return orderCrossings(global_indices, distances, MAXNUMVERTICES, cells[0], crossingDistances[0], numCrossings, current_indices, distance, outsideDistances);
+}
+
+
+CUDA_CALLABLE_MEMBER
+unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* cells, gpuRayFloat_t* distances, float_t pos, float_t dir, float_t distance, int index ){
+	const bool debug = false;
+
+	unsigned nDistances = 0;
+
+	if( debug ) {
+		printf( "GridBins::calcCrossings --------------------------------\n" );
+		printf( "calcCrossings -- vertices[0]=%f\n", vertices[0] );
+		printf( "calcCrossings -- vertices[nVertices-1]=%f\n", vertices[nVertices-1] );
+		printf( "calcCrossings -- pos=%f\n", pos );
+		printf( "calcCrossings -- dir=%f\n", dir );
+	}
+
+    if( abs(dir) <= MonteRay::epsilon ) {
+    	return nDistances;
+    }
+
+    int start_index = index;
+    int cell_index = start_index;
+
+    if( start_index < 0 ) {
+        if( dir < 0.0 ) {
+            return nDistances;
+        }
+    }
+
+    int nBins = nVertices - 1;
+    if( start_index >= nBins ) {
+        if( dir > 0.0 ) {
+        	return nDistances;
+        }
+    }
+
+    unsigned offset = 0;
+    if( dir > 0.0f ) {
+    	offset = 1;
+    }
+//    unsigned offset = (unsigned) signbit(-dir);
+    int end_index = offset*(nBins-1);;
+
+    int dirIncrement = copysign( 1.0f, dir );
+
+    unsigned num_indices = abs(end_index - start_index ) + 1;
+
+    int current_index = start_index;
+
+    // Calculate boundary crossing distances
+    float_t invDir = 1/dir;
+    bool rayTerminated = false;
+    for( int i = 0; i < num_indices ; ++i ) {
+
+//        BOOST_ASSERT( (current_index + offset) >= 0 );
+//        BOOST_ASSERT( (current_index + offset) < nBins+1 );
+
+        float_t minDistance = ( vertices[current_index + offset] - pos) * invDir;
+
+        if( debug ) {
+        	printf( " calcCrossings -- current_index=%d\n", current_index );
+        	printf( " calcCrossings --        offset=%d\n", offset );
+        	printf( " calcCrossings -- vertices[current_index + offset]=%f\n", vertices[current_index + offset] );
+        }
+
+        //if( rayDistance == inf ) {
+        //    // ray doesn't cross plane
+        //    break;
+        //}
+
+        if( minDistance >= distance ) {
+        	cells[nDistances] = cell_index;
+        	distances[nDistances] = distance;
+        	++nDistances;
+            rayTerminated = true;
+            break;
+        }
+
+        cells[nDistances] = cell_index;
+        distances[nDistances] = minDistance;
+        ++nDistances;
+
+        current_index += dirIncrement;
+        cell_index = current_index;
+    }
+
+    if( !rayTerminated ) {
+        // finish with distance into area outside
+    	cells[nDistances] = cell_index;
+    	distances[nDistances] = distance;
+    	++nDistances;
+        rayTerminated = true;
+    }
+
+    if( debug ) {
+    	for( unsigned i=0; i<nDistances; ++i){
+    		printf( " calcCrossings -- i=%d  cell index=%d  distance=%f\n", i, cells[i], distances[i] );
+    	}
+    	printf( "-----------------------------------------------------------------------\n" );
+    }
+
+    return nDistances;
+}
+
+CUDA_CALLABLE_MEMBER
+unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const {
+    // Order the distance crossings to provide a rayTrace
+
+    const bool debug = false;
+
+    unsigned end[3] = {0, 0, 0}; //    last location in the distance[i] vector
+
+    unsigned maxNumCrossings = 0;
+    for( unsigned i=0; i<3; ++i){
+        end[i] = numCrossings[i];
+        maxNumCrossings += end[i];
+    }
+
+    if( debug ) {
+    	for( unsigned i=0; i<3; ++i){
+    		printf( "Debug: i=%d  numCrossings=%d\n", i, numCrossings[i]);
+    		for( unsigned j=0; j< numCrossings[i]; ++j ) {
+    			printf( "Debug: j=%d  index=%d  distance=%f", j, *((cells+i*num) + j),  *((crossingDistances+i*num)+j) );
+    		}
+    	}
+    }
+
+    float_t minDistances[3];
+
+    bool outside;
+    float_t priorDistance = 0.0;
+    unsigned start[3] = {0, 0, 0}; // current location in the distance[i] vector
+
+    unsigned numRayCrossings = 0;
+    for( unsigned i=0; i<maxNumCrossings; ++i){
+
+    	unsigned minDim;
+    	float_t minimumDistance = MonteRay::inf;
+        for( unsigned j = 0; j<3; ++j) {
+            if( start[j] < end[j] ) {
+            	minDistances[j] = *((crossingDistances+j*num)+start[j]);
+            	if( minDistances[j] < minimumDistance ) {
+            		minimumDistance = minDistances[j];
+            		minDim = j;
+            	}
+            } else {
+                minDistances[j] = MonteRay::inf;
+            }
+        }
+
+        indices[minDim] =  *((cells+minDim*num) + start[minDim]);
+        if( debug ) {
+        	printf( "Debug: minDim=%d  index=%d   minimumDistance=%f\n", minDim, indices[minDim], minimumDistance);
+        }
+
+        // test for outside of the grid
+        outside = isOutside( indices );
+
+        if( debug ) {
+            if( outside ) {
+            	printf( "Debug: ray is outside \n" );
+            } else {
+            	printf( "Debug: ray is inside \n" );
+            }
+        }
+
+        float_t currentDistance = minimumDistance;
+
+        if( !outside || outsideDistances ) {
+        	float_t deltaDistance = currentDistance - priorDistance;
+
+            if( deltaDistance > 0.0  ) {
+                unsigned global_index;
+                if( !outside ) {
+                    global_index = calcIndex(indices );
+                } else {
+                    global_index = UINT_MAX;
+                }
+                global_indices[numRayCrossings] = global_index;
+                distances[numRayCrossings] = deltaDistance;
+                ++numRayCrossings;
+
+                if( debug ) {
+                	printf( "Debug: ******************\n" );
+                	printf( "Debug:  Entry Num    = %d\n", numRayCrossings );
+                	printf( "Debug:     index[0]  = %d\n", indices[0] );
+                	printf( "Debug:     index[1]  = %d\n", indices[1] );
+                	printf( "Debug:     index[2]  = %d\n", indices[2] );
+                	printf( "Debug:     distance  = %f\n", deltaDistance );
+                }
+            }
+        }
+
+        if( currentDistance >= distance ) {
+            break;
+        }
+
+        indices[minDim] = *((cells+minDim*num) + start[minDim]+1);
+
+        if( ! outside ) {
+            if( isIndexOutside(minDim, indices[minDim] ) ) {
+                // ray has moved outside of grid
+                break;
+            }
+        }
+
+        ++start[minDim];
+        priorDistance = currentDistance;
+    }
+
+    return numRayCrossings;
+}
 
 }
 

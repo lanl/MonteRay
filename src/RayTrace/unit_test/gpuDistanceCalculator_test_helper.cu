@@ -9,25 +9,25 @@
 
 namespace MonteRay{
 
-void
-gpuDistanceCalculatorTestHelper::launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos) {
-	gpuRayFloat_t x = pos[0];
-	gpuRayFloat_t y = pos[1];
-	gpuRayFloat_t z = pos[2];
-
-#ifdef __CUDACC__
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelGetDistancesToAllCenters<<<nBlocks,nThreads>>>(grid_device, distances_device, x, y, z);
-	gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
-#else
-	kernelGetDistancesToAllCenters(grid_device, distances_device, x, y, z);
-#endif
-
-	return;
-}
+//void
+//gpuDistanceCalculatorTestHelper::launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos) {
+//	gpuRayFloat_t x = pos[0];
+//	gpuRayFloat_t y = pos[1];
+//	gpuRayFloat_t z = pos[2];
+//
+//#ifdef __CUDACC__
+//	cudaEvent_t sync;
+//	cudaEventCreate(&sync);
+//	kernelGetDistancesToAllCenters<<<nBlocks,nThreads>>>(grid_device, distances_device, x, y, z);
+//	gpuErrchk( cudaPeekAtLastError() );
+//	cudaEventRecord(sync, 0);
+//	cudaEventSynchronize(sync);
+//#else
+//	kernelGetDistancesToAllCenters(grid_device, distances_device, x, y, z);
+//#endif
+//
+//	return;
+//}
 
 void
 gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outsideDistances) {
@@ -110,7 +110,7 @@ gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){
 
 void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 
-	nCells = getNumCells(grid);
+	nCells = grid->getNumCells();
 
 #ifdef __CUDACC__
 	// allocate and copy the grid
