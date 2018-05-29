@@ -231,6 +231,7 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
 CUDA_CALLABLE_MEMBER
 bool
 MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index, bool outward ) const {
+	const bool debug = false;
 
     // If outside and moving out then return
     if( outward && index >= Bins.getNumBins() ) {
@@ -283,6 +284,9 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
             minDistance = rayDistances.R2;
             maxDistance = rayDistances.R1;
         }
+        if( debug ){
+        	printf("Debug: minDistance=%f, maxDistance=%f\n", minDistance, maxDistance);
+        }
 
         if( minDistance == inf ) {
             // ray doesn't cross cylinder, terminate search
@@ -314,16 +318,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
     }
 
     if( ! outward && ! rayTerminated ) {
-//        for( auto itr = max_distances.rbegin(); itr != max_distances.rend(); ++itr ) {
-//             if( (*itr).second > distance ) {
-//                 distances.push_back( std::make_pair( (*itr).first, distance)  );
-//                 rayTerminated = true;
-//                 break;
-//             }
-//             distances.push_back( *itr );
-//         }
-
-    	for( unsigned i=0; i<max_distances.size(); ++i ){
+    	for( int i=max_distances.size()-1; i>=0; --i ){
     		auto id_max = max_distances.id(i);
     	    auto dist_max = max_distances.dist(i);
     		if( dist_max > distance ) {
