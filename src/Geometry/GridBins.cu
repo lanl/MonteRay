@@ -590,5 +590,34 @@ unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances,
     return numRayCrossings;
 }
 
+CUDA_CALLABLE_KERNEL
+void
+kernelRayTrace(void* ptrNumCrossings,
+		GridBins* ptrGrid,
+		int* ptrCells,
+		gpuRayFloat_t* ptrDistances,
+		gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
+		gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
+		gpuFloatType_t distance,
+		bool outsideDistances) {
+
+	const bool debug = false;
+
+	if( debug ) {
+		printf("kernelRayTrace(GridBins*):: Starting kernelRayTrace ******************\n");
+	}
+
+	unsigned* numCrossings = (unsigned*) ptrNumCrossings;
+
+	Position_t pos( x, y, z );
+	Direction_t dir( u, v, w );
+
+	numCrossings[0] = ptrGrid->rayTrace( ptrCells, ptrDistances, pos, dir, distance, outsideDistances);
+
+	if( debug ) {
+		printf("kernelRayTrace(GridBins*):: numCrossings=%d\n",numCrossings[0]);
+	}
+}
+
 }
 

@@ -5,7 +5,7 @@
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "HashLookup.h"
-#include "gpuRayTrace.hh"
+#include "GridBins.hh"
 #include "gpuTally.hh"
 
 #include <functional>

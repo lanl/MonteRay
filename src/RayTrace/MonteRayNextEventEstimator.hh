@@ -9,7 +9,6 @@
 #include "GPUAtomicAdd.hh"
 #include "RayList.hh"
 
-#include "gpuRayTrace.hh"
 #include "GridBins.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRayMaterialList.hh"

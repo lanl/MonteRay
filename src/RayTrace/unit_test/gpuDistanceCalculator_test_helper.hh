@@ -4,7 +4,6 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
 #include "GridBins.hh"
-#include "gpuRayTrace.hh"
 #include "MonteRay_timer.hh"
 
 namespace MonteRay{

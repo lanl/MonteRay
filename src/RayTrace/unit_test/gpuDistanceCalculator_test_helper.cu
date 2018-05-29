@@ -35,7 +35,7 @@ gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Di
 #ifdef __CUDACC__
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
-	kernelCudaRayTrace<<<1,1>>>(numCrossings_device,
+	kernelRayTrace<<<1,1>>>(numCrossings_device,
 			                                 grid_device,
 			                                 cells_device,
 			                                 distances_device,
@@ -48,7 +48,7 @@ gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Di
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
 #else
-	kernelCudaRayTrace(numCrossings_device,
+	kernelRayTrace(numCrossings_device,
 			                                 grid_device,
 			                                 cells_device,
 			                                 distances_device,

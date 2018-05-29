@@ -149,6 +149,18 @@ float_t getDistance( Position_t& pos1, Position_t& pos2);
 CUDA_CALLABLE_MEMBER
 unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* cells, gpuRayFloat_t* distances, float_t pos, float_t dir, float_t distance, int index );
 
+CUDA_CALLABLE_KERNEL
+void
+kernelRayTrace(
+		void* ptrNumCrossings,
+		GridBins* ptrGrid,
+		int* ptrCells,
+		gpuRayFloat_t* ptrDistances,
+		gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
+		gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
+		gpuFloatType_t distance,
+		bool outsideDistances);
+
 class GridBinsHost {
 public:
 	GridBinsHost();

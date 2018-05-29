@@ -1,7 +1,6 @@
 #include <UnitTest++.h>
 
 #include "GridBins.hh"
-#include "cpuRayTrace.hh"
 
 using namespace MonteRay;
 
