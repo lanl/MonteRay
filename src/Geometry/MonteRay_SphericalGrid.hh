@@ -77,7 +77,7 @@ public:
     CUDA_CALLABLE_MEMBER void validateR(void);
 
     CUDA_CALLABLE_MEMBER unsigned getNumRBins() const { return numRBins; }
-    CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const { return numRBins; }
+    CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const { return d == 0 ? numRBins : 0; }
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getRVertex(unsigned i) const { return pRVertices->vertices[i]; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getRSqVertex(unsigned i) const { return pRVertices->verticesSq[i]; }
@@ -85,7 +85,7 @@ public:
     CUDA_CALLABLE_MEMBER Position_t convertFromCartesian( const Position_t& pos) const;
 
     CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t R ) const { return pRVertices->getRadialIndexFromR(R); }
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t RSq ) const { return pRVertices->getRadialIndexFromRSq(R); }
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t RSq ) const { return pRVertices->getRadialIndexFromRSq(RSq); }
 
     CUDA_CALLABLE_MEMBER unsigned getIndex( const GridBins_t::Position_t& particle_pos) const;
     CUDA_CALLABLE_MEMBER bool isIndexOutside( unsigned d,  int i) const {
