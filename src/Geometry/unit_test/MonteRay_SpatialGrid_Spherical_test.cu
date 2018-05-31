@@ -125,7 +125,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
         grid.initialize();
 
         CHECK_CLOSE( 4.0*pi/3.0, grid.getVolume(0), 1e-11);
-        CHECK_CLOSE(  (4.0*pi/3.0)*(1000.0 - 1.0), grid.getVolume(1), 1e-11);
+        CHECK_CLOSE(  (4.0*pi/3.0)*(1000.0 - 1.0), grid.getVolume(1), 1e-3);
     }
 
     class particle {

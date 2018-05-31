@@ -62,7 +62,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( special_case_with_1_R_vertex ) {
-        std::vector<double> Rverts { 2.0 };
+        std::vector<gpuFloatType_t> Rverts { 2.0 };
 
         pArrayOfpGridInfo_t pGridInfo;
         pGridInfo[0] = new GridBins_t();
@@ -79,7 +79,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( special_case_remove_zero_R_entry ) {
-        std::vector<double> Rverts { 0.0, 1.5, 2.0 };
+        std::vector<gpuFloatType_t> Rverts { 0.0, 1.5, 2.0 };
 
 
         pArrayOfpGridInfo_t pGridInfo;
@@ -98,7 +98,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
      }
 
     TEST( convertFromCartesian ){
-        std::vector<double> Rverts { 0.0, 1.5, 2.0, 5.0, 6.0 };
+        std::vector<gpuFloatType_t> Rverts { 0.0, 1.5, 2.0, 5.0, 6.0 };
 
         pArrayOfpGridInfo_t pGridInfo;
         pGridInfo[0] = new GridBins_t();
@@ -109,15 +109,15 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
 
         unsigned dim = grid.getDimension();
 
-        Vector3D<double> pos = grid.convertFromCartesian( Vector3D<double>( 1.0, 0.0, 5.0) );
-        CHECK_CLOSE( 5.099019513593, pos[0], 1e-11);
+        Vector3D<gpuFloatType_t> pos = grid.convertFromCartesian( Vector3D<gpuFloatType_t>( 1.0, 0.0, 5.0) );
+        CHECK_CLOSE( 5.099019513593, pos[0], 1e-5);
         CHECK_CLOSE( 0.0, pos[1], 1e-11);
         CHECK_CLOSE( 0.0, pos[2], 1e-11);
 
-        pos = grid.convertFromCartesian( Vector3D<double>( 2.0, 1.0, 6.0) );
-        CHECK_CLOSE( 6.403124237433, pos[0], 1e-11);
-        CHECK_CLOSE( 0.0, pos[1], 1e-11);
-        CHECK_CLOSE( 0.0, pos[2], 1e-11);
+        pos = grid.convertFromCartesian( Vector3D<gpuFloatType_t>( 2.0, 1.0, 6.0) );
+        CHECK_CLOSE( 6.403124237433, pos[0], 1e-5);
+        CHECK_CLOSE( 0.0, pos[1], 1e-5);
+        CHECK_CLOSE( 0.0, pos[2], 1e-5);
 
         delete pGridInfo[0];
     }
@@ -132,7 +132,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( isIndexOutside_R ) {
-    	std::vector<double> Rverts { 1.0, 2.0, 3.0 };
+    	std::vector<gpuFloatType_t> Rverts { 1.0, 2.0, 3.0 };
 
     	pArrayOfpGridInfo_t pGridInfo;
     	pGridInfo[0] = new GridBins_t();
@@ -216,7 +216,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( isOutside_index ) {
-    	std::vector<double> Rverts { 1.0, 2.0, 3.0 };
+    	std::vector<gpuFloatType_t> Rverts { 1.0, 2.0, 3.0 };
 
     	pArrayOfpGridInfo_t pGridInfo;
     	pGridInfo[0] = new GridBins_t();
@@ -231,7 +231,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( isOutside_Radius_false ) {
-    	std::vector<double> Rverts { 1.0, 2.0, 3.0 };
+    	std::vector<gpuFloatType_t> Rverts { 1.0, 2.0, 3.0 };
 
     	pArrayOfpGridInfo_t pGridInfo;
     	pGridInfo[0] = new GridBins_t();
@@ -249,7 +249,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( calcIJK ) {
-    	std::vector<double> Rverts { 1.0, 2.0, 3.0 };
+    	std::vector<gpuFloatType_t> Rverts { 1.0, 2.0, 3.0 };
 
     	pArrayOfpGridInfo_t pGridInfo;
     	pGridInfo[0] = new GridBins_t();
@@ -278,7 +278,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( getVolume ) {
-    	std::vector<double> Rverts { 1.0, 2.0, 3.0 };
+    	std::vector<gpuFloatType_t> Rverts { 1.0, 2.0, 3.0 };
 
     	pArrayOfpGridInfo_t pGridInfo;
     	pGridInfo[0] = new GridBins_t();
@@ -286,8 +286,8 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
 
     	Grid_t grid( 1, pGridInfo );
 
-        CHECK_CLOSE( (1.0)*(4.0/3.0)*pi, grid.getVolume(0), 1e-11 );
-        CHECK_CLOSE( (8.0-1.0)*(4.0/3.0)*pi, grid.getVolume(1), 1e-11 );
+        CHECK_CLOSE( (1.0)*(4.0/3.0)*pi, grid.getVolume(0), 1e-5 );
+        CHECK_CLOSE( (8.0-1.0)*(4.0/3.0)*pi, grid.getVolume(1), 1e-5 );
 
         delete pGridInfo[0];
     }

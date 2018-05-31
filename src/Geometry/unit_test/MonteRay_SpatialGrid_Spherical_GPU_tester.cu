@@ -99,7 +99,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
         copyToGPU();
 
         CHECK_CLOSE( 4.0*pi/3.0, getVolume(0), 1e-11);
-        CHECK_CLOSE(  (4.0*pi/3.0)*(1000.0 - 1.0), getVolume(1), 1e-11);
+        CHECK_CLOSE(  (4.0*pi/3.0)*(1000.0 - 1.0), getVolume(1), 1e-4);
     }
 
     class particle {
