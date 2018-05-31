@@ -59,9 +59,9 @@ gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){
 //	std::cout << "Debug: starting ~gpuDistanceCalculatorTestHelper()" << std::endl;
 
 #ifdef __CUDACC__
-	if( grid_device != NULL ) {
-		CUDA_CHECK_RETURN( cudaFree( grid_device ));
-	}
+//	if( grid_device != NULL ) {
+//		CUDA_CHECK_RETURN( cudaFree( grid_device ));
+//	}
 	if( distances_device != NULL ) {
 		CUDA_CHECK_RETURN( cudaFree( distances_device ));
 	}
@@ -94,8 +94,10 @@ void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 
 #ifdef __CUDACC__
 	// allocate and copy the grid
-	CUDA_CHECK_RETURN( cudaMalloc((void**) &grid_device, sizeof(GridBins) ));
-	CUDA_CHECK_RETURN( cudaMemcpy(grid_device, grid, sizeof(GridBins), cudaMemcpyHostToDevice ));
+//	CUDA_CHECK_RETURN( cudaMalloc((void**) &grid_device, sizeof(GridBins) ));
+//	CUDA_CHECK_RETURN( cudaMemcpy(grid_device, grid, sizeof(GridBins), cudaMemcpyHostToDevice ));
+	grid->copyToGPU();
+	grid_device = grid->devicePtr;
 
 	// allocate the distances
 	CUDA_CHECK_RETURN(cudaMalloc((void**) &distances_device, sizeof(gpuRayFloat_t) * nCells ));

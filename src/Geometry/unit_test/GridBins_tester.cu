@@ -1,6 +1,7 @@
 #include <UnitTest++.h>
 
 #include "GridBins.hh"
+#include "GPUUtilityFunctions.hh"
 
 using namespace MonteRay;
 
@@ -8,6 +9,8 @@ SUITE( GridBins_Tester ) {
 
 
 	TEST( ctor_class_getMaxNumVertices ) {
+		gpuReset();
+
 		GridBins grid;
 		CHECK_EQUAL( 1001, grid.getMaxNumVertices() );
 		CHECK_EQUAL( 0, grid.getOffset(0) );
@@ -463,6 +466,94 @@ SUITE( GridBins_Tester ) {
 		CHECK_EQUAL( false, grid.isRegular(0) );
 		CHECK_EQUAL( false, grid.isRegular(1) );
 		CHECK_EQUAL( false, grid.isRegular(2) );
+	}
+
+	TEST( getHashPtr ) {
+		GridBins grid;
+		grid.setVertices(0,  0.0, 10.0, 10);
+
+		//CHECK( false );
+		CHECK_EQUAL( 8000, grid.getHashPtr(0)->getNEdges() );
+		CHECK_CLOSE( 0.0, grid.getHashPtr(0)->getMin(), 1e-5 );
+		CHECK_CLOSE( 10.0, grid.getHashPtr(0)->getMax(), 1e-5 );
+	}
+
+	TEST( getHasLowerUpperBins ) {
+		GridBins grid;
+		grid.setDefaultHashSize( 12 );
+
+		std::vector<gpuFloatType_t> vertices  { -1.0, -0.5, 0.1, 0.2, 3.0, 6.0, 6.1, 6.15, 8.0, 10.0 };
+
+		grid.setVertices(0, vertices);
+
+		//CHECK( false );
+
+		CHECK_EQUAL( 12, grid.getDefaultHashSize() );
+		CHECK_EQUAL( 12, grid.getHashPtr(0)->getNEdges() );
+		CHECK_CLOSE( -1.0, grid.getHashPtr(0)->getMin(), 1e-5 );
+		CHECK_CLOSE( 10.0, grid.getHashPtr(0)->getMax(), 1e-5 );
+
+		unsigned lower_bin;
+		unsigned upper_bin;
+
+		grid.getHashLowerUpperBins(0, -0.5, lower_bin, upper_bin);
+		CHECK_EQUAL( 0, lower_bin);
+		CHECK_EQUAL( 1, upper_bin );
+
+		grid.getHashLowerUpperBins(0, 0.0, lower_bin, upper_bin);
+		CHECK_EQUAL( 1, lower_bin);
+		CHECK_EQUAL( 3, upper_bin );
+
+		grid.getHashLowerUpperBins(0, 1.0, lower_bin, upper_bin);
+		CHECK_EQUAL( 3, lower_bin);
+		CHECK_EQUAL( 3, upper_bin );
+
+		grid.getHashLowerUpperBins(0, 9.9, lower_bin, upper_bin);
+		CHECK_EQUAL( 8, lower_bin);
+		CHECK_EQUAL( 9, upper_bin );
+	}
+
+	TEST( hash_getHashLowerUpperBins_and_getDimIndex ) {
+		GridBins grid;
+		grid.setDefaultHashSize( 201 );
+
+		std::vector<gpuFloatType_t> vertices {-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+			0,  1,  2,  3.1,  4,  5,  6,  7,  8,  9,  10};
+
+		grid.setVertices(0, vertices );
+
+		unsigned lower_bin;
+		unsigned upper_bin;
+
+		gpuFloatType_t pos = -10.5;
+		CHECK_EQUAL( -1, grid.getDimIndex( 0, pos) );
+
+		pos = -9.5;
+		grid.getHashLowerUpperBins(0, pos, lower_bin, upper_bin);
+		CHECK_EQUAL( 0, grid.getDimIndex( 0, pos) );
+		CHECK_EQUAL( 0, lower_bin);
+		CHECK_EQUAL( 0, upper_bin );
+
+		pos = -8.5;
+		grid.getHashLowerUpperBins(0, pos, lower_bin, upper_bin);
+		CHECK_EQUAL( 1, grid.getDimIndex( 0, pos) );
+		CHECK_EQUAL( 1, lower_bin);
+		CHECK_EQUAL( 1, upper_bin );
+
+		pos = 8.5;
+		grid.getHashLowerUpperBins(0, pos, lower_bin, upper_bin);
+		CHECK_EQUAL( 18, grid.getDimIndex( 0, pos) );
+		CHECK_EQUAL( 18, lower_bin);
+		CHECK_EQUAL( 18, upper_bin );
+
+		pos = 9.5;
+		grid.getHashLowerUpperBins(0, pos, lower_bin, upper_bin);
+		CHECK_EQUAL( 19, grid.getDimIndex( 0, pos) );
+		CHECK_EQUAL( 19, lower_bin);
+		CHECK_EQUAL( 19, upper_bin );
+
+		pos = 10.5;
+		CHECK_EQUAL( 20, grid.getDimIndex( 0, pos) );
 	}
 
 }

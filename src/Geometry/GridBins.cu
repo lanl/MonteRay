@@ -16,7 +16,6 @@
 
 namespace MonteRay{
 
-CUDA_CALLABLE_MEMBER
 void GridBins::setVertices( unsigned dim, float_t min, float_t max, unsigned numBins ) {
 
 	minMax[dim*2] = min;
@@ -35,6 +34,9 @@ void GridBins::setVertices( unsigned dim, float_t min, float_t max, unsigned num
 	for( unsigned i = 1; i<numBins+1; ++i) {
 		vertices[ i+ offset[dim]] = vertices[ i - 1 + offset[dim] ] + delta[dim];
 	}
+
+	hash[dim] = new HashBins( vertices + offset[dim], num[dim]+1, hashSize );
+
 	regular[dim] = true;
 }
 
@@ -107,7 +109,11 @@ GridBins::getDimIndex(const unsigned dim, const gpuRayFloat_t pos ) const {
 		if( regular[dim] ) {
 			dim_index = ( pos -  minimum ) / delta[dim];
 		} else {
-			dim_index = LowerBoundIndex( vertices + offset[dim], numBins+1, pos  );
+			unsigned lower;
+			unsigned upper;
+			hash[dim]->getLowerUpperBins(pos, lower, upper);
+			if( lower == upper ) { return lower; }
+			dim_index = lower + LowerBoundIndex( vertices + offset[dim] + lower, upper-lower+1, pos  );
 		}
 	}
 	return dim_index;
@@ -203,19 +209,21 @@ GridBinsHost::GridBinsHost( std::vector<double> x, std::vector<double> y, std::v
 GridBinsHost::~GridBinsHost(){
 	delete ptr;
 #ifdef __CUDACC__
-	if( cudaCopyMade ) {
-		if( ptr_device != NULL ) {
-			cudaFree( ptr_device );
-		}
-	}
+//	if( cudaCopyMade ) {
+//		if( ptr_device != NULL ) {
+//			cudaFree( ptr_device );
+//		}
+//	}
 #endif
 }
 
 void GridBinsHost::copyToGPU(void) {
 #ifdef __CUDACC__
 	cudaCopyMade = true;
-	CUDA_CHECK_RETURN( cudaMalloc( &ptr_device, sizeof(GridBins) ));
-	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof(GridBins), cudaMemcpyHostToDevice ));
+	ptr->copyToGPU();
+	ptr_device = ptr->devicePtr;
+//	CUDA_CHECK_RETURN( cudaMalloc( &ptr_device, sizeof(GridBins) ));
+//	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof(GridBins), cudaMemcpyHostToDevice ));
 #endif
 }
 
