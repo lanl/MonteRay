@@ -22,14 +22,14 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
 	using pGridInfo_t = GridBins_t*;
 	using pArrayOfpGridInfo_t = Grid_t::pArrayOfpGridInfo_t;
 
-    typedef MonteRay::Vector3D<gpuFloatType_t> Position_t;
+    typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
 
     class gridTestData {
     public:
         enum coord {X,Y,Z,DIM};
         gridTestData(){
 
-        	std::vector<gpuFloatType_t> vertices = { -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+        	std::vector<gpuRayFloat_t> vertices = { -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
         			0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10 };
 
         	pGridInfo[X] = new GridBins_t();
@@ -217,11 +217,11 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
         delete pResult;
     }
 
-   	CUDA_CALLABLE_KERNEL void kernelGetDimIndex(Grid_t** pPtrCart, resultClass<int>* pResult, unsigned d, gpuFloatType_t pos) {
+   	CUDA_CALLABLE_KERNEL void kernelGetDimIndex(Grid_t** pPtrCart, resultClass<int>* pResult, unsigned d, gpuRayFloat_t pos) {
    		pResult->v = (*pPtrCart)->getDimIndex(d,pos);
 	}
 
-   	CUDA_CALLABLE_KERNEL void kernelGetDimIndexDirect(Grid_t* pCart, resultClass<int>* pResult, unsigned d, gpuFloatType_t pos) {
+   	CUDA_CALLABLE_KERNEL void kernelGetDimIndexDirect(Grid_t* pCart, resultClass<int>* pResult, unsigned d, gpuRayFloat_t pos) {
    		pResult->v = pCart->getDimIndex(d,pos);
 	}
 
@@ -242,7 +242,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
    		}
    		~CartesianGridGPUTester(){}
 
-   	   	int getDimIndex( unsigned d, gpuFloatType_t pos) {
+   	   	int getDimIndex( unsigned d, gpuRayFloat_t pos) {
    	   		using result_t = resultClass<int>;
    	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   	    pResult->copyToGPU();
@@ -253,7 +253,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
    	   		return pResult->v;
    	   	}
 
-   	   	int getDimIndexDirect( unsigned d, gpuFloatType_t pos) {
+   	   	int getDimIndexDirect( unsigned d, gpuRayFloat_t pos) {
    	   		using result_t = resultClass<int>;
    	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   	    pResult->copyToGPU();
@@ -440,12 +440,12 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
      }
 
 
-     CUDA_CALLABLE_KERNEL void kernelCartesianGridGetVolume(Grid_t** pCart, resultClass<gpuFloatType_t>* pResult, unsigned i ) {
+     CUDA_CALLABLE_KERNEL void kernelCartesianGridGetVolume(Grid_t** pCart, resultClass<gpuRayFloat_t>* pResult, unsigned i ) {
     	 pResult->v = (*pCart)->getVolume(i);
      }
 
-     gpuFloatType_t getVolume(Grid_t& grid, unsigned i ) {
-    	 using result_t = resultClass<gpuFloatType_t>;
+     gpuRayFloat_t getVolume(Grid_t& grid, unsigned i ) {
+    	 using result_t = resultClass<gpuRayFloat_t>;
     	 std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
     	 pResult->copyToGPU();
 
@@ -461,7 +461,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
  		pGridInfo[1] = new GridBins_t();
  		pGridInfo[2] = new GridBins_t();
 
-     	std::vector<gpuFloatType_t> vertices = {-3, -1, 0};
+     	std::vector<gpuRayFloat_t> vertices = {-3, -1, 0};
 
      	pGridInfo[0]->initialize( vertices );
      	pGridInfo[1]->initialize( vertices );

@@ -52,7 +52,7 @@ public:
     CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
     	if( debug ) std::cout << "Debug: MonteRay_CartesianGrid::copyToGPU \n";
 #ifdef __CUDACC__
-    	ptrDevicePtr = (MonteRay_CartesianGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CartesianGrid*), std::string("device - MonteRay_CarteisanGrid::ptrDevicePtr") );
+    	ptrDevicePtr = (MonteRay_CartesianGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CartesianGrid*), std::string("device - MonteRay_CartesianGrid::ptrDevicePtr") );
 
     	pGridBins[0]->copyToGPU();
     	pGridBins[1]->copyToGPU();
@@ -74,9 +74,9 @@ public:
 
     CUDA_CALLABLE_MEMBER unsigned getIndex( const GridBins_t::Position_t& particle_pos) const;
 
-    CUDA_CALLABLE_MEMBER int getDimIndex( unsigned d, gpuFloatType_t pos) const {  return pGridBins[d]->getLinearIndex( pos ); }
+    CUDA_CALLABLE_MEMBER int getDimIndex( unsigned d, gpuRayFloat_t pos) const {  return pGridBins[d]->getLinearIndex( pos ); }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getVolume( unsigned index ) const;
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t getVolume( unsigned index ) const;
 
     CUDA_CALLABLE_MEMBER unsigned calcIndex( const int[] ) const;
 
@@ -90,15 +90,15 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace( rayTraceList_t&, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuFloatType_t distance,  bool outsideDistances=false) const;
+    rayTrace( rayTraceList_t&, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuRayFloat_t distance,  bool outsideDistances=false) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t&, unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance ) const;
+    crossingDistance(singleDimRayTraceMap_t&, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t&, const GridBins_t& Bins, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance, bool equal_spacing=false) const;
+    crossingDistance(singleDimRayTraceMap_t&, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing=false) const;
 
 public:
     MonteRay_CartesianGrid** ptrDevicePtr = nullptr;
