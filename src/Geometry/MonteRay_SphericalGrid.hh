@@ -108,11 +108,7 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const;
-
-    CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing=false) const;
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     void
@@ -127,6 +123,7 @@ public:
     radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outward ) const;
 
 protected:
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcParticleRSq( const gpuRayFloat_t&  pos) const { return pos*pos; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t calcParticleRSq( const Position_t&  pos) const { return pos[0]*pos[0] + pos[1]*pos[1] + pos[2]*pos[2]; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t calcQuadraticA(  const Direction_t& dir) const { return 1.0; } //=dot(pDirection,pDirection)
     CUDA_CALLABLE_MEMBER gpuRayFloat_t calcQuadraticB(  const Position_t&  pos, const Direction_t& dir) const { return 2.0*(pos[0]*dir[0] + pos[1]*dir[1] + pos[2]*dir[2]); }

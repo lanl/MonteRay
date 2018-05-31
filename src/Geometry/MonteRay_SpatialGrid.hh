@@ -252,6 +252,19 @@ public:
         return;
     }
 
+    CUDA_CALLABLE_MEMBER
+    void
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const {
+    	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
+
+//        if( transform ) {
+//            pos = (*transform).counterTransformPos( pos );
+//            dir = (*transform).counterTransformDir( dir );
+//        }
+    	pGridSystem->crossingDistance(rayTraceMap, pos, dir, distance );
+        return;
+    }
+
     //void setTransformation( const mcatk::Transformation& T);
     //const mcatk::Transformation* getTransformation( void ) const;
     //bool isTransformed( void ) const { return transform.is_initialized(); } //For testing purposes.

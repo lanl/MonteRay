@@ -164,16 +164,9 @@ MonteRay_SphericalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_SphericalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
-	radialCrossingDistances(rayTraceMap, pos, dir, distance);
-    return;
-}
-
-CUDA_CALLABLE_MEMBER
-void
-MonteRay_SphericalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing/*=false*/) const {
-    int index = Bins.getRadialIndexFromRSq(calcParticleRSq(pos));
-    radialCrossingDistances( rayTraceMap, pos, dir, distance, index);
+MonteRay_SphericalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
+    int index = pRVertices->getRadialIndexFromRSq(calcParticleRSq(pos));
+    radialCrossingDistances( rayTraceMap, pos, dir, index, distance );
     return;
 }
 

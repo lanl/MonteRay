@@ -60,6 +60,9 @@ using namespace MonteRay;
   	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
   			unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance );
 
+  	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+  			Position_t pos, Position_t dir, gpuRayFloat_t distance );
+
    	template<class Particle>
    	CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
    			Particle p,
@@ -281,6 +284,24 @@ using namespace MonteRay;
    	   		cudaDeviceSynchronize();
    	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
    	   				                 d, pos, dir, distance );
+   	   		cudaDeviceSynchronize();
+
+   	   		gpuErrchk( cudaPeekAtLastError() );
+
+   	   		pResult->copyToCPU();
+
+   	   		return pResult->v;
+   	   	}
+
+   	   	singleDimRayTraceMap_t crossingDistance( Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
+
+   	   		using result_t = resultClass<singleDimRayTraceMap_t>;
+   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+   	   		pResult->copyToGPU();
+
+   	   		cudaDeviceSynchronize();
+   	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+   	   				                 pos, dir, distance );
    	   		cudaDeviceSynchronize();
 
    	   		gpuErrchk( cudaPeekAtLastError() );
