@@ -110,14 +110,34 @@ SUITE( MonteRay_SpatialGrid_Tester ) {
          unsigned ExpectedNumCells = 100 * 100 * 100;
          CHECK_EQUAL(ExpectedNumCells, grid.getNumCells() );
 
-         grid.write( "test_spatialGrid_1.bin" );
+         grid.write( "test_spatialGrid_XYZ.bin" );
 
          {
              Grid_t newGrid;
-             newGrid.read( "test_spatialGrid_1.bin" );
+             newGrid.read( "test_spatialGrid_XYZ.bin" );
 
              CHECK_EQUAL( 3U, newGrid.getDimension() );
              CHECK_EQUAL( TransportMeshTypeEnum::Cartesian, newGrid.getCoordinateSystem() );
+             CHECK_EQUAL(ExpectedNumCells, newGrid.getNumCells() );
+         }
+     }
+
+     TEST( write_to_file_Spherical ) {
+         Grid_t grid;
+         grid.setCoordinateSystem( TransportMeshTypeEnum::Spherical );
+         grid.setDimension( 1 );
+         grid.setGrid( MonteRay_SpatialGrid::SPH_R, 0.0, 10.0, 100);
+         unsigned ExpectedNumCells = 100;
+         CHECK_EQUAL(ExpectedNumCells, grid.getNumCells() );
+
+         grid.write( "test_spatialGrid_SphR.bin" );
+
+         {
+             Grid_t newGrid;
+             newGrid.read( "test_spatialGrid_SphR.bin" );
+
+             CHECK_EQUAL( 1U, newGrid.getDimension() );
+             CHECK_EQUAL( TransportMeshTypeEnum::Spherical, newGrid.getCoordinateSystem() );
              CHECK_EQUAL(ExpectedNumCells, newGrid.getNumCells() );
          }
      }

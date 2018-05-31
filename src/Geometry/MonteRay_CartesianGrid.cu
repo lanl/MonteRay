@@ -79,10 +79,10 @@ MonteRay_CartesianGrid::getIndex( const GridBins_t::Position_t& particle_pos) co
 }
 
 CUDA_CALLABLE_MEMBER
-gpuFloatType_t
+gpuRayFloat_t
 MonteRay_CartesianGrid::getVolume(unsigned index ) const {
 
-    gpuFloatType_t volume=1.0;
+    gpuRayFloat_t volume=1.0;
 //    if( regular ) {
 //        for( unsigned d=0; d < DIM; ++d ) {
 //            volume *= pGridBins[d]->delta;
@@ -154,7 +154,7 @@ MonteRay_CartesianGrid::isOutside( const int i[] ) const {
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_direction, gpuFloatType_t distance,  bool outsideDistances) const{
+MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_direction, gpuRayFloat_t distance,  bool outsideDistances) const{
 	if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
 	rayTraceList.reset();
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
@@ -185,14 +185,14 @@ MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance ) const {
+MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
     crossingDistance(rayTraceMap, *(pGridBins[d]), pos, dir, distance, false);
     return;
 }
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance, bool equal_spacing) const {
+MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const {
     int index = Bins.getLinearIndex(pos);
     planarCrossingDistance( rayTraceMap, Bins, pos, dir, distance, index);
     return;

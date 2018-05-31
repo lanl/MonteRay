@@ -30,7 +30,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 	}
 
 	TEST( ctor_with_vector ) {
-        std::vector<gpuFloatType_t> vertices = {
+        std::vector<gpuRayFloat_t> vertices = {
         		-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
         		  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10
         };
@@ -92,20 +92,20 @@ SUITE( MonteRay_GridBins_Tester ) {
 	};
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetNumBins(MonteRay_GridBins* pGridBins, resultClass<gpuFloatType_t>* pResult) {
+	CUDA_CALLABLE_KERNEL void kernelGetNumBins(MonteRay_GridBins* pGridBins, resultClass<gpuRayFloat_t>* pResult) {
 		pResult->v = pGridBins->getNumBins();
 		printf( "kernelGetNumBins -- value = %d\n",  pResult->v );
 		return;
 	}
 
 	TEST( kernelGetNumVertices ) {
-		 std::vector<gpuFloatType_t> vertices = {
+		 std::vector<gpuRayFloat_t> vertices = {
 		        		-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 		        		  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10
 		        };
 
 		MonteRay_GridBins* pGridInfo = new MonteRay_GridBins(vertices);
-		resultClass<gpuFloatType_t>* pResult = new resultClass<gpuFloatType_t>();
+		resultClass<gpuRayFloat_t>* pResult = new resultClass<gpuRayFloat_t>();
 //
 #ifdef __CUDACC__
 		pGridInfo->copyToGPU();
@@ -174,7 +174,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
     TEST( getRadialIndexFromR ) {
-         std::vector<gpuFloatType_t> Rverts = { 1.0, 2.0, 3.0 };
+         std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0 };
 
          std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins( Rverts ) );
          pGridInfo->initialize( Rverts );
@@ -188,7 +188,7 @@ SUITE( MonteRay_GridBins_Tester ) {
      }
 
     TEST( getRadialIndexFromRSq ) {
-        std::vector<gpuFloatType_t> Rverts = { 1.0, 2.0, 3.0 };
+        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0 };
 
         std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins( Rverts ) );
         pGridInfo->initialize( Rverts );
@@ -202,7 +202,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
     TEST( read_write_radial ) {
-         std::vector<gpuFloatType_t> Rverts = { 1.0, 2.0, 3.0 };
+         std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0 };
 
          std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
          pGridInfo->initialize( Rverts );
@@ -233,7 +233,7 @@ SUITE( MonteRay_GridBins_Tester ) {
      }
 
     TEST( read_write_linear ) {
-    	std::vector<gpuFloatType_t> Xverts = { 1.0, 2.0, 3.0, 4.0 };
+    	std::vector<gpuRayFloat_t> Xverts = { 1.0, 2.0, 3.0, 4.0 };
 
     	std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
     	pGridInfo->initialize( Xverts );
@@ -259,7 +259,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetLinearIndex(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t r) {
+	CUDA_CALLABLE_KERNEL void kernelGetLinearIndex(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t r) {
 		pResult->v = pGridBins->getLinearIndex(r);
 		//printf( "kernelGetNumBins -- value = %d\n",  pResult->v );
 		return;
@@ -285,7 +285,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 
      }
 
-	int launchKernelGetLinearIndex( gpuFloatType_t r ) {
+	int launchKernelGetLinearIndex( gpuRayFloat_t r ) {
 
 		std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins(-10, 10, 20 ) );
 	    std::unique_ptr<resultClass<int>> pResult = std::unique_ptr<resultClass<int>>( new resultClass<int>() );
@@ -358,13 +358,13 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromR(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t r) {
+	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromR(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t r) {
 		pResult->v = pGridBins->getRadialIndexFromR(r);
 		return;
 	}
 
-	int launchKernelGetRadialIndexFromR( gpuFloatType_t r ) {
-        std::vector<gpuFloatType_t> Rverts= { 1.0, 2.0, 3.0 };
+	int launchKernelGetRadialIndexFromR( gpuRayFloat_t r ) {
+        std::vector<gpuRayFloat_t> Rverts= { 1.0, 2.0, 3.0 };
 		std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
 		pGridInfo->initialize( Rverts );
 		pGridInfo->modifyForRadial();
@@ -400,13 +400,13 @@ SUITE( MonteRay_GridBins_Tester ) {
 	}
 
 	// kernal call
-	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromRSq(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuFloatType_t rSq) {
+	CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromRSq(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t rSq) {
 		pResult->v = pGridBins->getRadialIndexFromRSq(rSq);
 		return;
 	}
 
-	int launchKernelGetRadialIndexFromRSq( gpuFloatType_t rSq ) {
-        std::vector<gpuFloatType_t> Rverts= { 1.0, 2.0, 3.0 };
+	int launchKernelGetRadialIndexFromRSq( gpuRayFloat_t rSq ) {
+        std::vector<gpuRayFloat_t> Rverts= { 1.0, 2.0, 3.0 };
 		std::unique_ptr<MonteRay_GridBins> pGridInfo = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
 		pGridInfo->initialize( Rverts );
 		pGridInfo->modifyForRadial();

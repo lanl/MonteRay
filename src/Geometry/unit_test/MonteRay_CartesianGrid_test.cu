@@ -20,13 +20,13 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
 	using pGridInfo_t = GridBins_t*;
 	using pArrayOfpGridInfo_t = Grid_t::pArrayOfpGridInfo_t;
 
-    typedef MonteRay::Vector3D<gpuFloatType_t> Position_t;
+    typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
 
     class gridTestData {
     public:
         enum coord {X,Y,Z,DIM};
         gridTestData(){
-            std::vector<gpuFloatType_t> vertices = { -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+            std::vector<gpuRayFloat_t> vertices = { -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
                                                        0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10 };
 
             pGridInfo[X] = new GridBins_t();
@@ -293,7 +293,7 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
 		pGridInfo[1] = new GridBins_t();
 		pGridInfo[2] = new GridBins_t();
 
-    	std::vector<gpuFloatType_t> vertices = {-3, -1, 0};
+    	std::vector<gpuRayFloat_t> vertices = {-3, -1, 0};
 
     	pGridInfo[0]->initialize( vertices );
     	pGridInfo[1]->initialize( vertices );

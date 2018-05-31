@@ -27,8 +27,8 @@ class MonteRay_GridBins : public CopyMemoryBase<MonteRay_GridBins>{
 public:
 	using Base = MonteRay::CopyMemoryBase<MonteRay_GridBins> ;
     //typedef MonteRay_GridBins[3] gridInfoArray_t;
-    typedef MonteRay::Vector3D<gpuFloatType_t> Position_t;
-    typedef MonteRay::Vector3D<gpuFloatType_t> Direction_t;
+    typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
+    typedef MonteRay::Vector3D<gpuRayFloat_t> Direction_t;
 
     enum coordinate_t{ LINEAR, RADIAL };
 
@@ -37,12 +37,12 @@ public:
     }
 
 
-    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( gpuFloatType_t min, gpuFloatType_t max, unsigned nBins) : CopyMemoryBase<MonteRay_GridBins>()  {
+    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins) : CopyMemoryBase<MonteRay_GridBins>()  {
     	init();
         initialize( min, max, nBins );
     }
 
-    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( const std::vector<gpuFloatType_t>& bins ) {
+    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( const std::vector<gpuRayFloat_t>& bins ) {
     	init();
         initialize( bins );
     }
@@ -141,18 +141,18 @@ public:
 		if( isCudaIntermediate ) {
 			// host to device
 			if( nVertices == 0 && rhs->nVertices > 0 ) {
-				vertices = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVertices*sizeof(gpuFloatType_t), std::string("device - MonteRay_GridBins::vertices") );
-				MonteRayMemcpy( vertices,   rhs->vertices,   rhs->nVertices*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
+				vertices = (gpuRayFloat_t*) MONTERAYDEVICEALLOC( rhs->nVertices*sizeof(gpuRayFloat_t), std::string("device - MonteRay_GridBins::vertices") );
+				MonteRayMemcpy( vertices,   rhs->vertices,   rhs->nVertices*sizeof(gpuRayFloat_t), cudaMemcpyHostToDevice );
 			}
 			if( nVerticesSq == 0 && rhs->nVerticesSq > 0) {
-				verticesSq = (gpuFloatType_t*) MONTERAYDEVICEALLOC( rhs->nVerticesSq*sizeof(gpuFloatType_t), std::string("device - MonteRay_GridBins::verticesSq") );
-				MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuFloatType_t), cudaMemcpyHostToDevice );
+				verticesSq = (gpuRayFloat_t*) MONTERAYDEVICEALLOC( rhs->nVerticesSq*sizeof(gpuRayFloat_t), std::string("device - MonteRay_GridBins::verticesSq") );
+				MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuRayFloat_t), cudaMemcpyHostToDevice );
 			}
 
 		} else {
 			// device to host
-//			MonteRayMemcpy( vertices, rhs->vertices, rhs->nVertices*sizeof(gpuFloatType_t), cudaMemcpyDeviceToHost );
-//			MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuFloatType_t), cudaMemcpyDeviceToHost );
+//			MonteRayMemcpy( vertices, rhs->vertices, rhs->nVertices*sizeof(gpuRayFloat_t), cudaMemcpyDeviceToHost );
+//			MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuRayFloat_t), cudaMemcpyDeviceToHost );
 		}
 
 		nVertices = rhs->nVertices;
@@ -169,38 +169,42 @@ public:
 #endif
 	}
 
-    void initialize( gpuFloatType_t min, gpuFloatType_t max, unsigned nBins);
+    void initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins);
 
-    void initialize( const std::vector<gpuFloatType_t>& bins );
+    void initialize( const std::vector<gpuRayFloat_t>& bins );
 
-    void setup(void);
+    CUDAHOST_CALLABLE_MEMBER void setup(void);
 
     CUDA_CALLABLE_MEMBER unsigned getNumBins(void) const {
     	//if( debug ) printf("Debug: MonteRay_GridBins::getNumBins -- \n");
     	return numBins;
     }
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getMinVertex(void) const {return minVertex; }
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getMaxVertex(void) const {return maxVertex; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t getMinVertex(void) const {return minVertex; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t getMaxVertex(void) const {return maxVertex; }
     CUDA_CALLABLE_MEMBER unsigned getNumVertices(void) const { return nVertices; }
     CUDA_CALLABLE_MEMBER unsigned getNumVerticesSq(void) const { return nVerticesSq; }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getDelta(void) const { return delta; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t getDelta(void) const { return delta; }
 
-    CUDA_CALLABLE_MEMBER const gpuFloatType_t* getVerticesData(void) const {return vertices;}
+    CUDA_CALLABLE_MEMBER const gpuRayFloat_t* getVerticesData(void) const {return vertices;}
 
     void removeVertex(unsigned i);
 
-    void modifyForRadial(void);
+    CUDA_CALLABLE_MEMBER void modifyForRadial(void);
 
     CUDA_CALLABLE_MEMBER bool isLinear(void) const { if( type == LINEAR) return true; return false; }
     CUDA_CALLABLE_MEMBER bool isRadial(void) const { if( type == RADIAL) return true; return false; }
 
     // returns -1 for one neg side of mesh
     // and number of bins on the pos side of the mesh
-    CUDA_CALLABLE_MEMBER int getLinearIndex(gpuFloatType_t pos) const;
+    CUDA_CALLABLE_MEMBER int getLinearIndex(gpuRayFloat_t pos) const;
 
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuFloatType_t r) const { MONTERAY_ASSERT( r >= 0.0 ); return getRadialIndexFromRSq( r*r ); }
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuFloatType_t rSq) const;
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const {
+    	printf("%f\n", r);
+    	MONTERAY_ASSERT( r >= 0.0 );
+    	return getRadialIndexFromRSq( r*r );
+    }
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t rSq) const;
 
     CUDA_CALLABLE_MEMBER bool isIndexOutside( int i) const { if( i < 0 ||  i >= getNumBins() ) return true; return false; }
 
@@ -209,22 +213,22 @@ public:
     unsigned nVertices;
     unsigned nVerticesSq;
 
-    std::vector<gpuFloatType_t>* verticesVec = nullptr;
-    std::vector<gpuFloatType_t>* verticesSqVec = nullptr;
+    std::vector<gpuRayFloat_t>* verticesVec = nullptr;
+    std::vector<gpuRayFloat_t>* verticesSqVec = nullptr;
 
-    gpuFloatType_t* vertices;
-    gpuFloatType_t* verticesSq;
+    gpuRayFloat_t* vertices;
+    gpuRayFloat_t* verticesSq;
 
-    gpuFloatType_t delta;
+    gpuRayFloat_t delta;
 
 private:
-    gpuFloatType_t minVertex;
-    gpuFloatType_t maxVertex;
+    gpuRayFloat_t minVertex;
+    gpuRayFloat_t maxVertex;
     unsigned numBins;
     coordinate_t type;
     bool radialModified;
 
-    void validate();
+    CUDA_CALLABLE_MEMBER void validate();
 
     const bool debug = false;
 

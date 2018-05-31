@@ -13,6 +13,7 @@
 #include "GPUUtilityFunctions.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "MonteRay_SingleValueCopyMemory.hh"
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay_SpatialGrid_helper {
 
@@ -34,15 +35,15 @@ using namespace MonteRay;
 
    	CUDA_CALLABLE_KERNEL void kernelGetNumGridBins(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetMinVertex(Grid_t* pSpatialGrid, resultClass<gpuFloatType_t>* pResult, unsigned index);
+   	CUDA_CALLABLE_KERNEL void kernelGetMinVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetMaxVertex(Grid_t* pSpatialGrid, resultClass<gpuFloatType_t>* pResult, unsigned index);
+   	CUDA_CALLABLE_KERNEL void kernelGetMaxVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetDelta(Grid_t* pSpatialGrid, resultClass<gpuFloatType_t>* pResult, unsigned index);
+   	CUDA_CALLABLE_KERNEL void kernelGetDelta(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetVertex(Grid_t* pSpatialGrid, resultClass<gpuFloatType_t>* pResult, unsigned d, unsigned index);
+   	CUDA_CALLABLE_KERNEL void kernelGetVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetVolume(Grid_t* pSpatialGrid, resultClass<gpuFloatType_t>* pResult, unsigned index);
+   	CUDA_CALLABLE_KERNEL void kernelGetVolume(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
    	CUDA_CALLABLE_KERNEL void kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos);
 
@@ -51,18 +52,21 @@ using namespace MonteRay;
    		pResult->v = pSpatialGrid->getIndex(p);
    	}
 
-  	//CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuFloatType_t distance);
+  	//CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuRayFloat_t distance);
   	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
-  	   			gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z, gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-  	   			gpuFloatType_t distance, bool outside = false);
+  	   			gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z, gpuRayFloat_t u, gpuRayFloat_t v, gpuRayFloat_t w,
+  	   			gpuRayFloat_t distance, bool outside = false);
 
   	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
-  			unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance );
+  			unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance );
+
+  	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+  			Position_t pos, Position_t dir, gpuRayFloat_t distance );
 
    	template<class Particle>
    	CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
    			Particle p,
-   			gpuFloatType_t distance, bool outside = false) {
+   			gpuRayFloat_t distance, bool outside = false) {
    		pSpatialGrid->rayTrace( pResult->v, p, distance, outside);
    	}
 
@@ -70,7 +74,7 @@ using namespace MonteRay;
    	public:
    		SpatialGridGPUTester(){
    			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
-   	    	cudaDeviceSetLimit( cudaLimitStackSize, 40960 );
+   			cudaDeviceSetLimit( cudaLimitStackSize, 50000 );
    		}
 
    		~SpatialGridGPUTester(){}
@@ -87,6 +91,16 @@ using namespace MonteRay;
    			pGridInfo->copyToGPU();
    		}
 
+   		void sphericalGrid1_setup(void) {
+   			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+   			pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Spherical );
+   			pGridInfo->setDimension( 1 );
+   			pGridInfo->setGrid( MonteRay_SpatialGrid::SPH_R, 0.0, 10.0, 100);
+   			pGridInfo->initialize();
+
+   			pGridInfo->copyToGPU();
+   		}
+
    		void initialize() {
    			pGridInfo->initialize();
    		}
@@ -95,11 +109,11 @@ using namespace MonteRay;
    			pGridInfo->copyToGPU();
    		}
 
-   		void setGrid(unsigned index, const std::vector<gpuFloatType_t>& vertices ) {
+   		void setGrid(unsigned index, const std::vector<gpuRayFloat_t>& vertices ) {
    			pGridInfo->setGrid(index, vertices);
    		}
 
-   		void setGrid(unsigned index, gpuFloatType_t min, gpuFloatType_t max, unsigned numBins ) {
+   		void setGrid(unsigned index, gpuRayFloat_t min, gpuRayFloat_t max, unsigned numBins ) {
    			pGridInfo->setGrid(index, min, max, numBins);
    		}
 
@@ -166,8 +180,8 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	gpuFloatType_t getMinVertex( unsigned index ) const {
-   	   		using result_t = resultClass<gpuFloatType_t>;
+   	   	gpuRayFloat_t getMinVertex( unsigned index ) const {
+   	   		using result_t = resultClass<gpuRayFloat_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
 
@@ -177,8 +191,8 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	gpuFloatType_t getMaxVertex( unsigned index ) const {
-   	   		using result_t = resultClass<gpuFloatType_t>;
+   	   	gpuRayFloat_t getMaxVertex( unsigned index ) const {
+   	   		using result_t = resultClass<gpuRayFloat_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
 
@@ -188,8 +202,8 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	gpuFloatType_t getDelta( unsigned index ) const {
-   	   		using result_t = resultClass<gpuFloatType_t>;
+   	   	gpuRayFloat_t getDelta( unsigned index ) const {
+   	   		using result_t = resultClass<gpuRayFloat_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
 
@@ -199,8 +213,8 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	gpuFloatType_t getVertex(unsigned d, unsigned index ) const {
-   	   		using result_t = resultClass<gpuFloatType_t>;
+   	   	gpuRayFloat_t getVertex(unsigned d, unsigned index ) const {
+   	   		using result_t = resultClass<gpuRayFloat_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
 
@@ -210,8 +224,8 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	gpuFloatType_t getVolume( unsigned index ) const {
-   	   		using result_t = resultClass<gpuFloatType_t>;
+   	   	gpuRayFloat_t getVolume( unsigned index ) const {
+   	   		using result_t = resultClass<gpuRayFloat_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
 
@@ -244,8 +258,7 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuFloatType_t distance, bool outside=false ) {
-
+   	   	rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
    	   		using result_t = resultClass<rayTraceList_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
    	   		pResult->copyToGPU();
@@ -262,7 +275,7 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
-   	   	singleDimRayTraceMap_t crossingDistance( unsigned d, gpuFloatType_t pos, gpuFloatType_t dir, gpuFloatType_t distance  ) {
+   	   	singleDimRayTraceMap_t crossingDistance( unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance  ) {
 
    	   		using result_t = resultClass<singleDimRayTraceMap_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
@@ -280,8 +293,26 @@ using namespace MonteRay;
    	   		return pResult->v;
    	   	}
 
+   	   	singleDimRayTraceMap_t crossingDistance( Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
+
+   	   		using result_t = resultClass<singleDimRayTraceMap_t>;
+   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+   	   		pResult->copyToGPU();
+
+   	   		cudaDeviceSynchronize();
+   	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+   	   				                 pos, dir, distance );
+   	   		cudaDeviceSynchronize();
+
+   	   		gpuErrchk( cudaPeekAtLastError() );
+
+   	   		pResult->copyToCPU();
+
+   	   		return pResult->v;
+   	   	}
+
    	   	template<typename particle>
-  	   	rayTraceList_t rayTrace( particle& p, gpuFloatType_t distance, bool outside = false) {
+  	   	rayTraceList_t rayTrace( particle& p, gpuRayFloat_t distance, bool outside = false) {
 
    	   		using result_t = resultClass<rayTraceList_t>;
    	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
