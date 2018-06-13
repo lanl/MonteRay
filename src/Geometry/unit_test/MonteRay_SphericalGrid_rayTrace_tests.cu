@@ -120,17 +120,17 @@ SUITE( SphericalGrid_Tests) {
 
         CHECK_EQUAL(   7,  distances.size() );
         CHECK_EQUAL(   3,  distances.id(0) );
-        CHECK_CLOSE( 2.0,  distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 2.0,  distances.dist(0), 1e-5 );
         CHECK_EQUAL(   2,  distances.id(1) );
-        CHECK_CLOSE( 1.0,  distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(1), 1e-5 );
         CHECK_EQUAL(   1,  distances.id(2) );
-        CHECK_CLOSE( 1.0,  distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(2), 1e-5 );
         CHECK_EQUAL(   0,  distances.id(3) );
-        CHECK_CLOSE( 2.0,  distances.dist(3), 1e-11 );
+        CHECK_CLOSE( 2.0,  distances.dist(3), 1e-5 );
         CHECK_EQUAL(   1,  distances.id(4) );
-        CHECK_CLOSE( 1.0,  distances.dist(4), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(4), 1e-5 );
         CHECK_EQUAL(   2,  distances.id(5) );
-        CHECK_CLOSE( 1.0,  distances.dist(5), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(5), 1e-5 );
         CHECK_EQUAL(   3,  distances.id(6) );
         CHECK_CLOSE( 2.0,  distances.dist(6), 1e-11 );
     }
@@ -151,7 +151,7 @@ SUITE( SphericalGrid_Tests) {
 
         CHECK_EQUAL(   2,  distances.size() );
         CHECK_EQUAL(   2,  distances.id(0) );
-        CHECK_CLOSE( 0.171572875254,  distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.171572875254,  distances.dist(0), 1e-5 );
         CHECK_EQUAL(   3,  distances.id(1) );
         CHECK_CLOSE( 2.0,  distances.dist(1), 1e-11 );
     }

@@ -159,11 +159,11 @@ SUITE( SphericalGrid_crossingDistance_GPU_Tests) {
 
 		CHECK_EQUAL( 4, distances.size() );
 		CHECK_EQUAL( 3, distances.id(0) );
-		CHECK_CLOSE( 4.0 - y, distances.dist(0), 1e-11 );
+		CHECK_CLOSE( 4.0 - y, distances.dist(0), 1e-5 );
 		CHECK_EQUAL( 2, distances.id(1) );
-		CHECK_CLOSE( 4.0 + y, distances.dist(1), 1e-11 );
+		CHECK_CLOSE( 4.0 + y, distances.dist(1), 1e-5 );
 		CHECK_EQUAL( 3, distances.id(2) );
-		CHECK_CLOSE( 4 + std::sqrt(25.0-4.5), distances.dist(2), 1e-11 ); // Cross the R=5 sphere at 25 = (3/sqrt(2))^2 + x^2 => x = 4.52769
+		CHECK_CLOSE( 4 + std::sqrt(25.0-4.5), distances.dist(2), 1e-5 ); // Cross the R=5 sphere at 25 = (3/sqrt(2))^2 + x^2 => x = 4.52769
 		CHECK_EQUAL( 4, distances.id(3) );
 		CHECK_CLOSE( 9.0, distances.dist(3), 1e-11 );
 	}
@@ -233,11 +233,11 @@ SUITE( SphericalGrid_crossingDistance_GPU_Tests) {
 
 		CHECK_EQUAL( 4, distances.size() );
 		CHECK_EQUAL( 3, distances.id(0) );
-		CHECK_CLOSE( 4.0 - std::sqrt(9.0-4.0), distances.dist(0), 1e-11 );
+		CHECK_CLOSE( 4.0 - std::sqrt(9.0-4.0), distances.dist(0), 1e-5 );
 		CHECK_EQUAL( 2, distances.id(1) );
-		CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(1), 1e-11 );
+		CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(1), 1e-5 );
 		CHECK_EQUAL( 3, distances.id(2) );
-		CHECK_CLOSE( 4.0 + std::sqrt(25.0-4.0), distances.dist(2), 1e-11 );
+		CHECK_CLOSE( 4.0 + std::sqrt(25.0-4.0), distances.dist(2), 1e-5 );
 		CHECK_EQUAL( 4, distances.id(3) );
 		CHECK_CLOSE( 9.0, distances.dist(3), 1e-11 );
 	}
@@ -416,7 +416,7 @@ SUITE( SphericalGrid_crossingDistance_GPU_Tests) {
 
 		CHECK_EQUAL( 2, distances.size() );
 		CHECK_EQUAL( 3, distances.id(0) );
-		CHECK_CLOSE( 3.5+std::sqrt(5.0*5.0-3.1*3.1), distances.dist(0), 1e-11 );
+		CHECK_CLOSE( 3.5+std::sqrt(5.0*5.0-3.1*3.1), distances.dist(0), 1e-5 );
 		CHECK_EQUAL( 4, distances.id(1) );
 		CHECK_CLOSE( 100.0, distances.dist(1), 1e-11 );
 	}
@@ -439,11 +439,11 @@ SUITE( SphericalGrid_crossingDistance_GPU_Tests) {
 
 		CHECK_EQUAL( 4, distances.size() );
 		CHECK_EQUAL( 3, distances.id(0) );
-		CHECK_CLOSE( 4.0 - y, distances.dist(0), 1e-11 );
+		CHECK_CLOSE( 4.0 - y, distances.dist(0), 1e-5 );
 		CHECK_EQUAL( 2, distances.id(1) );
-		CHECK_CLOSE( 4.0 + y, distances.dist(1), 1e-11 );
+		CHECK_CLOSE( 4.0 + y, distances.dist(1), 1e-5 );
 		CHECK_EQUAL( 3, distances.id(2) );
-		CHECK_CLOSE( 4.0 + std::sqrt(5.0*5.0-y*y) , distances.dist(2), 1e-11 );
+		CHECK_CLOSE( 4.0 + std::sqrt(5.0*5.0-y*y) , distances.dist(2), 1e-5 );
 		CHECK_EQUAL( 4, distances.id(3) );
 		CHECK_CLOSE( 9.0, distances.dist(3), 1e-11 );
 	}

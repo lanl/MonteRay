@@ -66,9 +66,9 @@ public:
 
 typedef size_t alloc_id_t;
 
-#define TRACKALLOCATIONS 1;
+#define TRACKALLOCATIONS 1
 
-#ifdef TRACKALLOCATIONS
+#if TRACKALLOCATIONS > 0
 static const bool trackAllocations = true;
 static const size_t id_offset = sizeof( alloc_id_t );
 #else
@@ -286,6 +286,10 @@ inline void MonteRayHostFree(void* ptr, bool managed ) noexcept {
 
 inline void MonteRayDeviceFree(void* ptr) noexcept {
 #ifdef __CUDACC__
+	if( debugAllocations ) {
+		printf( "Debug: MonteRayDeviceFree -- Deallocating   ptr address = %p\n");
+	}
+
 	if( ptr == NULL ) { return; }
 	char* realPtr = (char *)ptr - id_offset; // real pointer
 	if( trackAllocations ){

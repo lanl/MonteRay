@@ -19,7 +19,9 @@ FIGenericGPUTestHelper<N>::~FIGenericGPUTestHelper(){
 	}
 	if( grid_device != NULL ) {
 #ifdef __CUDACC__
-		cudaFree( grid_device );
+//		cudaFree( grid_device );
+#else
+		free(grid_device);
 #endif
 	}
 }
@@ -454,13 +456,15 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
 }
 
 template<unsigned N>
-void FIGenericGPUTestHelper<N>::copyGridtoGPU( const GridBins* grid){
+void FIGenericGPUTestHelper<N>::copyGridtoGPU(GridBins* grid){
 	// allocate and copy the grid
 #ifdef __CUDACC__
-	CUDA_CHECK_RETURN( cudaMalloc( &grid_device, sizeof(GridBins) ));
-	CUDA_CHECK_RETURN( cudaMemcpy(grid_device, grid, sizeof(GridBins), cudaMemcpyHostToDevice ));
+//	CUDA_CHECK_RETURN( cudaMalloc( &grid_device, sizeof(GridBins) ));
+//	CUDA_CHECK_RETURN( cudaMemcpy(grid_device, grid, sizeof(GridBins), cudaMemcpyHostToDevice ));
+	grid->copyToGPU();
+	grid_device = grid->devicePtr;
 #else
-	grid_device = (GridBins*) malloc( sizeof(GridBins) );
+	grid_device =  (GridBins*) malloc( sizeof(GridBins) );
 	memcpy( grid_device, grid, sizeof(GridBins) );
 #endif
 

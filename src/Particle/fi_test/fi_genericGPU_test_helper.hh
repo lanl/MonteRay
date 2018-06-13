@@ -29,7 +29,7 @@ public:
 
 	void stopTimers();
 
-	void copyGridtoGPU( const GridBins* );
+	void copyGridtoGPU(GridBins* );
 
 	void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, const RayListInterface<N>* pCP, const MonteRayCrossSectionHost* pXS );
 	void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, const RayListInterface<N>* pCP, const MonteRayMaterialListHost* pMatList, unsigned matIndex, gpuFloatType_t density );

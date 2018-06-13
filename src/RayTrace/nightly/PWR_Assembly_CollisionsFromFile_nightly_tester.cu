@@ -217,15 +217,14 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	unsigned nThreads = 256;
     	unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
     	capacity = 16698849;
-#ifdef TITANX_MAXWELL_GPU
-        nThreads = 416;
-        nBlocks  = 16384;
-//        nThreads  = std::min( 1024U, (capacity-1) / ( 2* ( nBlocks -1 ) ));
-//        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
 
-        nBlocks = std::min(( capacity + nThreads*4 -1 ) / (nThreads*4), 65535U);
+#ifdef TITANX_MAXWELL_GPU
+        unsigned N = 4;
+        nThreads = 416;
+        nBlocks = std::min(( capacity + N*nThreads -1 ) / (N*nThreads), 65535U);
 
 #endif
+
 #ifdef TESLA_K40_GPU
 //        nBlocks = 16384;
 //        nThreads  = (capacity-1) / ( nBlocks -1 );

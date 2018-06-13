@@ -382,8 +382,8 @@ SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
      	Grid_t grid(1,pGridInfo);
      	grid.copyToGPU();
 
-        CHECK_CLOSE( (1.0)*(4.0/3.0)*pi, getVolume(grid, 0), 1e-11 );
-        CHECK_CLOSE( (8.0-1.0)*(4.0/3.0)*pi, getVolume(grid, 1), 1e-11 );
+        CHECK_CLOSE( (1.0)*(4.0/3.0)*pi, getVolume(grid, 0), 1e-5 );
+        CHECK_CLOSE( (8.0-1.0)*(4.0/3.0)*pi, getVolume(grid, 1), 1e-4 );
 
      	delete pGridInfo[0];
      	delete pGridInfo[1];
