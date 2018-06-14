@@ -342,9 +342,11 @@ SUITE( Collision_fi_looping_tester ) {
     	FIGenericGPUTestHelper<1> helper(  1 );
 
     	cudaReset();
-    	GridBinsHost grid(-33.5, 33.5, 100,
-    			          -33.5, 33.5, 100,
-    			          -33.5, 33.5, 100);
+    	GridBins grid;
+    	grid.setVertices( 0, -33.5, 33.5, 100);
+    	grid.setVertices( 1, -33.5, 33.5, 100);
+    	grid.setVertices( 2, -33.5, 33.5, 100);
+
     	grid.copyToGPU();
 
     	gpuTallyHost tally( grid.getNumCells() );

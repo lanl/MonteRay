@@ -30,7 +30,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 
 	    	cudaReset();
 	    	gpuCheck();
-			pGrid = new GridBinsHost();
+			pGrid = new GridBins();
 			pGrid->setVertices( 0, 0.0, 2.0, 2);
 			pGrid->setVertices( 1, -10.0, 10.0, 1);
 			pGrid->setVertices( 2, -10.0, 10.0, 1);
@@ -85,7 +85,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 			delete pMat;
 		}
 
-		GridBinsHost* pGrid;
+		GridBins* pGrid;
 		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
     	MonteRayCrossSectionHost* pXS;
@@ -100,7 +100,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 
     TEST_FIXTURE(ControllerSetup, ctorForNEE ){
     	unsigned numPointDets = 1;
-    	NextEventEstimatorController controller( 1,
+    	NextEventEstimatorController<GridBins> controller( 1,
  				                             1,
  				                             pGrid,
  				                             pMatList,
@@ -117,7 +117,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
     	unsigned numPointDets = 1;
 
     	setup();
-    	NextEventEstimatorController controller( 1,
+    	NextEventEstimatorController<GridBins> controller( 1,
  				                             1,
  				                             pGrid,
  				                             pMatList,
@@ -200,7 +200,7 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
 	    	cudaReset();
 	    	gpuCheck();
-			pGrid = new GridBinsHost();
+			pGrid = new GridBins();
 			pGrid->setVertices( 0, xverts );
 			pGrid->setVertices( 1, yverts );
 			pGrid->setVertices( 2, zverts );
@@ -251,7 +251,7 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 			delete pMat;
 		}
 
-		GridBinsHost* pGrid;
+		GridBins* pGrid;
 		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
     	MonteRayCrossSectionHost* pXS;
@@ -263,7 +263,7 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 		unsigned numPointDets = 1;
 
 		setup();
-		NextEventEstimatorController controller( 1,
+		NextEventEstimatorController<GridBins> controller( 1,
 				1,
 				pGrid,
 				pMatList,

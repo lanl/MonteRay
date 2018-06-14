@@ -230,7 +230,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	std::cout << "Running Criticality_Accident from collision file with nBlocks=" << nBlocks <<
     			     " nThreads=" << nThreads << " collision buffer capacity=" << capacity << "\n";
 
-    	CollisionPointController controller(
+    	CollisionPointController<GridBinsHost> controller(
     			nBlocks,
     			nThreads,
     			pGrid,

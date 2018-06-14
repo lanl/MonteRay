@@ -16,11 +16,12 @@
 
 namespace MonteRay {
 
-class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator> {
+template<typename GRID_T>
+class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator<GRID_T>> {
 public:
 	typedef gpuTallyType_t tally_t;
 	typedef gpuRayFloat_t position_t;
-	using Base = MonteRay::CopyMemoryBase<MonteRayNextEventEstimator> ;
+	using Base = MonteRay::CopyMemoryBase<MonteRayNextEventEstimator<GRID_T>> ;
 
 	CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRayNextEventEstimator");}
 
@@ -67,7 +68,6 @@ public:
 		z = NULL;
 		tally = NULL;
 
-		pGridBinsHost = NULL;
 		pGridBins = NULL;
 		pMatPropsHost = NULL;
 		pMatProps = NULL;
@@ -116,7 +116,7 @@ public:
 			MonteRayMemcpy(z, rhs->z, num*sizeof(position_t), cudaMemcpyHostToDevice);
 			MonteRayMemcpy( tally, rhs->tally, num*sizeof(tally_t), cudaMemcpyHostToDevice);
 
-			pGridBins = rhs->pGridBinsHost->getPtrDevice();
+			pGridBins = rhs->pGridBins->getDevicePtr();
 			pMatProps = rhs->pMatPropsHost->ptrData_device;
 			pMatList = rhs->pMatListHost->ptr_device;
 			pHash = rhs->pMatListHost->getHashPtr()->getPtrDevice();
@@ -132,7 +132,7 @@ public:
 		nUsed = rhs->nUsed;
 
 		if( Base::debug ) {
-			std::cout << "Debug: MonteRayNextEventEstimator::copy -- exitting." << std::endl;
+			std::cout << "Debug: MonteRayNextEventEstimator::copy -- exiting." << std::endl;
 		}
 #else
 
@@ -322,9 +322,9 @@ public:
 	void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList );
 #endif
 
-	CUDAHOST_CALLABLE_MEMBER void setGeometry(const GridBinsHost* pGrid, const MonteRay_MaterialProperties* pMPs) {
-		pGridBinsHost = pGrid;
-		pGridBins = pGrid->getPtr();
+
+	CUDAHOST_CALLABLE_MEMBER void setGeometry(const GRID_T* pGrid, const MonteRay_MaterialProperties* pMPs) {
+		pGridBins = pGrid;
 		pMatPropsHost = pMPs;
 		pMatProps = pMPs->getPtr();
 	}
@@ -347,8 +347,7 @@ private:
 
 	tally_t* tally;
 
-	const GridBinsHost* pGridBinsHost;
-	const GridBins* pGridBins;
+	const GRID_T* pGridBins;
 	const MonteRay_MaterialProperties* pMatPropsHost;
 	const MonteRay_MaterialProperties_Data* pMatProps;
 	const MonteRayMaterialListHost* pMatListHost;
@@ -357,9 +356,11 @@ private:
 	const HashLookup* pHash;
 };
 
-template<unsigned N>
-CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator* ptr, const RayList_t<N>* pRayList );
+template<typename GRID_T, unsigned N>
+CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList );
 
 } /* namespace MonteRay */
+
+#include "MonteRayNextEventEstimator.t.hh"
 
 #endif /* MONTERAYNEXTEVENTESTIMATOR_HH_ */

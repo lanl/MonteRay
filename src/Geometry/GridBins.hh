@@ -363,6 +363,7 @@ public:
     }
     const GridBins* getPtr() const { return ptr; }
     const GridBins* getPtrDevice() const { return ptr_device; }
+    const GridBins* getDevicePtr(void) const { return ptr_device; }
 
     void write(std::ostream& outfile) const;
     void  read(std::istream& infile);
@@ -377,6 +378,8 @@ public:
 
 	float_t min(const unsigned dim) const { return ptr->min(dim); }
 	float_t max(const unsigned dim) const { return ptr->max(dim); }
+
+
 
 #ifndef __CUDACC__
     void loadFromLnk3dnt( const std::string& filename );

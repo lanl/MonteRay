@@ -1,9 +1,11 @@
-#include "MonteRayNextEventEstimator.hh"
+#ifndef MONTERAYNEXTEVENTESTIMATOR_T_HH_
+#define MONTERAYNEXTEVENTESTIMATOR_T_HH_
 
 namespace MonteRay {
 
-template<unsigned N>
-CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator* ptr, const RayList_t<N>* pRayList ) {
+template<typename GRID_T, unsigned N>
+CUDA_CALLABLE_KERNEL
+void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList ) {
 	const bool debug = false;
 
 	if( debug ) {
@@ -31,12 +33,13 @@ CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator* ptr, c
 	}
 }
 
+template<typename GRID_T>
 #ifdef __CUDACC__
 template<unsigned N>
-void MonteRayNextEventEstimator::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<N>* pRayList )
+void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<N>* pRayList )
 #else
 template<unsigned N>
-void MonteRayNextEventEstimator::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList )
+void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList )
 #endif
 	{
 	const bool debug = false;
@@ -54,7 +57,7 @@ void MonteRayNextEventEstimator::launch_ScoreRayList( unsigned nBlocks, unsigned
 		printf("Debug: MonteRayNextEventEstimator::launch_ScoreRayList -- launching kernel_ScoreRayList with %d blocks, %d threads, to process %d rays\n", nBlocks, nThreads, nRays);
 	}
 #ifdef __CUDACC__
-	kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( devicePtr, pRayList->devicePtr );
+	kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( Base::devicePtr, pRayList->devicePtr );
 	if( debug ) {
 		cudaError_t cudaerr = cudaDeviceSynchronize();
 		if( cudaerr != cudaSuccess ) {
@@ -67,14 +70,8 @@ void MonteRayNextEventEstimator::launch_ScoreRayList( unsigned nBlocks, unsigned
 
 }
 
-#ifdef __CUDACC__
-template void MonteRayNextEventEstimator::launch_ScoreRayList<1>( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<1>* pRayList );
-template void MonteRayNextEventEstimator::launch_ScoreRayList<3>( unsigned nBlocks, unsigned nThreads, cudaStream_t& stream, const RayList_t<3>* pRayList );
-#else
-template void MonteRayNextEventEstimator::launch_ScoreRayList<1>( unsigned nBlocks, unsigned nThreads, const RayList_t<1>* pRayList );
-template void MonteRayNextEventEstimator::launch_ScoreRayList<3>( unsigned nBlocks, unsigned nThreads, const RayList_t<3>* pRayList );
-#endif
-
 }
+
+#endif /* MONTERAYNEXTEVENTESTIMATOR_T_HH_ */
 
 

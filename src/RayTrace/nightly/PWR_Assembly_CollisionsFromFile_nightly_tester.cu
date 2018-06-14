@@ -243,7 +243,8 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	std::cout << "Running PWR_Assembly from collision file with nBlocks=" << nBlocks <<
     			     " nThreads=" << nThreads << " collision buffer capacity=" << capacity << "\n";
 
-    	CollisionPointController controller( nBlocks,
+    	CollisionPointController<GridBinsHost> controller(
+    			nBlocks,
     			nThreads,
     			pGrid,
     			pMatList,

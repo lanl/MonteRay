@@ -27,10 +27,10 @@ SUITE( Ray_bank_controller_fi_tester ) {
 
 	    	cudaReset();
 	    	gpuCheck();
-			pGrid = new GridBinsHost(-33.5, 33.5, 100,
-			          -33.5, 33.5, 100,
-			          -33.5, 33.5, 100);
-
+			pGrid = new GridBins;
+			pGrid->setVertices(0, -33.5, 33.5, 100);
+			pGrid->setVertices(1, -33.5, 33.5, 100);
+			pGrid->setVertices(2, -33.5, 33.5, 100);
 
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 
@@ -105,7 +105,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
 			delete water;
 		}
 
-		GridBinsHost* pGrid;
+		GridBins* pGrid;
 		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
@@ -171,7 +171,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
     TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
     	// exact numbers from expected path length tally in mcatk
 
-    	CollisionPointController controller( 256,
+    	CollisionPointController<GridBins> controller( 256,
     			256,
     			pGrid,
     			pMatList,
@@ -231,7 +231,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
     TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
     	std::cout << "Debug: ********************************************* \n";
     	std::cout << "Debug: Starting rayTrace tester with single looping bank \n";
-    	CollisionPointController controller( 256,
+    	CollisionPointController<GridBins> controller( 256,
     			256,
     			pGrid,
     			pMatList,

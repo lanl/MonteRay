@@ -27,14 +27,14 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST(  MonteRayNextEventEstimator_ctor ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		CHECK_EQUAL(0, estimator.size() );
 		CHECK_EQUAL(1, estimator.capacity() );
 		CHECK_CLOSE( 0.0, estimator.getExclusionRadius(), 1e-6 );
 	}
 
 	TEST(  MonteRayNextEventEstimator_get_invalid_X ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 #ifndef NDEBUG
 		CHECK_THROW( estimator.getX(10), std::runtime_error );
 		CHECK_THROW( estimator.getY(10), std::runtime_error );
@@ -43,7 +43,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( add ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 1.0, 2.0, 3.0);
 		CHECK_EQUAL( 0, id);
 		CHECK_CLOSE( 1.0, estimator.getX(0), 1e-6 );
@@ -52,19 +52,19 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( add_too_many ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 1.0, 2.0, 3.0);
 		CHECK_THROW( estimator.add( 1.0, 2.0, 3.0), std::runtime_error );
 	}
 
 	TEST( set_exclusion_radius ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		estimator.setExclusionRadius( 1.9 );
 		CHECK_CLOSE( 1.9, estimator.getExclusionRadius(), 1e-6 );
 	}
 
 	TEST( getDistance ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 3.0, 3.0, 3.0);
 		gpuFloatType_t expectedDistance = std::sqrt( (3.0f*3.0f)*3 );
 
@@ -76,7 +76,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( getDistanceDirection_PosU ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 3.0, 0.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
@@ -90,7 +90,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( getDistanceDirection_NegU ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( -3.0, 0.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
@@ -104,7 +104,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( getDistanceDirection_PosV ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 0.0, 3.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
@@ -118,7 +118,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( getDistanceDirection_NegV ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 0.0, -3.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
@@ -132,7 +132,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( getDistanceDirection_PosW ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 0.0, 0.0, 3.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
@@ -146,7 +146,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( getDistanceDirection_NegW ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 0.0, 0.0, -3.0);
 		gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
 
@@ -160,7 +160,7 @@ SUITE( NextEventEstimator_Tester ) {
 	}
 
 	TEST( getDistanceDirection_PosUV ) {
-		MonteRayNextEventEstimator estimator(1);
+		MonteRayNextEventEstimator<GridBins> estimator(1);
 		unsigned id = estimator.add( 3.0, 3.0, 0.0);
 		gpuFloatType_t expectedDistance = std::sqrt( (3.0f*3.0f)*2 );
 
@@ -217,21 +217,21 @@ SUITE( NextEventEstimator_Tester ) {
 
 			pXS->copyToGPU();
 
-			pEstimator = std::unique_ptr<MonteRayNextEventEstimator>( new MonteRayNextEventEstimator(1) );
+			pEstimator = std::unique_ptr<MonteRayNextEventEstimator<GridBins>>( new MonteRayNextEventEstimator<GridBins>(1) );
 			pEstimator->setGeometry( &grid, &matProps );
 			pEstimator->setMaterialList( pMatList.get() );
 		}
 		~CalcScore_test(){}
 
 	public:
-		GridBinsHost grid;
+		GridBins grid;
 		MonteRay_CellProperties cell1, cell2;
 		std::unique_ptr<MonteRayMaterialListHost> pMatList;
 		std::unique_ptr<MonteRayMaterialHost> pMat;
 		std::unique_ptr<MonteRayCrossSectionHost> pXS;
 		MonteRay_MaterialProperties matProps;
 
-		std::unique_ptr<MonteRayNextEventEstimator> pEstimator;
+		std::unique_ptr<MonteRayNextEventEstimator<GridBins>> pEstimator;
 	};
 
 #ifndef MEMCHECK
