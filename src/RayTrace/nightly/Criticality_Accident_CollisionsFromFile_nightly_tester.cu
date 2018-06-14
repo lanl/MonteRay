@@ -58,7 +58,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 			pMatProps->disableReduction();
 			pMatProps->setMaterialDescription( readerObject );
 
-			pGrid = new GridBinsHost(readerObject);
+			pGrid = new GridBins(readerObject);
 			CHECK_EQUAL( 2000000, pGrid->getNumCells() );
 
 			CHECK_CLOSE( -600.0, pGrid->min(0), 1e-2 );
@@ -165,7 +165,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 			delete concrete;
 		}
 
-		GridBinsHost* pGrid;
+		GridBins* pGrid;
 		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
@@ -230,7 +230,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     	std::cout << "Running Criticality_Accident from collision file with nBlocks=" << nBlocks <<
     			     " nThreads=" << nThreads << " collision buffer capacity=" << capacity << "\n";
 
-    	CollisionPointController<GridBinsHost> controller(
+    	CollisionPointController<GridBins> controller(
     			nBlocks,
     			nThreads,
     			pGrid,
