@@ -51,8 +51,8 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
             copyToGPU();
 
             CHECK_EQUAL(   10, getNumGridBins(MonteRay_SpatialGrid::SPH_R) );
-            CHECK_CLOSE(  1.0,   getMinVertex(MonteRay_SpatialGrid::SPH_R), 1e-11 );
-            CHECK_CLOSE( 10.0,   getMaxVertex(MonteRay_SpatialGrid::SPH_R), 1e-11 );
+            CHECK_CLOSE(  1.0,   getMinVertex(MonteRay_SpatialGrid::SPH_R), 1e-6 );
+            CHECK_CLOSE( 10.0,   getMaxVertex(MonteRay_SpatialGrid::SPH_R), 1e-6 );
         }
     }
 
@@ -208,19 +208,19 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
 
         CHECK_EQUAL(   7,  distances.size() );
         CHECK_EQUAL(   3,  distances.id(0) );
-        CHECK_CLOSE( 2.0,  distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 2.0,  distances.dist(0), 1e-6 );
         CHECK_EQUAL(   2,  distances.id(1) );
-        CHECK_CLOSE( 1.0,  distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(1), 1e-6 );
         CHECK_EQUAL(   1,  distances.id(2) );
-        CHECK_CLOSE( 1.0,  distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(2), 1e-6 );
         CHECK_EQUAL(   0,  distances.id(3) );
-        CHECK_CLOSE( 2.0,  distances.dist(3), 1e-11 );
+        CHECK_CLOSE( 2.0,  distances.dist(3), 1e-6 );
         CHECK_EQUAL(   1,  distances.id(4) );
-        CHECK_CLOSE( 1.0,  distances.dist(4), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(4), 1e-6 );
         CHECK_EQUAL(   2,  distances.id(5) );
-        CHECK_CLOSE( 1.0,  distances.dist(5), 1e-11 );
+        CHECK_CLOSE( 1.0,  distances.dist(5), 1e-6 );
         CHECK_EQUAL(   3,  distances.id(6) );
-        CHECK_CLOSE( 2.0,  distances.dist(6), 1e-11 );
+        CHECK_CLOSE( 2.0,  distances.dist(6), 1e-6 );
     }
     TEST_FIXTURE(SpatialGridGPUTester, rayTrace_in_XZDir_outside_to_outside_at_45degrees ) {
         setDimension( 1 );

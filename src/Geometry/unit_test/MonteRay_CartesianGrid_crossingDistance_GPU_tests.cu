@@ -32,9 +32,9 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 1, distances.id(1) );
-        CHECK_CLOSE( 1.0, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.0, distances.dist(1), 1e-6 );
     }
 
 
@@ -59,9 +59,9 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 1, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 0, distances.id(1) );
-        CHECK_CLOSE( 1.0, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.0, distances.dist(1), 1e-6 );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Outside_negSide_negDir ) {
@@ -129,11 +129,11 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 0, distances.id(1) );
-        CHECK_CLOSE( 1.5, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.5, distances.dist(1), 1e-6 );
         CHECK_EQUAL( 1, distances.id(2) );
-        CHECK_CLOSE( 2.0, distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Outside_posSide_negDir ) {
@@ -157,11 +157,11 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 20, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 19, distances.id(1) );
-        CHECK_CLOSE( 1.5, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.5, distances.dist(1), 1e-6 );
         CHECK_EQUAL( 18, distances.id(2) );
-        CHECK_CLOSE( 2.0, distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
@@ -185,19 +185,19 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 22, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 0, distances.id(1) );
-        CHECK_CLOSE( 1.5, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.5, distances.dist(1), 1e-6 );
         CHECK_EQUAL( 1, distances.id(2) );
-        CHECK_CLOSE( 2.5, distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 2.5, distances.dist(2), 1e-6 );
         CHECK_EQUAL( 17, distances.id(18) );
-        CHECK_CLOSE( 18.5, distances.dist(18), 1e-11 );
+        CHECK_CLOSE( 18.5, distances.dist(18), 1e-6 );
         CHECK_EQUAL( 18, distances.id(19) );
-        CHECK_CLOSE( 19.5, distances.dist(19), 1e-11 );
+        CHECK_CLOSE( 19.5, distances.dist(19), 1e-6 );
         CHECK_EQUAL( 19, distances.id(20) );
-        CHECK_CLOSE( 20.5, distances.dist(20), 1e-11 );
+        CHECK_CLOSE( 20.5, distances.dist(20), 1e-6 );
         CHECK_EQUAL( 20, distances.id(21) );
-        CHECK_CLOSE( 21.0, distances.dist(21), 1e-11 );
+        CHECK_CLOSE( 21.0, distances.dist(21), 1e-6 );
 
     }
 
@@ -222,19 +222,19 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 22, distances.size() );
         CHECK_EQUAL( 20, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 19, distances.id(1) );
-        CHECK_CLOSE( 1.5, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.5, distances.dist(1), 1e-6 );
         CHECK_EQUAL( 18, distances.id(2) );
-        CHECK_CLOSE( 2.5, distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 2.5, distances.dist(2), 1e-6 );
         CHECK_EQUAL( 2, distances.id(18) );
-        CHECK_CLOSE( 18.5, distances.dist(18), 1e-11 );
+        CHECK_CLOSE( 18.5, distances.dist(18), 1e-6 );
         CHECK_EQUAL( 1, distances.id(19) );
-        CHECK_CLOSE( 19.5, distances.dist(19), 1e-11 );
+        CHECK_CLOSE( 19.5, distances.dist(19), 1e-6 );
         CHECK_EQUAL( 0, distances.id(20) );
-        CHECK_CLOSE( 20.5, distances.dist(20), 1e-11 );
+        CHECK_CLOSE( 20.5, distances.dist(20), 1e-6 );
         CHECK_EQUAL( -1, distances.id(21) );
-        CHECK_CLOSE( 21.0, distances.dist(21), 1e-11 );
+        CHECK_CLOSE( 21.0, distances.dist(21), 1e-6 );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Inside_cross_out_negDir ) {
@@ -258,11 +258,11 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 1, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 0, distances.id(1) );
-        CHECK_CLOSE( 1.5, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.5, distances.dist(1), 1e-6 );
         CHECK_EQUAL( -1, distances.id(2) );
-        CHECK_CLOSE( 2.0, distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, Inside_cross_out_posDir ) {
@@ -286,11 +286,11 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 18, distances.id(0) );
-        CHECK_CLOSE( 0.5, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 19, distances.id(1) );
-        CHECK_CLOSE( 1.5, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 1.5, distances.dist(1), 1e-6 );
         CHECK_EQUAL( 20, distances.id(2) );
-        CHECK_CLOSE( 2.0, distances.dist(2), 1e-11 );
+        CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, crossingDistance_2D_internal_hit_corner_posXDir_posYDir ) {
