@@ -97,6 +97,9 @@ public:
 		MonteRayHostFree(ptr, isManagedMemory);
 	}
 
+	const Derived* getDevicePtr(void) const { return devicePtr; }
+
+
 	Derived* intermediatePtr = NULL;
 	Derived* devicePtr = NULL;
 

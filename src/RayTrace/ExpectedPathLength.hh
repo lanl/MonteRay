@@ -1,5 +1,5 @@
-#ifndef EXPECTEDPATHLENGTH_H_
-#define EXPECTEDPATHLENGTH_H_
+#ifndef EXPECTEDPATHLENGTH_HH_
+#define EXPECTEDPATHLENGTH_HH_
 
 #include "RayListInterface.hh"
 #include "MonteRayMaterialList.hh"
@@ -17,9 +17,9 @@ namespace MonteRay{
 
 class gpuTimingHost;
 
-template<unsigned N>
+template<typename GRIDTYPE, unsigned N>
 CUDA_CALLABLE_MEMBER void
-tallyCollision(const GridBins* pGrid,
+tallyCollision(const GRIDTYPE* pGrid,
 		       const MonteRayMaterialList* pMatList,
 		       const MonteRay_MaterialProperties_Data* pMatProps,
 		       const HashLookup* pHash,
@@ -39,10 +39,10 @@ tallyCellSegment(const MonteRayMaterialList* pMatList,
 	 	               gpuFloatType_t weight,
 	 	               gpuTallyType_t opticalPathLength);
 
-template<unsigned N>
+template<typename GRIDTYPE, unsigned N>
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
-tallyAttenuation(GridBins* pGrid,
+tallyAttenuation(GRIDTYPE* pGrid,
 			     MonteRayMaterialList* pMatList,
 			     MonteRay_MaterialProperties_Data* pMatProps,
 			     const HashLookup* pHash,
@@ -60,28 +60,30 @@ attenuateRayTraceOnly(const MonteRayMaterialList* pMatList,
 					  gpuTallyType_t enteringFraction,
 					  ParticleType_t particleType );
 
-template<unsigned N>
+template<typename GRIDTYPE, unsigned N>
 CUDA_CALLABLE_KERNEL
 void
-rayTraceTally(const GridBins* pGrid,
+rayTraceTally(const GRIDTYPE* pGrid,
 			  const RayList_t<N>* pCP,
 			  const MonteRayMaterialList* pMatList,
 			  const MonteRay_MaterialProperties_Data* pMatProps,
 			  const HashLookup* pHash,
 			  gpuTallyType_t* tally);
 
-template<unsigned N>
+template<typename GRIDTYPE, unsigned N>
 MonteRay::tripleTime launchRayTraceTally(
 		                 std::function<void (void)> cpuWork,
                          unsigned nBlocks,
 		                 unsigned nThreads,
-		                 const GridBinsHost* grid,
+		                 const GRIDTYPE* grid,
 		                 const RayListInterface<N>* pCP,
 		                 const MonteRayMaterialListHost* pMatList,
 		                 const MonteRay_MaterialProperties* pMatProps,
 		                 gpuTallyHost* pTally
 		                );
 
-}
+} /* end namespace */
 
-#endif /* EXPECTEDPATHLENGTH_H_ */
+#include "ExpectedPathLength.t.hh"
+
+#endif /* EXPECTEDPATHLENGTH_HH_ */

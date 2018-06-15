@@ -444,7 +444,7 @@ SUITE( GridBins_Tester ) {
 		CHECK_CLOSE( 0.5f, distances[0], 1e-11 );
 	}
 
-	TEST( gridbins_host_pwr_vertices_isRegular ) {
+	TEST( gridbins_pwr_vertices_isRegular ) {
 		//     0      1       2        3      4       5        6       7       8      9
 		std::vector<double> vertices  {
 			-40.26, -20.26, -10.26, -10.08,  -9.90,  -9.84,  -9.06,  -9.00,  -8.64,  -8.58,
@@ -458,7 +458,7 @@ SUITE( GridBins_Tester ) {
 
 		std::vector<double> zvertices { -80, -60, -50, 50, 60, 80 };
 
-		GridBinsHost grid;
+		GridBins grid;
 		grid.setVertices(0, vertices);
 		grid.setVertices(1, vertices);
 		grid.setVertices(2, zvertices);

@@ -59,7 +59,7 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 			pMatProps->disableReduction();
 			pMatProps->setMaterialDescription( readerObject );
 
-			pGrid = new GridBinsHost(readerObject);
+			pGrid = new GridBins(readerObject);
 			CHECK_EQUAL( 584820, pGrid->getNumCells() );
 
 			CHECK_CLOSE( -40.26, pGrid->min(0), 1e-2 );
@@ -178,7 +178,7 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 			delete soln;
 		}
 
-		GridBinsHost* pGrid;
+		GridBins* pGrid;
 		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
@@ -243,7 +243,8 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     	std::cout << "Running PWR_Assembly from collision file with nBlocks=" << nBlocks <<
     			     " nThreads=" << nThreads << " collision buffer capacity=" << capacity << "\n";
 
-    	CollisionPointController controller( nBlocks,
+    	CollisionPointController<GridBins> controller(
+    			nBlocks,
     			nThreads,
     			pGrid,
     			pMatList,

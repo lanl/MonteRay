@@ -1,5 +1,5 @@
-#ifndef RAYLISTCONTROLLER_H_
-#define RAYLISTCONTROLLER_H_
+#ifndef RAYLISTCONTROLLER_HH_
+#define RAYLISTCONTROLLER_HH_
 
 #include <string>
 #include <memory>
@@ -8,23 +8,22 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_timer.hh"
 #include "RayListInterface.hh"
+#include "MonteRayNextEventEstimator.hh"
 
 namespace MonteRay {
 
-class GridBinsHost;
 class MonteRayMaterialListHost;
 class MonteRay_MaterialProperties;
 class gpuTallyHost;
-class MonteRayNextEventEstimator;
 
-template<unsigned N = 1>
+template<typename GRID_T, unsigned N = 1>
 class RayListController {
 public:
 
 	/// Ctor for the volumetric ray casting solver
 	RayListController(unsigned nBlocks,
 			                 unsigned nThreads,
-			                 GridBinsHost*,
+			                 GRID_T*,
 			                 MonteRayMaterialListHost*,
 			                 MonteRay_MaterialProperties*,
 			                 gpuTallyHost* );
@@ -32,7 +31,7 @@ public:
 	/// Ctor for the next event estimator solver
 	RayListController(unsigned nBlocks,
 				                 unsigned nThreads,
-				                 GridBinsHost*,
+				                 GRID_T*,
 				                 MonteRayMaterialListHost*,
 				                 MonteRay_MaterialProperties*,
 				                 unsigned numPointDets );
@@ -96,11 +95,11 @@ public:
 private:
 	unsigned nBlocks;
 	unsigned nThreads;
-	GridBinsHost* pGrid;
+	GRID_T* pGrid;
 	MonteRayMaterialListHost* pMatList;
 	MonteRay_MaterialProperties* pMatProps;
 	gpuTallyHost* pTally;
-	std::shared_ptr<MonteRayNextEventEstimator> pNextEventEstimator;
+	std::shared_ptr<MonteRayNextEventEstimator<GRID_T>> pNextEventEstimator;
 
 	RayListInterface<N>* currentBank;
 	RayListInterface<N>* bank1;
@@ -129,9 +128,14 @@ private:
     kernel_t kernel;
 };
 
-typedef RayListController<1> CollisionPointController;
-typedef RayListController<3> NextEventEstimatorController;
+template<class GRID_T>
+using CollisionPointController = typename MonteRay::RayListController<GRID_T,1>;
+
+template<class GRID_T>
+using NextEventEstimatorController = typename MonteRay::RayListController<GRID_T,3>;
 
 } /* namespace MonteRay */
 
-#endif /* RAYLISTCONTROLLER_H_ */
+#include "RayListController.t.hh"
+
+#endif /* RAYLISTCONTROLLER_HH_ */

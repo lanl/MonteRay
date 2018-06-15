@@ -206,6 +206,18 @@ public:
     	return *this;
     }
 
+	template<class READER_T>
+	GridBins( READER_T& reader) : GridBins() {
+		if( reader.getGeometryString() != "XYZ" )  {
+			throw std::runtime_error( "Invalid Geometry type -- MonteRay::GridBins only supports XYZ");
+		}
+		for( unsigned d=0; d < 3; ++d) {
+			std::vector<double> vertices = reader.getVertices(d);
+			setVertices(d, vertices );
+		}
+		finalize();
+	}
+
 	CUDA_CALLABLE_MEMBER
 	unsigned getMaxNumVertices() const {
 		return MAXNUMVERTICES;
@@ -326,102 +338,6 @@ kernelRayTrace(
 		gpuFloatType_t distance,
 		bool outsideDistances);
 
-class GridBinsHost {
-public:
-	GridBinsHost();
-	GridBinsHost( float_t negX, float_t posX, unsigned nX,
-			      float_t negY, float_t posY, unsigned nY,
-			      float_t negZ, float_t posZ, unsigned nZ);
-	GridBinsHost( std::vector<double> x, std::vector<double> y, std::vector<double> z);
-
-	// ctor that takes a class that provides getVertices(unsigned dim)
-	template<class T>
-	GridBinsHost( T& reader) {
-		ptr = new GridBins;
-
-		for( unsigned d=0; d < 3; ++d) {
-			std::vector<double> vertices = reader.getVertices(d);
-			setVertices(d, vertices );
-		}
-		finalize();
-
-		ptr_device = NULL;
-		temp = NULL;
-		cudaCopyMade = false;
-	}
-
-    ~GridBinsHost();
-
-    template<typename T>
-    void setVertices(unsigned dim, std::vector<T> vertices );
-
-    void setVertices(unsigned dim, float_t min, float_t max, unsigned numBins ){
-    	ptr->setVertices( dim, min, max, numBins );
-    }
-    void finalize() {
-    	ptr->finalize();
-    }
-    const GridBins* getPtr() const { return ptr; }
-    const GridBins* getPtrDevice() const { return ptr_device; }
-
-    void write(std::ostream& outfile) const;
-    void  read(std::istream& infile);
-
-    void write( const std::string& filename ) const;
-    void read( const std::string& filename );
-
-    unsigned getNumCells(void) const { return ptr->getNumCells(); }
-    unsigned getIndex(float_t x, float_t y, float_t z) const;
-
-    bool isRegular(unsigned dim) { return ptr->isRegular(dim); }
-
-	float_t min(const unsigned dim) const { return ptr->min(dim); }
-	float_t max(const unsigned dim) const { return ptr->max(dim); }
-
-#ifndef __CUDACC__
-    void loadFromLnk3dnt( const std::string& filename );
-#endif
-
-    void copyToGPU(void);
-
-private:
-    GridBins* ptr;
-    GridBins* temp;
-    bool cudaCopyMade;
-
-public:
-    GridBins* ptr_device;
-
-};
-
-template<typename T>
-void GridBinsHost::setVertices(unsigned dim, std::vector<T> vertices ){
-
-  	double delta = 0.0;
-  	double lastDelta = 99.0;
-  	bool uniform = true;
-  	for( unsigned i = 1; i< vertices.size(); ++i){
-  		delta = vertices.at(i) - vertices.at(i-1);
-  		if( i > 1 ) {
-//  			std::cout << "Debug:: i = " << i << " delta = " << delta << " lastdelta = " << lastDelta << "\n";
-  			double epsilon = 10.0*(std::nextafter( lastDelta,  std::numeric_limits<double>::infinity() ) - lastDelta);
-  			if( std::abs(delta-lastDelta) > epsilon ) {
-//   				std::cout << "Debug:: delta - lastDelta > epsilon -- diff = " << std::abs(delta-lastDelta) << " epsilon = " << epsilon << "\n";
-  				uniform = false;
-  				break;
-  			}
-
-  		}
-  		lastDelta = delta;
-  	}
-
-  	if( uniform ) {
-  		ptr->setVertices( dim, vertices.front(), vertices.back(), vertices.size()-1 );
-  	} else {
-  		ptr->setVertices( dim, vertices );
-  	}
-}
-
 template<typename T>
 void
 GridBins::setVertices( const unsigned dim, const std::vector<T>& verts) {
@@ -445,8 +361,6 @@ GridBins::setVertices( const unsigned dim, const std::vector<T>& verts) {
 
 	regular[dim] = false;
 }
-
-
 
 }
 #endif /* GRIDBINS_H_ */

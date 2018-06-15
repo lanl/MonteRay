@@ -27,11 +27,10 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
 	    	cudaReset();
 	    	gpuCheck();
-			pGrid = new GridBinsHost(
-					  -5.0, 5.0, 10,
-					  -5.0, 5.0, 10,
-					  -5.0, 5.0, 10);
-
+			pGrid = new GridBins;
+			pGrid->setVertices(0, -5.0, 5.0, 10);
+			pGrid->setVertices(1, -5.0, 5.0, 10);
+			pGrid->setVertices(2, -5.0, 5.0, 10);
 
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 
@@ -82,7 +81,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 			delete metal;
 		}
 
-		GridBinsHost* pGrid;
+		GridBins* pGrid;
 		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
@@ -98,7 +97,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, ctor ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- ctor\n";
-        CollisionPointController controller( 1024,
+        CollisionPointController<GridBins> controller( 1024,
  				                             1024,
  				                             pGrid,
  				                             pMatList,
@@ -111,7 +110,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, setCapacity ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- setCapacity\n";
-        CollisionPointController controller( 1024,
+        CollisionPointController<GridBins> controller( 1024,
  				                             1024,
  				                             pGrid,
  				                             pMatList,
@@ -125,14 +124,14 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle\n";
-        CollisionPointController controller( 1024,
+        CollisionPointController<GridBins> controller( 1024,
  				                             1024,
  				                             pGrid,
  				                             pMatList,
  				                             pMatProps,
  				                             pTally );
 
-        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
+        unsigned i = pGrid->getIndex( Position_t( 0.0, 0.0, 0.0 ) );
         ParticleRay_t particle;
 
         particle.pos[0] = 0.0;
@@ -156,14 +155,14 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle_via_ptr ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr1\n";
-        CollisionPointController controller( 1024,
+        CollisionPointController<GridBins> controller( 1024,
  				                             1024,
  				                             pGrid,
  				                             pMatList,
  				                             pMatProps,
  				                             pTally );
 
-        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
+        unsigned i = pGrid->getIndex( Position_t(0.0, 0.0, 0.0) );
 
         ParticleRay_t particle;
         particle.pos[0] = 0.0;
@@ -184,14 +183,14 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_two_particles_via_ptr ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr2\n";
-        CollisionPointController controller( 1024,
+        CollisionPointController<GridBins> controller( 1024,
  				                             1024,
  				                             pGrid,
  				                             pMatList,
  				                             pMatProps,
  				                             pTally );
 
-        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
+        unsigned i = pGrid->getIndex( Position_t(0.0, 0.0, 0.0) );
 
         ParticleRay_t particle[2];
         particle[0].pos[0] = 1.0;
@@ -224,7 +223,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_ten_particles_via_ptr ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr3\n";
-        CollisionPointController controller( 1024,
+        CollisionPointController<GridBins> controller( 1024,
  				                             1024,
  				                             pGrid,
  				                             pMatList,
@@ -254,7 +253,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, single_ray ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- single_ray\n";
-    	CollisionPointController controller( 1,
+    	CollisionPointController<GridBins> controller( 1,
     			1,
     			pGrid,
     			pMatList,
@@ -274,7 +273,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     	gpuFloatType_t y = 0.5;
     	gpuFloatType_t z = 0.5;
 
-    	unsigned i = pGrid->getIndex( x, y, z );
+    	unsigned i = pGrid->getIndex( Position_t(x, y, z) );
     	CHECK_EQUAL( 555, i);
 
         ParticleRay_t particle;
@@ -308,7 +307,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, write_single_ray_to_file ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- write_single_ray_to_file\n";
-    	CollisionPointController controller( 1,
+    	CollisionPointController<GridBins> controller( 1,
     			1,
     			pGrid,
     			pMatList,
@@ -331,7 +330,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     	gpuFloatType_t y = 0.5;
     	gpuFloatType_t z = 0.5;
 
-    	unsigned i = pGrid->getIndex( x, y, z );
+    	unsigned i = pGrid->getIndex( Position_t(x, y, z) );
     	CHECK_EQUAL( 555, i);
 
         ParticleRay_t particle;
@@ -358,7 +357,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, read_single_ray_to_file ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- read_single_ray_to_file\n";
-    	CollisionPointController controller( 1,
+    	CollisionPointController<GridBins> controller( 1,
     			1,
     			pGrid,
     			pMatList,
@@ -379,7 +378,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     	gpuFloatType_t y = 0.5;
     	gpuFloatType_t z = 0.5;
 
-    	unsigned i = pGrid->getIndex( x, y, z );
+    	unsigned i = pGrid->getIndex( Position_t(x, y, z) );
     	CHECK_EQUAL( 555, i);
 
         controller.readCollisionsFromFile( "single_ray_collision.bin" );
@@ -392,14 +391,14 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, set_write_to_file_only_via_ctor ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle\n";
-    	CollisionPointController controller( 2, std::string("collisionPoints_via_ctor_test_file.bin") );
+    	CollisionPointController<GridBins> controller( 2, std::string("collisionPoints_via_ctor_test_file.bin") );
     	CHECK_EQUAL( true, controller.isSendingToFile() );
 
     	gpuFloatType_t x = 0.5;
     	gpuFloatType_t y = 0.5;
     	gpuFloatType_t z = 0.5;
 
-    	unsigned i = pGrid->getIndex( x, y, z );
+    	unsigned i = pGrid->getIndex( Position_t(x, y, z) );
     	CHECK_EQUAL( 555, i);
 
     	ParticleRay_t particle;
@@ -425,7 +424,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, read_single_ray_to_file_from_writeonly_ctor ){
     	std::cout << "Debug: CollisionPointController_unit_tester -- read_single_ray_to_file_from_writeonly_ctor\n";
-    	CollisionPointController controller( 1,
+    	CollisionPointController<GridBins> controller( 1,
     			1,
     			pGrid,
     			pMatList,
@@ -446,7 +445,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     	gpuFloatType_t y = 0.5;
     	gpuFloatType_t z = 0.5;
 
-    	unsigned i = pGrid->getIndex( x, y, z );
+    	unsigned i = pGrid->getIndex( Position_t(x, y, z) );
     	CHECK_EQUAL( 555, i);
 
         controller.readCollisionsFromFile( "collisionPoints_via_ctor_test_file.bin" );
