@@ -470,14 +470,14 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
      	Grid_t cart(3,pGridInfo);
      	cart.copyToGPU();
 
-     	CHECK_CLOSE( 8.0, getVolume(cart,0), 1e-11 );
-     	CHECK_CLOSE( 4.0, getVolume(cart,1), 1e-11 );
-     	CHECK_CLOSE( 4.0, getVolume(cart,2), 1e-11 );
-     	CHECK_CLOSE( 2.0, getVolume(cart,3), 1e-11 );
-     	CHECK_CLOSE( 4.0, getVolume(cart,4), 1e-11 );
-     	CHECK_CLOSE( 2.0, getVolume(cart,5), 1e-11 );
-     	CHECK_CLOSE( 2.0, getVolume(cart,6), 1e-11 );
-     	CHECK_CLOSE( 1.0, getVolume(cart,7), 1e-11 );
+     	CHECK_CLOSE( 8.0, getVolume(cart,0), 1e-6 );
+     	CHECK_CLOSE( 4.0, getVolume(cart,1), 1e-6 );
+     	CHECK_CLOSE( 4.0, getVolume(cart,2), 1e-6 );
+     	CHECK_CLOSE( 2.0, getVolume(cart,3), 1e-6 );
+     	CHECK_CLOSE( 4.0, getVolume(cart,4), 1e-6 );
+     	CHECK_CLOSE( 2.0, getVolume(cart,5), 1e-6 );
+     	CHECK_CLOSE( 2.0, getVolume(cart,6), 1e-6 );
+     	CHECK_CLOSE( 1.0, getVolume(cart,7), 1e-6 );
 
      	delete pGridInfo[0];
      	delete pGridInfo[1];

@@ -11,7 +11,7 @@ namespace MonteRay_SphericalGrid_crossingDistance_tests{
 using namespace MonteRay;
 
 SUITE( SphericalGrid_crossinDistance_Tests) {
-	typedef Vector3D<gpuFloatType_t> Position_t;
+	typedef Vector3D<gpuRayFloat_t> Position_t;
 	using SphericalGrid = MonteRay_SphericalGrid;
 	using GridBins_t = SphericalGrid::GridBins_t;
 	using pArrayOfpGridInfo_t = SphericalGrid::pArrayOfpGridInfo_t;
@@ -20,7 +20,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 	class gridTestData {
 	public:
 		gridTestData(){
-			std::vector<gpuFloatType_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
+			std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
 
 			pGridInfo[R] = new GridBins_t();
 			pGridInfo[R]->initialize( Rverts );
@@ -39,7 +39,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  -6.5, 0.0,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 100.0;
+		gpuRayFloat_t distance = 100.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -68,7 +68,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  -4.5, 0.0,  0.0 );
 		Position_t direction(     1,   0,    0 );
-		double distance = 100.0;
+		gpuRayFloat_t distance = 100.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -93,7 +93,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  -6.5, 0.0,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 6.0;
+		gpuRayFloat_t distance = 6.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -116,7 +116,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  -6.5, 0.0,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -141,10 +141,10 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 		gridTestData data;
 		SphericalGrid grid(1, data.pGridInfo );
 
-		double y = 3.0 / std::sqrt(2.0 );
+		gpuRayFloat_t y = 3.0 / std::sqrt(2.0 );
 		Position_t position (  -4.0, y,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -159,12 +159,12 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 		gridTestData data;
 		SphericalGrid grid(1, data.pGridInfo );
 
-		double x = -3.5;
-		double y = 3.0;
+		gpuRayFloat_t x = -3.5;
+		gpuRayFloat_t y = 3.0;
 
 		Position_t position (  x, y, 0.0 );
 		Position_t direction(  1, 0,   0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -175,12 +175,12 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 		gridTestData data;
 		SphericalGrid grid(1, data.pGridInfo );
 
-		double x = -3.5;
-		double y = -3.0;
+		gpuRayFloat_t x = -3.5;
+		gpuRayFloat_t y = -3.0;
 
 		Position_t position (  x, y, 0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -191,10 +191,10 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 		gridTestData data;
 		SphericalGrid grid(1, data.pGridInfo );
 
-		double y = 2.0;
+		gpuRayFloat_t y = 2.0;
 		Position_t position (  -4.0, y,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
@@ -213,7 +213,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  0.0, 0.0,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
@@ -237,7 +237,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  0.0, 0.0,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 4.5;
+		gpuRayFloat_t distance = 4.5;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
@@ -260,7 +260,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  3.5, 0.0,  0.0 );
 		Position_t direction(   -1,   0,    0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
@@ -279,7 +279,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  3.5, 0.0,  0.0 );
 		Position_t direction(   -1,   0,    0 );
-		double distance = 7.5;
+		gpuRayFloat_t distance = 7.5;
 
 		distances_t distances;
 		grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
@@ -295,7 +295,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  -4.5, 0.0,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 100.0;
+		gpuRayFloat_t distance = 100.0;
 
 		distances_t distances;
 		grid.radialCrossingDistances( distances, position, direction, distance);
@@ -325,7 +325,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
 		Position_t position (  -3.5, 3.1,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 100.0;
+		gpuRayFloat_t distance = 100.0;
 
 		distances_t distances;
 		grid.radialCrossingDistances( distances, position, direction, distance);
@@ -341,10 +341,10 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 		gridTestData data;
 		SphericalGrid grid(1, data.pGridInfo );
 
-		double y = 3.0 / std::sqrt(2.0 );
+		gpuRayFloat_t y = 3.0 / std::sqrt(2.0 );
 		Position_t position (  -4.0, y,  0.0 );
 		Position_t direction(    1,   0,    0 );
-		double distance = 9.0;
+		gpuRayFloat_t distance = 9.0;
 
 		distances_t distances;
 		grid.radialCrossingDistances( distances, position, direction, distance);

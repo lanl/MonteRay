@@ -32,8 +32,8 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         CHECK_EQUAL(   20, getNumGridBins(MonteRay_SpatialGrid::CART_X) );
         CHECK_EQUAL(   20, getNumGridBins(MonteRay_SpatialGrid::CART_Y) );
         CHECK_EQUAL(   4, getNumGridBins(MonteRay_SpatialGrid::CART_Z) );
-        CHECK_CLOSE(-10.0, getMinVertex(MonteRay_SpatialGrid::CART_X), 1e-11 );
-        CHECK_CLOSE( 10.0, getMaxVertex(MonteRay_SpatialGrid::CART_X), 1e-11 );
+        CHECK_CLOSE(-10.0, getMinVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
+        CHECK_CLOSE( 10.0, getMaxVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
     }
 
    	TEST_FIXTURE(SpatialGridGPUTester, read_test_Vertices_access_on_GPU ){
@@ -65,8 +65,8 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
             copyToGPU();
 
             CHECK_EQUAL(    20, getNumGridBins(MonteRay_SpatialGrid::CART_X) );
-            CHECK_CLOSE( -10.0,   getMinVertex(MonteRay_SpatialGrid::CART_X), 1e-11 );
-            CHECK_CLOSE(  10.0,   getMaxVertex(MonteRay_SpatialGrid::CART_X), 1e-11 );
+            CHECK_CLOSE( -10.0,   getMinVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
+            CHECK_CLOSE(  10.0,   getMaxVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
         }
     }
 
@@ -85,16 +85,16 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         copyToGPU();
 
         CHECK_EQUAL( 3, getNumGridBins(MonteRay_SpatialGrid::CART_X) );
-        CHECK_CLOSE( -10.0, getMinVertex(MonteRay_SpatialGrid::CART_X), 1e-11 );
-        CHECK_CLOSE( 10.0, getMaxVertex(MonteRay_SpatialGrid::CART_X), 1e-11 );
+        CHECK_CLOSE( -10.0, getMinVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
+        CHECK_CLOSE( 10.0, getMaxVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
 
         CHECK_EQUAL( 4, getNumGridBins(MonteRay_SpatialGrid::CART_Y) );
-        CHECK_CLOSE( -20.0, getMinVertex(MonteRay_SpatialGrid::CART_Y), 1e-11 );
-        CHECK_CLOSE( 10.0, getMaxVertex(MonteRay_SpatialGrid::CART_Y), 1e-11 );
+        CHECK_CLOSE( -20.0, getMinVertex(MonteRay_SpatialGrid::CART_Y), 1e-6 );
+        CHECK_CLOSE( 10.0, getMaxVertex(MonteRay_SpatialGrid::CART_Y), 1e-6 );
 
         CHECK_EQUAL( 6, getNumGridBins(MonteRay_SpatialGrid::CART_Z) );
-        CHECK_CLOSE( -30.0, getMinVertex(MonteRay_SpatialGrid::CART_Z), 1e-11 );
-        CHECK_CLOSE( 30.0, getMaxVertex(MonteRay_SpatialGrid::CART_Z), 1e-11 );
+        CHECK_CLOSE( -30.0, getMinVertex(MonteRay_SpatialGrid::CART_Z), 1e-6 );
+        CHECK_CLOSE( 30.0, getMaxVertex(MonteRay_SpatialGrid::CART_Z), 1e-6 );
     }
 
    	TEST_FIXTURE(SpatialGridGPUTester,  isInitialized ){
@@ -157,12 +157,12 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         initialize();
         copyToGPU();
 
-        CHECK_CLOSE( 9.0*1.0*9.0, getVolume(0), 1e-11);
-        CHECK_CLOSE( 2.0*1.0*9.0, getVolume(1), 1e-11);
-        CHECK_CLOSE( 9.0*2.0*9.0, getVolume(3), 1e-11);
-        CHECK_CLOSE( 9.0*1.0*9.0, getVolume(8), 1e-11);
-        CHECK_CLOSE( 9.0*1.0*2.0, getVolume(9), 1e-11);
-        CHECK_CLOSE( 9.0*1.0*19.0, getVolume(26), 1e-11);
+        CHECK_CLOSE( 9.0*1.0*9.0, getVolume(0), 1e-6);
+        CHECK_CLOSE( 2.0*1.0*9.0, getVolume(1), 1e-6);
+        CHECK_CLOSE( 9.0*2.0*9.0, getVolume(3), 1e-6);
+        CHECK_CLOSE( 9.0*1.0*9.0, getVolume(8), 1e-6);
+        CHECK_CLOSE( 9.0*1.0*2.0, getVolume(9), 1e-6);
+        CHECK_CLOSE( 9.0*1.0*19.0, getVolume(26), 1e-6);
     }
 
     class particle {
@@ -286,9 +286,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
 
          CHECK_EQUAL( 2, distances.size() );
          CHECK_EQUAL( 0, distances.id(0) );
-         CHECK_CLOSE( 1.0, distances.dist(0), 1e-11 );
+         CHECK_CLOSE( 1.0, distances.dist(0), 1e-6 );
          CHECK_EQUAL( 1, distances.id(1) );
-         CHECK_CLOSE( 0.5, distances.dist(1), 1e-11 );
+         CHECK_CLOSE( 0.5, distances.dist(1), 1e-6 );
      }
 #endif
 
@@ -322,9 +322,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
-        CHECK_CLOSE( 1.0, distances.dist(0), 1e-11 );
+        CHECK_CLOSE( 1.0, distances.dist(0), 1e-6 );
         CHECK_EQUAL( 1, distances.id(1) );
-        CHECK_CLOSE( 0.5, distances.dist(1), 1e-11 );
+        CHECK_CLOSE( 0.5, distances.dist(1), 1e-6 );
     }
 
 //    TEST( rayTrace_setRotation_1D_external_to_internal_posX_particle ) {
