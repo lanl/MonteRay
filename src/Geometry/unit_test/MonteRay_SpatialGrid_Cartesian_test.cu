@@ -2,6 +2,7 @@
 
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayDefinitions.hh"
+#include "MonteRay_ReadLnk3dnt.hh"
 
 #include <stdexcept>
 #include <fstream>
@@ -367,6 +368,15 @@ SUITE( MonteRay_SpatialGrid_Cartesian_tests ) {
 //        CHECK_CLOSE( 0.5, distances[1].second, 1e-11 );
 //    }
 
+    TEST( read_lnk3dnt ) {
+		MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
+		Grid_t grid(readerObject);
+
+		CHECK_EQUAL( TransportMeshTypeEnum::Cartesian, grid.getCoordinateSystem() );
+		CHECK_EQUAL( 100, grid.getNumGridBins(MonteRay_SpatialGrid::CART_X) );
+		CHECK_EQUAL( 100, grid.getNumGridBins(MonteRay_SpatialGrid::CART_Y) );
+		CHECK_EQUAL( 100, grid.getNumGridBins(MonteRay_SpatialGrid::CART_Z) );
+    }
 }
 
 } /* end namespace */
