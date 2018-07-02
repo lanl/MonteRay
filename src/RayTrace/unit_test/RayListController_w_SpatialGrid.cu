@@ -218,7 +218,10 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     	rayTraceList_t distances = rayTrace( pGrid, position, direction, distance);
 
     	CHECK_EQUAL( 2, distances.size() );
-    	//CHECK_EQUAL( 0, distances.id(0) );
+    	CHECK_EQUAL( 0, distances.id(0) );
+    	CHECK_CLOSE( 1.0, distances.dist(0), 1e-5 );
+    	CHECK_EQUAL( 1, distances.id(1) );
+    	CHECK_CLOSE( 0.5, distances.dist(1), 1e-5 );
     }
 
     TEST_FIXTURE(UnitControllerSetup, single_ray ){

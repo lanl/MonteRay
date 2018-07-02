@@ -144,10 +144,10 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
     	unsigned detectorIndex = 101;
     	short int particleType = 0;
 
-    	unsigned nI = 2;
-    	unsigned nJ = 1;
-    	for( unsigned i = 0; i < nI; ++i ) {
-    	    for( unsigned j = 0; j < nJ; ++j ) {
+    	const unsigned nBatches = 2;
+    	const unsigned nParticlePerBatch = 1;
+    	for( unsigned i = 0; i < nBatches; ++i ) {
+    	    for( unsigned j = 0; j < nParticlePerBatch; ++j ) {
     	    	ParticleRay_t ray;
     	    	ray.pos[0] = x;
     	    	ray.pos[1] = y;
@@ -162,7 +162,7 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
     	    	ray.particleType = particleType;
     	        controller.add( ray );
     	    }
-    	    CHECK_EQUAL( nJ, controller.size() );
+    	    CHECK_EQUAL( nParticlePerBatch, controller.size() );
     	    controller.flush(false);
     	}
     	CHECK_EQUAL( 0, controller.size() );
@@ -170,8 +170,8 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
 
     	pTally->copyToCPU();
 
-    	CHECK_CLOSE( 0.601248*nI*nJ, pTally->getTally(index), 1e-6*nI*nJ );
-    	CHECK_CLOSE( 0.482442*nI*nJ, pTally->getTally(index+1), 1e-6*nI*nJ );
+    	CHECK_CLOSE( 0.601248*nBatches*nParticlePerBatch, pTally->getTally(index), 1e-6*nBatches*nParticlePerBatch );
+    	CHECK_CLOSE( 0.482442*nBatches*nParticlePerBatch, pTally->getTally(index+1), 1e-6*nBatches*nParticlePerBatch );
 
     }
 
