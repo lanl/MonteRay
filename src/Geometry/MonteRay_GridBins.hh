@@ -171,7 +171,15 @@ public:
 
     void initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins);
 
-    void initialize( const std::vector<gpuRayFloat_t>& bins );
+    template<typename T>
+    void initialize( const std::vector<T>& bins ) {
+    	verticesVec = new std::vector<gpuRayFloat_t>;
+    	verticesVec->resize( bins.size() );
+    	for( unsigned i=0; i<bins.size(); ++i ) {
+    		(*verticesVec)[i] = bins[i];
+    	}
+        setup();
+    }
 
     CUDAHOST_CALLABLE_MEMBER void setup(void);
 
@@ -200,7 +208,7 @@ public:
     CUDA_CALLABLE_MEMBER int getLinearIndex(gpuRayFloat_t pos) const;
 
     CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const {
-    	printf("%f\n", r);
+    	if( debug ) printf("%f\n", r);
     	MONTERAY_ASSERT( r >= 0.0 );
     	return getRadialIndexFromRSq( r*r );
     }

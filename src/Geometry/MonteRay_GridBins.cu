@@ -20,13 +20,13 @@
 namespace MonteRay {
 
 
-CUDAHOST_CALLABLE_MEMBER
-void
-MonteRay_GridBins::initialize( const std::vector<gpuRayFloat_t>& bins ) {
-	verticesVec = new std::vector<gpuRayFloat_t>;
-	*verticesVec = bins;
-    setup();
-}
+//CUDAHOST_CALLABLE_MEMBER
+//void
+//MonteRay_GridBins::initialize( const std::vector<gpuRayFloat_t>& bins ) {
+//	verticesVec = new std::vector<gpuRayFloat_t>;
+//	*verticesVec = bins;
+//    setup();
+//}
 
 CUDAHOST_CALLABLE_MEMBER
 void
@@ -82,6 +82,7 @@ MonteRay_GridBins::modifyForRadial(void) {
     radialModified = true;
     type = RADIAL;
 
+#ifndef __CUDA_ARCH__
     // test for negative
     for( unsigned i=0; i< verticesVec->size(); ++i) {
     	MONTERAY_VERIFY( verticesVec->at(i) >= 0.0, "MonteRay_GridBins::modifyForRadial -- Radial bin edge values must be non-negative!!! " );
@@ -99,16 +100,17 @@ MonteRay_GridBins::modifyForRadial(void) {
         verticesSqVec->push_back( value*value );
     }
     numBins = verticesVec->size();
+#endif
     validate();
 }
 
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_GridBins::validate() {
-
 	MONTERAY_VERIFY( minVertex < maxVertex, "MonteRay_GridBins::validate -- The minimum vertex must be less than the maximum vertex !!!\n" );
 	MONTERAY_VERIFY( numBins > 0, "MonteRay_GridBins::validate -- The number of bins must be greater than 0 !!!\n" );
 
+#ifndef __CUDA_ARCH__
     // test ascending
     for( unsigned i=1; i< verticesVec->size(); ++i) {
     	MONTERAY_VERIFY( verticesVec->at(i) > verticesVec->at(i-1), "MonteRay_GridBins::validate -- The number of bins must be greater than 0 !!!\n" );
@@ -123,6 +125,7 @@ MonteRay_GridBins::validate() {
     	verticesSq = const_cast<gpuRayFloat_t*>( verticesSqVec->data() );
     	nVerticesSq = verticesSqVec->size();
     }
+#endif
 }
 
 void MonteRay_GridBins::write( const std::string& filename ) {

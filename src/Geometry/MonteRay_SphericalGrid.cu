@@ -94,7 +94,7 @@ MonteRay_SphericalGrid::getIndex( const Position_t& particle_pos) const{
     int index = 0;
     Position_t pos = convertFromCartesian( particle_pos );
 
-    printf("%i\n", pRVertices->isRadial() );
+    if( debug )  printf("%i\n", pRVertices->isRadial() );
     index = pRVertices->getRadialIndexFromR( pos[R] );
     if( isIndexOutside(R, index ) ) { return UINT_MAX; }
 
