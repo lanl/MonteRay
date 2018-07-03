@@ -19,15 +19,6 @@
 
 namespace MonteRay {
 
-
-CUDAHOST_CALLABLE_MEMBER
-void
-MonteRay_GridBins::initialize( const std::vector<gpuRayFloat_t>& bins ) {
-	verticesVec = new std::vector<gpuRayFloat_t>;
-	*verticesVec = bins;
-    setup();
-}
-
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_GridBins::initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins){

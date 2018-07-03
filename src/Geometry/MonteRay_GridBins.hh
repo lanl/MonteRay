@@ -42,7 +42,8 @@ public:
         initialize( min, max, nBins );
     }
 
-    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( const std::vector<gpuRayFloat_t>& bins ) {
+    template<typename T>
+    CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( const std::vector<T>& bins ) {
     	init();
         initialize( bins );
     }
@@ -171,7 +172,18 @@ public:
 
     void initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins);
 
-    void initialize( const std::vector<gpuRayFloat_t>& bins );
+    template<typename T>
+    CUDAHOST_CALLABLE_MEMBER
+    void
+    initialize( const std::vector<T>& bins ) {
+    	verticesVec = new std::vector<gpuRayFloat_t>;
+    	verticesVec->resize( bins.size() );
+    	for( unsigned i = 0; i< bins.size(); ++i ) {
+    		verticesVec->at(i) = gpuRayFloat_t( bins[i] );
+    	}
+        setup();
+    }
+
 
     CUDAHOST_CALLABLE_MEMBER void setup(void);
 
