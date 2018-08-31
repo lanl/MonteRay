@@ -7,7 +7,6 @@
 
 namespace MonteRay {
 
-#ifdef __CUDACC__
 class MonteRay_CylindricalGrid;
 
 using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
@@ -18,7 +17,6 @@ void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrSphericalG
 
 CUDA_CALLABLE_KERNEL
 void deleteDeviceInstance(MonteRay_CylindricalGrid** pInstance);
-#endif
 
 class MonteRay_CylindricalGrid : public MonteRay_GridSystemInterface {
 public:
@@ -37,12 +35,14 @@ public:
     CUDA_CALLABLE_MEMBER MonteRay_CylindricalGrid(unsigned d, GridBins_t* pGridR, GridBins_t* pGridZ );
 
     CUDA_CALLABLE_MEMBER virtual ~MonteRay_CylindricalGrid(void){
+#ifdef __CUDACC__
 #ifndef __CUDA_ARCH__
     	if( ptrDevicePtr ) {
     		deleteDeviceInstance<<<1,1>>>( ptrDevicePtr );
     		cudaDeviceSynchronize();
     	}
     	MonteRayDeviceFree( ptrDevicePtr );
+#endif
 #endif
     }
 

@@ -4,6 +4,10 @@
 #include <fstream>
 #include <ostream>
 
+#ifndef __CUDACC__
+#include <cmath>
+#endif
+
 #include "GPUErrorCheck.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_binaryIO.hh"
@@ -225,7 +229,11 @@ unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* c
 		printf( "calcCrossings -- dir=%f\n", dir );
 	}
 
+#ifdef __CUDACC__
     if( abs(dir) <= MonteRay::epsilon ) {
+#else
+    if( std::abs(dir) <= MonteRay::epsilon ) {
+#endif
     	return nDistances;
     }
 

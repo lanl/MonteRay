@@ -126,7 +126,9 @@ SUITE( CopyMemory_tester ) {
 		}
 		~testClassWithArray(){
 			if( Base::isCudaIntermediate ) {
+#ifdef __CUDACC__
 				MonteRayDeviceFree( elements );
+#endif
 			} else {
 				MonteRayHostFree( elements, Base::isManagedMemory );
 			}

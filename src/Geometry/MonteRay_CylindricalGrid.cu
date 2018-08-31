@@ -5,32 +5,29 @@
 
 namespace MonteRay {
 
-#ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL
-    void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ ) {
-    		*pPtrInstance = new MonteRay_CylindricalGrid( 2, pGridR, pGridZ );
-    		pResult->v = *pPtrInstance;
-    		//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
-    }
+CUDA_CALLABLE_KERNEL
+void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ ) {
+	*pPtrInstance = new MonteRay_CylindricalGrid( 2, pGridR, pGridZ );
+	pResult->v = *pPtrInstance;
+	//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
+}
 
-    CUDA_CALLABLE_KERNEL
-    void deleteDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance) {
-    	delete *pPtrInstance;
-    }
+CUDA_CALLABLE_KERNEL
+void deleteDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance) {
+	delete *pPtrInstance;
+}
 
-    CUDAHOST_CALLABLE_MEMBER
-    MonteRay_CylindricalGrid*
-    MonteRay_CylindricalGrid::getDeviceInstancePtr() {
-    	return devicePtr;
-    }
-
-#endif
+CUDAHOST_CALLABLE_MEMBER
+MonteRay_CylindricalGrid*
+MonteRay_CylindricalGrid::getDeviceInstancePtr() {
+	return devicePtr;
+}
 
 CUDA_CALLABLE_MEMBER
 MonteRay_CylindricalGrid::MonteRay_CylindricalGrid(unsigned dim, pArrayOfpGridInfo_t pBins) :
     MonteRay_GridSystemInterface(dim)
 {
-	MONTERAY_VERIFY( dim <= DimMax, "MonteRay_CylindricalGrid::ctor -- only 2-D is allowed" ); // No greater than 2-D.
+	MONTERAY_VERIFY( dim == DimMax, "MonteRay_CylindricalGrid::ctor -- only 2-D is allowed" ); // No greater than 2-D.
 
 	DIM = dim;
 

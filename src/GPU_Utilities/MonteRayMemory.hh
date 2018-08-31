@@ -306,7 +306,7 @@ inline void MonteRayDeviceFree(void* ptr) noexcept {
 
 	cudaFree(realPtr);
 #else
-	throw std::runtime_error( "MonteRayDeviceFree -- can NOT free device memory without CUDA." );
+	//throw std::runtime_error( "MonteRayDeviceFree -- can NOT free device memory without CUDA." );
 #endif
 }
 

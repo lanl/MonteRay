@@ -8,6 +8,8 @@ using namespace MonteRay;
 using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( SphericalGrid_crossingDistance_GPU_Tests) {
+#ifdef __CUDACC__
+
 	TEST( setup ) {
 		gpuReset();
 	}
@@ -447,7 +449,7 @@ SUITE( SphericalGrid_crossingDistance_GPU_Tests) {
 		CHECK_EQUAL( 4, distances.id(3) );
 		CHECK_CLOSE( 9.0, distances.dist(3), 1e-6 );
 	}
-
+#endif
 }
 
 }

@@ -8,7 +8,7 @@ using namespace MonteRay;
 using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( MonteRay_CartesianGrid_rayTrace_GPU_Tests) {
-
+#ifdef __CUDACC__
    	TEST( setup ) {
    		gpuReset();
    	}
@@ -936,6 +936,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_GPU_Tests) {
 		checkDistances( {maxuint,maxuint,maxuint,26,25,22,13,12,9,0}, {s3,0,0,s3,0,0,s3,0,0,s3}, distances );
 	}
 
+#endif
 }
 
 }

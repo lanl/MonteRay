@@ -14,7 +14,6 @@
 
 namespace MonteRay {
 
-#ifdef __CUDACC__
 class MonteRay_SphericalGrid;
 
 using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_SphericalGrid*>;
@@ -22,10 +21,8 @@ using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_Spheri
 CUDA_CALLABLE_KERNEL
 void createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR );
 
-
 CUDA_CALLABLE_KERNEL
 void deleteDeviceInstance(MonteRay_SphericalGrid** pInstance);
-#endif
 
 class MonteRay_SphericalGrid : public MonteRay_GridSystemInterface {
 public:
@@ -43,12 +40,14 @@ public:
     CUDA_CALLABLE_MEMBER MonteRay_SphericalGrid(unsigned d, GridBins_t* );
 
     CUDA_CALLABLE_MEMBER virtual ~MonteRay_SphericalGrid(void){
+#ifdef __CUDACC__
 #ifndef __CUDA_ARCH__
     	if( ptrDevicePtr ) {
     		deleteDeviceInstance<<<1,1>>>( ptrDevicePtr );
     		cudaDeviceSynchronize();
     	}
     	MonteRayDeviceFree( ptrDevicePtr );
+#endif
 #endif
     }
 

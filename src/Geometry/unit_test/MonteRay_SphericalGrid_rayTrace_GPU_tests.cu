@@ -8,6 +8,7 @@ using namespace MonteRay;
 using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( SphericalGrid_GPU_Tests) {
+#ifdef __CUDACC__
 
 	TEST( setup ) {
 		gpuReset();
@@ -232,6 +233,7 @@ SUITE( SphericalGrid_GPU_Tests) {
 		CHECK_EQUAL(   0,  distances.size() );
 	}
 
+#endif
 }
 
 }

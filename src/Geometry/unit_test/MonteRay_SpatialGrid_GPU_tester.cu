@@ -7,6 +7,7 @@ namespace MonteRay_SpatialGrid_GPU_tester {
 using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( MonteRay_SpatialGrid_GPU_Tests_Cartesian ) {
+#ifdef __CUDACC__
 
    	TEST( setup ) {
    		gpuReset();
@@ -184,6 +185,7 @@ SUITE( MonteRay_SpatialGrid_GPU_Tests_Spherical ) {
         CHECK_EQUAL( 99, getIndex( p ) ); // last index
     }
 
+#endif
 }
 
 } // end namespace

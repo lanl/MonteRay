@@ -1,5 +1,4 @@
 #include <UnitTest++.h>
-
 #include "MonteRay_SpatialGrid_GPU_helper.hh"
 
 namespace MonteRay_SpatialGrid_Cartesian_GPU_tester {
@@ -7,6 +6,7 @@ namespace MonteRay_SpatialGrid_Cartesian_GPU_tester {
 using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
+#ifdef __CUDACC__
 
    	TEST( setup ) {
    		gpuReset();
@@ -370,6 +370,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
    		gpuReset();
    	}
 
+#endif
 }
 
 } // end namespace

@@ -108,13 +108,13 @@ void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 	// allocate the num crossings
 	CUDA_CHECK_RETURN(cudaMalloc((void**) &numCrossings_device, sizeof(unsigned) ));
 #else
-	grid_device = malloc( sizeof(GridBins) );
+	grid_device = (MonteRay::GridBins*) malloc( sizeof(GridBins) );
 	memcpy( grid_device, grid, sizeof(GridBins) );
 
-	distances_device = malloc( sizeof(float_t) * nCells );
-	cells_device = malloc( sizeof(int) * nCells );
+	distances_device = (gpuRayFloat_t*) malloc( sizeof(float_t) * nCells );
+	cells_device = (int*) malloc( sizeof(int) * nCells );
 
-	numCrossings_device = malloc( sizeof(unsigned) );
+	numCrossings_device = (int*) malloc( sizeof(unsigned) );
 #endif
 }
 

@@ -4,6 +4,7 @@
 
 SUITE( CopyMemory_tester ) {
 
+#ifdef __CUDACC__
 	using namespace MonteRay;
 
 	template<class T>
@@ -92,6 +93,8 @@ SUITE( CopyMemory_tester ) {
 		CHECK_EQUAL(6,managedVector[2]);
 		CHECK_EQUAL(8,managedVector[3]);
 	}
+
+#endif
 
 }
 

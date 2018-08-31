@@ -154,11 +154,16 @@ CUDA_CALLABLE_MEMBER
 void
 MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, int index) const {
 	const bool debug = false;
+    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
 
 	//	constexpr gpuRayFloat_t epsilon = std::numeric_limits<gpuRayFloat_t>::epsilon();
+#ifdef __CUDACC__
     if( abs(dir) <= FLT_EPSILON ) { return; }
+#else
+    if( std::abs(dir) <= FLT_EPSILON ) { return; }
+#endif
 
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
+
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance  -- Bins=%p \n", &Bins );
 
     int start_index = index;
@@ -188,7 +193,11 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
     int dirIncrement = std::copysign( 1, dir );
 #endif
 
+#ifdef __CUDACC__
+    unsigned num_indices = abs(end_index - start_index ) + 1;
+#else
     unsigned num_indices = std::abs(end_index - start_index ) + 1;
+#endif
 
     int current_index = start_index;
 
@@ -262,7 +271,11 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
         end_index = Bins.getNumBins()-1;
     }
 
+#ifdef __CUDACC__
+    unsigned num_indices = abs(end_index - start_index ) + 1;
+#else
     unsigned num_indices = std::abs(end_index - start_index ) + 1;
+#endif
     //distances.reserve( num_indices+5 );
 
     int current_index = start_index;

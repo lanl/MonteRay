@@ -11,26 +11,24 @@
 
 namespace MonteRay {
 
-#ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL
-    void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
-    		*pPtrInstance = new MonteRay_CartesianGrid( 3, pGridX, pGridY, pGridZ );
-    		pResult->v = *pPtrInstance;
-    		//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
-    }
+CUDA_CALLABLE_KERNEL
+void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
+	*pPtrInstance = new MonteRay_CartesianGrid( 3, pGridX, pGridY, pGridZ );
+	pResult->v = *pPtrInstance;
+	//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
+}
 
-    CUDA_CALLABLE_KERNEL
-    void deleteDeviceInstance(MonteRay_CartesianGrid** pPtrInstance) {
-    	delete *pPtrInstance;
-    }
+CUDA_CALLABLE_KERNEL
+void deleteDeviceInstance(MonteRay_CartesianGrid** pPtrInstance) {
+	delete *pPtrInstance;
+}
 
-    CUDAHOST_CALLABLE_MEMBER
-    MonteRay_CartesianGrid*
-    MonteRay_CartesianGrid::getDeviceInstancePtr() {
-    	return devicePtr;
-    }
+CUDAHOST_CALLABLE_MEMBER
+MonteRay_CartesianGrid*
+MonteRay_CartesianGrid::getDeviceInstancePtr() {
+	return devicePtr;
+}
 
-#endif
 
 CUDA_CALLABLE_MEMBER
 MonteRay_CartesianGrid::MonteRay_CartesianGrid(unsigned dim, pArrayOfpGridInfo_t pBins) :
@@ -186,6 +184,7 @@ MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
+	if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const \n");
     crossingDistance(rayTraceMap, *(pGridBins[d]), pos, dir, distance, false);
     return;
 }
@@ -193,7 +192,9 @@ MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, u
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const {
+	if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const \n");
     int index = Bins.getLinearIndex(pos);
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance -- calling MonteRay_GridSystemInterface::planarCrossingDistance.\n");
     planarCrossingDistance( rayTraceMap, Bins, pos, dir, distance, index);
     return;
 }
