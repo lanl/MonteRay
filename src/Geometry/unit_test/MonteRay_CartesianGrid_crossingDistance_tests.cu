@@ -266,6 +266,17 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
         unsigned dim = 0;
         distances_t distances;
+        CHECK_EQUAL( 3, cart.getDimension() );
+        CHECK_EQUAL( 0, cart.getDimIndex(0, -0.5) );
+        CHECK_EQUAL( 0, cart.getDimIndex(1, -0.5) );
+        CHECK_EQUAL( 0, cart.getDimIndex(2, -0.5) );
+        CHECK_EQUAL( 1, cart.getDimIndex(0, 0.5) );
+        CHECK_EQUAL( 1, cart.getDimIndex(1, 0.5) );
+        CHECK_EQUAL( 1, cart.getDimIndex(2, 0.5) );
+        CHECK_EQUAL( 2, cart.getNumBins(0) );
+        CHECK_EQUAL( 2, cart.getNumBins(1) );
+        CHECK_EQUAL( 2, cart.getNumBins(2) );
+
         cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
 
         CHECK_EQUAL( 2, distances.size() );

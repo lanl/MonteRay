@@ -7,6 +7,7 @@
 using namespace MonteRay;
 
 SUITE( GridBins_gpu_Tester ) {
+#ifdef __CUDACC__
 
 	template<typename T>
 	using resultClass = MonteRay_SingleValueCopyMemory<T>;
@@ -184,7 +185,7 @@ SUITE( GridBins_gpu_Tester ) {
 
 
 	TEST(setup) {
-		gpuReset();
+		//gpuReset();
 	}
 
 	TEST_FIXTURE(GridBinsGPUHelper, ctor_class_getMaxNumVertices ) {
@@ -320,7 +321,7 @@ SUITE( GridBins_gpu_Tester ) {
 	}
 
 	TEST( cleanup ) {
-		gpuReset();
+		//gpuReset();
 	}
-
+#endif
 }

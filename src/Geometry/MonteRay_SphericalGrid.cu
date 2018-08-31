@@ -12,26 +12,23 @@
 
 namespace MonteRay {
 
-#ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL
-    void createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR ) {
-    		*pPtrInstance = new MonteRay_SphericalGrid( 1, pGridR );
-    		pResult->v = *pPtrInstance;
-    		//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
-    }
+CUDA_CALLABLE_KERNEL
+void createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR ) {
+	*pPtrInstance = new MonteRay_SphericalGrid( 1, pGridR );
+	pResult->v = *pPtrInstance;
+	//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
+}
 
-    CUDA_CALLABLE_KERNEL
-    void deleteDeviceInstance(MonteRay_SphericalGrid** pPtrInstance) {
-    	delete *pPtrInstance;
-    }
+CUDA_CALLABLE_KERNEL
+void deleteDeviceInstance(MonteRay_SphericalGrid** pPtrInstance) {
+	delete *pPtrInstance;
+}
 
-    CUDAHOST_CALLABLE_MEMBER
-    MonteRay_SphericalGrid*
-    MonteRay_SphericalGrid::getDeviceInstancePtr() {
-    	return devicePtr;
-    }
-
-#endif
+CUDAHOST_CALLABLE_MEMBER
+MonteRay_SphericalGrid*
+MonteRay_SphericalGrid::getDeviceInstancePtr() {
+	return devicePtr;
+}
 
 CUDA_CALLABLE_MEMBER
 MonteRay_SphericalGrid::MonteRay_SphericalGrid(unsigned dim, pArrayOfpGridInfo_t pBins) :
@@ -94,7 +91,7 @@ MonteRay_SphericalGrid::getIndex( const Position_t& particle_pos) const{
     int index = 0;
     Position_t pos = convertFromCartesian( particle_pos );
 
-    printf("%i\n", pRVertices->isRadial() );
+    if( debug )  printf("%i\n", pRVertices->isRadial() );
     index = pRVertices->getRadialIndexFromR( pos[R] );
     if( isIndexOutside(R, index ) ) { return UINT_MAX; }
 

@@ -13,9 +13,9 @@ using namespace MonteRay;
 
 namespace MonteRay_CartesianGrid_on_GPU_tester{
 
-#if true
-
 SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
+#ifdef __CUDACC__
+
 	using Grid_t = MonteRay_CartesianGrid;
 	using GridBins_t = MonteRay_GridBins;
 	using GridBins_t = Grid_t::GridBins_t;
@@ -107,6 +107,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
 	}
 
     TEST( getNumBins_on_GPU ) {
+
     	enum coord {X,Y,Z,DimMax};
     	gridTestData data;
 
@@ -486,8 +487,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
      	delete[] pGridInfo;
      }
 
-}
-
 #endif
+}
 
 } // end namespace

@@ -25,8 +25,8 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 	public:
 		UnitControllerSetup(){
 
-	    	cudaReset();
-	    	gpuCheck();
+	    	//cudaReset();
+	    	//gpuCheck();
 			pGrid = new GridBins;
 			pGrid->setVertices(0, -5.0, 5.0, 10);
 			pGrid->setVertices(1, -5.0, 5.0, 10);
@@ -92,7 +92,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 	};
 
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
 
     TEST_FIXTURE(UnitControllerSetup, ctor ){

@@ -14,7 +14,7 @@ SUITE( RayListInterface_simple_tests ) {
 	typedef MonteRay::ParticleRay_t ParticleRay_t;
 
 	TEST( test_setup ) {
-		gpuCheck();
+		//gpuCheck();
 //		CHECK(false);
 	}
     TEST( setup_host ) {

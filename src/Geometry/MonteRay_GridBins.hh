@@ -184,7 +184,6 @@ public:
         setup();
     }
 
-
     CUDAHOST_CALLABLE_MEMBER void setup(void);
 
     CUDA_CALLABLE_MEMBER unsigned getNumBins(void) const {
@@ -212,7 +211,7 @@ public:
     CUDA_CALLABLE_MEMBER int getLinearIndex(gpuRayFloat_t pos) const;
 
     CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const {
-    	printf("%f\n", r);
+    	if( debug ) printf("%f\n", r);
     	MONTERAY_ASSERT( r >= 0.0 );
     	return getRadialIndexFromRSq( r*r );
     }

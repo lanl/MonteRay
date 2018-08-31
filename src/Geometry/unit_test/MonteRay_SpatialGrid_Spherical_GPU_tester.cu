@@ -1,6 +1,7 @@
 #include <UnitTest++.h>
 
 #include "MonteRay_SpatialGrid_GPU_helper.hh"
+
 #include "MonteRayConstants.hh"
 
 namespace MonteRay_SpatialGrid_Spherical_GPU_tester {
@@ -8,9 +9,10 @@ namespace MonteRay_SpatialGrid_Spherical_GPU_tester {
 using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
+#ifdef __CUDACC__
 
    	TEST( setup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 
    	TEST_FIXTURE(SpatialGridGPUTester, set_Vertices ){
@@ -282,9 +284,9 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
     }
 
   	TEST( cleanup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
-
+#endif
 }
 
 } // end namespace

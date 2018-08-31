@@ -9,7 +9,7 @@ using namespace MonteRay;
 SUITE( HashBins_Tester ) {
 
 TEST( ctor ) {
-	gpuReset();
+	//gpuReset();
 
 	unsigned N= 10;
 	gpuFloatType_t values[N];
@@ -145,6 +145,7 @@ CUDA_CALLABLE_KERNEL void kernelGetNEdges(HashBins* pHashBins, resultClass<unsig
 	pResult->v = pHashBins->getNEdges();
 }
 
+
 CUDA_CALLABLE_KERNEL void kernelGetLowerUpperBins(HashBins* pHashBins, gpuFloatType_t value, resultClass<unsigned>* pLower, resultClass<unsigned>* pUpper) {
 	pHashBins->getLowerUpperBins(value, pLower->v, pUpper->v);
 }
@@ -164,11 +165,16 @@ public:
 	unsigned getNEdges() {
 		using result_t = resultClass<unsigned>;
 		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
-		pResult->copyToGPU();
 
+#ifdef __CUDACC__
+		pResult->copyToGPU();
 		kernelGetNEdges<<<1,1>>>( pHashBins->devicePtr, pResult->devicePtr);
 		gpuErrchk( cudaPeekAtLastError() );
 		pResult->copyToCPU();
+#else
+		kernelGetNEdges( pHashBins.get(), pResult.get());
+#endif
+
 		return pResult->v;
 	}
 
@@ -180,8 +186,12 @@ public:
 		pResult1->copyToGPU();
 		pResult2->copyToGPU();
 
+#ifdef __CUDACC__
 		kernelGetLowerUpperBins<<<1,1>>>( pHashBins->devicePtr, value, pResult1->devicePtr, pResult2->devicePtr);
 		gpuErrchk( cudaPeekAtLastError() );
+#else
+		kernelGetLowerUpperBins( pHashBins.get(), value, pResult1.get(), pResult2.get());
+#endif
 
 		pResult1->copyToCPU();
 		pResult2->copyToCPU();
@@ -252,7 +262,7 @@ TEST( device_getLowerUpperBins1 ) {
 }
 
 TEST( cleanup ) {
-	gpuReset();
+	//gpuReset();
 }
 
 

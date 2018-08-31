@@ -45,7 +45,7 @@ SUITE( DistanceCalculatorGPU_Tester ) {
 	};
 
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
 
 	TEST_FIXTURE(DistanceCalculatorGPUTest, rayTrace_outside_to_inside_posDir_one_crossing ) {

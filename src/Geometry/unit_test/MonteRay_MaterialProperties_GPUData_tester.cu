@@ -4,12 +4,16 @@
 
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
+
+#ifdef __CUDACC__
 #include "genericGPU_test_helper.hh"
+#endif
 
 namespace MonteRay_MaterialProperties_GPUData_tester {
 using namespace MonteRay;
 
 SUITE( MaterialProperties_GPUData_tester ) {
+
 	TEST( read_lnk3dnt ) {
 		MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
 		readerObject.ReadMatData();
@@ -37,6 +41,7 @@ SUITE( MaterialProperties_GPUData_tester ) {
 		CHECK_CLOSE( 18.7922, den, 1e-4);
 	}
 
+#ifdef __CUDACC__
 	TEST_FIXTURE(GenericGPUTestHelper, test_copy_to_gpu)
 	{
 		MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
@@ -83,6 +88,7 @@ SUITE( MaterialProperties_GPUData_tester ) {
 		mass *= std::pow( ((33.5*2.0)/100), 3);
 		CHECK_CLOSE( 2.21573E+04, mass, 1e-1);
 	}
+#endif
 }
 
 }

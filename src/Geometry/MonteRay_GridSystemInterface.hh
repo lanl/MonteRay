@@ -12,6 +12,7 @@
 
 #include <utility>
 #include <vector>
+#include <climits>
 
 #include "MonteRay_GridBins.hh"
 

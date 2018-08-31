@@ -27,10 +27,6 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 	public:
 		UnitControllerSetup(){
 
-	    	cudaReset();
-	    	gpuCheck();
-	    	cudaDeviceSetLimit( cudaLimitStackSize, 60000 );
-
 			pGrid = new Grid_t;
 			pGrid->setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
 			pGrid->setDimension( 3 );
@@ -97,6 +93,14 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 
         MonteRayMaterialHost* metal;
 	};
+	
+	TEST( Reset ) {
+#ifdef __CUDACC__
+		//cudaReset();
+	    //gpuCheck();
+	    cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
+#endif
+	}
 
 	template<typename T>
 	using resultClass = MonteRay_SingleValueCopyMemory<T>;
@@ -109,18 +113,24 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
    	gpuRayFloat_t getVertex(GRID_T* pGrid, unsigned d, unsigned index )  {
    		using result_t = resultClass<gpuRayFloat_t>;
    		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
-   		pResult->copyToGPU();
 
+#ifdef __CUDACC__
+   		pResult->copyToGPU();
    		kernelGetVertex<<<1,1>>>( pGrid->getDevicePtr(), pResult->devicePtr, d, index);
    		gpuErrchk( cudaPeekAtLastError() );
    		pResult->copyToCPU();
+#else
+   		kernelGetVertex( pGrid, pResult.get(), d, index);
+#endif
    		return pResult->v;
    	}
 
 
 	TEST_FIXTURE(UnitControllerSetup, getVertex ){
 		setup();
+#ifdef __CUDACC__
 		cudaDeviceSynchronize();
+#endif
 		CHECK_CLOSE(-5.0, getVertex(pGrid, MonteRay_SpatialGrid::CART_X,0), 1e-11 );
 	}
 
@@ -147,17 +157,23 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     unsigned getIndex(GRID_T* pGridInfo, particle& p) {
     	using result_t = resultClass<unsigned>;
     	std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+#ifdef __CUDACC__
     	pResult->copyToGPU();
 
     	kernelGetIndexByParticle<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, p );
     	gpuErrchk( cudaPeekAtLastError() );
     	pResult->copyToCPU();
+#else
+    	kernelGetIndexByParticle( pGridInfo, pResult.get(), p );
+#endif
     	return pResult->v;
     }
 
     TEST_FIXTURE(UnitControllerSetup, getIndex ){
     	setup();
+#ifdef __CUDACC__
     	cudaDeviceSynchronize();
+#endif
 
         particle p;
 
@@ -191,6 +207,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     rayTraceList_t rayTrace( GRID_T* pGridInfo, Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
     	using result_t = resultClass<rayTraceList_t>;
     	std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+#ifdef __CUDACC__
     	pResult->copyToGPU();
 
     	cudaDeviceSynchronize();
@@ -202,13 +219,19 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     	gpuErrchk( cudaPeekAtLastError() );
 
     	pResult->copyToCPU();
+#else
+    	kernelRayTrace( pGridInfo, pResult.get(),
+    	    			pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
+#endif
 
     	return pResult->v;
     }
 
     TEST_FIXTURE(UnitControllerSetup, rayTrace_outside_to_inside_posX ){
     	setup();
+#ifdef __CUDACC__
     	cudaDeviceSynchronize();
+#endif
 
     	Grid_t::Position_t position (  -5.5, -4.5, -4.5 );
     	Grid_t::Position_t direction(    1,   0,    0 );
@@ -228,7 +251,9 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     	//std::cout << "Debug: CollisionPointController_unit_tester -- single_ray\n";
 
      	setup();
+#ifdef __CUDACC__
      	cudaDeviceSynchronize();
+#endif
 
     	CollisionPointController<Grid_t> controller( 1,
     			1,
@@ -268,7 +293,9 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         particle.detectorIndex = 1;
         particle.particleType = 0;
 
+#ifdef __CUDACC__
         cudaDeviceSynchronize();
+#endif
         controller.add(  particle );
 
         controller.flush(true);

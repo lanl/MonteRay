@@ -20,11 +20,7 @@ RayList_t<N>::~RayList_t(){
 	if( ! Base::isCudaIntermediate ) {
 		MonteRayHostFree(points, Base::isManagedMemory );
 	} else {
-#ifdef __CUDACC__
 		MonteRayDeviceFree( points );
-#else
-		throw std::runtime_error("RayList_t::~RayList_t -- Destructor can NOT free CUDA intermediate without CUDA.");
-#endif
 	}
 }
 

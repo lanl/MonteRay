@@ -14,7 +14,6 @@
 
 namespace MonteRay {
 
-#ifdef __CUDACC__
 class MonteRay_CartesianGrid;
 
 using ptrCartesianGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CartesianGrid*>;
@@ -25,7 +24,6 @@ void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGri
 
 CUDA_CALLABLE_KERNEL
 void deleteDeviceInstance(MonteRay_CartesianGrid** pInstance);
-#endif
 
 class MonteRay_CartesianGrid : public MonteRay_GridSystemInterface {
 public:
@@ -40,12 +38,14 @@ public:
     CUDA_CALLABLE_MEMBER MonteRay_CartesianGrid(unsigned d, GridBins_t*, GridBins_t*, GridBins_t* );
 
     CUDA_CALLABLE_MEMBER virtual ~MonteRay_CartesianGrid(void){
+#ifdef __CUDACC__
 #ifndef __CUDA_ARCH__
     	if( ptrDevicePtr ) {
     		deleteDeviceInstance<<<1,1>>>( ptrDevicePtr );
     		cudaDeviceSynchronize();
     	}
     	MonteRayDeviceFree( ptrDevicePtr );
+#endif
 #endif
     }
 

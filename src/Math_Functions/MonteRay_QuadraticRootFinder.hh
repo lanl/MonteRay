@@ -8,9 +8,9 @@
 #ifndef MONTERAYQUADRATICROOTFINDER_HH_
 #define MONTERAYQUADRATICROOTFINDER_HH_
 
-#include "MonteRayDefinitions.hh"
-
 #include <limits>
+
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay {
 

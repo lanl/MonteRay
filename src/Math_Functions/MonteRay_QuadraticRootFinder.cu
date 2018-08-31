@@ -7,8 +7,6 @@
 
 #include "MonteRay_QuadraticRootFinder.hh"
 
-namespace MonteRay {
-
 #include <cmath>
 
 #ifdef __CUDACC__
@@ -17,6 +15,8 @@ namespace MonteRay {
 #endif
 
 //#include <vector>
+
+namespace MonteRay {
 
 ///\brief Quadratic equation solver.
 ///

@@ -14,9 +14,10 @@ using namespace MonteRay;
 
 namespace MonteRay_SphericalGrid_on_GPU_tester{
 
-#if true
-
 SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
+
+#ifdef __CUDACC__
+
 	using Grid_t = MonteRay_SphericalGrid;
 	using GridBins_t = MonteRay_GridBins;
 	using GridBins_t = Grid_t::GridBins_t;
@@ -391,9 +392,6 @@ SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
 
      	delete[] pGridInfo;
      }
-
-}
-
 #endif
-
+}
 } // end namespace

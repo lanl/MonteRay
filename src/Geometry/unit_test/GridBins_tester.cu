@@ -9,7 +9,7 @@ SUITE( GridBins_Tester ) {
 
 
 	TEST( ctor_class_getMaxNumVertices ) {
-		gpuReset();
+		//gpuReset();
 
 		GridBins grid;
 		CHECK_EQUAL( 1001, grid.getMaxNumVertices() );

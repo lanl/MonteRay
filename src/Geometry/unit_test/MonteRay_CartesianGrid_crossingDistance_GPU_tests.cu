@@ -8,6 +8,7 @@ using namespace MonteRay;
 using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
+#ifdef __CUDACC__
 
     typedef singleDimRayTraceMap_t distances_t;
     typedef singleDimRayTraceMap_t rayTraceMap_t;
@@ -512,7 +513,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     	CHECK_EQUAL( -1, distances.id(4) );
     	CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
     }
-
+#endif
 }
 
 }

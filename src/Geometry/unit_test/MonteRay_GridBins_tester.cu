@@ -265,6 +265,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 		return;
 	}
 
+#ifdef __CUDACC__
     TEST( read_access_on_GPU ) {
     	std::unique_ptr<MonteRay_GridBins> pReadBins = std::unique_ptr<MonteRay_GridBins>( new MonteRay_GridBins() );
     	std::unique_ptr<resultClass<int>> pResult = std::unique_ptr<resultClass<int>>( new resultClass<int>() );
@@ -412,7 +413,6 @@ SUITE( MonteRay_GridBins_Tester ) {
 		pGridInfo->modifyForRadial();
 
 	    std::unique_ptr<resultClass<int>> pResult = std::unique_ptr<resultClass<int>>( new resultClass<int>() );
-#ifdef __CUDACC__
 	    pGridInfo->copyToGPU();
 		pResult->copyToGPU();
 		CHECK_EQUAL(0, pResult->v );
@@ -427,9 +427,6 @@ SUITE( MonteRay_GridBins_Tester ) {
 		gpuErrchk( cudaPeekAtLastError() );
 
 		pResult->copyToCPU();
-#else
-		kernelGetRadialIndexFromRSq( pGridInfo, pResult, rSq);
-#endif
 		return pResult->v;
 	}
 
@@ -440,5 +437,6 @@ SUITE( MonteRay_GridBins_Tester ) {
         CHECK_EQUAL(   3, launchKernelGetRadialIndexFromRSq( 3.5*3.5 ) );
         CHECK_EQUAL(   3, launchKernelGetRadialIndexFromRSq( 30.5*30.5 ) );
 	}
+#endif
 
 }

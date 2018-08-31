@@ -25,8 +25,8 @@ SUITE( Ray_bank_controller_fi_tester ) {
 	public:
 		ControllerSetup(){
 
-	    	cudaReset();
-	    	gpuCheck();
+	    	//cudaReset();
+	    	//gpuCheck();
 			pGrid = new GridBins;
 			pGrid->setVertices(0, -33.5, 33.5, 100);
 			pGrid->setVertices(1, -33.5, 33.5, 100);
@@ -123,7 +123,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
 
 #if false
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
 
     TEST_FIXTURE(ControllerSetup, ctor ){

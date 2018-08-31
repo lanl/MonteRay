@@ -12,7 +12,7 @@
 
 SUITE( MonteRayCrossSection_tester ) {
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
     TEST( ctor ) {
         MonteRayCrossSectionHost xs(10);

@@ -1,12 +1,5 @@
-/*
- * MonteRaySphericalGrid.hh
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
-#ifndef MONTERAYSPHERICALGRID_HH_
-#define MONTERAYSPHERICALGRID_HH_
+#ifndef MONTERAYCYLINDRICALGRID_HH_
+#define MONTERAYCYLINDRICALGRID_HH_
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_GridSystemInterface.hh"
@@ -14,32 +7,34 @@
 
 namespace MonteRay {
 
-class MonteRay_SphericalGrid;
+class MonteRay_CylindricalGrid;
 
-using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_SphericalGrid*>;
-
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR );
+using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
 
 CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_SphericalGrid** pInstance);
+void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ );
 
-class MonteRay_SphericalGrid : public MonteRay_GridSystemInterface {
+
+CUDA_CALLABLE_KERNEL
+void deleteDeviceInstance(MonteRay_CylindricalGrid** pInstance);
+
+class MonteRay_CylindricalGrid : public MonteRay_GridSystemInterface {
 public:
     typedef MonteRay_GridBins::Position_t Position_t;
     typedef MonteRay_GridBins::Direction_t Direction_t;
 
-    enum coord {R=0,DimMax=1};
+    enum coord {R=0,Z=1,Theta=2,DimMax=2};  //Theta not supported
+    enum cart_coord {x=0, y=1, z=2};
 
     using GridBins_t = MonteRay_GridBins;
     //typedef singleDimRayTraceMap_t;
     using pGridInfo_t = GridBins_t*;
     using pArrayOfpGridInfo_t = pGridInfo_t[3];
 
-    CUDA_CALLABLE_MEMBER MonteRay_SphericalGrid(unsigned d, pArrayOfpGridInfo_t pBins);
-    CUDA_CALLABLE_MEMBER MonteRay_SphericalGrid(unsigned d, GridBins_t* );
+    CUDA_CALLABLE_MEMBER MonteRay_CylindricalGrid(unsigned d, pArrayOfpGridInfo_t pBins);
+    CUDA_CALLABLE_MEMBER MonteRay_CylindricalGrid(unsigned d, GridBins_t* pGridR, GridBins_t* pGridZ );
 
-    CUDA_CALLABLE_MEMBER virtual ~MonteRay_SphericalGrid(void){
+    CUDA_CALLABLE_MEMBER virtual ~MonteRay_CylindricalGrid(void){
 #ifdef __CUDACC__
 #ifndef __CUDA_ARCH__
     	if( ptrDevicePtr ) {
@@ -52,16 +47,18 @@ public:
     }
 
     CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
-    	if( debug ) std::cout << "Debug: MonteRay_SphericalGrid::copyToGPU \n";
+    	if( debug ) std::cout << "Debug: MonteRay_CylindricalGrid::copyToGPU \n";
 #ifdef __CUDACC__
-    	ptrDevicePtr = (MonteRay_SphericalGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_SphericalGrid*), std::string("device - MonteRay_SphericalGrid::ptrDevicePtr") );
+    	ptrDevicePtr = (MonteRay_CylindricalGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CylindricalGrid*), std::string("device - MonteRay_CylindricalGrid::ptrDevicePtr") );
 
     	pRVertices->copyToGPU();
+    	pZVertices->copyToGPU();
+    	//pThetaVertices->copyToGPU();
 
     	std::unique_ptr<ptrSphericalGrid_result_t> ptrResult = std::unique_ptr<ptrSphericalGrid_result_t>( new ptrSphericalGrid_result_t() );
     	ptrResult->copyToGPU();
 
-    	createDeviceInstance<<<1,1>>>( ptrDevicePtr, ptrResult->devicePtr, pRVertices->devicePtr );
+    	createDeviceInstance<<<1,1>>>( ptrDevicePtr, ptrResult->devicePtr, pRVertices->devicePtr, pZVertices->devicePtr );
     	cudaDeviceSynchronize();
     	ptrResult->copyToCPU();
     	devicePtr = ptrResult->v;
@@ -70,34 +67,35 @@ public:
 	}
 
     CUDAHOST_CALLABLE_MEMBER
-    MonteRay_SphericalGrid* getDeviceInstancePtr();
+    MonteRay_CylindricalGrid* getDeviceInstancePtr();
 
     CUDA_CALLABLE_MEMBER void validate(void);
     CUDA_CALLABLE_MEMBER void validateR(void);
 
+    CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const;
     CUDA_CALLABLE_MEMBER unsigned getNumRBins() const { return numRBins; }
-    CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const { return d == 0 ? numRBins : 0; }
+    CUDA_CALLABLE_MEMBER unsigned getNumZBins() const { return numZBins; }
+    //CUDA_CALLABLE_MEMBER unsigned getNumThetaBins() const { return numThetaBins; }
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getRVertex(unsigned i) const { return pRVertices->vertices[i]; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getRSqVertex(unsigned i) const { return pRVertices->verticesSq[i]; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t getZVertex(unsigned i) const { return pZVertices->vertices[i]; }
+    //CUDA_CALLABLE_MEMBER gpuRayFloat_t getThetaVertex(unsigned i) const { return pThetaVertices->vertices.at(i); }
 
     CUDA_CALLABLE_MEMBER Position_t convertFromCartesian( const Position_t& pos) const;
 
     CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t R ) const { return pRVertices->getRadialIndexFromR(R); }
     CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t RSq ) const { return pRVertices->getRadialIndexFromRSq(RSq); }
+    CUDA_CALLABLE_MEMBER int getAxialIndex( gpuRayFloat_t z) const { return pZVertices->getLinearIndex(z);}
 
     CUDA_CALLABLE_MEMBER unsigned getIndex( const GridBins_t::Position_t& particle_pos) const;
-    CUDA_CALLABLE_MEMBER bool isIndexOutside( unsigned d,  int i) const {
-    	MONTERAY_VERIFY( d == 0, "MonteRay_SphericalGrid::isIndexOutside -- Index i must not be negative." );
-    	MONTERAY_VERIFY( d == 0, "MonteRay_SphericalGrid::isIndexOutside -- Dimension d must be 0 because spherical geometry is 1-D." );
-    	return pRVertices->isIndexOutside(i);
-    }
+    CUDA_CALLABLE_MEMBER bool isIndexOutside( unsigned d,  int i) const;
 
     CUDA_CALLABLE_MEMBER bool isOutside(  const int i[]) const;
 
     CUDA_CALLABLE_MEMBER unsigned calcIndex( const int[] ) const;
 
-    CUDA_CALLABLE_MEMBER uint3 calcIJK( unsigned index ) const { return {index, 0, 0}; }
+    CUDA_CALLABLE_MEMBER uint3 calcIJK( unsigned index ) const;
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getVolume( unsigned index ) const;
 
@@ -107,7 +105,7 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     void
@@ -122,18 +120,25 @@ public:
     radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outward ) const;
 
 protected:
-    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcParticleRSq( const gpuRayFloat_t&  pos) const { return pos*pos; }
-    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcParticleRSq( const Position_t&  pos) const { return pos[0]*pos[0] + pos[1]*pos[1] + pos[2]*pos[2]; }
-    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcQuadraticA(  const Direction_t& dir) const { return 1.0; } //=dot(pDirection,pDirection)
-    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcQuadraticB(  const Position_t&  pos, const Direction_t& dir) const { return 2.0*(pos[0]*dir[0] + pos[1]*dir[1] + pos[2]*dir[2]); }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcParticleRSq( const Position_t&  pos) const { return pos[x]*pos[x] + pos[y]*pos[y]; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcQuadraticA(  const Direction_t& dir) const { return dir[x]*dir[x] + dir[y]*dir[y]; } //=dot(pDirection,pDirection)
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t calcQuadraticB(  const Position_t&  pos, const Direction_t& dir) const { return 2.0*(pos[x]*dir[x] + pos[y]*dir[y]); }
 
 public:
-    MonteRay_SphericalGrid** ptrDevicePtr = nullptr;
-    MonteRay_SphericalGrid* devicePtr = nullptr;
+    MonteRay_CylindricalGrid** ptrDevicePtr = nullptr;
+    MonteRay_CylindricalGrid* devicePtr = nullptr;
 
 private:
+    static constexpr gpuRayFloat_t inf = std::numeric_limits<gpuRayFloat_t>::infinity();
+
     pGridInfo_t pRVertices = nullptr;
+    pGridBins_t pZVertices = nullptr;
+    // pGridBins_t pThetaVertices = nullptr;
+
     unsigned numRBins = 0;
+    unsigned numZBins = 0;
+    //unsigned numThetaBins = 0;
+
     //bool regular = false;
 
     const bool debug = false;
@@ -141,4 +146,4 @@ private:
 
 } /* namespace MonteRay */
 
-#endif /* MONTERAYSPHERICALGRID_HH_ */
+#endif /* MONTERAYCYLINDRICALGRID_HH_ */

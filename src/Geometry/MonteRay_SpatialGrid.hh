@@ -258,7 +258,7 @@ public:
     rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const {
         const bool debug = false;
 
-        if( debug ) printf("MonteRay_SpatialGrid::rayTrace(irayTraceList_t&, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
+        if( debug ) printf("MonteRay_SpatialGrid::rayTrace(rayTraceList_t&, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
 
         MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 

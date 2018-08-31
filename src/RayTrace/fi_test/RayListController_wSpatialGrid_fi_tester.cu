@@ -25,10 +25,6 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
 	class ControllerSetup {
 	public:
 		ControllerSetup(){
-	    	cudaReset();
-	    	gpuCheck();
-	    	cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
-
 	    	pMatProps = new MonteRay_MaterialProperties;
 
 	    	u234s = new MonteRayCrossSectionHost(1);
@@ -115,6 +111,14 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
         MonteRayMaterialHost* water;
 
 	};
+	
+	TEST( Reset ) {
+#ifdef __CUDACC__
+		//cudaReset();
+	    //gpuCheck();
+	    cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
+#endif
+	}
 
     TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
 
