@@ -51,7 +51,7 @@ gpuDistanceCalculatorTestHelper::gpuDistanceCalculatorTestHelper(){
 }
 
 void gpuDistanceCalculatorTestHelper::gpuCheck() {
-	MonteRay::gpuCheck();
+	//MonteRay::gpuCheck();
 }
 
 gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){

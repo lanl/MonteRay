@@ -43,6 +43,22 @@ public:
 	CUDAHOST_CALLABLE_MEMBER MonteRay_SpatialGrid(void);
 	CUDAHOST_CALLABLE_MEMBER MonteRay_SpatialGrid( const MonteRay_SpatialGrid& );
 
+	template<typename READER_T>
+	CUDAHOST_CALLABLE_MEMBER MonteRay_SpatialGrid( READER_T& reader ) : MonteRay_SpatialGrid() {
+		if( reader.getGeometryString() == "XYZ" )  {
+			setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
+			const unsigned DIM=3;
+			setDimension(DIM);
+			for( unsigned d=0; d < DIM; ++d) {
+				std::vector<double> vertices = reader.getVertices(d);
+				setGrid(d, vertices );
+			}
+			initialize();
+		} else {
+			throw std::runtime_error( "MonteRay_SpatialGrid(reader) -- Geometry type not yet supported." );
+		}
+	}
+
 	CUDAHOST_CALLABLE_MEMBER
     virtual ~MonteRay_SpatialGrid(void){
 
@@ -145,8 +161,15 @@ public:
     CUDAHOST_CALLABLE_MEMBER
     void setGrid( unsigned index, gpuRayFloat_t min, gpuRayFloat_t max, unsigned numBins );
 
+    template<typename T>
     CUDAHOST_CALLABLE_MEMBER
-    void setGrid( unsigned index, const std::vector<gpuRayFloat_t>& vertices );
+    void
+    setGrid( unsigned index, const std::vector<T>& vertices ) {
+        checkDim( index+1 );
+        if( pGridInfo[index] ) delete pGridInfo[index];
+        pGridInfo[index] = new GridBins_t();
+        pGridInfo[index]->initialize( vertices );
+    }
 
     CUDA_CALLABLE_MEMBER
     unsigned getNumGridBins( unsigned index ) const;
@@ -223,20 +246,54 @@ public:
     CUDA_CALLABLE_MEMBER
     void
     rayTrace(rayTraceList_t& rayTraceList, const Particle& p, gpuRayFloat_t distance, bool OutsideDistances=false) const {
-        return rayTrace( rayTraceList, p.getPosition(), p.getDirection(), distance, OutsideDistances );
+        const bool debug = false;
+
+        if( debug ) printf("MonteRay_SptialGrid::rayTrace(irayTraceList_t&, const Particle& p, gpuRayFloat distance, bool OutsideDistances\n");
+
+    	return rayTrace( rayTraceList, p.getPosition(), p.getDirection(), distance, OutsideDistances );
     }
 
     CUDA_CALLABLE_MEMBER
     void
     rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const {
+        const bool debug = false;
+
+        if( debug ) printf("MonteRay_SpatialGrid::rayTrace(rayTraceList_t&, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
+
+        MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
+
+//        if( transform ) {
+//            pos = (*transform).counterTransformPos( pos );
+//            dir = (*transform).counterTransformDir( dir );
+//        }
+        if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- calling grid system rayTrace \n");
+    	pGridSystem->rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
+        return;
+    }
+
+    /// Call to support call with integer c array of indices
+    /// and float c array of distances - may be slow
+    CUDA_CALLABLE_MEMBER
+    unsigned
+    rayTrace(int* global_indices, gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const {
+        const bool debug = false;
+
+        if( debug ) printf("MonteRay_SpatialGrid::rayTrace(int* global_indices, int* gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
     	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
 //        if( transform ) {
 //            pos = (*transform).counterTransformPos( pos );
 //            dir = (*transform).counterTransformDir( dir );
 //        }
-    	pGridSystem->rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
-        return;
+    	rayTraceList_t rayTraceList;
+    	rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
+
+    	if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayTraceList.size());
+    	for( unsigned i=0; i< rayTraceList.size(); ++i ) {
+    		global_indices[i] = rayTraceList.id(i);
+    		distances[i] = rayTraceList.dist(i);
+    	}
+        return rayTraceList.size();
     }
 
     CUDA_CALLABLE_MEMBER

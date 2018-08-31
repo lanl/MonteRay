@@ -11,7 +11,7 @@ SUITE( SphericalGrid_GPU_Tests) {
 #ifdef __CUDACC__
 
 	TEST( setup ) {
-		gpuReset();
+		//gpuReset();
 	}
 
 	typedef rayTraceList_t rayTrace_t;

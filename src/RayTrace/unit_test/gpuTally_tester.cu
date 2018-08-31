@@ -13,7 +13,7 @@
 
 SUITE( gpuTally_tester ) {
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
     TEST( ctor ) {
         gpuTallyHost tally(5);

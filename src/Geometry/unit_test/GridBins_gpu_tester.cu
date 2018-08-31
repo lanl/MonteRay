@@ -185,7 +185,7 @@ SUITE( GridBins_gpu_Tester ) {
 
 
 	TEST(setup) {
-		gpuReset();
+		//gpuReset();
 	}
 
 	TEST_FIXTURE(GridBinsGPUHelper, ctor_class_getMaxNumVertices ) {
@@ -321,7 +321,7 @@ SUITE( GridBins_gpu_Tester ) {
 	}
 
 	TEST( cleanup ) {
-		gpuReset();
+		//gpuReset();
 	}
 #endif
 }

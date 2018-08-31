@@ -11,7 +11,7 @@ SUITE( SphericalGrid_crossingDistance_GPU_Tests) {
 #ifdef __CUDACC__
 
 	TEST( setup ) {
-		gpuReset();
+		//gpuReset();
 	}
 
 	typedef singleDimRayTraceMap_t distances_t;

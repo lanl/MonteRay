@@ -17,7 +17,7 @@ tallyCollision(const GRIDTYPE* pGrid,
 
 	if( debug ) {
 		printf("--------------------------------------------------------------------------------------------------------\n");
-		printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, e=%f, w=%f, weight=%f, index=%d \n",
+		printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, w=%f, energy=%f, weight=%f, index=%d \n",
 				tid+1,
 				p->pos[0],
 				p->pos[1],

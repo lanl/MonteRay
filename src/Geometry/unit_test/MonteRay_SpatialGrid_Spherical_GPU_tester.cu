@@ -12,7 +12,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
 #ifdef __CUDACC__
 
    	TEST( setup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 
    	TEST_FIXTURE(SpatialGridGPUTester, set_Vertices ){
@@ -284,7 +284,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
     }
 
   	TEST( cleanup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 #endif
 }

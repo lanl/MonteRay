@@ -10,7 +10,7 @@ SUITE( MonteRay_SpatialGrid_GPU_Tests_Cartesian ) {
 #ifdef __CUDACC__
 
    	TEST( setup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 
 	TEST( ctor ) {
@@ -108,7 +108,7 @@ SUITE( MonteRay_SpatialGrid_GPU_Tests_Cartesian ) {
 SUITE( MonteRay_SpatialGrid_GPU_Tests_Spherical ) {
 
    	TEST( setup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 
 	TEST( ctor ) {

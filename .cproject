@@ -379,10 +379,10 @@
 			</target>
 			<target name="install" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} --</buildArguments>
+				<buildArguments>--build ${BINARY_DIR} -- -j8</buildArguments>
 				<buildTarget>install</buildTarget>
 				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
+				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 			<target name="createUserManual" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">

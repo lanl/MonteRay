@@ -10,7 +10,7 @@ using namespace MonteRay_SpatialGrid_helper;
 SUITE( MonteRay_CartesianGrid_rayTrace_GPU_Tests) {
 #ifdef __CUDACC__
    	TEST( setup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 
    	typedef rayTraceList_t rayTrace_t;

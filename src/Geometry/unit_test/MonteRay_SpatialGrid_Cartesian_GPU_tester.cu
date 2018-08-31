@@ -9,7 +9,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
 #ifdef __CUDACC__
 
    	TEST( setup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 
    	TEST_FIXTURE(SpatialGridGPUTester, set_Vertices ){
@@ -367,7 +367,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
 #endif
 
   	TEST( cleanup ) {
-   		gpuReset();
+   		//gpuReset();
    	}
 
 #endif

@@ -18,7 +18,7 @@ SUITE( RayListInterface_fi_tester ) {
 	TEST( setup ) {
 		std::cout << "Debug: starting - RayListInterface_fi_tester\n";
 		//CHECK(false);
-		gpuCheck();
+		//gpuCheck();
 	}
 
     TEST(get_total_xs_from_gpu ) {
@@ -242,7 +242,7 @@ SUITE( RayListInterface_fi_tester ) {
 
     TEST( rayTraceTally_GodivaR )
     {
-    	cudaReset();
+    	//cudaReset();
 
     	GridBins* grid_host = new GridBins;
     	grid_host->setVertices( 0, -33.5, 33.5, 100);
@@ -332,7 +332,7 @@ SUITE( RayListInterface_fi_tester ) {
 SUITE( Collision_fi_looping_tester ) {
 
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
 
     TEST( rayTraceTally_GodivaR_wGlobalLauncher )
@@ -341,7 +341,7 @@ SUITE( Collision_fi_looping_tester ) {
     	std::cout << "Debug: Starting rayTrace tester with Global Launcher \n";
     	FIGenericGPUTestHelper<1> helper(  1 );
 
-    	cudaReset();
+    	//cudaReset();
     	GridBins grid;
     	grid.setVertices( 0, -33.5, 33.5, 100);
     	grid.setVertices( 1, -33.5, 33.5, 100);

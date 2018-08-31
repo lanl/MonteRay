@@ -9,7 +9,7 @@ using namespace MonteRay;
 SUITE( HashBins_Tester ) {
 
 TEST( ctor ) {
-	gpuReset();
+	//gpuReset();
 
 	unsigned N= 10;
 	gpuFloatType_t values[N];
@@ -262,7 +262,7 @@ TEST( device_getLowerUpperBins1 ) {
 }
 
 TEST( cleanup ) {
-	gpuReset();
+	//gpuReset();
 }
 
 

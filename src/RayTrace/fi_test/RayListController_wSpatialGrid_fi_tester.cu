@@ -10,7 +10,7 @@
 #include "MonteRay_timer.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
-#include "GridBins.hh"
+#include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
@@ -19,21 +19,12 @@ namespace RayListController_fi_tester {
 
 using namespace MonteRay;
 
-SUITE( Ray_bank_controller_fi_tester ) {
+SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
+	typedef MonteRay_SpatialGrid Grid_t;
 
 	class ControllerSetup {
 	public:
 		ControllerSetup(){
-
-	    	//cudaReset();
-	    	//gpuCheck();
-			pGrid = new GridBins;
-			pGrid->setVertices(0, -33.5, 33.5, 100);
-			pGrid->setVertices(1, -33.5, 33.5, 100);
-			pGrid->setVertices(2, -33.5, 33.5, 100);
-
-	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
-
 	    	pMatProps = new MonteRay_MaterialProperties;
 
 	    	u234s = new MonteRayCrossSectionHost(1);
@@ -50,17 +41,17 @@ SUITE( Ray_bank_controller_fi_tester ) {
 		}
 
 		void setup(){
-
-
-	    	pGrid->copyToGPU();
-
-	    	pTally->copyToGPU();
-
 			MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
 			readerObject.ReadMatData();
 
 			pMatProps->disableReduction();
 			pMatProps->setMaterialDescription( readerObject );
+
+			pGrid = new Grid_t( readerObject );
+			pGrid->copyToGPU();
+
+	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
+	    	pTally->copyToGPU();
 
 	        u234s->read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
 	        u235s->read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
@@ -105,7 +96,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
 			delete water;
 		}
 
-		GridBins* pGrid;
+		Grid_t* pGrid;
 		MonteRayMaterialListHost* pMatList;
 		MonteRay_MaterialProperties* pMatProps;
 		gpuTallyHost* pTally;
@@ -120,69 +111,30 @@ SUITE( Ray_bank_controller_fi_tester ) {
         MonteRayMaterialHost* water;
 
 	};
-
-#if false
-	TEST( setup ) {
-		//gpuCheck();
+	
+	TEST( Reset ) {
+#ifdef __CUDACC__
+		//cudaReset();
+	    //gpuCheck();
+	    cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
+#endif
 	}
 
-    TEST_FIXTURE(ControllerSetup, ctor ){
-        CollisionPointController controller( 1024,
- 				                             1024,
- 				                             pGrid,
- 				                             pMatList,
- 				                             pMatProps,
- 				                             pTally );
-
-        CHECK_EQUAL(1000000, controller.capacity());
-        CHECK_EQUAL(0, controller.size());
-    }
-
-    TEST_FIXTURE(ControllerSetup, setCapacity ){
-        CollisionPointController controller( 1024,
- 				                             1024,
- 				                             pGrid,
- 				                             pMatList,
- 				                             pMatProps,
- 				                             pTally );
-
-        CHECK_EQUAL(1000000, controller.capacity());
-        controller.setCapacity(10);
-        CHECK_EQUAL(10, controller.capacity());
-    }
-
-    TEST_FIXTURE(ControllerSetup, add_a_particle ){
-        CollisionPointController controller( 1024,
- 				                             1024,
- 				                             pGrid,
- 				                             pMatList,
- 				                             pMatProps,
- 				                             pTally );
-
-        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
-        controller.add( 0.0, 0.0, 0.0,
-        		        1.0, 0.0, 0.0,
-        		        1.0, 1.0, i);
-
-        CHECK_EQUAL(1, controller.size());
-    }
-#endif
-
     TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
-    	// exact numbers from expected path length tally in mcatk
 
-    	CollisionPointController<GridBins> controller( 256,
+    	setup();
+
+    	// exact numbers from expected path length tally in mcatk
+    	CollisionPointController<Grid_t> controller( 256,
     			256,
     			pGrid,
     			pMatList,
     			pMatProps,
     			pTally );
 
-    	setup();
-
     	RayListInterface<1> bank1(500000);
-//    	bool end = false;
-//    	unsigned offset = 0;
+    	bool end = false;
+    	unsigned offset = 0;
 
     	double x = 0.0001;
     	double y = 0.0001;
@@ -196,10 +148,10 @@ SUITE( Ray_bank_controller_fi_tester ) {
     	unsigned detectorIndex = 101;
     	short int particleType = 0;
 
-    	unsigned nI = 2;
-    	unsigned nJ = 1;
-    	for( unsigned i = 0; i < nI; ++i ) {
-    	    for( unsigned j = 0; j < nJ; ++j ) {
+    	const unsigned nBatches = 2;
+    	const unsigned nParticlePerBatch = 1;
+    	for( unsigned i = 0; i < nBatches; ++i ) {
+    	    for( unsigned j = 0; j < nParticlePerBatch; ++j ) {
     	    	ParticleRay_t ray;
     	    	ray.pos[0] = x;
     	    	ray.pos[1] = y;
@@ -214,7 +166,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
     	    	ray.particleType = particleType;
     	        controller.add( ray );
     	    }
-    	    CHECK_EQUAL( nJ, controller.size() );
+    	    CHECK_EQUAL( nParticlePerBatch, controller.size() );
     	    controller.flush(false);
     	}
     	CHECK_EQUAL( 0, controller.size() );
@@ -222,23 +174,23 @@ SUITE( Ray_bank_controller_fi_tester ) {
 
     	pTally->copyToCPU();
 
-    	CHECK_CLOSE( 0.601248*nI*nJ, pTally->getTally(index), 1e-6*nI*nJ );
-    	CHECK_CLOSE( 0.482442*nI*nJ, pTally->getTally(index+1), 1e-6*nI*nJ );
+    	CHECK_CLOSE( 0.601248*nBatches*nParticlePerBatch, pTally->getTally(index), 1e-6*nBatches*nParticlePerBatch );
+    	CHECK_CLOSE( 0.482442*nBatches*nParticlePerBatch, pTally->getTally(index+1), 1e-6*nBatches*nParticlePerBatch );
 
     }
 
 #if( true )
     TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
     	std::cout << "Debug: ********************************************* \n";
-    	std::cout << "Debug: Starting rayTrace tester with single looping bank \n";
-    	CollisionPointController<GridBins> controller( 256,
+    	std::cout << "Debug: Starting SpatialGrid - Cartesian - rayTrace tester with single looping bank \n";
+    	setup();
+    	CollisionPointController<Grid_t> controller( 256,
     			256,
     			pGrid,
     			pMatList,
     			pMatProps,
     			pTally );
     	controller.setCapacity( 1000000 );
-    	setup();
 
     	RayListInterface<1> bank1(50000);
     	bool end = false;

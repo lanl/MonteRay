@@ -28,8 +28,8 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 	public:
 		ControllerSetup(){
 
-	    	cudaReset();
-	    	gpuCheck();
+	    	//cudaReset();
+	    	//gpuCheck();
 			pGrid = new GridBins();
 			pGrid->setVertices( 0, 0.0, 2.0, 2);
 			pGrid->setVertices( 1, -10.0, 10.0, 1);
@@ -95,7 +95,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 
 #if true
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
 
     TEST_FIXTURE(ControllerSetup, ctorForNEE ){
@@ -198,8 +198,8 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 	        yverts.push_back(-10.0); yverts.push_back(10.0);
 	        zverts.push_back(-10.0); zverts.push_back(10.0);
 
-	    	cudaReset();
-	    	gpuCheck();
+	    	//cudaReset();
+	    	//gpuCheck();
 			pGrid = new GridBins();
 			pGrid->setVertices( 0, xverts );
 			pGrid->setVertices( 1, yverts );

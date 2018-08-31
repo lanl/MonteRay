@@ -14,7 +14,7 @@ using namespace MonteRay;
 
 SUITE( gpuTiming_tester ) {
 	TEST( setup ) {
-		gpuCheck();
+		//gpuCheck();
 	}
     TEST( ctor ) {
         gpuTimingHost timing;

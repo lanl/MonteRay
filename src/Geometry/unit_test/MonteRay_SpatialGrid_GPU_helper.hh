@@ -75,7 +75,7 @@ using namespace MonteRay;
    		SpatialGridGPUTester(){
    			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
 #ifdef __CUDACC__
-   			cudaDeviceSetLimit( cudaLimitStackSize, 50000 );
+   			cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
 #endif
    		}
 
