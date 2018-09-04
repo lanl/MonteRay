@@ -117,6 +117,7 @@ endif()
 #include( Boost )
 #include( tbb )
 #include( loki )
+include( mpi )
 include( unittest )
 
 ############################################
