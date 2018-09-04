@@ -48,8 +48,9 @@ if( foundMPI GREATER -1 )
     set( usingMPI true )
 endif()
 if( parallel OR usingMPI )
+    include_directories( ${MPI_INCLUDE_DIRS} )
     list( APPEND ${ParentDir}_includes IPComm )
-    list( INSERT ToolkitLibs     0     IPComm )
+#    list( INSERT ToolkitLibs     0     IPComm )
     list( INSERT ${ParentDir}_packages 0 Boost_MPI )
     if( NOT usingMPI )
         list( APPEND ${ParentDir}_packages MPI )
@@ -182,6 +183,11 @@ foreach( curLib ${ToolkitLibs} )
     target_link_libraries( ${appName} PRIVATE ${curLib} )
 endforeach()
 
+if( usingMPI )
+    target_include_directories(${appName} PRIVATE ${MPI_CXX_INCLUDE_PATH} )
+    target_link_libraries( ${appName} PRIVATE ${MPI_CXX_LIBRARIES} ${MPI_CXX_LINK_FLAGS} )
+endif()
+
 ########################################
 #  3rd Party packages that need to linked in
 
@@ -203,7 +209,7 @@ endif()
 # Need to explicitly link in thread library if this is known
 if( CMAKE_THREAD_LIBS_INIT )
     target_link_libraries( ${appName} PRIVATE ${CMAKE_THREAD_LIBS_INIT} )
-endif()
+endif() 
 
 ######################################################################
 #  TESTING
