@@ -51,41 +51,16 @@ endif()
 # |___|_| |_|___/\__\__,_|_|_|\__,_|\__|_|\___/|_| |_|
 # ====================================================================
 
-find_path( install_dir 
-           NAMES release
-           PATHS /local
-                 /home/xshares/PROJECTS 
-                 /home/xshares 
-                 /usr/projects 
-                 /usr/gapps 
-           PATH_SUFFIXES mcatk
-           DOC "Default location to install toolkit" 
-           NO_DEFAULT_PATH )
-           
-if( NOT EXISTS ${install_dir} )
-  # try INSTALLDIR environment variable
-  if( DEFINED ENV{INSTALLDIR} ) 
-    set( install_dir $ENV{INSTALLDIR} )
-  endif()
-endif()
-
-if( NOT EXISTS ${install_dir} OR NOT IS_DIRECTORY ${install_dir} )
-#    message( FATAL_ERROR "Unable to locate root directory for installation." )
-    
-else()
-
-    if( ReleaseName )
-        # Find subdirectory structure for releases.
-        set( tempDirType developer )
-        if( isProdRelease )
-            set( tempDirType release )
-        endif()
-        
-        set( MCATK_ReleaseDir "${install_dir}/${tempDirType}/${ReleaseName}" CACHE PATH "Location of toolkit release files" )
+    unset( MCATK_ReleaseDir CACHE ) 
+    if( InstallDir )
+        message( "LocatePackagesDir.cmake: -- InstallDir is set to [ ${InstallDir} ]." )
+                
+        set( MCATK_ReleaseDir "${InstallDir}" CACHE PATH "Location of toolkit release files" )
         if( EXISTS ${MCATK_ReleaseDir} )
             set( OverwritingPublicRelease false )
         endif()
     else()
+        message( "LocatePackagesDir.cmake: -- InstallDir is NOT set." )
         set( DefaultReleaseName "SandboxRelease" )
         # Most builds will be installed in the binary directory
         set( MCATK_ReleaseDir "${CMAKE_BINARY_DIR}/${DefaultReleaseName}" CACHE PATH "Location of toolkit release files" )
@@ -94,10 +69,9 @@ else()
                       ADDITIONAL_MAKE_CLEAN_FILES "${MCATK_ReleaseDir}" )
     endif()
 
+    message( "LocatePackagesDir.cmake: -- Installing MCATK to [ ${MCATK_ReleaseDir} ]" )
     set( CMAKE_INSTALL_PREFIX "${MCATK_ReleaseDir}" CACHE INTERNAL "Prefix prepended to install directories" FORCE )
-
-endif()
-
+    
 #  _       _    _____     _       _   
 # | |_ __ | | _|___ /  __| |_ __ | |_ 
 # | | '_ \| |/ / |_ \ / _` | '_ \| __|

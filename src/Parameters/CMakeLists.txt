@@ -11,5 +11,5 @@ else()
 endif()
 
 configure_file(MonteRayPreprocessorDefinitions.hh.in MonteRayPreprocessorDefinitions.hh @ONLY)
-install( FILES ${CMAKE_CURRENT_BINARY_DIR}/MonteRayPreprocessorDefinitions.hh DESTINATION include/MonteRay )
+install( FILES ${CMAKE_CURRENT_BINARY_DIR}/MonteRayPreprocessorDefinitions.hh DESTINATION include )
 

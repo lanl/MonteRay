@@ -15,8 +15,13 @@ function( concatenateInstallSubdirs )
      set(debugPrefix "")
    endif()
    
-   set(library_install_prefix lib/${Platform}/${compiler_install_prefix}${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
-   set(binary_install_prefix  bin/${Platform}/${compiler_install_prefix}${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
+   #set(library_install_prefix lib/${Platform}/${compiler_install_prefix}${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
+   #set(binary_install_prefix  bin/${Platform}/${compiler_install_prefix}${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
+   
+   # Don't add specific sub-paths for MonteRay
+   set(library_install_prefix lib CACHE INTERNAL "Holds library install prefix path")
+   set(binary_install_prefix  bin CACHE INTERNAL "Holds library install prefix path")
+   
    
    message( STATUS "${CMAKE_PROJECT_NAME} Installation Path Settings:" )
    message( STATUS "   Toolkit installation root is [ ${CMAKE_INSTALL_PREFIX} ]" )
@@ -118,7 +123,7 @@ function( includeAllHeaders )
             set( temppath "${CMAKE_CURRENT_BINARY_DIR}/${temp}" )
 #            message( STATUS "including directory: ${temppath}" )
             include_directories( ${temppath} )
-            install( FILES ${modfulltemppath} DESTINATION include/mcatk )
+            install( FILES ${modfulltemppath} DESTINATION include )
         endif()
     endforeach()
     
