@@ -2,9 +2,9 @@
 
 # Versioning
 # See also http://en.wikipedia.org/wiki/Software_versioning
-set( Toolkit_Major_Version 1 )
-set( Toolkit_Minor_Version 0 )
-set( Toolkit_Minor_Revision "1beta" )
+set( Toolkit_Major_Version 0 )
+set( Toolkit_Minor_Version 1 )
+set( Toolkit_Minor_Revision "0" )
 set( ToolkitVersion ${Toolkit_Major_Version}.${Toolkit_Minor_Version}.${Toolkit_Minor_Revision} )
 message( "Toolkit Version is [ ${ToolkitVersion} ]" )
 
