@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include <type_traits>
 
 #include <mpi.h>
 
@@ -16,20 +17,20 @@
 
 namespace MonteRay {
 
-  struct bucket_header_t{
-      unsigned size; // current number of collisions in bucket
-      bool done; // bucket is full or process is done with partial fill
-  };
+struct bucket_header_t{
+    unsigned size; // current number of collisions in bucket
+    bool done; // bucket is full or process is done with partial fill
+};
 
-  struct rank_info_t{
-      bool allDone; // rank is done with work.
-      unsigned currentBucket;
-  };
+struct rank_info_t{
+    bool allDone; // rank is done with work.
+    unsigned currentBucket;
+};
 
 template<typename COLLISION_T>
 class SharedRayList {
 public:
-	typedef gpuFloatType_t float_t;
+    typedef gpuFloatType_t float_t;
     typedef std::function<void (const COLLISION_T* particle, unsigned N ) > store_func_t;
 
     typedef std::function<void (bool final)> controllerFlush_func_t;
@@ -39,12 +40,12 @@ public:
 
     template<class T>
     SharedRayList(T& controller, unsigned size, unsigned rankArg, unsigned numRanks, bool useMPI = false, unsigned numBuckets=1000) :
-        nParticles( size ),
-        usingMPI(useMPI),
-        nBuckets(numBuckets),
-        nRanks(numRanks),
-        rank( rankArg ),
-        nMaster( 0 )
+    nParticles( size ),
+    usingMPI(useMPI),
+    nBuckets(numBuckets),
+    nRanks(numRanks),
+    rank( rankArg ),
+    nMaster( 0 )
     {
         if( ! usingMPI ) {
             particlesPerRank = nParticles / nRanks;
@@ -143,9 +144,9 @@ public:
             if( ptrRankInfo ) delete [] ptrRankInfo;
         } else {
             // explicit free causes failure due to double free.
-//            MPI_Free_mem( ptrBucketHeader );
-//            MPI_Free_mem( ptrLocalCollisionPointList );
-//            MPI_Free_mem( ptrRankInfo );
+            //            MPI_Free_mem( ptrBucketHeader );
+            //            MPI_Free_mem( ptrLocalCollisionPointList );
+            //            MPI_Free_mem( ptrRankInfo );
         }
     }
 
@@ -159,7 +160,7 @@ public:
     }
 
     void store_collision( const COLLISION_T* ptrCollision, unsigned N=1 ){
-    	store(  ptrCollision, N);
+        store(  ptrCollision, N);
     }
 
     void master_flush(bool final=false){
@@ -176,17 +177,17 @@ public:
     }
 
     void flushBuffers(){
-    	if( flushForward ) {
-    		for( unsigned i = 1; i< nRanks; ++i ) {
-    			copyToMaster(i);
-    		}
-    		flushForward = false;
-    	} else {
-    		for( unsigned i = nRanks-1; i > 0; --i ) {
-    			copyToMaster(i);
-    		}
-    		flushForward = true;
-    	}
+        if( flushForward ) {
+            for( unsigned i = 1; i< nRanks; ++i ) {
+                copyToMaster(i);
+            }
+            flushForward = false;
+        } else {
+            for( unsigned i = nRanks-1; i > 0; --i ) {
+                copyToMaster(i);
+            }
+            flushForward = true;
+        }
         nMaster = 0;
     }
 
@@ -251,10 +252,10 @@ public:
 
             bucket_header_t* header = getBucketHeader( targetRank, currentBucket );
             if( ! header->done ) {
-//            if( header->size < particlesPerBucket ) {
-//                if( header->size == 0 ) {
-//                   header->done = false;
-//                }
+                //            if( header->size < particlesPerBucket ) {
+                //                if( header->size == 0 ) {
+                //                   header->done = false;
+                //                }
                 // store particle
                 ptrLocalCollisionPointList[ getCollisionBufferOffset(targetRank,currentBucket)  + header->size] = collision;
                 ++header->size;
@@ -302,106 +303,161 @@ public:
 
     void addCollision( unsigned targetRank, const COLLISION_T& collision) {
 
-    	MONTERAY_ASSERT( targetRank < nRanks );
+        MONTERAY_ASSERT( targetRank < nRanks );
 
-    	if( targetRank > 0 ) {
-    		addCollisionLocal(targetRank, collision);
-    	} else {
-    		addCollisionMaster(collision);
-    	}
+        if( targetRank > 0 ) {
+            addCollisionLocal(targetRank, collision);
+        } else {
+            addCollisionMaster(collision);
+        }
     }
 
     void add( const COLLISION_T& collision) {
-    	addCollision( rank, collision );
+        addCollision( rank, collision );
     }
 
     void addCollision2( unsigned targetRank, float_t pos[3], float_t dir[3], float_t energy, float_t weight, unsigned index) {
-    	COLLISION_T collision;
-    	std::memcpy( collision.pos, pos, 3*sizeof(float_t));
-    	std::memcpy( collision.dir, dir, 3*sizeof(float_t));
-    	collision.energy[0] = energy;
-    	collision.weight[0] = weight;
-    	collision.index = index;
+        COLLISION_T collision;
+        std::memcpy( collision.pos, pos, 3*sizeof(float_t));
+        std::memcpy( collision.dir, dir, 3*sizeof(float_t));
+        collision.energy[0] = energy;
+        collision.weight[0] = weight;
+        collision.index = index;
 
-    	addCollision( targetRank, collision);
-     }
+        addCollision( targetRank, collision);
+    }
 
-     unsigned getCurrentBucket(unsigned targetRank) const {
-         if( targetRank == 0 ) return 0;
+    // enable addCollision for triple energy, probability pairs
+    template<typename PARTICLE_T, typename SCATTERING_PROBABILITES,
+             typename Foo = COLLISION_T,
+             typename std::enable_if<(Foo::getN() == 3)>::type* = nullptr >
+    void addCollision( unsigned targetRank,
+                       const PARTICLE_T& particle,
+                       const SCATTERING_PROBABILITES& results,
+                       unsigned detectorIndex) {
 
-         return getRankInfo(targetRank)->currentBucket;
-     }
+        COLLISION_T collision;
 
-     void copyToMaster( unsigned targetRank ){
-         if( rank != 0 ) {
-             throw std::runtime_error("SharedRayList::copyToMaster -- can only perform operation from rank 0 ");
-         }
+        collision.pos[0] = particle.getPosition()[0];
+        collision.pos[1] = particle.getPosition()[1];
+        collision.pos[2] = particle.getPosition()[2];
 
-         for( unsigned i=0; i<nBuckets; ++i ){
-             // search for full or done buckets;
-             bucket_header_t* header = getBucketHeader( targetRank, i );
-             if( header->done && header->size > 0 ) {
-                 unsigned offset = getCollisionBufferOffset(targetRank,i);
-                 store_collision( ptrLocalCollisionPointList + offset, header->size  );
-                 header->size = 0;
-                 header->done = false;
-             }
-         }
-     }
+        collision.dir[0] = particle.getDirection()[0];
+        collision.dir[1] = particle.getDirection()[1];
+        collision.dir[2] = particle.getDirection()[2];
 
-     unsigned getMasterSize() const {
-         return nMaster;
-     }
+        collision.energy[0] = results.incoherent.energy;
+        collision.energy[1] = results.coherent.energy;
+        collision.energy[2] = results.pairProduction.energy;
 
-     COLLISION_T getCollisionFromLocal( unsigned targetRank, unsigned bucket, unsigned i ){
-         const bool debug = false;
+        collision.weight[0] = results.incoherent.probability;
+        collision.weight[1] = results.coherent.probability;
+        collision.weight[2] = results.pairProduction.probability;
 
-         if( rank != 0 ) {
-             throw std::runtime_error("SharedRayList::getCollisionFromLocal -- can only perform operation from rank 0 ");
-         }
-         unsigned offset = getCollisionBufferOffset(targetRank,bucket);
-         unsigned index = offset + i;
+        collision.index = particle.getLocationIndex();
+        collision.detectorIndex = detectorIndex;
 
-         if( debug ) printf( "Debug: getCollisionFromLocal -- index = %d, x=%f\n",index,ptrLocalCollisionPointList[index].pos[0]);
-         return ptrLocalCollisionPointList[ index ];
-     }
+        addCollision( targetRank, collision);
+    }
 
-     bool allDone() const {
-         if( rank != 0 ) {
-             throw std::runtime_error("SharedRayList::allDone -- can only call from rank 0.");
-         }
-         for( unsigned i = 1; i< nRanks; ++i ){
-             if( isRankDone(i) == false ) {
-                 return false;
-             }
-         }
-         return true;
-     }
+    // enable addCollision for a single energy, probability pair
+    template<typename PARTICLE_T,
+             typename Foo = COLLISION_T,
+             typename std::enable_if<(Foo::getN() == 1)>::type* = nullptr >
+    void addCollision( unsigned targetRank,const PARTICLE_T& particle) {
+        COLLISION_T collision;
 
-     bool isRankDone(unsigned targetRank) const {
-         MONTERAY_ASSERT( targetRank < nRanks );
+        collision.pos[0] = particle.getPosition()[0];
+        collision.pos[1] = particle.getPosition()[1];
+        collision.pos[2] = particle.getPosition()[2];
 
-         return getRankInfo(targetRank)->allDone;
-     }
+        collision.dir[0] = particle.getDirection()[0];
+        collision.dir[1] = particle.getDirection()[1];
+        collision.dir[2] = particle.getDirection()[2];
 
-     bool allEmpty() const {
-         if( rank != 0 ) {
-             throw std::runtime_error("SharedRayList::allEmpty -- can only call from rank 0.");
-         }
-         for( unsigned i = 1; i< nRanks; ++i ){
+        collision.energy[0] = particle.getEnergy();
+        collision.weight[0] = particle.getWeight();
+        collision.index = particle.getLocationIndex();
 
-             for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
-                 // search for full or done buckets;
-                 bucket_header_t* header = getBucketHeader( i, bucket );
-                 if( header->size != 0 ) {
-                     return false;
-                 }
-             }
-         }
-         return true;
-     }
+        addCollision( targetRank, collision);
+    }
 
-     void flush( unsigned targetRank, bool final=false) {
+    unsigned getCurrentBucket(unsigned targetRank) const {
+        if( targetRank == 0 ) return 0;
+
+        return getRankInfo(targetRank)->currentBucket;
+    }
+
+    void copyToMaster( unsigned targetRank ){
+        if( rank != 0 ) {
+            throw std::runtime_error("SharedRayList::copyToMaster -- can only perform operation from rank 0 ");
+        }
+
+        for( unsigned i=0; i<nBuckets; ++i ){
+            // search for full or done buckets;
+            bucket_header_t* header = getBucketHeader( targetRank, i );
+            if( header->done && header->size > 0 ) {
+                unsigned offset = getCollisionBufferOffset(targetRank,i);
+                store_collision( ptrLocalCollisionPointList + offset, header->size  );
+                header->size = 0;
+                header->done = false;
+            }
+        }
+    }
+
+    unsigned getMasterSize() const {
+        return nMaster;
+    }
+
+    COLLISION_T getCollisionFromLocal( unsigned targetRank, unsigned bucket, unsigned i ){
+        const bool debug = false;
+
+        if( rank != 0 ) {
+            throw std::runtime_error("SharedRayList::getCollisionFromLocal -- can only perform operation from rank 0 ");
+        }
+        unsigned offset = getCollisionBufferOffset(targetRank,bucket);
+        unsigned index = offset + i;
+
+        if( debug ) printf( "Debug: getCollisionFromLocal -- index = %d, x=%f\n",index,ptrLocalCollisionPointList[index].pos[0]);
+        return ptrLocalCollisionPointList[ index ];
+    }
+
+    bool allDone() const {
+        if( rank != 0 ) {
+            throw std::runtime_error("SharedRayList::allDone -- can only call from rank 0.");
+        }
+        for( unsigned i = 1; i< nRanks; ++i ){
+            if( isRankDone(i) == false ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool isRankDone(unsigned targetRank) const {
+        MONTERAY_ASSERT( targetRank < nRanks );
+
+        return getRankInfo(targetRank)->allDone;
+    }
+
+    bool allEmpty() const {
+        if( rank != 0 ) {
+            throw std::runtime_error("SharedRayList::allEmpty -- can only call from rank 0.");
+        }
+        for( unsigned i = 1; i< nRanks; ++i ){
+
+            for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
+                // search for full or done buckets;
+                bucket_header_t* header = getBucketHeader( i, bucket );
+                if( header->size != 0 ) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    void flush( unsigned targetRank, bool final=false) {
 
         MONTERAY_ASSERT( targetRank < nRanks );
 
@@ -419,44 +475,44 @@ public:
             // mark process as done;
             getRankInfo(targetRank)->allDone = true;
         }
-     }
+    }
 
-     void clear(unsigned targetRank, bool clearController=true) {
-         MONTERAY_ASSERT( targetRank < nRanks );
-         if( targetRank == 0 ) {
-        	 if( clearController ) {
-        		 controllerClear();
-        	 }
-             nMaster = 0;
-         } else {
-             getRankInfo(targetRank)->allDone = false;
-             for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
-                  // search for full or done buckets;
-                  bucket_header_t* header = getBucketHeader( targetRank, bucket );
-                  header->size = 0U;
-                  header->done = false;
-              }
-         }
-     }
+    void clear(unsigned targetRank, bool clearController=true) {
+        MONTERAY_ASSERT( targetRank < nRanks );
+        if( targetRank == 0 ) {
+            if( clearController ) {
+                controllerClear();
+            }
+            nMaster = 0;
+        } else {
+            getRankInfo(targetRank)->allDone = false;
+            for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
+                // search for full or done buckets;
+                bucket_header_t* header = getBucketHeader( targetRank, bucket );
+                header->size = 0U;
+                header->done = false;
+            }
+        }
+    }
 
-     void restart(unsigned targetRank, bool clearController=true) {
-         MONTERAY_ASSERT( targetRank < nRanks );
-         if( targetRank == 0 ) {
-             nMaster = 0;
-         } else {
-             getRankInfo(targetRank)->allDone = false;
-             for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
-                  // search for full or done buckets;
-                  bucket_header_t* header = getBucketHeader( targetRank, bucket );
-                  header->size = 0U;
-                  header->done = false;
-              }
-         }
-     }
+    void restart(unsigned targetRank, bool clearController=true) {
+        MONTERAY_ASSERT( targetRank < nRanks );
+        if( targetRank == 0 ) {
+            nMaster = 0;
+        } else {
+            getRankInfo(targetRank)->allDone = false;
+            for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
+                // search for full or done buckets;
+                bucket_header_t* header = getBucketHeader( targetRank, bucket );
+                header->size = 0U;
+                header->done = false;
+            }
+        }
+    }
 
-     void debugPrint() {
-    	 controllerDebugPrint();
-     }
+    void debugPrint() {
+        controllerDebugPrint();
+    }
 
 private:
     unsigned nParticles;

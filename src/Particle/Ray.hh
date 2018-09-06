@@ -25,7 +25,7 @@ public:
     DetectorIndex_t detectorIndex = 0;  // for next-event estimator
     ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
 
-    CUDA_CALLABLE_MEMBER static unsigned getN(void ) {
+    CUDA_CALLABLE_MEMBER constexpr static unsigned getN(void ) {
     	return N;
     }
 
