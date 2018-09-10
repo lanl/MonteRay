@@ -13,6 +13,7 @@ zin           llnl  2   8 /p/lscratch3                        MOAB    drlanl    
 rzuseq        llnl NA  NA /nfs/tmp2                           slurm   lanl       pdebug   16  10:00:00 rz-sequoia
 vulcan        llnl NA  NA /p/lscratchv                        slurm   lanl       psmall   16  10:00:00 vulcan
 seq           llnl NA  NA /nfs/tmp2                           slurm   lanlexec   psmall   16  10:00:00 sequoia
+shark         llnl NA  NA /nfs/tmp2                           LSF     lanlexec   psmall   16  10:00:00 shark
 pecos         snl  NA  NA /p/lscratch1                        SBATCH  FY140373   trilab   16  10:00:00 pecos
 darwin        xdiv  2  14 /usr/projects/mcatk                 slurm   lanl       haswell  20  10:00:00 darwin
 candycorn     xdiv  1   8 /local/mcatk/users
