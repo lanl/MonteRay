@@ -7,6 +7,7 @@
 
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRay_CartesianGrid.hh"
+#include "MonteRay_CylindricalGrid.hh"
 #include "MonteRay_SphericalGrid.hh"
 #include "MonteRay_binaryIO.hh"
 
@@ -184,26 +185,15 @@ void MonteRay_SpatialGrid::initialize(void) {
         	pGridSystem = new MonteRay_CartesianGrid(3,pGridInfo);
             break;
 
-//        case TransportMeshTypeEnum::Cylindrical:
-//            if(dimension < MaxDim ) {
-//                pGridSystem.reset( new MonteRay_CylindricalGrid(dimension,gridInfo) );
-//                break;
-//            } else {
-//#ifndef __CUDA_ARCH__
-//                std::stringstream msg;
-//                msg << " Not Permitted Yet. Dimension set to 3 with Cylindrical. " << std::endl
-//                    << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << BOOST_CURRENT_FUNCTION << std::endl << std::endl;
-//
-//                throw SpatialGridException( SpatialGridException::DIMENSION_ERROR, msg );
-//#else
-//                ABORT( "MonteRay_SpatialGrid:: initialize -- Not Permitted Yet. Dimension set to 3 with Cylindrical.!!!\n" );
-//#endif
-//                break;
-//            }
+        case TransportMeshTypeEnum::Cylindrical:
+        	pGridInfo[2] = new GridBins_t();  // dim 3 not used.
+        	if( pGridSystem ) delete pGridSystem;
+        	pGridSystem = new MonteRay_CylindricalGrid(2,pGridInfo);
+			break;
 
         case TransportMeshTypeEnum::Spherical:
-        	pGridInfo[1] = new GridBins_t();
-        	pGridInfo[2] = new GridBins_t();
+        	pGridInfo[1] = new GridBins_t(); // dim 2 not used
+        	pGridInfo[2] = new GridBins_t(); // dim 3 not used
         	if( pGridSystem ) delete pGridSystem;
             pGridSystem = new MonteRay_SphericalGrid(1,pGridInfo);
             break;

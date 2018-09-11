@@ -311,6 +311,19 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const {
+    	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
+
+//        if( transform ) {
+//            pos = (*transform).counterTransformPos( pos );
+//            dir = (*transform).counterTransformDir( dir );
+//        }
+    	pGridSystem->crossingDistance(rayTraceMap, d, pos, dir, distance );
+    	return;
+    }
+
+    CUDA_CALLABLE_MEMBER
+    void
     crossingDistance(singleDimRayTraceMap_t& rayTraceMap, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const {
     	MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
@@ -348,7 +361,7 @@ private:
 
 private:
     CUDA_CALLABLE_MEMBER
-    inline void checkDim( unsigned dim ) const;
+    void checkDim( unsigned dim ) const;
 
 public:
     void write(std::ostream& outfile) const;
