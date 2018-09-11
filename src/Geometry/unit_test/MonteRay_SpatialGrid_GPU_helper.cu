@@ -75,5 +75,10 @@ using namespace MonteRay;
    		pSpatialGrid->crossingDistance( pResult->v, pos, dir, distance);
    	}
 
+   	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+   				unsigned d, Position_t pos, Position_t dir, gpuRayFloat_t distance ) {
+   		pSpatialGrid->crossingDistance( pResult->v, d, pos, dir, distance);
+	}
+
 }
 

@@ -63,6 +63,9 @@ using namespace MonteRay;
   	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
   			Position_t pos, Position_t dir, gpuRayFloat_t distance );
 
+  	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+  			unsigned d, Position_t pos, Position_t dir, gpuRayFloat_t distance );
+
    	template<class Particle>
    	CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
    			Particle p,
@@ -75,7 +78,7 @@ using namespace MonteRay;
    		SpatialGridGPUTester(){
    			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
 #ifdef __CUDACC__
-   			cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
+   			cudaDeviceSetLimit( cudaLimitStackSize, 40000 );
 #endif
    		}
 
@@ -98,6 +101,17 @@ using namespace MonteRay;
    			pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Spherical );
    			pGridInfo->setDimension( 1 );
    			pGridInfo->setGrid( MonteRay_SpatialGrid::SPH_R, 0.0, 10.0, 100);
+   			pGridInfo->initialize();
+
+   			pGridInfo->copyToGPU();
+   		}
+
+   		void cylindricalGrid_setup(const std::vector<gpuRayFloat_t>& Rverts, const std::vector<gpuRayFloat_t>& Zverts) {
+   			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+   			pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Cylindrical );
+   			pGridInfo->setDimension( 2 );
+   			pGridInfo->setGrid(  MonteRay_SpatialGrid::CYLR_R, Rverts);
+   			pGridInfo->setGrid(  MonteRay_SpatialGrid::CYLR_Z, Zverts);
    			pGridInfo->initialize();
 
    			pGridInfo->copyToGPU();
@@ -361,6 +375,29 @@ using namespace MonteRay;
    	   								d, pos, dir, distance );
 #endif
 
+   	   		return pResult->v;
+   	   	}
+
+   	   	singleDimRayTraceMap_t crossingDistance( unsigned d, Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
+
+   	   		using result_t = resultClass<singleDimRayTraceMap_t>;
+   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+
+#ifdef __CUDACC__
+   	   		pResult->copyToGPU();
+
+   	   		cudaDeviceSynchronize();
+   	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+   	   				                 d, pos, dir, distance );
+   	   		cudaDeviceSynchronize();
+
+   	   		gpuErrchk( cudaPeekAtLastError() );
+
+   	   		pResult->copyToCPU();
+#else
+   	   		kernelCrossingDistance( pGridInfo.get(), pResult.get(),
+   	   								d, pos, dir, distance );
+#endif
    	   		return pResult->v;
    	   	}
 

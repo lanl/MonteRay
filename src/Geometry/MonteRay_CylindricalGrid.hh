@@ -9,10 +9,10 @@ namespace MonteRay {
 
 class MonteRay_CylindricalGrid;
 
-using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
+using ptrCylindricalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
 
 CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ );
+void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ );
 
 
 CUDA_CALLABLE_KERNEL
@@ -55,7 +55,7 @@ public:
     	pZVertices->copyToGPU();
     	//pThetaVertices->copyToGPU();
 
-    	std::unique_ptr<ptrSphericalGrid_result_t> ptrResult = std::unique_ptr<ptrSphericalGrid_result_t>( new ptrSphericalGrid_result_t() );
+    	std::unique_ptr<ptrCylindricalGrid_result_t> ptrResult = std::unique_ptr<ptrCylindricalGrid_result_t>( new ptrCylindricalGrid_result_t() );
     	ptrResult->copyToGPU();
 
     	createDeviceInstance<<<1,1>>>( ptrDevicePtr, ptrResult->devicePtr, pRVertices->devicePtr, pZVertices->devicePtr );

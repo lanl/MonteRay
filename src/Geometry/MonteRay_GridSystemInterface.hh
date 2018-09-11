@@ -113,6 +113,12 @@ public:
 
     CUDA_CALLABLE_MEMBER
     virtual void
+    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
+    	ABORT("Single dimension crossingDistance with Position_t and Direction_t function not implemented for this grid type.");
+    }
+
+    CUDA_CALLABLE_MEMBER
+    virtual void
     crossingDistance( singleDimRayTraceMap_t&, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
         ABORT("Multi-dimension crossingDistance function not implemented for this grid type.");
     }

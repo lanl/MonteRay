@@ -37,7 +37,7 @@ if( NOT enable_cuda )
 ############################################
 #  Create toolkit library dependent on ToolkitVersion
 set( MonteRayLibName MonteRay )
-add_library( ${MonteRayLibName} SHARED  )
+add_library( ${MonteRayLibName} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Parameters/MonteRayDefinitions.hh )
 set_target_properties( ${MonteRayLibName} PROPERTIES VERSION ${Toolkit_Major_Version}.${Toolkit_Minor_Version}
                                         SOVERSION 1 )
 add_custom_command( TARGET ${MonteRayLibName} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove -f ${CMAKE_INSTALL_PREFIX}/.ToolkitInstalled )
