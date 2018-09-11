@@ -91,8 +91,14 @@ SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA;-Xcompiler -fPIC;--relocatable-dev
 # Moonlight Tesla M2090 -arch=compute_20 -code=sm_20
 # Quadro K420 - 3.0
 #list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
-add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
-add_definitions( -DCMAKE_CUDA_FLAGS_DEBUG='${GPUCOMPUTECAPABILITY} -g -G' )
+
+if(DEFINED GPUCOMPUTECAPABILITY )
+  add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
+  set( Cuda_Flags_Debug "${GPUCOMPUTECAPABILITY} -g -G "
+  add_definitions( -DCMAKE_CUDA_FLAGS_DEBUG=${Cuda_Flags_Debug} )
+else()
+  message( FATAL_ERROR "GPUCOMPUTECAPABILITY was NOT DEFINED!")
+endif()
 
 if( CMAKE_BUILD_TYPE STREQUAL "Debug" ) 
     list(APPEND CUDA_NVCC_FLAGS "-G")
