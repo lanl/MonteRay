@@ -225,6 +225,11 @@ function( PlatformInfo )
         # Special case for SNL batching
         find_program( SubmitCmd sbatch )
         
+    elseif( BatchSystem STREQUAL LSF AND HostDoman STREQUAL llnl )
+        # For Sierra/Shark/RZManta
+        find_program( SubmitCmd bsub )
+        set( Platform $ENV{SYS_TYPE} CACHE INTERNAL "Platform on which this was configured.")        
+
     else()
         message( FATAL_ERROR "Batching system unrecognized [ ${BatchSystem} ] for this system" )
     endif()
@@ -338,7 +343,7 @@ function( configureToolSet Tool )
     elseif( Tool STREQUAL "clang" )
         set( ENV{CC}  "clang" )
         set( ENV{CXX} "clang++" )
-        set( ENV{FC}  "ifort" )
+        set( ENV{FC}  "gfortran" )
     endif()
 
     #--------------------------------
