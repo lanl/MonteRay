@@ -3,6 +3,7 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
+#include "MonteRay_ReadLnk3dnt.hh"
 
 #include <stdexcept>
 #include <fstream>
@@ -21,12 +22,21 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
     typedef MonteRay_SpatialGrid::Position_t Position_t;
 
     TEST( set_Radial_Vertices ){
-        std::vector<double> vertices = { 1.0, 2.0, 3.0, 5.0 };
+        std::vector<double> Rvertices = { 1.0, 2.0, 3.0, 5.0 };
 
         Grid_t grid;
+        grid.setGrid( MonteRay_SpatialGrid::CYLR_R, Rvertices);
 
-        grid.setGrid( MonteRay_SpatialGrid::CYLR_R, vertices);
         CHECK_EQUAL(   3, grid.getNumGridBins(MonteRay_SpatialGrid::CYLR_R) );
+
+        // set Z vertices, coordinate system and dimension to pass initialization
+        std::vector<double> Zvertices = { 1.0, 2.0, 3.0, 5.0 };
+        grid.setGrid( MonteRay_SpatialGrid::CYLR_Z, Zvertices);
+        grid.setDimension(2);
+        grid.setCoordinateSystem( TransportMeshTypeEnum::Cylindrical );
+        grid.initialize();
+
+        CHECK_EQUAL(   4, grid.getNumGridBins(MonteRay_SpatialGrid::CYLR_R) );
         CHECK_CLOSE( 1.0, grid.getMinVertex(MonteRay_SpatialGrid::CYLR_R), 1e-6 );
         CHECK_CLOSE( 5.0, grid.getMaxVertex(MonteRay_SpatialGrid::CYLR_R), 1e-6 );
     }
@@ -521,6 +531,15 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         CHECK_CLOSE( 1.0*sqrt(2.0),  distances.dist(1), 1e-6 );
         CHECK_EQUAL(   3,            distances.id(2)  );
         CHECK_CLOSE( 2.0*sqrt(2.0),  distances.dist(2), 1e-6 );
+    }
+
+    TEST( read_lnk3dnt ) {
+        MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/zeus2.lnk3dnt" );
+        Grid_t grid(readerObject);
+
+        CHECK_EQUAL( TransportMeshTypeEnum::Cylindrical, grid.getCoordinateSystem() );
+        CHECK_EQUAL( 28, grid.getNumGridBins(MonteRay_SpatialGrid::CYLR_R) );
+        CHECK_EQUAL( 34, grid.getNumGridBins(MonteRay_SpatialGrid::CYLR_Z) );
     }
 }
 

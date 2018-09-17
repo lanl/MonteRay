@@ -53,6 +53,15 @@ public:
                 setGrid(d, vertices );
             }
             initialize();
+        }else if( reader.getGeometryString() == "RZ" )  {
+            setCoordinateSystem( TransportMeshTypeEnum::Cylindrical );
+            const unsigned DIM=2;
+            setDimension(DIM);
+            for( unsigned d=0; d < DIM; ++d) {
+                std::vector<double> vertices = reader.getVertices(d);
+                setGrid(d, vertices );
+            }
+            initialize();
         } else {
             throw std::runtime_error( "MonteRay_SpatialGrid(reader) -- Geometry type not yet supported." );
         }

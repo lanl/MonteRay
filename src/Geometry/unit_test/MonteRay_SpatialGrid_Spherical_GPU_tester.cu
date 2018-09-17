@@ -11,15 +11,15 @@ using namespace MonteRay_SpatialGrid_helper;
 SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
 #ifdef __CUDACC__
 
-   	TEST( setup ) {
-   		//gpuReset();
-   	}
+    TEST( setup ) {
+        //gpuReset();
+    }
 
-   	TEST_FIXTURE(SpatialGridGPUTester, set_Vertices ){
+    TEST_FIXTURE(SpatialGridGPUTester, set_Vertices ){
         //CHECK(false);
         std::vector<gpuRayFloat_t> vertices= {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
         setCoordinateSystem( TransportMeshTypeEnum::Spherical );
-		setDimension( 1 );
+        setDimension( 1 );
         setGrid( MonteRay_SpatialGrid::SPH_R, vertices);
         initialize();
         copyToGPU();
@@ -29,7 +29,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
         CHECK_CLOSE(10.0, getMaxVertex(MonteRay_SpatialGrid::SPH_R), 1e-11 );
     }
 
-   	TEST_FIXTURE(SpatialGridGPUTester, read_test_Vertices_access_on_GPU ){
+    TEST_FIXTURE(SpatialGridGPUTester, read_test_Vertices_access_on_GPU ){
         Grid_t grid;
         grid.setCoordinateSystem( TransportMeshTypeEnum::Spherical );
         grid.setDimension( 1 );
@@ -58,7 +58,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
         }
     }
 
-   	TEST_FIXTURE(SpatialGridGPUTester,  isInitialized ){
+    TEST_FIXTURE(SpatialGridGPUTester,  isInitialized ){
         setDimension( 1 );
         setCoordinateSystem( TransportMeshTypeEnum::Spherical );
 
@@ -71,25 +71,25 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
         CHECK_EQUAL( true, isInitialized() );
     }
 
-   	TEST_FIXTURE(SpatialGridGPUTester, getIndexByPos ){
-         setDimension( 1 );
-         setCoordinateSystem( TransportMeshTypeEnum::Spherical );
+    TEST_FIXTURE(SpatialGridGPUTester, getIndexByPos ){
+        setDimension( 1 );
+        setCoordinateSystem( TransportMeshTypeEnum::Spherical );
 
-         std::vector<gpuRayFloat_t> Rvertices = { 0, 1, 10 };
+        std::vector<gpuRayFloat_t> Rvertices = { 0, 1, 10 };
 
-         setGrid( MonteRay_SpatialGrid::SPH_R, Rvertices);
+        setGrid( MonteRay_SpatialGrid::SPH_R, Rvertices);
 
-         initialize();
-         copyToGPU();
+        initialize();
+        copyToGPU();
 
-         MonteRay_SpatialGrid::Position_t pos1( 0.5, 0.5, 0.5 );
-         MonteRay_SpatialGrid::Position_t pos2( 5.0, 5.0, 5.0 );
+        MonteRay_SpatialGrid::Position_t pos1( 0.5, 0.5, 0.5 );
+        MonteRay_SpatialGrid::Position_t pos2( 5.0, 5.0, 5.0 );
 
-         CHECK_EQUAL(   0, getIndex( pos1 ) );
-         CHECK_EQUAL(   1, getIndex( pos2 ) );
-     }
+        CHECK_EQUAL(   0, getIndex( pos1 ) );
+        CHECK_EQUAL(   1, getIndex( pos2 ) );
+    }
 
-   	TEST_FIXTURE(SpatialGridGPUTester, getVolume_byIndex ){
+    TEST_FIXTURE(SpatialGridGPUTester, getVolume_byIndex ){
         setDimension( 1 );
         setCoordinateSystem( TransportMeshTypeEnum::Spherical );
 
@@ -106,7 +106,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
 
     class particle {
     public:
-    	CUDA_CALLABLE_MEMBER particle(void){};
+        CUDA_CALLABLE_MEMBER particle(void){};
 
         MonteRay_SpatialGrid::Position_t pos;
         MonteRay_SpatialGrid::Position_t dir;
@@ -151,43 +151,43 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
 
         grid.initialize();
 
-    	grid.write( "spatialgrid_spherical_test_gpu_2.bin" );
+        grid.write( "spatialgrid_spherical_test_gpu_2.bin" );
 
-    	{;
-    		read( "spatialgrid_spherical_test_gpu_2.bin" );
-    		copyToGPU();
+        {;
+        read( "spatialgrid_spherical_test_gpu_2.bin" );
+        copyToGPU();
 
-    		particle p;
+        particle p;
 
-            MonteRay_SpatialGrid::Position_t pos1(  0.5,  0.0,  0.0 );
-            MonteRay_SpatialGrid::Position_t pos2(  1.5,  0.0,  0.0 );
-            MonteRay_SpatialGrid::Position_t pos3(  2.5,  0.0,  0.0 );
-            MonteRay_SpatialGrid::Position_t pos4(  3.5,  0.0,  0.0 );
+        MonteRay_SpatialGrid::Position_t pos1(  0.5,  0.0,  0.0 );
+        MonteRay_SpatialGrid::Position_t pos2(  1.5,  0.0,  0.0 );
+        MonteRay_SpatialGrid::Position_t pos3(  2.5,  0.0,  0.0 );
+        MonteRay_SpatialGrid::Position_t pos4(  3.5,  0.0,  0.0 );
 
-            p.pos = pos1;
-            CHECK_EQUAL(   0, getIndex( p ) );
-            p.pos = pos2;
-            CHECK_EQUAL(   1, getIndex( p ) );
-            p.pos = pos3;
-            CHECK_EQUAL(   2, getIndex( p ) );
-            p.pos = pos4;
-            CHECK_EQUAL( MonteRay_SpatialGrid::OUTSIDE_MESH, getIndex( p ) );
+        p.pos = pos1;
+        CHECK_EQUAL(   0, getIndex( p ) );
+        p.pos = pos2;
+        CHECK_EQUAL(   1, getIndex( p ) );
+        p.pos = pos3;
+        CHECK_EQUAL(   2, getIndex( p ) );
+        p.pos = pos4;
+        CHECK_EQUAL( MonteRay_SpatialGrid::OUTSIDE_MESH, getIndex( p ) );
 
 
-            pos1 = MonteRay_SpatialGrid::Position_t(  0.0,  0.5, 0.0 );
-            pos2 = MonteRay_SpatialGrid::Position_t(  0.0,  1.5, 0.0 );
-            pos3 = MonteRay_SpatialGrid::Position_t(  0.0,  2.5, 0.0 );
-            pos4 = MonteRay_SpatialGrid::Position_t(  0.0,  3.5, 0.0 );
+        pos1 = MonteRay_SpatialGrid::Position_t(  0.0,  0.5, 0.0 );
+        pos2 = MonteRay_SpatialGrid::Position_t(  0.0,  1.5, 0.0 );
+        pos3 = MonteRay_SpatialGrid::Position_t(  0.0,  2.5, 0.0 );
+        pos4 = MonteRay_SpatialGrid::Position_t(  0.0,  3.5, 0.0 );
 
-            p.pos = pos1;
-            CHECK_EQUAL(   0, getIndex( p ) );
-            p.pos = pos2;
-            CHECK_EQUAL(   1, getIndex( p ) );
-            p.pos = pos3;
-            CHECK_EQUAL(   2, getIndex( p ) );
-            p.pos = pos4;
-            CHECK_EQUAL( MonteRay_SpatialGrid::OUTSIDE_MESH, getIndex( p ) );
-    	}
+        p.pos = pos1;
+        CHECK_EQUAL(   0, getIndex( p ) );
+        p.pos = pos2;
+        CHECK_EQUAL(   1, getIndex( p ) );
+        p.pos = pos3;
+        CHECK_EQUAL(   2, getIndex( p ) );
+        p.pos = pos4;
+        CHECK_EQUAL( MonteRay_SpatialGrid::OUTSIDE_MESH, getIndex( p ) );
+        }
 
     }
 
@@ -283,9 +283,9 @@ SUITE( MonteRay_SpatialGrid_Spherical_GPU_Tests ) {
         CHECK_CLOSE( 2.0,  distances.dist(1), 1e-6 );
     }
 
-  	TEST( cleanup ) {
-   		//gpuReset();
-   	}
+    TEST( cleanup ) {
+        //gpuReset();
+    }
 #endif
 }
 
