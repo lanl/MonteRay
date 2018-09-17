@@ -94,7 +94,7 @@ SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA;-Xcompiler -fPIC;--relocatable-dev
 
 if(DEFINED GPUCOMPUTECAPABILITY )
   add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
-  set( Cuda_Flags_Debug "${GPUCOMPUTECAPABILITY} -g -G "
+  set( Cuda_Flags_Debug "${GPUCOMPUTECAPABILITY} -g -G " )
   add_definitions( -DCMAKE_CUDA_FLAGS_DEBUG=${Cuda_Flags_Debug} )
 else()
   message( FATAL_ERROR "GPUCOMPUTECAPABILITY was NOT DEFINED!")

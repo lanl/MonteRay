@@ -19,455 +19,459 @@ namespace MonteRay_SpatialGrid_helper {
 
 using namespace MonteRay;
 
-	typedef MonteRay_SpatialGrid Grid_t;
-	using Position_t = MonteRay_SpatialGrid::Position_t;
+typedef MonteRay_SpatialGrid Grid_t;
+using Position_t = MonteRay_SpatialGrid::Position_t;
 
-	template<typename T>
-	using resultClass = MonteRay_SingleValueCopyMemory<T>;
+template<typename T>
+using resultClass = MonteRay_SingleValueCopyMemory<T>;
 
-   	CUDA_CALLABLE_KERNEL void kernelGetNumCells(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult) ;
+CUDA_CALLABLE_KERNEL void kernelGetNumCells(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult) ;
 
-   	CUDA_CALLABLE_KERNEL void kernelGetCoordinateSystem(Grid_t* pSpatialGrid, resultClass<TransportMeshTypeEnum::TransportMeshTypeEnum_t>* pResult);
+CUDA_CALLABLE_KERNEL void kernelGetCoordinateSystem(Grid_t* pSpatialGrid, resultClass<TransportMeshTypeEnum::TransportMeshTypeEnum_t>* pResult);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetDimension(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult);
+CUDA_CALLABLE_KERNEL void kernelGetDimension(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult);
 
-   	CUDA_CALLABLE_KERNEL void kernelIsInitialized(Grid_t* pSpatialGrid, resultClass<bool>* pResult);
+CUDA_CALLABLE_KERNEL void kernelIsInitialized(Grid_t* pSpatialGrid, resultClass<bool>* pResult);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetNumGridBins(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL void kernelGetNumGridBins(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetMinVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL void kernelGetMinVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetMaxVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL void kernelGetMaxVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetDelta(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL void kernelGetDelta(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index);
+CUDA_CALLABLE_KERNEL void kernelGetVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetVolume(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL void kernelGetVolume(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-   	CUDA_CALLABLE_KERNEL void kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos);
+CUDA_CALLABLE_KERNEL void kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos);
 
-   	template<typename particle>
-   	CUDA_CALLABLE_KERNEL void kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
-   		pResult->v = pSpatialGrid->getIndex(p);
-   	}
+template<typename particle>
+CUDA_CALLABLE_KERNEL void kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
+    pResult->v = pSpatialGrid->getIndex(p);
+}
 
-  	//CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuRayFloat_t distance);
-  	CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
-  	   			gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z, gpuRayFloat_t u, gpuRayFloat_t v, gpuRayFloat_t w,
-  	   			gpuRayFloat_t distance, bool outside = false);
+//CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuRayFloat_t distance);
+CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+        gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z, gpuRayFloat_t u, gpuRayFloat_t v, gpuRayFloat_t w,
+        gpuRayFloat_t distance, bool outside = false);
 
-  	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
-  			unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance );
+CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+        unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance );
 
-  	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
-  			Position_t pos, Position_t dir, gpuRayFloat_t distance );
+CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+        Position_t pos, Position_t dir, gpuRayFloat_t distance );
 
-  	CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
-  			unsigned d, Position_t pos, Position_t dir, gpuRayFloat_t distance );
+CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+        unsigned d, Position_t pos, Position_t dir, gpuRayFloat_t distance );
 
-   	template<class Particle>
-   	CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
-   			Particle p,
-   			gpuRayFloat_t distance, bool outside = false) {
-   		pSpatialGrid->rayTrace( pResult->v, p, distance, outside);
-   	}
+template<class Particle>
+CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+        Particle p,
+        gpuRayFloat_t distance, bool outside = false) {
+    pSpatialGrid->rayTrace( pResult->v, p, distance, outside);
+}
 
-   	class SpatialGridGPUTester {
-   	public:
-   		SpatialGridGPUTester(){
-   			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+class SpatialGridGPUTester {
+public:
+    SpatialGridGPUTester(){
+        pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
 #ifdef __CUDACC__
-   			cudaDeviceSetLimit( cudaLimitStackSize, 40000 );
+        cudaDeviceSetLimit( cudaLimitStackSize, 40000 );
 #endif
-   		}
+    }
 
-   		~SpatialGridGPUTester(){}
+    ~SpatialGridGPUTester(){}
 
-   		void cartesianGrid1_setup(void) {
-   			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
-   			pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-   			pGridInfo->setDimension( 3 );
-   			pGridInfo->setGrid( MonteRay_SpatialGrid::CART_X, -10.0, 10.0, 100);
-   			pGridInfo->setGrid( MonteRay_SpatialGrid::CART_Y, -20.0, 20.0, 100);
-   			pGridInfo->setGrid( MonteRay_SpatialGrid::CART_Z, -30.0, 30.0, 100);
-   			pGridInfo->initialize();
+    void cartesianGrid1_setup(void) {
+        pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+        pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
+        pGridInfo->setDimension( 3 );
+        pGridInfo->setGrid( MonteRay_SpatialGrid::CART_X, -10.0, 10.0, 100);
+        pGridInfo->setGrid( MonteRay_SpatialGrid::CART_Y, -20.0, 20.0, 100);
+        pGridInfo->setGrid( MonteRay_SpatialGrid::CART_Z, -30.0, 30.0, 100);
+        pGridInfo->initialize();
 
-   			pGridInfo->copyToGPU();
-   		}
+        pGridInfo->copyToGPU();
+    }
 
-   		void sphericalGrid1_setup(void) {
-   			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
-   			pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Spherical );
-   			pGridInfo->setDimension( 1 );
-   			pGridInfo->setGrid( MonteRay_SpatialGrid::SPH_R, 0.0, 10.0, 100);
-   			pGridInfo->initialize();
+    void sphericalGrid1_setup(void) {
+        pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+        pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Spherical );
+        pGridInfo->setDimension( 1 );
+        pGridInfo->setGrid( MonteRay_SpatialGrid::SPH_R, 0.0, 10.0, 100);
+        pGridInfo->initialize();
 
-   			pGridInfo->copyToGPU();
-   		}
+        pGridInfo->copyToGPU();
+    }
 
-   		void cylindricalGrid_setup(const std::vector<gpuRayFloat_t>& Rverts, const std::vector<gpuRayFloat_t>& Zverts) {
-   			pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
-   			pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Cylindrical );
-   			pGridInfo->setDimension( 2 );
-   			pGridInfo->setGrid(  MonteRay_SpatialGrid::CYLR_R, Rverts);
-   			pGridInfo->setGrid(  MonteRay_SpatialGrid::CYLR_Z, Zverts);
-   			pGridInfo->initialize();
+    void cylindricalGrid_setup(const std::vector<gpuRayFloat_t>& Rverts, const std::vector<gpuRayFloat_t>& Zverts) {
+        pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
+        pGridInfo->setCoordinateSystem( TransportMeshTypeEnum::Cylindrical );
+        pGridInfo->setDimension( 2 );
+        pGridInfo->setGrid(  MonteRay_SpatialGrid::CYLR_R, Rverts);
+        pGridInfo->setGrid(  MonteRay_SpatialGrid::CYLR_Z, Zverts);
+        pGridInfo->initialize();
 
-   			pGridInfo->copyToGPU();
-   		}
+        pGridInfo->copyToGPU();
+    }
 
-   		void initialize() {
-   			pGridInfo->initialize();
-   		}
+    void initialize() {
+        pGridInfo->initialize();
+    }
 
-   		void copyToGPU() {
-   			pGridInfo->copyToGPU();
-   		}
+    void copyToGPU() {
+        pGridInfo->copyToGPU();
+    }
 
-   		void setGrid(unsigned index, const std::vector<gpuRayFloat_t>& vertices ) {
-   			pGridInfo->setGrid(index, vertices);
-   		}
+    void setGrid(unsigned index, const std::vector<gpuRayFloat_t>& vertices ) {
+        pGridInfo->setGrid(index, vertices);
+    }
 
-   		void setGrid(unsigned index, gpuRayFloat_t min, gpuRayFloat_t max, unsigned numBins ) {
-   			pGridInfo->setGrid(index, min, max, numBins);
-   		}
+    void setGrid(unsigned index, gpuRayFloat_t min, gpuRayFloat_t max, unsigned numBins ) {
+        pGridInfo->setGrid(index, min, max, numBins);
+    }
 
-   		void setCoordinateSystem(TransportMeshTypeEnum::TransportMeshTypeEnum_t system) {
-   			pGridInfo->setCoordinateSystem(system);
-   		}
+    void setCoordinateSystem(TransportMeshTypeEnum::TransportMeshTypeEnum_t system) {
+        pGridInfo->setCoordinateSystem(system);
+    }
 
-   		void setDimension( unsigned dim) {
-   			pGridInfo->setDimension(dim);
-   		}
+    void setDimension( unsigned dim) {
+        pGridInfo->setDimension(dim);
+    }
 
-   	   	int getNumCells( void ) {
-   	   		using result_t = resultClass<unsigned>;
-   	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
-   	   	    pResult->copyToGPU();
+    void write( const std::string& fileName) const {
+        pGridInfo->write(fileName);
+    }
+
+    int getNumCells( void ) {
+        using result_t = resultClass<unsigned>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+        pResult->copyToGPU();
 #ifdef __CUDACC__
-   	   	    kernelGetNumCells<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
-   	   	    gpuErrchk( cudaPeekAtLastError() );
+        kernelGetNumCells<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
+        gpuErrchk( cudaPeekAtLastError() );
 #else
-   	   	    kernelGetNumCells( pGridInfo->devicePtr, pResult->devicePtr);
+        kernelGetNumCells( pGridInfo->devicePtr, pResult->devicePtr);
 #endif
 
-   	   		pResult->copyToCPU();
-   	   		return pResult->v;
-   	   	}
+        pResult->copyToCPU();
+        return pResult->v;
+    }
 
-   	   	unsigned getDimension( void ) {
-   	   		using result_t = resultClass<unsigned>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    unsigned getDimension( void ) {
+        using result_t = resultClass<unsigned>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
-   	   		kernelGetDimension<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        pResult->copyToGPU();
+        kernelGetDimension<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetDimension( pGridInfo.get(), pResult.get());
+        kernelGetDimension( pGridInfo.get(), pResult.get());
 #endif
 
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	TransportMeshTypeEnum::TransportMeshTypeEnum_t getCoordinateSystem( void ) const {
-   	   		using result_t = resultClass<TransportMeshTypeEnum::TransportMeshTypeEnum_t>;
-   	   	    std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    TransportMeshTypeEnum::TransportMeshTypeEnum_t getCoordinateSystem( void ) const {
+        using result_t = resultClass<TransportMeshTypeEnum::TransportMeshTypeEnum_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   	    pResult->copyToGPU();
-   	   	    kernelGetCoordinateSystem<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        pResult->copyToGPU();
+        kernelGetCoordinateSystem<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetCoordinateSystem( pGridInfo.get(), pResult.get() );
+        kernelGetCoordinateSystem( pGridInfo.get(), pResult.get() );
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	bool isInitialized( void ) const {
-   	   		using result_t = resultClass<bool>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
-   	   		pResult->copyToGPU();
+    bool isInitialized( void ) const {
+        using result_t = resultClass<bool>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+        pResult->copyToGPU();
 
 #ifdef __CUDACC__
-   	   		kernelIsInitialized<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelIsInitialized<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelIsInitialized( pGridInfo.get(), pResult.get() );
+        kernelIsInitialized( pGridInfo.get(), pResult.get() );
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	unsigned getNumGridBins( unsigned index ) const {
-   	   		using result_t = resultClass<unsigned>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    unsigned getNumGridBins( unsigned index ) const {
+        using result_t = resultClass<unsigned>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetNumGridBins<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetNumGridBins<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetNumGridBins( pGridInfo.get(), pResult.get(), index);
+        kernelGetNumGridBins( pGridInfo.get(), pResult.get(), index);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	gpuRayFloat_t getMinVertex( unsigned index ) const {
-   	   		using result_t = resultClass<gpuRayFloat_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    gpuRayFloat_t getMinVertex( unsigned index ) const {
+        using result_t = resultClass<gpuRayFloat_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetMinVertex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetMinVertex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetMinVertex( pGridInfo.get(), pResult.get(), index);
+        kernelGetMinVertex( pGridInfo.get(), pResult.get(), index);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	gpuRayFloat_t getMaxVertex( unsigned index ) const {
-   	   		using result_t = resultClass<gpuRayFloat_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    gpuRayFloat_t getMaxVertex( unsigned index ) const {
+        using result_t = resultClass<gpuRayFloat_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetMaxVertex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetMaxVertex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetMaxVertex( pGridInfo.get(), pResult.get(), index);
+        kernelGetMaxVertex( pGridInfo.get(), pResult.get(), index);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	gpuRayFloat_t getDelta( unsigned index ) const {
-   	   		using result_t = resultClass<gpuRayFloat_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    gpuRayFloat_t getDelta( unsigned index ) const {
+        using result_t = resultClass<gpuRayFloat_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetDelta<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetDelta<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetDelta( pGridInfo.get(), pResult.get(), index);
+        kernelGetDelta( pGridInfo.get(), pResult.get(), index);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	gpuRayFloat_t getVertex(unsigned d, unsigned index ) const {
-   	   		using result_t = resultClass<gpuRayFloat_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    gpuRayFloat_t getVertex(unsigned d, unsigned index ) const {
+        using result_t = resultClass<gpuRayFloat_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetVertex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, d, index);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetVertex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, d, index);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetVertex( pGridInfo.get(), pResult.get(), d, index);
+        kernelGetVertex( pGridInfo.get(), pResult.get(), d, index);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	gpuRayFloat_t getVolume( unsigned index ) const {
-   	   		using result_t = resultClass<gpuRayFloat_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    gpuRayFloat_t getVolume( unsigned index ) const {
+        using result_t = resultClass<gpuRayFloat_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetVolume<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetVolume<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, index);
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetVolume( pGridInfo.get(), pResult.get(), index);
+        kernelGetVolume( pGridInfo.get(), pResult.get(), index);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	unsigned getIndex(Position_t pos ) const {
-   	   		using result_t = resultClass<unsigned>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    unsigned getIndex(Position_t pos ) const {
+        using result_t = resultClass<unsigned>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetIndex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, pos );
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetIndex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, pos );
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetIndex( pGridInfo.get(), pResult.get(), pos);
+        kernelGetIndex( pGridInfo.get(), pResult.get(), pos);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	template<typename particle>
-  	   	unsigned getIndex(particle& p) const {
-   	   		using result_t = resultClass<unsigned>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    template<typename particle>
+    unsigned getIndex(particle& p) const {
+        using result_t = resultClass<unsigned>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		kernelGetIndexByParticle<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, p );
-   	   		gpuErrchk( cudaPeekAtLastError() );
-   	   		pResult->copyToCPU();
+        kernelGetIndexByParticle<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, p );
+        gpuErrchk( cudaPeekAtLastError() );
+        pResult->copyToCPU();
 #else
-   	   		kernelGetIndexByParticle( pGridInfo, pResult, p);
+        kernelGetIndexByParticle( pGridInfo, pResult, p);
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
-   	   		using result_t = resultClass<rayTraceList_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+    rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
+        using result_t = resultClass<rayTraceList_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		cudaDeviceSynchronize();
-   	   		kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
-   	   				                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
-   	   		cudaDeviceSynchronize();
+        cudaDeviceSynchronize();
+        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+                pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
+        cudaDeviceSynchronize();
 
-   	   		gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaPeekAtLastError() );
 
-   	   		pResult->copyToCPU();
+        pResult->copyToCPU();
 #else
-   	   		kernelRayTrace( pGridInfo.get(), pResult.get(),
-		                	pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
+        kernelRayTrace( pGridInfo.get(), pResult.get(),
+                pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
 #endif
 
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	singleDimRayTraceMap_t crossingDistance( unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance  ) {
+    singleDimRayTraceMap_t crossingDistance( unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance  ) {
 
-   	   		using result_t = resultClass<singleDimRayTraceMap_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+        using result_t = resultClass<singleDimRayTraceMap_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		cudaDeviceSynchronize();
-   	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
-   	   				                 d, pos, dir, distance );
-   	   		cudaDeviceSynchronize();
+        cudaDeviceSynchronize();
+        kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+                d, pos, dir, distance );
+        cudaDeviceSynchronize();
 
-   	   		gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaPeekAtLastError() );
 
-   	   		pResult->copyToCPU();
+        pResult->copyToCPU();
 #else
-   	   		kernelCrossingDistance( pGridInfo.get(), pResult.get(),
-   	   								d, pos, dir, distance );
+        kernelCrossingDistance( pGridInfo.get(), pResult.get(),
+                d, pos, dir, distance );
 #endif
 
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	singleDimRayTraceMap_t crossingDistance( unsigned d, Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
+    singleDimRayTraceMap_t crossingDistance( unsigned d, Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
 
-   	   		using result_t = resultClass<singleDimRayTraceMap_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+        using result_t = resultClass<singleDimRayTraceMap_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		cudaDeviceSynchronize();
-   	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
-   	   				                 d, pos, dir, distance );
-   	   		cudaDeviceSynchronize();
+        cudaDeviceSynchronize();
+        kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+                d, pos, dir, distance );
+        cudaDeviceSynchronize();
 
-   	   		gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaPeekAtLastError() );
 
-   	   		pResult->copyToCPU();
+        pResult->copyToCPU();
 #else
-   	   		kernelCrossingDistance( pGridInfo.get(), pResult.get(),
-   	   								d, pos, dir, distance );
+        kernelCrossingDistance( pGridInfo.get(), pResult.get(),
+                d, pos, dir, distance );
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	singleDimRayTraceMap_t crossingDistance( Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
+    singleDimRayTraceMap_t crossingDistance( Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
 
-   	   		using result_t = resultClass<singleDimRayTraceMap_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+        using result_t = resultClass<singleDimRayTraceMap_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		cudaDeviceSynchronize();
-   	   		kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
-   	   				                 pos, dir, distance );
-   	   		cudaDeviceSynchronize();
+        cudaDeviceSynchronize();
+        kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+                pos, dir, distance );
+        cudaDeviceSynchronize();
 
-   	   		gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaPeekAtLastError() );
 
-   	   		pResult->copyToCPU();
+        pResult->copyToCPU();
 #else
-   	   		kernelCrossingDistance( pGridInfo.get(), pResult.get(),
-   	   								pos, dir, distance );
+        kernelCrossingDistance( pGridInfo.get(), pResult.get(),
+                pos, dir, distance );
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	template<typename particle>
-  	   	rayTraceList_t rayTrace( particle& p, gpuRayFloat_t distance, bool outside = false) {
+    template<typename particle>
+    rayTraceList_t rayTrace( particle& p, gpuRayFloat_t distance, bool outside = false) {
 
-   	   		using result_t = resultClass<rayTraceList_t>;
-   	   		std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+        using result_t = resultClass<rayTraceList_t>;
+        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-   	   		pResult->copyToGPU();
+        pResult->copyToGPU();
 
-   	   		cudaDeviceSynchronize();
-   	   		kernelRayTraceParticle<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
-   	   				                 p, distance, outside );
-   	   		cudaDeviceSynchronize();
+        cudaDeviceSynchronize();
+        kernelRayTraceParticle<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+                p, distance, outside );
+        cudaDeviceSynchronize();
 
-   	   		gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaPeekAtLastError() );
 
-   	   		pResult->copyToCPU();
+        pResult->copyToCPU();
 #else
-   	   		kernelRayTraceParticle( pGridInfo.get(), pResult.get(),
-   	   								p, distance, outside );
+        kernelRayTraceParticle( pGridInfo.get(), pResult.get(),
+                p, distance, outside );
 #endif
-   	   		return pResult->v;
-   	   	}
+        return pResult->v;
+    }
 
-   	   	void read( const std::string& fileName ) {
-   	   		pGridInfo->read(fileName);
-   	   	}
+    void read( const std::string& fileName ) {
+        pGridInfo->read(fileName);
+    }
 
-   	   	std::unique_ptr<Grid_t> pGridInfo;
-   	};
+    std::unique_ptr<Grid_t> pGridInfo;
+};
 
-   	class particle {
-    public:
-    	CUDA_CALLABLE_MEMBER particle(void){};
+class particle {
+public:
+    CUDA_CALLABLE_MEMBER particle(void){};
 
-        Position_t pos;
-        Position_t dir;
+    Position_t pos;
+    Position_t dir;
 
-        CUDA_CALLABLE_MEMBER
-        MonteRay_SpatialGrid::Position_t getPosition(void) const { return pos; }
+    CUDA_CALLABLE_MEMBER
+    MonteRay_SpatialGrid::Position_t getPosition(void) const { return pos; }
 
-        CUDA_CALLABLE_MEMBER
-        MonteRay_SpatialGrid::Position_t getDirection(void) const { return dir; }
-    };
+    CUDA_CALLABLE_MEMBER
+    MonteRay_SpatialGrid::Position_t getDirection(void) const { return dir; }
+};
 
 }
 

@@ -39,18 +39,18 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
         grid.setGrid( MonteRay_SpatialGrid::SPH_R, vertices);
         bool exception=false;
         try{
-        	grid.setGrid( 1, vertices);
+            grid.setGrid( 1, vertices);
         }
         catch( ... ) {
-        	exception=true;
+            exception=true;
         }
         CHECK_EQUAL(true, exception );
         exception=false;
         try{
-        	grid.setGrid( 2, vertices);
+            grid.setGrid( 2, vertices);
         }
         catch( ... ) {
-        	exception=true;
+            exception=true;
         }
         CHECK_EQUAL(true, exception );
 
@@ -90,28 +90,28 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
             grid.initialize();
         }
         catch( ... ) {
-        	exception=true;
+            exception=true;
         }
         CHECK_EQUAL(true, exception );
     }
 
     TEST( getIndexByPos ){
-         Grid_t grid;
-         grid.setDimension( 1 );
-         grid.setCoordinateSystem( TransportMeshTypeEnum::Spherical );
+        Grid_t grid;
+        grid.setDimension( 1 );
+        grid.setCoordinateSystem( TransportMeshTypeEnum::Spherical );
 
-         std::vector<gpuRayFloat_t> Rvertices = { 0, 1, 10 };
+        std::vector<gpuRayFloat_t> Rvertices = { 0, 1, 10 };
 
-         grid.setGrid( MonteRay_SpatialGrid::SPH_R, Rvertices);
+        grid.setGrid( MonteRay_SpatialGrid::SPH_R, Rvertices);
 
-         grid.initialize();
+        grid.initialize();
 
-         MonteRay_SpatialGrid::Position_t pos1( 0.5, 0.5, 0.5 );
-         MonteRay_SpatialGrid::Position_t pos2( 5.0, 5.0, 5.0 );
+        MonteRay_SpatialGrid::Position_t pos1( 0.5, 0.5, 0.5 );
+        MonteRay_SpatialGrid::Position_t pos2( 5.0, 5.0, 5.0 );
 
-         CHECK_EQUAL(   0, grid.getIndex( pos1 ) );
-         CHECK_EQUAL(   1, grid.getIndex( pos2 ) );
-     }
+        CHECK_EQUAL(   0, grid.getIndex( pos1 ) );
+        CHECK_EQUAL(   1, grid.getIndex( pos2 ) );
+    }
 
     TEST( getVolume_byIndex ){
         Grid_t grid;
@@ -130,7 +130,7 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
 
     class particle {
     public:
-    	CUDA_CALLABLE_MEMBER particle(void){};
+        CUDA_CALLABLE_MEMBER particle(void){};
 
         MonteRay_SpatialGrid::Position_t pos;
         MonteRay_SpatialGrid::Position_t dir;
@@ -175,12 +175,12 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
 
         grid.initialize();
 
-    	grid.write( "spatialgrid_spherical_test_2.bin" );
+        grid.write( "spatialgrid_spherical_test_2.bin" );
 
         {
             // read class state from archive
             Grid_t newGrid;
-    		newGrid.read( "spatialgrid_spherical_test_2.bin" );
+            newGrid.read( "spatialgrid_spherical_test_2.bin" );
 
             particle p;
 
