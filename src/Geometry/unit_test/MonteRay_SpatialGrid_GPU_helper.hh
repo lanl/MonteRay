@@ -14,6 +14,7 @@
 #include "MonteRay_GridSystemInterface.hh"
 #include "MonteRay_SingleValueCopyMemory.hh"
 #include "MonteRayDefinitions.hh"
+#include "MonteRay_ReadLnk3dnt.hh"
 
 namespace MonteRay_SpatialGrid_helper {
 
@@ -114,6 +115,12 @@ public:
         pGridInfo->setGrid(  MonteRay_SpatialGrid::CYLR_Z, Zverts);
         pGridInfo->initialize();
 
+        pGridInfo->copyToGPU();
+    }
+
+    void reader_setup(const std::string& filename) {
+        MonteRay_ReadLnk3dnt readerObject( filename );
+        pGridInfo = std::unique_ptr<Grid_t>( new Grid_t(readerObject) );
         pGridInfo->copyToGPU();
     }
 

@@ -417,6 +417,14 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_GPU_tests ) {
         CHECK_CLOSE( 2.0*sqrt(2.0),  distances.dist(2), 1e-6 );
     }
 
+    TEST_FIXTURE(SpatialGridGPUTester, read_lnk3dnt ) {
+        reader_setup( "lnk3dnt/zeus2.lnk3dnt" );
+
+        CHECK_EQUAL( TransportMeshTypeEnum::Cylindrical,getCoordinateSystem() );
+        CHECK_EQUAL( 28, getNumGridBins(MonteRay_SpatialGrid::CYLR_R) );
+        CHECK_EQUAL( 34, getNumGridBins(MonteRay_SpatialGrid::CYLR_Z) );
+    }
+
 #endif /* CUDACC */
 }
 
