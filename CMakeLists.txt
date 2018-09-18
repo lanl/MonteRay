@@ -6,6 +6,11 @@ if( enable_cuda )
     enable_language(CUDA)
 #    set(CMAKE_CXX_IGNORE_EXTENSIONS cu )
 #    set(CMAKE_CUDA_SOURCE_FILE_EXTENSIONS cu )
+
+# TRA - These need to be used and tested in other places besides Shark?
+    #set(CMAKE_CUDA_STANDARD 11)
+    #set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
     PROJECT(MonteRayProject LANGUAGES CXX CUDA )
 else()
     enable_language(CXX)
@@ -17,8 +22,6 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 # TRA - These need to be used and tested in other places besides Shark?
 #set(CMAKE_CXX_STANDARD 11)
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#set(CMAKE_CUDA_STANDARD 11)
-#set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 if( POLICY CMP0022 )
     cmake_policy( SET CMP0022 OLD )
