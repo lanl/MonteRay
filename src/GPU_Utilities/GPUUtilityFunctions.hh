@@ -18,6 +18,7 @@ void gpuCheck();
 void gpuInfo();
 int getNumberOfGPUS(void);
 void setCudaPrintBufferSize( size_t size);
+void setCudaStackSize( size_t size);
 
 } /* namespace MonteRay */
 
