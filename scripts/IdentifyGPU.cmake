@@ -45,7 +45,14 @@ if( output_value STREQUAL "GP102" )
   set( ${RESULT} "P102" PARENT_SCOPE )
   set( ${COMPUTECAPABILITY} "-arch=sm_61" PARENT_SCOPE )
   return()
-endif()   
+endif()  
+
+if( output_value STREQUAL "GP104" )
+  add_definitions(-DP104_GPU)
+  set( ${RESULT} "P104" PARENT_SCOPE )
+  set( ${COMPUTECAPABILITY} "-arch=sm_61" PARENT_SCOPE )
+  return()
+endif() 
 
 message( WARNING "MonteRay IndentifyGPU.cmake -- Unknown GPU Type, add your card, to support customized testing." )     
 
