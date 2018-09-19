@@ -285,6 +285,24 @@ MonteRay_SpatialGrid::setGrid( unsigned index, gpuRayFloat_t min, gpuRayFloat_t 
     pGridInfo[index]->initialize( min, max, numBins);
 }
 
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRay_SpatialGrid::setGrid( unsigned index, const std::vector<double>& vertices ) {
+    checkDim( index+1 );
+    if( pGridInfo[index] ) delete pGridInfo[index];
+    pGridInfo[index] = new GridBins_t();
+    pGridInfo[index]->initialize( vertices );
+}
+
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRay_SpatialGrid::setGrid( unsigned index, const std::vector<float>& vertices ) {
+    checkDim( index+1 );
+    if( pGridInfo[index] ) delete pGridInfo[index];
+    pGridInfo[index] = new GridBins_t();
+    pGridInfo[index]->initialize( vertices );
+}
+
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_SpatialGrid::getNumGridBins( unsigned index ) const {

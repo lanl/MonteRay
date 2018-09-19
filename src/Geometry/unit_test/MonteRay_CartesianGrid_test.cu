@@ -8,17 +8,18 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "GPUSync.hh"
 #include "MonteRayVector3D.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 using namespace MonteRay;
 
 namespace MonteRay_CartesianGrid_tester{
 
 SUITE( MonteRay_CartesianGrid_basic_tests ) {
-	using Grid_t = MonteRay_CartesianGrid;
-	using GridBins_t = MonteRay_GridBins;
-	using GridBins_t = Grid_t::GridBins_t;
-	using pGridInfo_t = GridBins_t*;
-	using pArrayOfpGridInfo_t = Grid_t::pArrayOfpGridInfo_t;
+    using Grid_t = MonteRay_CartesianGrid;
+    using GridBins_t = MonteRay_GridBins;
+    using GridBins_t = Grid_t::GridBins_t;
+    using pGridInfo_t = GridBins_t*;
+    using pArrayOfpGridInfo_t = Grid_t::pArrayOfpGridInfo_t;
 
     typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
 
@@ -27,7 +28,7 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
         enum coord {X,Y,Z,DIM};
         gridTestData(){
             std::vector<gpuRayFloat_t> vertices = { -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-                                                       0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10 };
+                    0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10 };
 
             pGridInfo[X] = new GridBins_t();
             pGridInfo[Y] = new GridBins_t();
@@ -39,9 +40,9 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
 
         }
         ~gridTestData(){
-        	delete pGridInfo[X];
-        	delete pGridInfo[Y];
-        	delete pGridInfo[Z];
+            delete pGridInfo[X];
+            delete pGridInfo[Y];
+            delete pGridInfo[Z];
         }
 
         pArrayOfpGridInfo_t pGridInfo;
@@ -55,26 +56,26 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
     }
 
     TEST( ctor_4args ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3, data.pGridInfo[0],data.pGridInfo[1],data.pGridInfo[2] ));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3, data.pGridInfo[0],data.pGridInfo[1],data.pGridInfo[2] ));
 
-    	CHECK_EQUAL( 20, pCart->getNumBins(0) );
-    	CHECK_EQUAL( 20, pCart->getNumBins(1) );
-    	CHECK_EQUAL( 20, pCart->getNumBins(2) );
+        CHECK_EQUAL( 20, pCart->getNumBins(0) );
+        CHECK_EQUAL( 20, pCart->getNumBins(1) );
+        CHECK_EQUAL( 20, pCart->getNumBins(2) );
     }
 
     TEST( getNumBins ) {
-    	gridTestData data;
-    	CHECK_EQUAL( 20, data.pGridInfo[0]->getNumBins() );
-    	CHECK_EQUAL( 20, data.pGridInfo[1]->getNumBins() );
-    	CHECK_EQUAL( 20, data.pGridInfo[2]->getNumBins() );
+        gridTestData data;
+        CHECK_EQUAL( 20, data.pGridInfo[0]->getNumBins() );
+        CHECK_EQUAL( 20, data.pGridInfo[1]->getNumBins() );
+        CHECK_EQUAL( 20, data.pGridInfo[2]->getNumBins() );
 
 
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
 
-    	CHECK_EQUAL( 20, pCart->getNumBins(0) );
-    	CHECK_EQUAL( 20, pCart->getNumBins(1) );
-    	CHECK_EQUAL( 20, pCart->getNumBins(2) );
+        CHECK_EQUAL( 20, pCart->getNumBins(0) );
+        CHECK_EQUAL( 20, pCart->getNumBins(1) );
+        CHECK_EQUAL( 20, pCart->getNumBins(2) );
     }
 
     TEST( getIndex ) {
@@ -95,65 +96,65 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
     }
 
     TEST( getDimIndex_negX ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( -1, pCart->getDimIndex( 0, -10.5 ) );
     }
     TEST( getDimIndex_posX ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 20, pCart->getDimIndex( 0, 10.5 ) );
     }
     TEST( getDimIndex_inside_negSide_X ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 0, pCart->getDimIndex( 0, -9.5 ) );
     }
     TEST( getDimIndex_inside_posSide_X ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 19, pCart->getDimIndex( 0, 9.5 ) );
     }
 
     TEST( getDimIndex_negY ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( -1, pCart->getDimIndex( 1, -10.5 ) );
     }
     TEST( getDimIndex_posY ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 20, pCart->getDimIndex( 1, 10.5 ) );
     }
     TEST( getDimIndex_inside_negSide_Y ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 0, pCart->getDimIndex( 1, -9.5 ) );
     }
     TEST( getDimIndex_inside_posSide_Y ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 19, pCart->getDimIndex( 1, 9.5 ) );
     }
 
     TEST( getDimIndex_negZ ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( -1, pCart->getDimIndex( 2, -10.5 ) );
     }
     TEST( getDimIndex_posZ ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 20, pCart->getDimIndex( 2, 10.5 ) );
     }
     TEST( getDimIndex_inside_negSide_Z ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 0, pCart->getDimIndex( 2, -9.5 ) );
     }
     TEST( getDimIndex_inside_posSide_Z ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pCart = std::unique_ptr<Grid_t>( new Grid_t(3,data.pGridInfo));
         CHECK_EQUAL( 19, pCart->getDimIndex( 2, 9.5 ) );
     }
 
@@ -288,33 +289,33 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
     }
 
     TEST( getVolume ) {
-    	pGridInfo_t* pGridInfo = new pGridInfo_t[3];
-		pGridInfo[0] = new GridBins_t();
-		pGridInfo[1] = new GridBins_t();
-		pGridInfo[2] = new GridBins_t();
+        pGridInfo_t* pGridInfo = new pGridInfo_t[3];
+        pGridInfo[0] = new GridBins_t();
+        pGridInfo[1] = new GridBins_t();
+        pGridInfo[2] = new GridBins_t();
 
-    	std::vector<gpuRayFloat_t> vertices = {-3, -1, 0};
+        std::vector<gpuRayFloat_t> vertices = {-3, -1, 0};
 
-    	pGridInfo[0]->initialize( vertices );
-    	pGridInfo[1]->initialize( vertices );
-    	pGridInfo[2]->initialize( vertices );
+        pGridInfo[0]->initialize( vertices );
+        pGridInfo[1]->initialize( vertices );
+        pGridInfo[2]->initialize( vertices );
 
-    	Grid_t cart(3,pGridInfo);
+        Grid_t cart(3,pGridInfo);
 
-    	CHECK_CLOSE( 8.0, cart.getVolume(0), 1e-11 );
-    	CHECK_CLOSE( 4.0, cart.getVolume(1), 1e-11 );
-    	CHECK_CLOSE( 4.0, cart.getVolume(2), 1e-11 );
-    	CHECK_CLOSE( 2.0, cart.getVolume(3), 1e-11 );
-    	CHECK_CLOSE( 4.0, cart.getVolume(4), 1e-11 );
-    	CHECK_CLOSE( 2.0, cart.getVolume(5), 1e-11 );
-    	CHECK_CLOSE( 2.0, cart.getVolume(6), 1e-11 );
-    	CHECK_CLOSE( 1.0, cart.getVolume(7), 1e-11 );
+        CHECK_CLOSE( 8.0, cart.getVolume(0), 1e-11 );
+        CHECK_CLOSE( 4.0, cart.getVolume(1), 1e-11 );
+        CHECK_CLOSE( 4.0, cart.getVolume(2), 1e-11 );
+        CHECK_CLOSE( 2.0, cart.getVolume(3), 1e-11 );
+        CHECK_CLOSE( 4.0, cart.getVolume(4), 1e-11 );
+        CHECK_CLOSE( 2.0, cart.getVolume(5), 1e-11 );
+        CHECK_CLOSE( 2.0, cart.getVolume(6), 1e-11 );
+        CHECK_CLOSE( 1.0, cart.getVolume(7), 1e-11 );
 
-    	delete pGridInfo[0];
-    	delete pGridInfo[1];
-    	delete pGridInfo[2];
+        delete pGridInfo[0];
+        delete pGridInfo[1];
+        delete pGridInfo[2];
 
-    	delete[] pGridInfo;
+        delete[] pGridInfo;
     }
 
 }

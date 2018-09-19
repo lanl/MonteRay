@@ -4,6 +4,7 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 #include <stdexcept>
 #include <fstream>

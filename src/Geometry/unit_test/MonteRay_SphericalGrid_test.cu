@@ -9,17 +9,18 @@
 #include "GPUSync.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRayConstants.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 using namespace MonteRay;
 
 namespace MonteRay_SphericalGrid_tester{
 
 SUITE( MonteRay_SphericalGrid_basic_tests ) {
-	using Grid_t = MonteRay_SphericalGrid;
-	using GridBins_t = MonteRay_GridBins;
-	using GridBins_t = Grid_t::GridBins_t;
-	using pGridInfo_t = GridBins_t*;
-	using pArrayOfpGridInfo_t = Grid_t::pArrayOfpGridInfo_t;
+    using Grid_t = MonteRay_SphericalGrid;
+    using GridBins_t = MonteRay_GridBins;
+    using GridBins_t = Grid_t::GridBins_t;
+    using pGridInfo_t = GridBins_t*;
+    using pArrayOfpGridInfo_t = Grid_t::pArrayOfpGridInfo_t;
 
     typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
 
@@ -35,7 +36,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
 
         }
         ~gridTestData(){
-        	delete pGridInfo[0];
+            delete pGridInfo[0];
         }
 
         pArrayOfpGridInfo_t pGridInfo;
@@ -55,10 +56,10 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( ctor_pGridInfo ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1, data.pGridInfo[0] ));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1, data.pGridInfo[0] ));
 
-    	CHECK_EQUAL( 10, pGrid->getNumBins(0) );
+        CHECK_EQUAL( 10, pGrid->getNumBins(0) );
     }
 
     TEST( special_case_with_1_R_vertex ) {
@@ -95,7 +96,7 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
         CHECK_CLOSE( 2.0, grid.getRVertex(1), 1e-11 );
 
         delete pGridInfo[0];
-     }
+    }
 
     TEST( convertFromCartesian ){
         std::vector<gpuRayFloat_t> Rverts { 0.0, 1.5, 2.0, 5.0, 6.0 };
@@ -123,27 +124,27 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( getNumBins ) {
-    	gridTestData data;
-    	CHECK_EQUAL( 10, data.pGridInfo[0]->getNumBins() );
+        gridTestData data;
+        CHECK_EQUAL( 10, data.pGridInfo[0]->getNumBins() );
 
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
 
-    	CHECK_EQUAL( 10, pGrid->getNumBins(0) );
+        CHECK_EQUAL( 10, pGrid->getNumBins(0) );
     }
 
     TEST( isIndexOutside_R ) {
-    	std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
+        std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
 
-    	pArrayOfpGridInfo_t pGridInfo;
-    	pGridInfo[0] = new GridBins_t();
-    	pGridInfo[0]->initialize( Rverts );
+        pArrayOfpGridInfo_t pGridInfo;
+        pGridInfo[0] = new GridBins_t();
+        pGridInfo[0]->initialize( Rverts );
 
-    	Grid_t grid( 1, pGridInfo );
+        Grid_t grid( 1, pGridInfo );
 
-    	CHECK_EQUAL(   false, grid.isIndexOutside(0, 0 ) );
-    	CHECK_EQUAL(   false, grid.isIndexOutside(0, 1 ) );
-    	CHECK_EQUAL(   false, grid.isIndexOutside(0, 2 ) );
-    	CHECK_EQUAL(    true, grid.isIndexOutside(0, 3 ) );
+        CHECK_EQUAL(   false, grid.isIndexOutside(0, 0 ) );
+        CHECK_EQUAL(   false, grid.isIndexOutside(0, 1 ) );
+        CHECK_EQUAL(   false, grid.isIndexOutside(0, 2 ) );
+        CHECK_EQUAL(    true, grid.isIndexOutside(0, 3 ) );
 
         delete pGridInfo[0];
     }
@@ -174,55 +175,55 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( getRadialIndexFromR_outside ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 10, pGrid->getRadialIndexFromR( 10.5 ) );
     }
     TEST( getRadialIndexFromR_inside ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 9, pGrid->getRadialIndexFromR( 9.5 ) );
     }
     TEST( getRadialIndexFromR_insideOnVertex ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 9, pGrid->getRadialIndexFromR( 9.0 ) );
     }
     TEST( getRadialIndexFromR_center ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 0, pGrid->getRadialIndexFromR( 0.0 ) );
     }
 
     TEST( getRadialIndexFromRSq_outside ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 10, pGrid->getRadialIndexFromRSq( 10.5*10.5 ) );
     }
     TEST( getRadialIndexFromRSq_inside ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 9, pGrid->getRadialIndexFromRSq( 9.5*9.5 ) );
     }
     TEST( getRadialIndexFromRSq_insideOnVertex ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 9, pGrid->getRadialIndexFromRSq( 9.0*9.0 ) );
     }
     TEST( getRadialIndexFromRSq_center ) {
-    	gridTestData data;
-    	std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
+        gridTestData data;
+        std::unique_ptr<Grid_t> pGrid = std::unique_ptr<Grid_t>( new Grid_t(1,data.pGridInfo));
         CHECK_EQUAL( 0, pGrid->getRadialIndexFromRSq( 0.0 ) );
     }
 
     TEST( isOutside_index ) {
-    	std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
+        std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
 
-    	pArrayOfpGridInfo_t pGridInfo;
-    	pGridInfo[0] = new GridBins_t();
-    	pGridInfo[0]->initialize( Rverts );
+        pArrayOfpGridInfo_t pGridInfo;
+        pGridInfo[0] = new GridBins_t();
+        pGridInfo[0]->initialize( Rverts );
 
-    	Grid_t grid( 1, pGridInfo );
+        Grid_t grid( 1, pGridInfo );
 
         int indices[] = {3,0,0};
         CHECK_EQUAL( true, grid.isOutside( indices ) );
@@ -231,13 +232,13 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( isOutside_Radius_false ) {
-    	std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
+        std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
 
-    	pArrayOfpGridInfo_t pGridInfo;
-    	pGridInfo[0] = new GridBins_t();
-    	pGridInfo[0]->initialize( Rverts );
+        pArrayOfpGridInfo_t pGridInfo;
+        pGridInfo[0] = new GridBins_t();
+        pGridInfo[0]->initialize( Rverts );
 
-    	Grid_t grid( 1, pGridInfo );
+        Grid_t grid( 1, pGridInfo );
 
         int indices[] = {2,0,0};
         CHECK_EQUAL( false, grid.isOutside( indices ) );
@@ -249,13 +250,13 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( calcIJK ) {
-    	std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
+        std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
 
-    	pArrayOfpGridInfo_t pGridInfo;
-    	pGridInfo[0] = new GridBins_t();
-    	pGridInfo[0]->initialize( Rverts );
+        pArrayOfpGridInfo_t pGridInfo;
+        pGridInfo[0] = new GridBins_t();
+        pGridInfo[0]->initialize( Rverts );
 
-    	Grid_t grid( 1, pGridInfo );
+        Grid_t grid( 1, pGridInfo );
 
         uint3 indices;
 
@@ -278,13 +279,13 @@ SUITE( MonteRay_SphericalGrid_basic_tests ) {
     }
 
     TEST( getVolume ) {
-    	std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
+        std::vector<gpuRayFloat_t> Rverts { 1.0, 2.0, 3.0 };
 
-    	pArrayOfpGridInfo_t pGridInfo;
-    	pGridInfo[0] = new GridBins_t();
-    	pGridInfo[0]->initialize( Rverts );
+        pArrayOfpGridInfo_t pGridInfo;
+        pGridInfo[0] = new GridBins_t();
+        pGridInfo[0]->initialize( Rverts );
 
-    	Grid_t grid( 1, pGridInfo );
+        Grid_t grid( 1, pGridInfo );
 
         CHECK_CLOSE( (1.0)*(4.0/3.0)*pi, grid.getVolume(0), 1e-5 );
         CHECK_CLOSE( (8.0-1.0)*(4.0/3.0)*pi, grid.getVolume(1), 1e-5 );

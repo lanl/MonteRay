@@ -123,15 +123,11 @@ public:
     CUDAHOST_CALLABLE_MEMBER
     void setGrid( unsigned index, gpuRayFloat_t min, gpuRayFloat_t max, unsigned numBins );
 
-    template<typename T>
     CUDAHOST_CALLABLE_MEMBER
-    void
-    setGrid( unsigned index, const std::vector<T>& vertices ) {
-        checkDim( index+1 );
-        if( pGridInfo[index] ) delete pGridInfo[index];
-        pGridInfo[index] = new GridBins_t();
-        pGridInfo[index]->initialize( vertices );
-    }
+    void setGrid( unsigned index, const std::vector<double>& vertices );
+
+    CUDAHOST_CALLABLE_MEMBER
+    void setGrid( unsigned index, const std::vector<float>& vertices );
 
     CUDA_CALLABLE_MEMBER
     unsigned getNumGridBins( unsigned index ) const;

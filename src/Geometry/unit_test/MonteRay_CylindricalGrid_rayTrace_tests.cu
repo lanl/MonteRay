@@ -5,6 +5,7 @@
 #include "MonteRayVector3D.hh"
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 namespace MonteRay_CylindricalGrid_rayTrace_tests{
 
