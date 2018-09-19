@@ -10,6 +10,7 @@
 #include "MonteRay_CylindricalGrid.hh"
 #include "MonteRay_SphericalGrid.hh"
 #include "MonteRay_binaryIO.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 #ifndef __CUDA_ARCH__
 #include <stdexcept>
@@ -25,29 +26,29 @@ const unsigned MonteRay_SpatialGrid::OUTSIDE_MESH = UINT_MAX;
 
 CUDAHOST_CALLABLE_MEMBER
 MonteRay_SpatialGrid::MonteRay_SpatialGrid() :
-	CopyMemoryBase<MonteRay_SpatialGrid>(),
-    CoordinateSystem(TransportMeshTypeEnum::NONE),
-    dimension( 0 ),
-    initialized( false )
+CopyMemoryBase<MonteRay_SpatialGrid>(),
+CoordinateSystem(TransportMeshTypeEnum::NONE),
+dimension( 0 ),
+initialized( false )
 {
-		pGridInfo[0] = nullptr;
-		pGridInfo[1] = nullptr;
-		pGridInfo[2] = nullptr;
-		pGridSystem = nullptr;
+    pGridInfo[0] = nullptr;
+    pGridInfo[1] = nullptr;
+    pGridInfo[2] = nullptr;
+    pGridSystem = nullptr;
 }
 
 CUDAHOST_CALLABLE_MEMBER
 MonteRay_SpatialGrid::MonteRay_SpatialGrid( const MonteRay_SpatialGrid& rhs ) :
-		CopyMemoryBase<MonteRay_SpatialGrid>(),
-        CoordinateSystem( rhs.CoordinateSystem ),
-        dimension( rhs.dimension ),
-        initialized( false )
+CopyMemoryBase<MonteRay_SpatialGrid>(),
+CoordinateSystem( rhs.CoordinateSystem ),
+dimension( rhs.dimension ),
+initialized( false )
 //        transform( rhs.transform )
 {
-	pGridInfo[0] = rhs.pGridInfo[0];
-	pGridInfo[1] = rhs.pGridInfo[1];
-	pGridInfo[2] = rhs.pGridInfo[2];
-	pGridSystem = rhs.pGridSystem;
+    pGridInfo[0] = rhs.pGridInfo[0];
+    pGridInfo[1] = rhs.pGridInfo[1];
+    pGridInfo[2] = rhs.pGridInfo[2];
+    pGridSystem = rhs.pGridSystem;
     if( rhs.initialized ) {
         initialize();
     }
@@ -82,15 +83,67 @@ MonteRay_SpatialGrid::MonteRay_SpatialGrid( const MonteRay_SpatialGrid& rhs ) :
 //}
 
 CUDAHOST_CALLABLE_MEMBER
+MonteRay_SpatialGrid::~MonteRay_SpatialGrid(void){
+
+    if( ! Base::isCudaIntermediate ) {
+        if( pGridInfo[0] ) delete pGridInfo[0];
+        if( pGridInfo[1] ) delete pGridInfo[1];
+        if( pGridInfo[2] ) delete pGridInfo[2];
+        if( pGridSystem )  delete pGridSystem;
+    }
+
+}
+
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRay_SpatialGrid::copy(const MonteRay_SpatialGrid* rhs) {
+     //      if( debug ) {
+     //          std::cout << "Debug: MonteRay_SpatialGrid::copy(const MonteRay_SpatialGrid* rhs) \n";
+     //      }
+
+     if( ! rhs->initialized ) {
+         throw std::runtime_error("MonteRay_SpatialGrid::copy -- MonteRay_SpatialGrid object has not been initialized.");
+     }
+
+     CoordinateSystem = rhs->CoordinateSystem;
+     dimension = rhs->dimension;
+     initialized = rhs->initialized;
+
+#ifdef __CUDACC__
+     if( isCudaIntermediate ) {
+         // host to device
+         pGridInfo[0] = rhs->pGridInfo[0]->devicePtr;
+         pGridInfo[1] = rhs->pGridInfo[1]->devicePtr;
+         pGridInfo[2] = rhs->pGridInfo[2]->devicePtr;
+         pGridSystem = rhs->pGridSystem->getDeviceInstancePtr();
+
+         if( debug ) {
+             //              printf( "Debug: MonteRay_SpatialGrid::copy-- pGridInfo[%d]=%p \n", 0, pGridInfo[0] );
+             //              printf( "Debug: MonteRay_SpatialGrid::copy-- pGridInfo[%d]=%p \n", 1, pGridInfo[1] );
+             //              printf( "Debug: MonteRay_SpatialGrid::copy-- pGridInfo[%d]=%p \n", 2, pGridInfo[2] );
+             //              printf( "Debug: MonteRay_SpatialGrid::copy--   pGridSystem=%p \n", pGridSystem );
+         }
+
+     } else {
+         // device to host
+
+     }
+
+#else
+     throw std::runtime_error("MonteRay_SpatialGrid::copy -- can NOT copy between host and device without CUDA.");
+#endif
+ }
+
+CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::setCoordinateSystem(TransportMeshTypeEnum::TransportMeshTypeEnum_t system) {
     if( !( system < TransportMeshTypeEnum::MAX ) ) {
 #ifndef __CUDA_ARCH__
-    	std::stringstream msg;
+        std::stringstream msg;
         msg << " Equal or Greater than TransportMeshTypeEnum::MAX !!! " << std::endl
-            << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::setCoordinateSystem" << std::endl << std::endl;
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::setCoordinateSystem" << std::endl << std::endl;
 
-//        throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg);
+        //        throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg);
         throw std::runtime_error( msg.str() );
 #else
         ABORT( "Equal or Greater than TransportMeshTypeEnum::MAX !!!\n" );
@@ -106,7 +159,7 @@ void MonteRay_SpatialGrid::initialize(void) {
 #ifndef __CUDA_ARCH__
         std::stringstream msg;
         msg << " Class already initialized, can't re-initialize !!! " << std::endl
-            << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
 
         //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg);
         throw std::runtime_error( msg.str() );
@@ -120,7 +173,7 @@ void MonteRay_SpatialGrid::initialize(void) {
 #ifndef __CUDA_ARCH__
         std::stringstream msg;
         msg << " Number of dimensions is not set!!! " << std::endl
-            << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
 
         //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg);
         throw std::runtime_error( msg.str() );
@@ -133,7 +186,7 @@ void MonteRay_SpatialGrid::initialize(void) {
 #ifndef __CUDA_ARCH__
         std::stringstream msg;
         msg << " Coordinate system is not set!!! " << std::endl
-            << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
 
         //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg);
         throw std::runtime_error( msg.str() );
@@ -146,9 +199,9 @@ void MonteRay_SpatialGrid::initialize(void) {
     for( unsigned d = 0; d < dimension; ++d ){
         if( ! pGridInfo[d] ) {
 #ifndef __CUDA_ARCH__
-        	std::stringstream msg;
+            std::stringstream msg;
             msg << "Grid data for index [" << std::to_string(d).c_str()  << "] is not allocated! " << std::endl
-                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
+                    << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
 
             //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg );
             throw std::runtime_error( msg.str() );
@@ -161,9 +214,9 @@ void MonteRay_SpatialGrid::initialize(void) {
     for( unsigned d = 0; d < dimension; ++d ){
         if( getNumGridBins(d) == 0 ) {
 #ifndef __CUDA_ARCH__
-        	std::stringstream msg;
+            std::stringstream msg;
             msg << " Grid vertices for index [" << std::to_string(d).c_str()  << "] is not set! " << std::endl
-                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
+                    << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
 
             //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg );
             throw std::runtime_error( msg.str() );
@@ -175,39 +228,39 @@ void MonteRay_SpatialGrid::initialize(void) {
 
     //TODO: TRA - need 1d,2d for Cart_regular and Cart?
     switch (CoordinateSystem) {
-//        case TransportMeshTypeEnum::Cartesian_Regular:
-//            pGridSystem.reset( new CartesianGrid(3,gridInfo) );
-//            dynamic_cast<CartesianGrid*>( pGridSystem.get() )->setRegular();
-//            break;
+    //        case TransportMeshTypeEnum::Cartesian_Regular:
+    //            pGridSystem.reset( new CartesianGrid(3,gridInfo) );
+    //            dynamic_cast<CartesianGrid*>( pGridSystem.get() )->setRegular();
+    //            break;
 
-        case TransportMeshTypeEnum::Cartesian:
-        	if( pGridSystem ) delete pGridSystem;
-        	pGridSystem = new MonteRay_CartesianGrid(3,pGridInfo);
-            break;
+    case TransportMeshTypeEnum::Cartesian:
+        if( pGridSystem ) delete pGridSystem;
+        pGridSystem = new MonteRay_CartesianGrid(3,pGridInfo);
+        break;
 
-        case TransportMeshTypeEnum::Cylindrical:
-        	pGridInfo[2] = new GridBins_t();  // dim 3 not used.
-        	if( pGridSystem ) delete pGridSystem;
-        	pGridSystem = new MonteRay_CylindricalGrid(2,pGridInfo);
-			break;
+    case TransportMeshTypeEnum::Cylindrical:
+        pGridInfo[2] = new GridBins_t();  // dim 3 not used.
+        if( pGridSystem ) delete pGridSystem;
+        pGridSystem = new MonteRay_CylindricalGrid(2,pGridInfo);
+        break;
 
-        case TransportMeshTypeEnum::Spherical:
-        	pGridInfo[1] = new GridBins_t(); // dim 2 not used
-        	pGridInfo[2] = new GridBins_t(); // dim 3 not used
-        	if( pGridSystem ) delete pGridSystem;
-            pGridSystem = new MonteRay_SphericalGrid(1,pGridInfo);
-            break;
+    case TransportMeshTypeEnum::Spherical:
+        pGridInfo[1] = new GridBins_t(); // dim 2 not used
+        pGridInfo[2] = new GridBins_t(); // dim 3 not used
+        if( pGridSystem ) delete pGridSystem;
+        pGridSystem = new MonteRay_SphericalGrid(1,pGridInfo);
+        break;
 
-        default:
+    default:
 #ifndef __CUDA_ARCH__
-            std::stringstream msg;
-            msg << " Unknown coordinate system or coordinate system is not set! " << std::endl
+        std::stringstream msg;
+        msg << " Unknown coordinate system or coordinate system is not set! " << std::endl
                 << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::initialize" << std::endl << std::endl;
 
-            //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg );
-            throw std::runtime_error( msg.str() );
+        //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR, msg );
+        throw std::runtime_error( msg.str() );
 #else
-            ABORT( "MonteRay_SpatialGrid:: initialize -- Unknown coordinate system or coordinate system is not set!!!\n" );
+        ABORT( "MonteRay_SpatialGrid:: initialize -- Unknown coordinate system or coordinate system is not set!!!\n" );
 #endif
     }
 
@@ -273,7 +326,7 @@ MonteRay_SpatialGrid::checkDim( unsigned dim ) const {
 #ifndef __CUDA_ARCH__
         std::stringstream msg;
         msg << " Number of dimensions can not be 0 !!! " << std::endl
-            << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::checkDim" << std::endl << std::endl;
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::checkDim" << std::endl << std::endl;
 
         //throw SpatialGridException( SpatialGridException::INITIALIZATION_ERROR,  msg);
         throw std::runtime_error( msg.str() );
@@ -284,24 +337,24 @@ MonteRay_SpatialGrid::checkDim( unsigned dim ) const {
 
     unsigned maxDim;
     if( dimension > 0 ){
-    	maxDim = dimension;
+        maxDim = dimension;
     } else {
-    	maxDim = MaxDim;
+        maxDim = MaxDim;
     }
-//    maxDim = MaxDim;
+    //    maxDim = MaxDim;
     if( dim > maxDim ) {
 #ifndef __CUDA_ARCH__
-         std::stringstream msg;
-         msg << " Dimension greater than MaxDim = " << maxDim << "!!! " << std::endl
-             << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::checkDim" << std::endl << std::endl;
+        std::stringstream msg;
+        msg << " Dimension greater than MaxDim = " << maxDim << "!!! " << std::endl
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::checkDim" << std::endl << std::endl;
 
-         //throw SpatialGridException( SpatialGridException::INVALID_DIM_INDEX, msg);
-         throw std::runtime_error( msg.str() );
+        //throw SpatialGridException( SpatialGridException::INVALID_DIM_INDEX, msg);
+        throw std::runtime_error( msg.str() );
 #else
 
-         ABORT( "MonteRay_SpatialGrid::checkDim -- Dimension index is greater than the specified dimension of the grid!!!\n" );
+        ABORT( "MonteRay_SpatialGrid::checkDim -- Dimension index is greater than the specified dimension of the grid!!!\n" );
 #endif
-     }
+    }
 
 }
 
@@ -323,9 +376,9 @@ MonteRay_SpatialGrid::getNumCells(void) const {
 
     unsigned long long int nCells = 1;
     for( auto d=0; d < dimension; ++d  ){
-    	if( CoordinateSystem == TransportMeshTypeEnum::Spherical && d > 0 ){
+        if( CoordinateSystem == TransportMeshTypeEnum::Spherical && d > 0 ){
             ABORT( "MonteRay_SpatialGrid::getNumCells -- Number of dimensions is greater than 1 !!!\n" );
-    	}
+        }
         nCells *= getNumGridBins(d);
     }
     if( nCells > UINT_MAX ) {
@@ -367,14 +420,14 @@ gpuRayFloat_t
 MonteRay_SpatialGrid::getVertex(unsigned d, unsigned i ) const {
     if( d > dimension ) {
 #ifndef __CUDA_ARCH__
-         std::stringstream msg;
-         msg << " Dimension index greater than number of set dimensions = " << dimension << "!" << std::endl
-             << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::getVertex" << std::endl << std::endl;
+        std::stringstream msg;
+        msg << " Dimension index greater than number of set dimensions = " << dimension << "!" << std::endl
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid::getVertex" << std::endl << std::endl;
 
-         //throw SpatialGridException( SpatialGridException::INVALID_DIM_INDEX, msg);
-         throw std::runtime_error( msg.str() );
+        //throw SpatialGridException( SpatialGridException::INVALID_DIM_INDEX, msg);
+        throw std::runtime_error( msg.str() );
 #else
-         ABORT( "MonteRay_SpatialGrid::getVertex -- Dimension index greater than number of set dimensions!!!\n" );
+        ABORT( "MonteRay_SpatialGrid::getVertex -- Dimension index greater than number of set dimensions!!!\n" );
 #endif
     }
     return pGridInfo[d]->vertices[i];
@@ -382,12 +435,12 @@ MonteRay_SpatialGrid::getVertex(unsigned d, unsigned i ) const {
 
 CUDA_CALLABLE_MEMBER
 size_t MonteRay_SpatialGrid::getNumVertices(unsigned i) const {
-	return pGridInfo[i]->getNumVertices();
+    return pGridInfo[i]->getNumVertices();
 }
 
 CUDA_CALLABLE_MEMBER
 size_t MonteRay_SpatialGrid::getNumVerticesSq(unsigned i) const{
-	return pGridInfo[i]->getNumVerticesSq();
+    return pGridInfo[i]->getNumVerticesSq();
 }
 
 void MonteRay_SpatialGrid::write( const std::string& filename ) {
@@ -423,36 +476,36 @@ void MonteRay_SpatialGrid::read( const std::string& filename ) {
 
 void
 MonteRay_SpatialGrid::write(std::ostream& outf) const {
-	unsigned version = 0;
-	binaryIO::write(outf, version );
+    unsigned version = 0;
+    binaryIO::write(outf, version );
 
-	binaryIO::write(outf, CoordinateSystem);
-	binaryIO::write(outf, dimension);
-	for( unsigned i = 0; i<dimension; ++i) {
-		pGridInfo[i]->write(outf);
-	}
+    binaryIO::write(outf, CoordinateSystem);
+    binaryIO::write(outf, dimension);
+    for( unsigned i = 0; i<dimension; ++i) {
+        pGridInfo[i]->write(outf);
+    }
 }
 
 void
 MonteRay_SpatialGrid::read(std::istream& infile) {
-	unsigned version;
-	binaryIO::read(infile, version );
+    unsigned version;
+    binaryIO::read(infile, version );
 
-	if( version == 0 ) {
-		read_v0(infile);
-	}
-	initialize();
+    if( version == 0 ) {
+        read_v0(infile);
+    }
+    initialize();
 }
 
 void
 MonteRay_SpatialGrid::read_v0(std::istream& infile){
-	binaryIO::read(infile, CoordinateSystem);
-	binaryIO::read(infile, dimension);
-	for( unsigned i = 0; i<dimension; ++i) {
-	    if( pGridInfo[i] ) delete pGridInfo[i];
-	    pGridInfo[i] = new GridBins_t();
-		pGridInfo[i]->read(infile);
-	}
+    binaryIO::read(infile, CoordinateSystem);
+    binaryIO::read(infile, dimension);
+    for( unsigned i = 0; i<dimension; ++i) {
+        if( pGridInfo[i] ) delete pGridInfo[i];
+        pGridInfo[i] = new GridBins_t();
+        pGridInfo[i]->read(infile);
+    }
 }
 
 } /* namespace MonteRay */

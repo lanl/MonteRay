@@ -2,19 +2,20 @@
 
 #include "MonteRay_SpatialGrid.hh"
 #include "GPUSync.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 using namespace MonteRay;
 
 SUITE( MonteRay_SpatialGrid_Tester ) {
-	typedef MonteRay_SpatialGrid Grid_t;
+    typedef MonteRay_SpatialGrid Grid_t;
 
-	TEST( ctor ) {
-		CHECK(true);
-		Grid_t grid;
-	}
+    TEST( ctor ) {
+        CHECK(true);
+        Grid_t grid;
+    }
 
-	TEST( ctor_ptr ) {
-		CHECK(true);
+    TEST( ctor_ptr ) {
+        CHECK(true);
         std::unique_ptr<Grid_t> pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
     }
 

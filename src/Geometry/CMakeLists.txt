@@ -2,7 +2,7 @@ file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
 
 include( template_select )
 
-list( APPEND ${UnitName}_packages Utilities )
+list( APPEND ${UnitName}_packages GPU_Utilities Utilities )
 
 set( ToolkitLibs Math_Functions)
 

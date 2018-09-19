@@ -7,8 +7,15 @@
 
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 namespace MonteRay{
+
+template< unsigned N>
+RayListInterface<N>::RayListInterface( unsigned num) :
+    ptrPoints( new RAYLIST_T(num) )
+{}
+
 
 template< unsigned N>
 RayListInterface<N>::~RayListInterface() {

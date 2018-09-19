@@ -26,12 +26,12 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
     }
 
     if( debug )  {
-    	for( unsigned d = 0; d<DIM; ++d) {
-    		printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d\n",d);
-    		for( unsigned i = 0; i<distances[d].size(); ++i) {
-    			printf( "Debug: ----------------------------------- -- distances[%d].id[%d]=%d, distances[%d].dist[%d]=%f\n", d,i, distances[d].id(i), d,i, distances[d].dist(i));
-    		}
-    	}
+        for( unsigned d = 0; d<DIM; ++d) {
+            printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d\n",d);
+            for( unsigned i = 0; i<distances[d].size(); ++i) {
+                printf( "Debug: ----------------------------------- -- distances[%d].id[%d]=%d, distances[%d].dist[%d]=%f\n", d,i, distances[d].id(i), d,i, distances[d].dist(i));
+            }
+        }
     }
 
     unsigned   end[3] = {0, 0, 0}; //    last location in the distance[i] vector
@@ -63,19 +63,19 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         }
 
         if( debug )  {
-        	for( unsigned d = 0; d<DIM; ++d) {
-        		printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d, minDistance[%d]=%f\n",d, minDistances[d]);
-        	}
+            for( unsigned d = 0; d<DIM; ++d) {
+                printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d, minDistance[%d]=%f\n",d, minDistances[d]);
+            }
         }
 
         //unsigned minDim = std::distance(minDistances, std::min_element(minDistances,minDistances+DIM) );
         unsigned minDim = 0;
         gpuRayFloat_t minDist = minDistances[0];
         for( unsigned i = 1; i<DIM; ++i){
-        	if( minDistances[i] < minDist ) {
-        		minDim = i;
-        		minDist = minDistances[i];
-        	}
+            if( minDistances[i] < minDist ) {
+                minDim = i;
+                minDist = minDistances[i];
+            }
         }
 
         if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- minDim=%d\n",minDim);
@@ -96,24 +96,24 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         gpuRayFloat_t currentDistance = distances[minDim].dist( start[minDim] );
 
         if( !outside || outsideDistances ) {
-        	gpuRayFloat_t deltaDistance = currentDistance - priorDistance;
+            gpuRayFloat_t deltaDistance = currentDistance - priorDistance;
 
-                unsigned global_index;
-                if( !outside ) {
-                    global_index = calcIndex( indices );
-                } else {
-                    global_index = MonteRay_GridSystemInterface::OUTSIDE_GRID;
-                }
-                rayTraceList.add( global_index, deltaDistance );
+            unsigned global_index;
+            if( !outside ) {
+                global_index = calcIndex( indices );
+            } else {
+                global_index = MonteRay_GridSystemInterface::OUTSIDE_GRID;
+            }
+            rayTraceList.add( global_index, deltaDistance );
 
-                if( debug ) {
-                	printf( "Debug: ****************** \n" );
-                	printf( "Debug:  Entry Num    = %d\n", rayTraceList.size() );
-                	printf( "Debug:     index[0]  = %d\n", indices[0] );
-                	printf( "Debug:     index[1]  = %d\n", indices[1] );
-                	printf( "Debug:     index[2]  = %d\n", indices[2] );
-                	printf( "Debug:     distance  = %f\n", deltaDistance );
-                }
+            if( debug ) {
+                printf( "Debug: ****************** \n" );
+                printf( "Debug:  Entry Num    = %d\n", rayTraceList.size() );
+                printf( "Debug:     index[0]  = %d\n", indices[0] );
+                printf( "Debug:     index[1]  = %d\n", indices[1] );
+                printf( "Debug:     index[2]  = %d\n", indices[2] );
+                printf( "Debug:     distance  = %f\n", deltaDistance );
+            }
         }
 
         if( currentDistance >= distance ) {
@@ -122,10 +122,10 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
 
         if( debug ) {
             if( start[minDim]+1 >= distances[minDim].size() ) {
-            	printf( "Debug: Error - start[minDim]+1 >= distances[minDim].size() \n");
-            	printf( "Debug:                   minDim = %d\n", minDim );
-            	printf( "Debug:          start[minDim]+1 = %d\n", start[minDim]+1 );
-            	printf( "Debug: distances[minDim].size() = %d\n", distances[minDim].size() );
+                printf( "Debug: Error - start[minDim]+1 >= distances[minDim].size() \n");
+                printf( "Debug:                   minDim = %d\n", minDim );
+                printf( "Debug:          start[minDim]+1 = %d\n", start[minDim]+1 );
+                printf( "Debug: distances[minDim].size() = %d\n", distances[minDim].size() );
             }
         }
 
@@ -153,10 +153,10 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, int index) const {
-	const bool debug = false;
+    const bool debug = false;
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
 
-	//	constexpr gpuRayFloat_t epsilon = std::numeric_limits<gpuRayFloat_t>::epsilon();
+    //	constexpr gpuRayFloat_t epsilon = std::numeric_limits<gpuRayFloat_t>::epsilon();
 #ifdef __CUDACC__
     if( abs(dir) <= FLT_EPSILON ) { return; }
 #else
@@ -206,8 +206,8 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
     bool rayTerminated = false;
     for( int i = 0; i < num_indices ; ++i ) {
 
-    	//MONTERAY_ASSERT( (current_index + offset) >= 0 );
-    	MONTERAY_ASSERT( (current_index + offset) < Bins.getNumBins()+1 );
+        //MONTERAY_ASSERT( (current_index + offset) >= 0 );
+        MONTERAY_ASSERT( (current_index + offset) < Bins.getNumBins()+1 );
 
         gpuRayFloat_t minDistance = ( Bins.vertices[current_index + offset] - pos) * invDir;
 
@@ -240,15 +240,15 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
 CUDA_CALLABLE_MEMBER
 bool
 MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index, bool outward ) const {
-	const bool debug = false;
-	if( debug ){
+    const bool debug = false;
+    if( debug ){
         printf("Debug: MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection -- \n");
-	}
+    }
 
     // If outside and moving out then return
     if( outward && index >= Bins.getNumBins() ) {
         //distances.push_back( std::make_pair( Bins.getNumBins(), distance)  );
-    	distances.add(Bins.getNumBins(), distance);
+        distances.add(Bins.getNumBins(), distance);
         return true;
     }
 
@@ -284,8 +284,8 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
     bool rayTerminated = false;
     for( int i = 0; i < num_indices ; ++i ) {
 
-    	MONTERAY_ASSERT( (current_index + offset) >= 0 );
-    	MONTERAY_ASSERT( (current_index + offset) < Bins.getNumBins() );
+        MONTERAY_ASSERT( (current_index + offset) >= 0 );
+        MONTERAY_ASSERT( (current_index + offset) < Bins.getNumBins() );
 
         gpuRayFloat_t RadiusSq = Bins.verticesSq[current_index + offset ];
         gpuRayFloat_t C = particle_R2 - RadiusSq;
@@ -301,7 +301,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
             maxDistance = rayDistances.R1;
         }
         if( debug ){
-        	printf("Debug: minDistance=%f, maxDistance=%f\n", minDistance, maxDistance);
+            printf("Debug: minDistance=%f, maxDistance=%f\n", minDistance, maxDistance);
         }
 
         if( minDistance == inf ) {
@@ -325,7 +325,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
             // rays directed inward can have two crossings
             if( maxDistance > 0.0 && maxDistance < inf) {
                 //max_distances.push_back( std::make_pair( cell_index-1, maxDistance)  );
-            	max_distances.add( cell_index-1, maxDistance );
+                max_distances.add( cell_index-1, maxDistance );
             }
         }
 
@@ -334,21 +334,21 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
     }
 
     if( ! outward && ! rayTerminated ) {
-    	for( int i=max_distances.size()-1; i>=0; --i ){
-    		auto id_max = max_distances.id(i);
-    	    auto dist_max = max_distances.dist(i);
-    		if( dist_max > distance ) {
-    			distances.add( id_max, distance );
-    			rayTerminated = true;
-    			break;
-    		}
-    		distances.add( id_max, dist_max );
-    	}
+        for( int i=max_distances.size()-1; i>=0; --i ){
+            auto id_max = max_distances.id(i);
+            auto dist_max = max_distances.dist(i);
+            if( dist_max > distance ) {
+                distances.add( id_max, distance );
+                rayTerminated = true;
+                break;
+            }
+            distances.add( id_max, dist_max );
+        }
 
     }
     if( outward && !rayTerminated ) {
         // finish with distance into area outside of largest radius
-//        distances.push_back( std::make_pair( Bins.getNumBins(), distance)  );
+        //        distances.push_back( std::make_pair( Bins.getNumBins(), distance)  );
         distances.add( Bins.getNumBins(), distance);
         rayTerminated = true;
     }

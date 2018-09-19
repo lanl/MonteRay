@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 
-#include "MonteRayCopyMemory.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 SUITE( CopyMemory_tester ) {
 

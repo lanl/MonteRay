@@ -8,6 +8,7 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "GPUSync.hh"
 #include "MonteRayVector3D.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 using namespace MonteRay;
 

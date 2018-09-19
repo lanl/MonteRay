@@ -68,16 +68,7 @@ public:
     }
 
     CUDAHOST_CALLABLE_MEMBER
-    virtual ~MonteRay_SpatialGrid(void){
-
-        if( ! Base::isCudaIntermediate ) {
-            if( pGridInfo[0] ) delete pGridInfo[0];
-            if( pGridInfo[1] ) delete pGridInfo[1];
-            if( pGridInfo[2] ) delete pGridInfo[2];
-            if( pGridSystem )  delete pGridSystem;
-        }
-
-    }
+    ~MonteRay_SpatialGrid(void);
 
     CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRay_SpatialGrid");}
 
@@ -106,44 +97,7 @@ public:
         Base::copyToGPU();
     }
 
-    CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_SpatialGrid* rhs) {
-        //		if( debug ) {
-        //			std::cout << "Debug: MonteRay_SpatialGrid::copy(const MonteRay_SpatialGrid* rhs) \n";
-        //		}
-
-        if( ! rhs->initialized ) {
-            throw std::runtime_error("MonteRay_SpatialGrid::copy -- MonteRay_SpatialGrid object has not been initialized.");
-        }
-
-        CoordinateSystem = rhs->CoordinateSystem;
-        dimension = rhs->dimension;
-        initialized = rhs->initialized;
-
-#ifdef __CUDACC__
-        if( isCudaIntermediate ) {
-            // host to device
-            pGridInfo[0] = rhs->pGridInfo[0]->devicePtr;
-            pGridInfo[1] = rhs->pGridInfo[1]->devicePtr;
-            pGridInfo[2] = rhs->pGridInfo[2]->devicePtr;
-            pGridSystem = rhs->pGridSystem->getDeviceInstancePtr();
-
-            if( debug ) {
-                //				printf( "Debug: MonteRay_SpatialGrid::copy-- pGridInfo[%d]=%p \n", 0, pGridInfo[0] );
-                //				printf( "Debug: MonteRay_SpatialGrid::copy-- pGridInfo[%d]=%p \n", 1, pGridInfo[1] );
-                //				printf( "Debug: MonteRay_SpatialGrid::copy-- pGridInfo[%d]=%p \n", 2, pGridInfo[2] );
-                //				printf( "Debug: MonteRay_SpatialGrid::copy--   pGridSystem=%p \n", pGridSystem );
-            }
-
-        } else {
-            // device to host
-
-        }
-
-
-#else
-        throw std::runtime_error("MonteRay_SpatialGrid::copy -- can NOT copy between host and device without CUDA.");
-#endif
-    }
+    CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_SpatialGrid* rhs);
 
 
     //  Disable assignment operator until needed
@@ -354,6 +308,7 @@ public:
 
     void write( const std::string& fileName );
     void read( const std::string& fileName );
+
 private:
     TransportMeshTypeEnum::TransportMeshTypeEnum_t CoordinateSystem = TransportMeshTypeEnum::NONE;
     unsigned dimension = 0;

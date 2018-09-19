@@ -12,9 +12,10 @@
 #include "GPUSync.hh"
 #include "GPUUtilityFunctions.hh"
 #include "MonteRay_GridSystemInterface.hh"
-#include "MonteRay_SingleValueCopyMemory.hh"
+#include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 namespace MonteRay_SpatialGrid_helper {
 

@@ -34,37 +34,9 @@ public:
     CUDA_CALLABLE_MEMBER MonteRay_CylindricalGrid(unsigned d, pArrayOfpGridInfo_t pBins);
     CUDA_CALLABLE_MEMBER MonteRay_CylindricalGrid(unsigned d, GridBins_t* pGridR, GridBins_t* pGridZ );
 
-    CUDA_CALLABLE_MEMBER virtual ~MonteRay_CylindricalGrid(void){
-#ifdef __CUDACC__
-#ifndef __CUDA_ARCH__
-    	if( ptrDevicePtr ) {
-    		deleteDeviceInstance<<<1,1>>>( ptrDevicePtr );
-    		cudaDeviceSynchronize();
-    	}
-    	MonteRayDeviceFree( ptrDevicePtr );
-#endif
-#endif
-    }
+    CUDA_CALLABLE_MEMBER virtual ~MonteRay_CylindricalGrid(void);
 
-    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
-    	if( debug ) std::cout << "Debug: MonteRay_CylindricalGrid::copyToGPU \n";
-#ifdef __CUDACC__
-    	ptrDevicePtr = (MonteRay_CylindricalGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CylindricalGrid*), std::string("device - MonteRay_CylindricalGrid::ptrDevicePtr") );
-
-    	pRVertices->copyToGPU();
-    	pZVertices->copyToGPU();
-    	//pThetaVertices->copyToGPU();
-
-    	std::unique_ptr<ptrCylindricalGrid_result_t> ptrResult = std::unique_ptr<ptrCylindricalGrid_result_t>( new ptrCylindricalGrid_result_t() );
-    	ptrResult->copyToGPU();
-
-    	createDeviceInstance<<<1,1>>>( ptrDevicePtr, ptrResult->devicePtr, pRVertices->devicePtr, pZVertices->devicePtr );
-    	cudaDeviceSynchronize();
-    	ptrResult->copyToCPU();
-    	devicePtr = ptrResult->v;
-
-#endif
-	}
+    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void);
 
     CUDAHOST_CALLABLE_MEMBER
     MonteRay_CylindricalGrid* getDeviceInstancePtr();

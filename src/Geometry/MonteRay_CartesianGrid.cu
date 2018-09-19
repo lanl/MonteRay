@@ -6,6 +6,8 @@
  */
 
 #include "MonteRay_CartesianGrid.hh"
+#include "MonteRay_SingleValueCopyMemory.t.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 #include <float.h>
 
@@ -54,7 +56,40 @@ MonteRay_CartesianGrid::MonteRay_CartesianGrid(unsigned dim, GridBins_t* pGridX,
 	pGridBins[2] = pGridZ;
 }
 
+CUDA_CALLABLE_MEMBER
+MonteRay_CartesianGrid::~MonteRay_CartesianGrid(void){
+#ifdef __CUDACC__
+#ifndef __CUDA_ARCH__
+    if( ptrDevicePtr ) {
+        deleteDeviceInstance<<<1,1>>>( ptrDevicePtr );
+        cudaDeviceSynchronize();
+    }
+    MonteRayDeviceFree( ptrDevicePtr );
+#endif
+#endif
+}
 
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRay_CartesianGrid::copyToGPU(void) {
+    if( debug ) std::cout << "Debug: MonteRay_CartesianGrid::copyToGPU \n";
+#ifdef __CUDACC__
+    ptrDevicePtr = (MonteRay_CartesianGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CartesianGrid*), std::string("device - MonteRay_CartesianGrid::ptrDevicePtr") );
+
+    pGridBins[0]->copyToGPU();
+    pGridBins[1]->copyToGPU();
+    pGridBins[2]->copyToGPU();
+
+    std::unique_ptr<ptrCartesianGrid_result_t> ptrResult = std::unique_ptr<ptrCartesianGrid_result_t>( new ptrCartesianGrid_result_t() );
+    ptrResult->copyToGPU();
+
+    createDeviceInstance<<<1,1>>>( ptrDevicePtr, ptrResult->devicePtr, pGridBins[0]->devicePtr, pGridBins[1]->devicePtr, pGridBins[2]->devicePtr );
+    cudaDeviceSynchronize();
+    ptrResult->copyToCPU();
+    devicePtr = ptrResult->v;
+
+#endif
+}
 
 CUDA_CALLABLE_MEMBER
 unsigned

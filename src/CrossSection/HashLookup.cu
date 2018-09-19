@@ -8,6 +8,7 @@
 
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayCrossSection.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 namespace MonteRay{
 

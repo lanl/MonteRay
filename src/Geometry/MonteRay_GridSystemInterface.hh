@@ -20,68 +20,68 @@ namespace MonteRay {
 
 class singleDimRayTraceMap_t {
 private:
-	unsigned N = 0;
-	int CellId[MAXNUMVERTICES]; // negative indicates outside mesh
-	gpuRayFloat_t distance[MAXNUMVERTICES];
+    unsigned N = 0;
+    int CellId[MAXNUMVERTICES]; // negative indicates outside mesh
+    gpuRayFloat_t distance[MAXNUMVERTICES];
 
 public:
-	CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t() : N(0) {}
-	CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(unsigned n) : N(n) {}
-	CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
+    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t() : N(0) {}
+    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(unsigned n) : N(n) {}
+    CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
 
-	CUDA_CALLABLE_MEMBER
-	void add( int cell, gpuRayFloat_t dist) {
-		MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
-		CellId[N] = cell;
-		distance[N] = dist;
-		++N;
-	}
+    CUDA_CALLABLE_MEMBER
+    void add( int cell, gpuRayFloat_t dist) {
+        MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
+        CellId[N] = cell;
+        distance[N] = dist;
+        ++N;
+    }
 
-	CUDA_CALLABLE_MEMBER void clear() { reset(); }
-	CUDA_CALLABLE_MEMBER void reset() { N = 0; }
-	CUDA_CALLABLE_MEMBER unsigned size() const { return N; }
+    CUDA_CALLABLE_MEMBER void clear() { reset(); }
+    CUDA_CALLABLE_MEMBER void reset() { N = 0; }
+    CUDA_CALLABLE_MEMBER unsigned size() const { return N; }
 
-	CUDA_CALLABLE_MEMBER int id(size_t i) const { return CellId[i]; }
-	CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
+    CUDA_CALLABLE_MEMBER int id(size_t i) const { return CellId[i]; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
 };
 
 struct rayTraceList_t {
 private:
-	unsigned N;
-	unsigned CellId[MAXNUMVERTICES*2];
-	gpuRayFloat_t distance[MAXNUMVERTICES*2];
+    unsigned N;
+    unsigned CellId[MAXNUMVERTICES*2];
+    gpuRayFloat_t distance[MAXNUMVERTICES*2];
 
 public:
-	CUDA_CALLABLE_MEMBER rayTraceList_t() : N(0) {}
-	CUDA_CALLABLE_MEMBER rayTraceList_t(unsigned n) : N(n) {}
-	CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
+    CUDA_CALLABLE_MEMBER rayTraceList_t() : N(0) {}
+    CUDA_CALLABLE_MEMBER rayTraceList_t(unsigned n) : N(n) {}
+    CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
 
-	CUDA_CALLABLE_MEMBER
-	void add( unsigned cell, gpuRayFloat_t dist) {
-		MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
-		CellId[N] = cell;
-		distance[N] = dist;
-		++N;
-	}
+    CUDA_CALLABLE_MEMBER
+    void add( unsigned cell, gpuRayFloat_t dist) {
+        MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
+        CellId[N] = cell;
+        distance[N] = dist;
+        ++N;
+    }
 
-	CUDA_CALLABLE_MEMBER void clear() { reset(); }
-	CUDA_CALLABLE_MEMBER void reset() { N = 0; }
-	CUDA_CALLABLE_MEMBER unsigned size() const { return N; }
+    CUDA_CALLABLE_MEMBER void clear() { reset(); }
+    CUDA_CALLABLE_MEMBER void reset() { N = 0; }
+    CUDA_CALLABLE_MEMBER unsigned size() const { return N; }
 
-	CUDA_CALLABLE_MEMBER unsigned id(size_t i) const { return CellId[i]; }
-	CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
+    CUDA_CALLABLE_MEMBER unsigned id(size_t i) const { return CellId[i]; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
 };
 
 class multiDimRayTraceMap_t {
 public:
-	CUDA_CALLABLE_MEMBER multiDimRayTraceMap_t(){}
-	CUDA_CALLABLE_MEMBER ~multiDimRayTraceMap_t(){}
+    CUDA_CALLABLE_MEMBER multiDimRayTraceMap_t(){}
+    CUDA_CALLABLE_MEMBER ~multiDimRayTraceMap_t(){}
 
-	const unsigned N = 3 ;  // hardcoded to 3D for now.
-	singleDimRayTraceMap_t traceMapList[3];
+    const unsigned N = 3 ;  // hardcoded to 3D for now.
+    singleDimRayTraceMap_t traceMapList[3];
 
-	CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t& operator[] (size_t i ) { return traceMapList[i];}
-	CUDA_CALLABLE_MEMBER const singleDimRayTraceMap_t& operator[] (size_t i ) const { return traceMapList[i];}
+    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t& operator[] (size_t i ) { return traceMapList[i];}
+    CUDA_CALLABLE_MEMBER const singleDimRayTraceMap_t& operator[] (size_t i ) const { return traceMapList[i];}
 
 };
 
@@ -89,10 +89,10 @@ class MonteRay_GridSystemInterface {
 
 #define OUTSIDE_INDEX UINT_MAX;
 public:
-//    typedef std::vector<std::pair<int,gpuRayFloat_t>> singleDimRayTraceMap_t;
-//    typedef std::vector<singleDimRayTraceMap_t> multiDimRayTraceMap_t;
-//    typedef std::vector<std::pair<unsigned, gpuRayFloat_t>> rayTraceList_t;
-	using GridBins_t = MonteRay_GridBins;
+    //    typedef std::vector<std::pair<int,gpuRayFloat_t>> singleDimRayTraceMap_t;
+    //    typedef std::vector<singleDimRayTraceMap_t> multiDimRayTraceMap_t;
+    //    typedef std::vector<std::pair<unsigned, gpuRayFloat_t>> rayTraceList_t;
+    using GridBins_t = MonteRay_GridBins;
     typedef GridBins_t* pGridBins_t;
     //static const unsigned OUTSIDE = UINT_MAX;
 
@@ -114,7 +114,7 @@ public:
     CUDA_CALLABLE_MEMBER
     virtual void
     crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
-    	ABORT("Single dimension crossingDistance with Position_t and Direction_t function not implemented for this grid type.");
+        ABORT("Single dimension crossingDistance with Position_t and Direction_t function not implemented for this grid type.");
     }
 
     CUDA_CALLABLE_MEMBER
@@ -155,7 +155,7 @@ protected:
     bool radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index, bool outward ) const;
 
 public:
-	static constexpr unsigned OUTSIDE_GRID = UINT_MAX;
+    static constexpr unsigned OUTSIDE_GRID = UINT_MAX;
 
     unsigned DIM = 0;
     static const unsigned MAXDIM = 3;

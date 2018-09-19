@@ -1,5 +1,7 @@
 #include "MonteRay_CylindricalGrid.hh"
 #include "MonteRayConstants.hh"
+#include "MonteRay_SingleValueCopyMemory.t.hh"
+#include "MonteRayCopyMemory.t.hh"
 
 #include <float.h>
 
@@ -7,46 +9,82 @@ namespace MonteRay {
 
 CUDA_CALLABLE_KERNEL
 void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ ) {
-	*pPtrInstance = new MonteRay_CylindricalGrid( 2, pGridR, pGridZ );
-	pResult->v = *pPtrInstance;
-	//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
+    *pPtrInstance = new MonteRay_CylindricalGrid( 2, pGridR, pGridZ );
+    pResult->v = *pPtrInstance;
+    //if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
 }
 
 CUDA_CALLABLE_KERNEL
 void deleteDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance) {
-	delete *pPtrInstance;
+    delete *pPtrInstance;
 }
 
 CUDAHOST_CALLABLE_MEMBER
 MonteRay_CylindricalGrid*
 MonteRay_CylindricalGrid::getDeviceInstancePtr() {
-	return devicePtr;
+    return devicePtr;
 }
 
 CUDA_CALLABLE_MEMBER
 MonteRay_CylindricalGrid::MonteRay_CylindricalGrid(unsigned dim, pArrayOfpGridInfo_t pBins) :
-    MonteRay_GridSystemInterface(dim)
+MonteRay_GridSystemInterface(dim)
 {
-	MONTERAY_VERIFY( dim == DimMax, "MonteRay_CylindricalGrid::ctor -- only 2-D is allowed" ); // No greater than 2-D.
+    MONTERAY_VERIFY( dim == DimMax, "MonteRay_CylindricalGrid::ctor -- only 2-D is allowed" ); // No greater than 2-D.
 
-	DIM = dim;
+    DIM = dim;
 
-	pRVertices = pBins[R];
-	if( DIM > 1 ) { pZVertices = pBins[Z]; }
-	//if( DIM > 2 ) { pThetaVertices = pBins[Theta]; }
-	validate();
+    pRVertices = pBins[R];
+    if( DIM > 1 ) { pZVertices = pBins[Z]; }
+    //if( DIM > 2 ) { pThetaVertices = pBins[Theta]; }
+    validate();
 }
 
 CUDA_CALLABLE_MEMBER
 MonteRay_CylindricalGrid::MonteRay_CylindricalGrid(unsigned dim, GridBins_t* pGridR, GridBins_t* pGridZ ) :
-    MonteRay_GridSystemInterface(dim)
+MonteRay_GridSystemInterface(dim)
 {
-	MONTERAY_VERIFY( dim == DimMax, "MonteRay_CylindricalGrid::ctor -- only 2-D is allowed" ); // No greater than 2-D.
+    MONTERAY_VERIFY( dim == DimMax, "MonteRay_CylindricalGrid::ctor -- only 2-D is allowed" ); // No greater than 2-D.
 
-	DIM = 2;
-	pRVertices = pGridR;
-	pZVertices = pGridZ;
-	validate();
+    DIM = 2;
+    pRVertices = pGridR;
+    pZVertices = pGridZ;
+    validate();
+}
+
+CUDA_CALLABLE_MEMBER
+MonteRay_CylindricalGrid::~MonteRay_CylindricalGrid(void){
+#ifdef __CUDACC__
+#ifndef __CUDA_ARCH__
+    if( ptrDevicePtr ) {
+        deleteDeviceInstance<<<1,1>>>( ptrDevicePtr );
+        cudaDeviceSynchronize();
+    }
+    MonteRayDeviceFree( ptrDevicePtr );
+#endif
+#endif
+}
+
+
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRay_CylindricalGrid::copyToGPU(void) {
+    if( debug ) std::cout << "Debug: MonteRay_CylindricalGrid::copyToGPU \n";
+#ifdef __CUDACC__
+    ptrDevicePtr = (MonteRay_CylindricalGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CylindricalGrid*), std::string("device - MonteRay_CylindricalGrid::ptrDevicePtr") );
+
+    pRVertices->copyToGPU();
+    pZVertices->copyToGPU();
+    //pThetaVertices->copyToGPU();
+
+    std::unique_ptr<ptrCylindricalGrid_result_t> ptrResult = std::unique_ptr<ptrCylindricalGrid_result_t>( new ptrCylindricalGrid_result_t() );
+    ptrResult->copyToGPU();
+
+    createDeviceInstance<<<1,1>>>( ptrDevicePtr, ptrResult->devicePtr, pRVertices->devicePtr, pZVertices->devicePtr );
+    cudaDeviceSynchronize();
+    ptrResult->copyToCPU();
+    devicePtr = ptrResult->v;
+
+#endif
 }
 
 
@@ -64,7 +102,7 @@ CUDA_CALLABLE_MEMBER
 void
 MonteRay_CylindricalGrid::validateR(void) {
     // Test for negative R
-	for( int i=0; i<pRVertices->nVertices; ++i ){
+    for( int i=0; i<pRVertices->nVertices; ++i ){
         MONTERAY_VERIFY( pRVertices->vertices[i] >= 0.0, "MonteRay_CylindricalGrid::validateR -- Can't have negative values for radius!!!" );
     }
 
@@ -74,38 +112,38 @@ MonteRay_CylindricalGrid::validateR(void) {
 CUDA_CALLABLE_MEMBER
 MonteRay_CylindricalGrid::Position_t
 MonteRay_CylindricalGrid::convertFromCartesian( const Position_t& pos) const {
-     Position_t particleMeshPosition = {0.0, 0.0, 0.0};
+    Position_t particleMeshPosition = {0.0, 0.0, 0.0};
 
-     gpuRayFloat_t r = sqrt(pos[x]*pos[x] + pos[y]*pos[y]);
-     particleMeshPosition[R] = r;
+    gpuRayFloat_t r = sqrt(pos[x]*pos[x] + pos[y]*pos[y]);
+    particleMeshPosition[R] = r;
 
-     if(DIM > 1) {
-    	 particleMeshPosition[Z] =  pos[z];
-     }
+    if(DIM > 1) {
+        particleMeshPosition[Z] =  pos[z];
+    }
 
-//     if(DIM > 2) {
-//         const double smallR = 1.0e-8;
-//         double theta = 0.0;
-//         if( r >= smallR ) {
-//             theta = std::acos( pos[x] / r );
-//         }
-//
-//         if( pos[y] < 0.0  ) {
-//             theta = 2.0*mcatk::Constants::pi - theta;
-//         }
-//         particleMeshPosition[Theta] =  theta / (2.0*mcatk::Constants::pi); // to get revolutions
-//     }
+    //     if(DIM > 2) {
+    //         const double smallR = 1.0e-8;
+    //         double theta = 0.0;
+    //         if( r >= smallR ) {
+    //             theta = std::acos( pos[x] / r );
+    //         }
+    //
+    //         if( pos[y] < 0.0  ) {
+    //             theta = 2.0*mcatk::Constants::pi - theta;
+    //         }
+    //         particleMeshPosition[Theta] =  theta / (2.0*mcatk::Constants::pi); // to get revolutions
+    //     }
 
-     return particleMeshPosition;
+    return particleMeshPosition;
 }
 
 
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CylindricalGrid::getIndex( const Position_t& particle_pos) const{
-	if( debug ) { printf("Debug: MonteRay_CylindricalGrid::getIndex -- starting\n"); }
+    if( debug ) { printf("Debug: MonteRay_CylindricalGrid::getIndex -- starting\n"); }
 
-	int indices[3]= {0, 0, 0};
+    int indices[3]= {0, 0, 0};
     Position_t pos = convertFromCartesian( particle_pos );
 
     if( debug ) { printf("%i\n", pRVertices->isRadial() ); }
@@ -114,8 +152,8 @@ MonteRay_CylindricalGrid::getIndex( const Position_t& particle_pos) const{
     if( DIM>1 ) { indices[1] = getAxialIndex( pos[Z] ); }
 
     for( auto d = 0; d < DIM; ++d ) {
-    	// outside the grid
-    	if( isIndexOutside(d, indices[d] ) ) { return UINT_MAX; }
+        // outside the grid
+        if( isIndexOutside(d, indices[d] ) ) { return UINT_MAX; }
     }
 
     return calcIndex( indices );;
@@ -124,10 +162,10 @@ MonteRay_CylindricalGrid::getIndex( const Position_t& particle_pos) const{
 CUDA_CALLABLE_MEMBER
 bool
 MonteRay_CylindricalGrid::isIndexOutside( unsigned d, int i) const {
-   	MONTERAY_ASSERT( d < 3 );
+    MONTERAY_ASSERT( d < 3 );
 
     if( d == R ) {
-    	MONTERAY_ASSERT( i >= 0 );
+        MONTERAY_ASSERT( i >= 0 );
         if( i >= numRBins ) { return true; }
     }
 
@@ -135,9 +173,9 @@ MonteRay_CylindricalGrid::isIndexOutside( unsigned d, int i) const {
         if( i < 0 ||  i >= numZBins ){ return true; }
     }
 
-//    if( d == Theta ) {
-//        if( i < 0 ||  i >= numThetaBins ){ return true; }
-//    }
+    //    if( d == Theta ) {
+    //        if( i < 0 ||  i >= numThetaBins ){ return true; }
+    //    }
     return false;
 }
 
@@ -148,9 +186,9 @@ MonteRay_CylindricalGrid::calcIndex( const int indices[] ) const{
     if( DIM > 1) {
         index += indices[1]*numRBins;
     }
-//    if( DIM > 2) {
-//        index += indices[2]*numZBins*numRBins;
-//    }
+    //    if( DIM > 2) {
+    //        index += indices[2]*numZBins*numRBins;
+    //    }
 
     return index;
 }
@@ -185,7 +223,7 @@ CUDA_CALLABLE_MEMBER
 bool
 MonteRay_CylindricalGrid::isOutside( const int i[] ) const {
     for( unsigned d=0; d<DIM; ++d){
-       if( isIndexOutside(d, i[d]) ) return true;
+        if( isIndexOutside(d, i[d]) ) return true;
     }
     return false;
 }
@@ -212,15 +250,15 @@ MonteRay_CylindricalGrid::getVolume( unsigned index ) const {
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CylindricalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance,  bool outsideDistances/*=false*/) const {
-	if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- \n");
-	rayTraceList.reset();
+    if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- \n");
+    rayTraceList.reset();
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
     multiDimRayTraceMap_t distances;
 
     // Crossing distance in R direction
     {
-    	distances[R].reset();
+        distances[R].reset();
         gpuRayFloat_t particleRSq = calcParticleRSq( pos );
         indices[R] = pRVertices->getRadialIndexFromRSq(particleRSq);
 
@@ -261,15 +299,15 @@ MonteRay_CylindricalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CylindricalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
-	if( d == R ) {
-		int index = pRVertices->getRadialIndexFromRSq(calcParticleRSq(pos));
-		radialCrossingDistances( rayTraceMap, pos, dir, index, distance );
-	}
+    if( d == R ) {
+        int index = pRVertices->getRadialIndexFromRSq(calcParticleRSq(pos));
+        radialCrossingDistances( rayTraceMap, pos, dir, index, distance );
+    }
 
-	if( d == Z ) {
-		int index = pZVertices->getLinearIndex( pos[z] );
-		planarCrossingDistance( rayTraceMap, *pZVertices, pos[z], dir[z], distance, index );
-	}
+    if( d == Z ) {
+        int index = pZVertices->getLinearIndex( pos[z] );
+        planarCrossingDistance( rayTraceMap, *pZVertices, pos[z], dir[z], distance, index );
+    }
     return;
 }
 
@@ -292,9 +330,9 @@ MonteRay_CylindricalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTra
     if( debug ) {
         printf("Debug: Inward ray trace size=%d\n",rayTraceMap.size());
         if( rayTerminated ) {
-        	printf("Debug: - ray terminated!\n");
+            printf("Debug: - ray terminated!\n");
         } else {
-        	printf("Debug: - ray not terminated!\n");
+            printf("Debug: - ray not terminated!\n");
         }
     }
 
@@ -303,7 +341,7 @@ MonteRay_CylindricalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTra
         if( !isIndexOutside(R, rIndex) ) {
             radialCrossingDistanceSingleDirection(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex, true);
         } else {
-        	rayTraceMap.add(rIndex, distance);
+            rayTraceMap.add(rIndex, distance);
         }
     }
 }
@@ -311,7 +349,7 @@ MonteRay_CylindricalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTra
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CylindricalGrid::radialCrossingDistances( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance ) const {
-	gpuRayFloat_t particleRSq = calcParticleRSq( pos );
+    gpuRayFloat_t particleRSq = calcParticleRSq( pos );
     unsigned rIndex = pRVertices->getRadialIndexFromRSq(particleRSq);
     radialCrossingDistances( rayTraceMap, pos, dir, rIndex, distance );
 }
@@ -320,7 +358,7 @@ CUDA_CALLABLE_MEMBER
 void
 MonteRay_CylindricalGrid::radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outward ) const {
     // helper function to wrap generalized radialCrossingDistancesSingleDirection
-	gpuRayFloat_t particleRSq = calcParticleRSq( pos );
+    gpuRayFloat_t particleRSq = calcParticleRSq( pos );
     unsigned rIndex = pRVertices->getRadialIndexFromRSq(particleRSq);
 
     gpuRayFloat_t A = calcQuadraticA( dir );
@@ -333,19 +371,19 @@ MonteRay_CylindricalGrid::radialCrossingDistancesSingleDirection( singleDimRayTr
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CylindricalGrid::getNumBins( unsigned d) const {
-	MONTERAY_ASSERT( d < 3 );
-	if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins -- d= %d\n", d);
-	if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins --calling pGridBins[d]->getNumBins()\n");
-	if( d == 0 ) {
-		return pRVertices->getNumBins();
-	}
-	if( d == 1 ) {
-		return pZVertices->getNumBins();
-	}
-	if( d == 2 ) {
-		return 1;
-	}
-	return 0;
+    MONTERAY_ASSERT( d < 3 );
+    if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins -- d= %d\n", d);
+    if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins --calling pGridBins[d]->getNumBins()\n");
+    if( d == 0 ) {
+        return pRVertices->getNumBins();
+    }
+    if( d == 1 ) {
+        return pZVertices->getNumBins();
+    }
+    if( d == 2 ) {
+        return 1;
+    }
+    return 0;
 }
 
 } /* namespace MonteRay */

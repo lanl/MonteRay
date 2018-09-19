@@ -14,13 +14,11 @@ namespace MonteRay{
 template<unsigned N = 1>
 class RayListInterface {
 public:
-	typedef MonteRay::Ray_t<N>      RAY_T;
-	typedef MonteRay::RayList_t<N>  RAYLIST_T;
-	typedef MonteRay::RayListSize_t RayListSize_t;
+    typedef MonteRay::Ray_t<N>      RAY_T;
+    typedef MonteRay::RayList_t<N>  RAYLIST_T;
+    typedef MonteRay::RayListSize_t RayListSize_t;
 
-    RayListInterface( unsigned num) :
-        ptrPoints( new RAYLIST_T(num) )
-	{}
+    RayListInterface( unsigned num);
 
     ~RayListInterface();
 
@@ -53,9 +51,9 @@ public:
     void add( const void* ptrRay, unsigned num=1 ) { add( (const ParticleRay_t*) ptrRay, num); }
 
     void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
-              gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-              gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
-              DetectorIndex_t detectorIndex, ParticleType_t particleType );
+            gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
+            gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
+            DetectorIndex_t detectorIndex, ParticleType_t particleType );
 
     void clear(void) { ptrPoints->clear(); }
 

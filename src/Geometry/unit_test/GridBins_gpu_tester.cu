@@ -1,7 +1,7 @@
 #include <UnitTest++.h>
 
 #include "GridBins.hh"
-#include "MonteRay_SingleValueCopyMemory.hh"
+#include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "GPUUtilityFunctions.hh"
 
 using namespace MonteRay;
