@@ -359,7 +359,7 @@ else()
       if( DEFINED JobController )
           add_test( NAME ${CTestID} COMMAND ${JobController} $<TARGET_FILE:${appName}> ${suiteName} )
       else()
-          add_test( NAME ${CTestID} COMMAND ${appName}.copy ${suiteName} )
+          add_test( NAME ${CTestID} COMMAND ${appName} ${suiteName} )
       endif()
 
       set_property( TEST ${CTestID} APPEND PROPERTY LABELS Serial ${SubProjectName} )
