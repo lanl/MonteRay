@@ -17,7 +17,7 @@
 namespace MonteRay{
 
 struct MonteRay_MaterialProperties_Data {
-	typedef size_t offset_t;
+    typedef size_t offset_t;
     typedef MonteRay_CellProperties::Material_Index_t Material_Index_t;
     typedef MonteRay_CellProperties::Temperature_t Temperature_t;
     typedef MonteRay_CellProperties::MatID_t MatID_t;
@@ -84,14 +84,14 @@ public:
     ///Default Ctor
     MonteRay_MaterialProperties(void) {
         pMemoryLayout.reset( new MemoryLayout_t() );
-        disableReduction();
+        disableMemoryReduction();
         ptrData = new MonteRay_MaterialProperties_Data;
     }
 
     ///Ctor initialized by total number of cells.
     MonteRay_MaterialProperties(const std::size_t& nCells) {
         pMemoryLayout.reset( new MemoryLayout_t(nCells) );
-        disableReduction();
+        disableMemoryReduction();
         ptrData = new MonteRay_MaterialProperties_Data;
     }
 
@@ -104,8 +104,8 @@ public:
 
     ///Default Dtor
     virtual ~MonteRay_MaterialProperties(void) {
-    	cudaDtor();
-    	delete ptrData;
+        cudaDtor();
+        delete ptrData;
     }
 
     void cudaDtor(void);
@@ -135,37 +135,37 @@ public:
     /// initializer that expects an object like MaterialProperties
     template<typename MATPROPS_T>
     void copyMaterialProperties( MATPROPS_T& matprops  ) {
-    	if( ! matprops.isReductionDisabled() ) {
-    		throw std::runtime_error("MonteRay_MaterialProperties::copyMaterialProperties -- original material properties must have memory reduction disabled.");
-    	}
-    	using MAT_T = typename MATPROPS_T::MatID_t;
-    	using DEN_T = typename MATPROPS_T::Density_t;
-    	using TEMP_T = typename MATPROPS_T::Temperature_t;
+        if( ! matprops.isMemoryReductionDisabled() ) {
+            throw std::runtime_error("MonteRay_MaterialProperties::copyMaterialProperties -- original material properties must have memory reduction disabled.");
+        }
+        using MAT_T = typename MATPROPS_T::MatID_t;
+        using DEN_T = typename MATPROPS_T::Density_t;
+        using TEMP_T = typename MATPROPS_T::Temperature_t;
         pMemoryLayout->template copyMaterialProperties<MAT_T, DEN_T, TEMP_T >( matprops.size(),
-        		                                                    matprops.numMatSpecs(),
-        		                                                    matprops.getOffsetData(),
-        		                                                    matprops.getTemperatureData(),
-        		                                                    matprops.getMaterialIDData(),
-        		                                                    matprops.getMaterialDensityData()
-        		                                                  );
+                matprops.numMatSpecs(),
+                matprops.getOffsetData(),
+                matprops.getTemperatureData(),
+                matprops.getMaterialIDData(),
+                matprops.getMaterialDensityData()
+        );
         setupPtrData();
     }
 
     void setupPtrData(void) {
-    	ptrData->numCells = size();
-    	ptrData->numMaterialComponents = numMatSpecs();
-    	ptrData->offset = const_cast<offset_t*>(getOffsetData());
-    	ptrData->ID = const_cast<MatID_t*>(getMaterialIDData());
-    	ptrData->density = const_cast<Density_t*>(getMaterialDensityData());
+        ptrData->numCells = size();
+        ptrData->numMaterialComponents = numMatSpecs();
+        ptrData->offset = const_cast<offset_t*>(getOffsetData());
+        ptrData->ID = const_cast<MatID_t*>(getMaterialIDData());
+        ptrData->density = const_cast<Density_t*>(getMaterialDensityData());
     }
 
     template<typename T>
     void setupPtrData(const T& obj ) {
-    	ptrData->numCells = obj.size();
-    	ptrData->numMaterialComponents = obj.numMatSpecs();
-    	ptrData->offset = const_cast<offset_t*>(obj.getOffsetData());
-    	ptrData->ID = const_cast<MatID_t*>(obj.getMaterialIDData());
-    	ptrData->density = const_cast<Density_t*>(obj.getMaterialDensityData());
+        ptrData->numCells = obj.size();
+        ptrData->numMaterialComponents = obj.numMatSpecs();
+        ptrData->offset = const_cast<offset_t*>(obj.getOffsetData());
+        ptrData->ID = const_cast<MatID_t*>(obj.getMaterialIDData());
+        ptrData->density = const_cast<Density_t*>(obj.getMaterialDensityData());
     }
 
     template< typename FUNC_T, typename CELLINDEX_T, typename T = double >
@@ -240,7 +240,7 @@ public:
 
     template<typename T>
     void renumberMaterialIDs(const T& matList ) {
-    	pMemoryLayout->renumberMaterialIDs<T>(matList);
+        pMemoryLayout->renumberMaterialIDs<T>(matList);
     }
 
     void add( MonteRay::MonteRay_CellProperties cell = MonteRay::MonteRay_CellProperties() );
@@ -300,8 +300,8 @@ public:
     const MatID_t* getMaterialIDData(void) const { return pMemoryLayout->getMaterialIDData(); }
     const Density_t* getMaterialDensityData(void) const { return pMemoryLayout->getMaterialDensityData(); }
 
-    void disableReduction() { pMemoryLayout->disableReduction(); }
-    bool isReductionDisabled(void) const { return pMemoryLayout->isReductionDisabled(); }
+    void disableMemoryReduction() { pMemoryLayout->disableMemoryReduction(); }
+    bool isMemoryReductionDisabled(void) const { return pMemoryLayout->isMemoryReductionDisabled(); }
 
     Density_t launchSumMatDensity(MatID_t matIndex) const;
     Density_t sumMatDensity( MatID_t matIndex) const;
@@ -312,7 +312,7 @@ public:
     Density_t launchGetMaterialDensity( Cell_Index_t cellID, Material_Index_t i ) const;
 
     const MonteRay_MaterialProperties_Data* getPtr( void ) const {
-    	return ptrData;
+        return ptrData;
     }
 private:
     pMemoryLayout_t pMemoryLayout;

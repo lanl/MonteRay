@@ -35,7 +35,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 	    	pTally = new gpuTallyHost( pGrid->getNumCells() );
 
 	    	pMatProps = new MonteRay_MaterialProperties();
-	    	pMatProps->disableReduction();
+	    	pMatProps->disableMemoryReduction();
 
 	    	// xs from 0.0 to 100.0 mev with total cross-section of 1.0
 	    	xs = new MonteRayCrossSectionHost(2);

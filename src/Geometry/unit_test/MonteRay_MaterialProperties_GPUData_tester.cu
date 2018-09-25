@@ -48,7 +48,7 @@ SUITE( MaterialProperties_GPUData_tester ) {
 		readerObject.ReadMatData();
 
 		MonteRay_MaterialProperties mp;
-		mp.disableReduction();
+		mp.disableMemoryReduction();
 		mp.setMaterialDescription( readerObject );
 
 	    mp.copyToGPU();

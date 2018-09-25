@@ -55,7 +55,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 			MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/Room_cartesian_200x200x50.lnk3dnt" );
 			readerObject.ReadMatData();
 
-			pMatProps->disableReduction();
+			pMatProps->disableMemoryReduction();
 			pMatProps->setMaterialDescription( readerObject );
 
 			pGrid = new GridBins(readerObject);

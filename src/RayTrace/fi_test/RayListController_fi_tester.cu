@@ -59,7 +59,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
 			MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
 			readerObject.ReadMatData();
 
-			pMatProps->disableReduction();
+			pMatProps->disableMemoryReduction();
 			pMatProps->setMaterialDescription( readerObject );
 
 	        u234s->read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );

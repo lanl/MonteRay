@@ -180,7 +180,7 @@ MonteRay_MaterialProperties_FlatLayout::reserve( size_t NTotalCells, size_t nCom
     numReservedCells = NTotalCells;
     totalNumComponents = nComponents;
 
-    if( reductionDisabled ) {
+    if( memoryReductionDisabled ) {
         temperature.reserve( NTotalCells );
         offset.reserve(NTotalCells+1);
     }
@@ -250,15 +250,15 @@ MonteRay_MaterialProperties_FlatLayout::getCell( Cell_Index_t cellID ) const {
 }
 
 void
-MonteRay_MaterialProperties_FlatLayout::disableReduction() {
-    reductionDisabled = true;
+MonteRay_MaterialProperties_FlatLayout::disableMemoryReduction() {
+    memoryReductionDisabled = true;
     singleTemp = false;
     singleNumComponents = false;
 
     if( size() > 0 ) {
         std::stringstream msg;
-        msg << "Disable reduction called after cells have already been added!\n";
-        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : MonteRay_MaterialProperties_FlatLayout::disableReduction\n\n";
+        msg << "Disable memory reduction called after cells have already been added!\n";
+        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : MonteRay_MaterialProperties_FlatLayout::disableMemoryReduction\n\n";
         throw std::runtime_error( msg.str() );
     }
 }

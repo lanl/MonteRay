@@ -56,7 +56,7 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 			MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/pwr16x16_assembly_fine.lnk3dnt" );
 			readerObject.ReadMatData();
 
-			pMatProps->disableReduction();
+			pMatProps->disableMemoryReduction();
 			pMatProps->setMaterialDescription( readerObject );
 
 			pGrid = new GridBins(readerObject);

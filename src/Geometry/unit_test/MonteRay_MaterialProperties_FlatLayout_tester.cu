@@ -140,7 +140,7 @@ SUITE( MaterialProperties_FlatLayout_tests ) {
         cell.setTemperature( 11.0 );
 
         MaterialProperties_FlatLayout mp;
-        mp.disableReduction();
+        mp.disableMemoryReduction();
 
         CHECK_EQUAL( 0, mp.size() );
         mp.add( cell );
@@ -161,7 +161,7 @@ SUITE( MaterialProperties_FlatLayout_tests ) {
         cell.setTemperature( 11.0 );
 
         MaterialProperties_FlatLayout mp;
-        mp.disableReduction();
+        mp.disableMemoryReduction();
 
         CHECK_EQUAL( 0, mp.size() );
         mp.add( cell );
@@ -495,7 +495,7 @@ SUITE( MaterialProperties_FlatLayout_tests ) {
 
         size_t TotalNumberOfCells = 5;
         tester mp;
-        mp.disableReduction();
+        mp.disableMemoryReduction();
         mp.initializeMaterialDescription( IDs, densities, TotalNumberOfCells );
         CHECK_EQUAL( false, mp.isSingleNumMats());
 
@@ -785,7 +785,7 @@ SUITE( MaterialProperties_FlatLayout_tests ) {
         for( unsigned k = 0 ; k < nMats+1; ++k){
 
             MaterialProperties_FlatLayout mp;
-            mp.disableReduction();
+            mp.disableMemoryReduction();
             mp.reserve( 1e6, 1e6*k );
 
             for( unsigned i=0; i<1e6; ++i ) {
@@ -809,7 +809,7 @@ SUITE( MaterialProperties_FlatLayout_1million_godiva) {
         readerObject.ReadMatData();
 
         MaterialProperties_FlatLayout mp;
-        mp.disableReduction();
+        mp.disableMemoryReduction();
         mp.setMaterialDescription( readerObject );
 
         CHECK_EQUAL(false,mp.isSingleTemp() );
@@ -853,7 +853,7 @@ SUITE( MaterialProperties_FlatLayout_boston) {
         readerObject.ReadMatData();
 
         MaterialProperties_FlatLayout mp;
-        mp.disableReduction();
+        mp.disableMemoryReduction();
         mp.setMaterialDescription( readerObject );
 
         CHECK_EQUAL(99960000, mp.size());

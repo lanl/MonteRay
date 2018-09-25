@@ -82,32 +82,32 @@ public:
     }
 
     void resetMaterialID( Cell_Index_t cellID, Material_Index_t i, MatID_t id ) {
-    	 size_t location = getOffset(cellID) + i;
-    	 if( i >= getNumMaterials(cellID) ) {
-    		 std::stringstream msg;
-    		 msg << "Exceeding the number of materials in the cell!\n";
-    		 msg << "Cell index = " << cellID << ", material index = " << i << "\n";
-    		 msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_MaterialProperties_FlatLayout::resetMaterialID" << "\n\n";
-    		 throw std::runtime_error( msg.str() );
-    	 }
-    	 componentMatID[ getOffset(cellID) + i ] = id;
+        size_t location = getOffset(cellID) + i;
+        if( i >= getNumMaterials(cellID) ) {
+            std::stringstream msg;
+            msg << "Exceeding the number of materials in the cell!\n";
+            msg << "Cell index = " << cellID << ", material index = " << i << "\n";
+            msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_MaterialProperties_FlatLayout::resetMaterialID" << "\n\n";
+            throw std::runtime_error( msg.str() );
+        }
+        componentMatID[ getOffset(cellID) + i ] = id;
     }
 
     template<typename T>
     void renumberMaterialIDs(const T& matList ) {
-    	for( size_t i = 0; i < componentMatID.size(); ++i) {
-    		try{
-    			componentMatID[i] = matList.materialIDtoIndex( componentMatID[i] );
-    		}
-    		catch( const std::exception& e ) {
-    			std::stringstream msg;
-    			msg << e.what();
-    			msg << "Failure converting material ID to index!\n";
-    			msg << "Material ID = " << componentMatID[i] << ", component index = " << i << "\n";
-    			msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_MaterialProperties_FlatLayout::renumberMaterialIDs" << "\n\n";
-    			throw std::runtime_error( msg.str() );
-    		}
-    	}
+        for( size_t i = 0; i < componentMatID.size(); ++i) {
+            try{
+                componentMatID[i] = matList.materialIDtoIndex( componentMatID[i] );
+            }
+            catch( const std::exception& e ) {
+                std::stringstream msg;
+                msg << e.what();
+                msg << "Failure converting material ID to index!\n";
+                msg << "Material ID = " << componentMatID[i] << ", component index = " << i << "\n";
+                msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_MaterialProperties_FlatLayout::renumberMaterialIDs" << "\n\n";
+                throw std::runtime_error( msg.str() );
+            }
+        }
     }
 
     Density_t getMaterialDensity( Cell_Index_t cellID, Material_Index_t i ) const {
@@ -172,8 +172,8 @@ public:
     size_t componentMatIDCapacity() const { return componentMatID.capacity(); }
     size_t componentDensityCapacity() const { return componentDensity.capacity(); }
 
-    void disableReduction();
-    bool isReductionDisabled(void) const { return reductionDisabled; }
+    void disableMemoryReduction();
+    bool isMemoryReductionDisabled(void) const { return memoryReductionDisabled; }
 
     const offset_t* getOffsetData(void) const {return offset.data(); }
     const Temperature_t* getTemperatureData(void) const { return temperature.data(); }
@@ -196,7 +196,7 @@ protected:
     unsigned maxNumComponents = 0;
     bool singleTemp = true;
     bool singleNumComponents = false;
-    bool reductionDisabled = false;
+    bool memoryReductionDisabled = false;
 
     void convertFromSingleNumComponents(void);
 
@@ -232,8 +232,8 @@ MonteRay_MaterialProperties_FlatLayout::initializeMaterialDescription( const std
 
     clear();
 
-    // re-check disabled reductions after call to clear
-    if( reductionDisabled ) { disableReduction(); }
+    // re-check disabled memory reductions after call to clear
+    if( memoryReductionDisabled ) { disableMemoryReduction(); }
 
     MaterialIDType maxMatID = std::numeric_limits<MatID_t>::max();
 
@@ -266,7 +266,7 @@ MonteRay_MaterialProperties_FlatLayout::initializeMaterialDescription( const std
     size_t memorySizeForEqualNumMats = getEqualNumMatMemorySize( NTotalCells, maxNumComponents );
     size_t memorySizeForNonEqualNumMats = getNonEqualNumMatMemorySize( NTotalCells, nComponents );
 
-    if( memorySizeForEqualNumMats < memorySizeForNonEqualNumMats && !reductionDisabled ) {
+    if( memorySizeForEqualNumMats < memorySizeForNonEqualNumMats && !memoryReductionDisabled ) {
         singleNumComponents = true;
         reserve( NTotalCells, NTotalCells * maxNumComponents );
     } else {
@@ -323,7 +323,7 @@ MonteRay_MaterialProperties_FlatLayout::copyMaterialProperties(
 	numCells = nCells;
 	totalNumComponents = nMatSpecs;
     numReservedCells = numCells;
-    reductionDisabled = true;
+    memoryReductionDisabled = true;
 
     offset.resize( nCells + 1 );
     for( unsigned i=0; i< nCells+1; ++i) {
