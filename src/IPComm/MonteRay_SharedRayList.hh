@@ -350,9 +350,9 @@ public:
         collision.energy[1] = results.coherent.energy;
         collision.energy[2] = results.pairProduction.energy;
 
-        collision.weight[0] = results.incoherent.probability;
-        collision.weight[1] = results.coherent.probability;
-        collision.weight[2] = results.pairProduction.probability;
+        collision.weight[0] = particle.getWeight()*results.incoherent.probability;
+        collision.weight[1] = particle.getWeight()*results.coherent.probability;
+        collision.weight[2] = particle.getWeight()*results.pairProduction.probability;
 
         collision.index = particle.getLocationIndex();
         collision.detectorIndex = detectorIndex;

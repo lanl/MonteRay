@@ -526,4 +526,6 @@ MonteRay_SpatialGrid::read_v0(std::istream& infile){
     }
 }
 
+template class MonteRay::CopyMemoryBase<MonteRay::MonteRay_SpatialGrid>;
+
 } /* namespace MonteRay */

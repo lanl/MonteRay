@@ -102,16 +102,16 @@ SUITE( shared_next_event_ray_list_tester ){
         ~dummyNextEventRay(){}
         PositionDouble_t getPosition( void ) const {return pos;}
         PositionDouble_t getDirection( void ) const { return dir; }
-        double getEnergy(unsigned i) const { return energy[i]; }
-        double getWeight(unsigned i) const { return weight[i]; }
+        double getEnergy() const { return energy; }
+        double getWeight() const { return weight; }
         int getLocationIndex() const { return locationIndex; }
-        constexpr static unsigned getNPairs() { return 3;}
+        //constexpr static unsigned getNPairs() { return 3;}
 
     private:
         PositionDouble_t pos = PositionDouble_t( 1.0, 2.0, 3.0 );
         PositionDouble_t dir = PositionDouble_t( 4.0, 5.0, 6.0 );
-        double energy[3] = {7.0, 8.0, 9.0};
-        double weight[3] = {10.0, 11.0, 12.0};
+        double energy = 7.0;
+        double weight = 10.0;
         int locationIndex = 13;
 
     };
@@ -128,10 +128,10 @@ SUITE( shared_next_event_ray_list_tester ){
     public:
         dummuyPhotonScatteringProbabilities(){
             incoherent.energy = 0.0;
-            incoherent.probability = 0.0;
+            incoherent.probability = 1.0;
 
             coherent.energy = 0.0;
-            coherent.probability = 0.0;
+            coherent.probability = 4.0;
 
             pairProduction.energy = 0.511;
             pairProduction.probability = 2.0;
@@ -157,6 +157,16 @@ SUITE( shared_next_event_ray_list_tester ){
          CHECK_EQUAL( false, list.isBucketFull(1,0) );
          CHECK_EQUAL( false, list.isBucketDone(1,0) );
          CHECK_EQUAL( 0, list.getCurrentBucket(1) );
+
+         list.flush(1,true);
+         list.flush(0,true);
+
+         CHECK_EQUAL( 1, master.size() );
+         ray3_t stored_ray = master.get(0);
+
+         CHECK_CLOSE( 10.0, stored_ray.getWeight(0), 1e-6);
+         CHECK_CLOSE( 40.0, stored_ray.getWeight(1), 1e-6);
+         CHECK_CLOSE( 20.0, stored_ray.getWeight(2), 1e-6);
      }
 
 }
