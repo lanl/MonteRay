@@ -146,19 +146,13 @@ SUITE( shared_next_event_ray_list_tester ){
 
     TEST( addDummyNextEventRay ){
          TestMasterList master;
-         rayList_t list(master, 100,0,2,false,10);
+         rayList_t list(master, 100,0,1,false,10);
          dummyNextEventRay particle;
          dummuyPhotonScatteringProbabilities probs;
          unsigned detectorID = 10;
 
          double prob = 20.0;
-         list.addCollision(1, particle, probs, detectorID);
-         CHECK_EQUAL( 1U, list.bucketSize(1,0) );
-         CHECK_EQUAL( false, list.isBucketFull(1,0) );
-         CHECK_EQUAL( false, list.isBucketDone(1,0) );
-         CHECK_EQUAL( 0, list.getCurrentBucket(1) );
-
-         list.flush(1,true);
+         list.add(particle, probs, detectorID);
          list.flush(0,true);
 
          CHECK_EQUAL( 1, master.size() );

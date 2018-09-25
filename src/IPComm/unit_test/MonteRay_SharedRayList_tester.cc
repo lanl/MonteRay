@@ -508,11 +508,12 @@ SUITE( shared_collisionPointList_tester ){
          dummyParticle particle;
 
          double prob = 20.0;
-         list.addCollision(1,particle);
-         CHECK_EQUAL( 1U, list.bucketSize(1,0) );
-         CHECK_EQUAL( false, list.isBucketFull(1,0) );
-         CHECK_EQUAL( false, list.isBucketDone(1,0) );
-         CHECK_EQUAL( 0, list.getCurrentBucket(1) );
+         list.add(particle);
+
+         CHECK_EQUAL( 1, master.size() );
+         ray_t stored_ray = master.get(0);
+
+         CHECK_CLOSE( 8.0, stored_ray.getWeight(0), 1e-6);
      }
 
 }

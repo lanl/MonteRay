@@ -331,55 +331,21 @@ public:
     template<typename PARTICLE_T, typename SCATTERING_PROBABILITES,
              typename Foo = COLLISION_T,
              typename std::enable_if<(Foo::getN() == 3)>::type* = nullptr >
-    void addCollision( unsigned targetRank,
-                       const PARTICLE_T& particle,
-                       const SCATTERING_PROBABILITES& results,
-                       unsigned detectorIndex) {
+    void add( const PARTICLE_T& particle,
+              const SCATTERING_PROBABILITES& results,
+              unsigned detectorIndex) {
 
-        COLLISION_T collision;
-
-        collision.pos[0] = particle.getPosition()[0];
-        collision.pos[1] = particle.getPosition()[1];
-        collision.pos[2] = particle.getPosition()[2];
-
-        collision.dir[0] = particle.getDirection()[0];
-        collision.dir[1] = particle.getDirection()[1];
-        collision.dir[2] = particle.getDirection()[2];
-
-        collision.energy[0] = results.incoherent.energy;
-        collision.energy[1] = results.coherent.energy;
-        collision.energy[2] = results.pairProduction.energy;
-
-        collision.weight[0] = particle.getWeight()*results.incoherent.probability;
-        collision.weight[1] = particle.getWeight()*results.coherent.probability;
-        collision.weight[2] = particle.getWeight()*results.pairProduction.probability;
-
-        collision.index = particle.getLocationIndex();
-        collision.detectorIndex = detectorIndex;
-
-        addCollision( targetRank, collision);
+        COLLISION_T collision( particle, results, detectorIndex);
+        addCollision( rank, collision);
     }
 
     // enable addCollision for a single energy, probability pair
     template<typename PARTICLE_T,
              typename Foo = COLLISION_T,
              typename std::enable_if<(Foo::getN() == 1)>::type* = nullptr >
-    void addCollision( unsigned targetRank,const PARTICLE_T& particle) {
-        COLLISION_T collision;
-
-        collision.pos[0] = particle.getPosition()[0];
-        collision.pos[1] = particle.getPosition()[1];
-        collision.pos[2] = particle.getPosition()[2];
-
-        collision.dir[0] = particle.getDirection()[0];
-        collision.dir[1] = particle.getDirection()[1];
-        collision.dir[2] = particle.getDirection()[2];
-
-        collision.energy[0] = particle.getEnergy();
-        collision.weight[0] = particle.getWeight();
-        collision.index = particle.getLocationIndex();
-
-        addCollision( targetRank, collision);
+    void add( const PARTICLE_T& particle ) {
+        COLLISION_T collision( particle );
+        addCollision( rank, collision);
     }
 
     unsigned getCurrentBucket(unsigned targetRank) const {
