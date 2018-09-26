@@ -16,7 +16,7 @@
 namespace MonteRay{
 
 struct MonteRayCrossSection {
-	int id;
+    int id;
     unsigned numPoints;
     gpuFloatType_t AWR;
     gpuFloatType_t* energies;
@@ -106,9 +106,9 @@ public:
     void setTotalXS(unsigned i, gpuFloatType_t value) { xs->totalXS[i] = value; }
 
     void setTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t value) {
-    	if( i >= size() ) {
-    		throw std::runtime_error( "Error: MonteRayCrossSectionHost::setTotalXS, invalid index");
-    	}
+        if( i >= size() ) {
+            throw std::runtime_error( "Error: MonteRayCrossSectionHost::setTotalXS, invalid index");
+        }
         xs->energies[i] = E;
         xs->totalXS[i] = value;
     }
@@ -137,52 +137,52 @@ public:
 
     template <typename T>
     struct has_member_func_totalXS_with_energy_temp_and_index {
-    	template <typename C>
-    	static auto test(double x) -> decltype( std::declval<C>().TotalXsec(x, -1.0, 0), std::true_type() );
+        template <typename C>
+        static auto test(double x) -> decltype( std::declval<C>().TotalXsec(x, -1.0, 0), std::true_type() );
 
-    	template <typename>
-    	static std::false_type test( ... );
+        template <typename>
+        static std::false_type test( ... );
 
-    	typedef decltype( test<T>(1.0) ) CheckType;
-    	static const bool value = std::is_same<std::true_type,CheckType>::value;
+        typedef decltype( test<T>(1.0) ) CheckType;
+        static const bool value = std::is_same<std::true_type,CheckType>::value;
     };
 
     template <typename T>
     typename std::enable_if< !has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
     getTotal(const T& CrossSection, double& E) {
-    	return CrossSection.TotalXsec(E);
+        return CrossSection.TotalXsec(E);
     }
 
     template<typename T>
     typename std::enable_if< !has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
     getTotal(const T& CrossSection, double E, size_t index) {
-    	return CrossSection.TotalXsec(E, index);
+        return CrossSection.TotalXsec(E, index);
     }
 
     template <typename T>
     typename std::enable_if< has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
     getTotal(const T& CrossSection, double E ) {
-    	return CrossSection.TotalXsec(E, -1.0);
+        return CrossSection.TotalXsec(E, -1.0);
     }
 
     template <typename T>
     typename std::enable_if< has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
     getTotal(const T& CrossSection, double E, size_t index) {
-    	return CrossSection.TotalXsec(E, -1.0, index);
+        return CrossSection.TotalXsec(E, -1.0, index);
     }
 
     template<typename CROSS_SECTION_T, typename GRID_T>
     GRID_T
     createInitialGrid(const CROSS_SECTION_T& CrossSection, const toEnergyFunc_t& toEnergyFunc, const xsByIndexFunct_t& xsByIndexFunc ) const{
-    	GRID_T linearGrid;
+        GRID_T linearGrid;
 
-    	// build initial grid;
-    	for( unsigned i=0; i<CrossSection.getEnergyGrid().GridSize(); ++i ){
-    		double energy = toEnergyFunc( (CrossSection.getEnergyGrid())[i] );
-    		double totalXS = xsByIndexFunc( energy, i);
-    		linearGrid.push_back( std::make_pair(energy, totalXS ) );
-    	}
-    	return linearGrid;
+        // build initial grid;
+        for( unsigned i=0; i<CrossSection.getEnergyGrid().GridSize(); ++i ){
+            double energy = toEnergyFunc( (CrossSection.getEnergyGrid())[i] );
+            double totalXS = xsByIndexFunc( energy, i);
+            linearGrid.push_back( std::make_pair(energy, totalXS ) );
+        }
+        return linearGrid;
     }
 
     static void thinGrid(const totalXSFunct_t& xsFunc, linearGrid_t& linearGrid, double max_error);
@@ -191,56 +191,53 @@ public:
 
     template<typename T>
     void load(const T& CrossSection, double error = maxError, unsigned nBinsToVerify = nBinsToCheck ) {
-    	typedef std::vector<double> xsec_t;
-    	xsGrid_t xsGrid;
+        typedef std::vector<double> xsec_t;
+        xsGrid_t xsGrid;
 
-    	toEnergyFunc_t toEnergyFunc;
-    	ParticleType_t ParticleType;
-    	if( CrossSection.getType() == "neutron" ) {
-    		ParticleType = neutron;
-    		toEnergyFunc = [&] (double E) -> double {
-    			return E;
-    		};
-    		auto xsFuncByIndex = [&] ( double E, size_t index ) {
-    			return getTotal<T>( CrossSection, E, index );
-    		};
-    		xsGrid = createInitialGrid<T,xsGrid_t>(CrossSection, toEnergyFunc, xsFuncByIndex);
-    	}
-    	if( CrossSection.getType() == "photon" ) {
-    		ParticleType = photon;
-    		toEnergyFunc = [&] (double E) -> double {
-    			return std::exp(E);
-    		};
-    		auto xsFunc = [&] ( double E ) {
-    			return getTotal<T>( CrossSection, E );
-    		};
-    		auto xsFuncByIndex = [&] ( double E, size_t index ) {
-    			return getTotal<T>( CrossSection, E, index );
-    		};
+        toEnergyFunc_t toEnergyFunc;
+        ParticleType_t ParticleType;
+        if( CrossSection.getType() == "neutron" ) {
+            ParticleType = neutron;
+            toEnergyFunc = [&] (double E) -> double {
+                return E;
+            };
+            auto xsFuncByIndex = [&] ( double E, size_t index ) {
+                return getTotal<T>( CrossSection, E, index );
+            };
+            xsGrid = createInitialGrid<T,xsGrid_t>(CrossSection, toEnergyFunc, xsFuncByIndex);
+        }
+        if( CrossSection.getType() == "photon" ) {
+            ParticleType = photon;
+            toEnergyFunc = [&] (double E) -> double {
+                return std::exp(E);
+            };
+            auto xsFunc = [&] ( double E ) {
+                return getTotal<T>( CrossSection, E );
+            };
+            auto xsFuncByIndex = [&] ( double E, size_t index ) {
+                return getTotal<T>( CrossSection, E, index );
+            };
 
-    		linearGrid_t linearGrid = createInitialGrid<T,linearGrid_t>( CrossSection, toEnergyFunc, xsFuncByIndex );
-    		thinGrid( xsFunc, linearGrid, error );
+            linearGrid_t linearGrid = createInitialGrid<T,linearGrid_t>( CrossSection, toEnergyFunc, xsFuncByIndex );
+            thinGrid( xsFunc, linearGrid, error );
 
-    		bool done = true;
-    		do {
-    			addPointsToGrid( xsFunc, linearGrid, error );
-    			done = checkGrid( xsFunc, linearGrid, error, nBinsToVerify );
-    		} while (!done);
+            addPointsToGrid( xsFunc, linearGrid, error );
+            checkGrid( xsFunc, linearGrid, error, nBinsToVerify );
 
-    		xsGrid.reserve( linearGrid.size() );
-    		std::copy( std::begin(linearGrid), std::end(linearGrid), std::back_inserter(xsGrid));
-    	}
+            xsGrid.reserve( linearGrid.size() );
+            std::copy( std::begin(linearGrid), std::end(linearGrid), std::back_inserter(xsGrid));
+        }
 
-    	unsigned num = xsGrid.size();
-    	dtor( xs );
-    	ctor( xs, num );
-    	setAWR( CrossSection.getAWR() );
-    	xs->ParticleType = ParticleType;
+        unsigned num = xsGrid.size();
+        dtor( xs );
+        ctor( xs, num );
+        setAWR( CrossSection.getAWR() );
+        xs->ParticleType = ParticleType;
 
-    	for( unsigned i=0; i<num; ++i ){
-    		xs->energies[i] = xsGrid[i].first;
-    		xs->totalXS[i] = xsGrid[i].second;
-    	}
+        for( unsigned i=0; i<num; ++i ){
+            xs->energies[i] = xsGrid[i].first;
+            xs->totalXS[i] = xsGrid[i].second;
+        }
     }
 
     const MonteRayCrossSection* getPtr() const { return xs; }

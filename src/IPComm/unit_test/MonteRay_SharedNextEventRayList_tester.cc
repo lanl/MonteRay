@@ -96,10 +96,20 @@ SUITE( shared_next_event_ray_list_tester ){
 
     typedef MonteRay::Vector3D<double> PositionDouble_t;
 
+    class dummyType {
+    public:
+        dummyType(){}
+        bool isANeutron() const { return false; }
+    };
+
     class dummyNextEventRay {
     public:
-        dummyNextEventRay(){}
-        ~dummyNextEventRay(){}
+        dummyNextEventRay(){
+            type = new dummyType();
+        }
+        ~dummyNextEventRay(){
+            delete type;
+        }
         PositionDouble_t getPosition( void ) const {return pos;}
         PositionDouble_t getDirection( void ) const { return dir; }
         double getEnergy() const { return energy; }
@@ -107,13 +117,15 @@ SUITE( shared_next_event_ray_list_tester ){
         int getLocationIndex() const { return locationIndex; }
         //constexpr static unsigned getNPairs() { return 3;}
 
+        const dummyType* getType() const { return type; }
+
     private:
         PositionDouble_t pos = PositionDouble_t( 1.0, 2.0, 3.0 );
         PositionDouble_t dir = PositionDouble_t( 4.0, 5.0, 6.0 );
         double energy = 7.0;
         double weight = 10.0;
         int locationIndex = 13;
-
+        dummyType* type;
     };
 
     class dummyScatteringProbabilityResult{

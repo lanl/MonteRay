@@ -14,14 +14,14 @@ namespace MonteRay{
 template< unsigned N>
 RayListInterface<N>::RayListInterface( unsigned num) :
     ptrPoints( new RAYLIST_T(num) )
-{}
+    {}
 
 
 template< unsigned N>
 RayListInterface<N>::~RayListInterface() {
-	if( ptrPoints != NULL ) {
-		delete ptrPoints;
-	}
+    if( ptrPoints != NULL ) {
+        delete ptrPoints;
+    }
 
     if( io.is_open() ) {
         if( iomode == "out" ){
@@ -38,7 +38,7 @@ RayListInterface<N>::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
         gpuFloatType_t energy, gpuFloatType_t weight,
         unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType) {
-	RAY_T particle;
+    RAY_T particle;
     particle.pos[0] = x;
     particle.pos[1] = y;
     particle.pos[2] = z;
@@ -68,15 +68,15 @@ RayListInterface<N>::writeHeader(std::fstream& infile){
 template< unsigned N>
 void
 RayListInterface<N>::readHeader(std::fstream& infile){
-//	std::cout << "Debug: RayListInterface::readHeader - starting.\n";
+    //	std::cout << "Debug: RayListInterface::readHeader - starting.\n";
     if( ! infile.good() ) {
         fprintf(stderr, "RayListInterface::readHeader -- Failure prior to reading header.  %s %d\n", __FILE__, __LINE__);
         exit(1);
     }
     try{
-//    	std::cout << "Debug: RayListInterface::reading version - starting.\n";
+        //    	std::cout << "Debug: RayListInterface::reading version - starting.\n";
         binaryIO::read(infile,currentVersion);
-//        std::cout << "Debug: RayListInterface::reading number of collisions on the file - starting.\n";
+        //        std::cout << "Debug: RayListInterface::reading number of collisions on the file - starting.\n";
         binaryIO::read(infile,numCollisionOnFile);
     }
     catch( std::iostream::failure& e  ) {
@@ -137,17 +137,17 @@ RayListInterface<N>::resetFile(void){
 template< unsigned N>
 void
 RayListInterface<N>::openInput( const std::string& file){
-//	std::cout << "Debug: RayListInterface::openInput(string) - starting -- setting filename.\n";
+    //	std::cout << "Debug: RayListInterface::openInput(string) - starting -- setting filename.\n";
     setFilename( file );
-//    std::cout << "Debug: RayListInterface::openInput(string) - opening input.\n";
+    //    std::cout << "Debug: RayListInterface::openInput(string) - opening input.\n";
     openInput(io);
-//    std::cout << "Debug: RayListInterface::openInput(string) - input open.\n";
+    //    std::cout << "Debug: RayListInterface::openInput(string) - input open.\n";
 }
 
 template< unsigned N>
 void
 RayListInterface<N>::openInput( std::fstream& infile){
-//	std::cout << "Debug: RayListInterface::openInput(fstream) - starting.\n";
+    //	std::cout << "Debug: RayListInterface::openInput(fstream) - starting.\n";
     iomode = "in";
     if( infile.is_open() ) {
         closeInput(infile);
@@ -160,9 +160,9 @@ RayListInterface<N>::openInput( std::fstream& infile){
     }
     assert( infile.good() );
     infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
-//    std::cout << "Debug: RayListInterface::openInput(fstream) - reading header.\n";
+    //    std::cout << "Debug: RayListInterface::openInput(fstream) - reading header.\n";
     readHeader(infile);
-//    std::cout << "Debug: RayListInterface::openInput(fstream) - reading header done.\n";
+    //    std::cout << "Debug: RayListInterface::openInput(fstream) - reading header done.\n";
 }
 
 template< unsigned N>
@@ -198,26 +198,28 @@ RayListInterface<N>::closeInput(std::fstream& infile) {
 template< unsigned N>
 void
 RayListInterface<N>::writeParticle(const RAY_T& ray){
-	ray.write(io);
+    ray.write(io);
     ++numCollisionOnFile;
 }
 
 template< unsigned N>
 void
 RayListInterface<N>::printParticle(unsigned i, const RAY_T& particle ) const {
-	std::cout << "Debug: RayListInterface::printParticle -- i=" << i;
-	std::cout << " x= " << particle.pos[0];
-	std::cout << " y= " << particle.pos[1];
-	std::cout << " z= " << particle.pos[2];
-	std::cout << " u= " << particle.dir[0];
-	std::cout << " v= " << particle.dir[1];
-	std::cout << " w= " << particle.dir[2];
-	std::cout << " E= " << particle.energy;
-	std::cout << " W= " << particle.weight;
-	std::cout << " index= " << particle.index;
-	std::cout << " detector index= " << particle.detectorIndex;
-	std::cout << " particle type= " << particle.particleType;
-	std::cout << "\n";
+    std::cout << "Debug: RayListInterface::printParticle -- i=" << i;
+    std::cout << " x= " << particle.pos[0];
+    std::cout << " y= " << particle.pos[1];
+    std::cout << " z= " << particle.pos[2];
+    std::cout << " u= " << particle.dir[0];
+    std::cout << " v= " << particle.dir[1];
+    std::cout << " w= " << particle.dir[2];
+    for( unsigned j = 0; j < N; ++j) {
+        std::cout << " E(" << j << ")= " << particle.energy[j];
+        std::cout << " W(" << j << ")= " << particle.weight[j];
+    }
+    std::cout << " index= " << particle.index;
+    std::cout << " detector index= " << particle.detectorIndex;
+    std::cout << " particle type= " << particle.particleType;
+    std::cout << "\n";
 }
 
 template< unsigned N>
@@ -230,7 +232,7 @@ RayListInterface<N>::readParticle(void){
     }
     RAY_T particle;
     try{
-    	particle.read(io);
+        particle.read(io);
     }
     catch( std::fstream::failure& e  ) {
         std::string message = "RayListInterface::readParticle -- Failure during reading of a collision. -- ";
@@ -262,9 +264,9 @@ RayListInterface<N>::readToMemory( const std::string& file ){
 template< unsigned N>
 void
 RayListInterface<N>::writeBank() {
-	for( unsigned i=0; i< size(); ++i ) {
-		writeParticle( getParticle(i) );
-	}
+    for( unsigned i=0; i< size(); ++i ) {
+        writeParticle( getParticle(i) );
+    }
 }
 
 template< unsigned N>
@@ -280,13 +282,13 @@ RayListInterface<N>::readToBank( const std::string& file, unsigned start ){
         add( readParticle() );
         ++nRead;
         if( numCollisionOnFile == nRead + start) {
-        	break;
+            break;
         }
     }
     closeInput();
 
     if( nRead < capacity() ) {
-    	return true; // return end = true
+        return true; // return end = true
     }
     return false; // return end = false
 }
@@ -294,9 +296,9 @@ RayListInterface<N>::readToBank( const std::string& file, unsigned start ){
 template< unsigned N>
 void
 RayListInterface<N>::debugPrint() const {
-	for( unsigned i=0; i< size(); ++i ) {
-		printParticle( i, getParticle(i) );
-	}
+    for( unsigned i=0; i< size(); ++i ) {
+        printParticle( i, getParticle(i) );
+    }
 }
 
 }

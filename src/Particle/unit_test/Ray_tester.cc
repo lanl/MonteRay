@@ -35,14 +35,30 @@ SUITE( Ray_simple_tests ) {
         CHECK_EQUAL( 3, ray.getN());
     }
 
+    class dummyType {
+    public:
+        dummyType(){}
+        bool isANeutron() const { return false; }
+    };
+
     typedef MonteRay::Vector3D<double> PositionDouble_t;
     class dummyParticle {
     public:
+        dummyParticle() {
+            type = new dummyType();
+        }
+
+        ~dummyParticle() {
+            delete type;
+        }
+
         PositionDouble_t getPosition( void ) const {return pos;}
         PositionDouble_t getDirection( void ) const { return dir; }
         double getEnergy(void) const { return energy; }
         double getWeight(void) const { return weight; }
         int getLocationIndex() const { return locationIndex; }
+
+        const dummyType* getType() const { return type; }
 
     private:
         PositionDouble_t pos = PositionDouble_t( 1.0, 2.0, 3.0 );
@@ -50,6 +66,7 @@ SUITE( Ray_simple_tests ) {
         double energy = 7.0;
         double weight = 8.0;
         int locationIndex = 9;
+        dummyType* type;
 
     };
 

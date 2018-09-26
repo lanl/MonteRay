@@ -60,6 +60,12 @@ public:
 
         index = particle.getLocationIndex();
         detectorIndex = argDetectorIndex;
+
+        if( particle.getType()->isANeutron() ) {
+            particleType = neutron;
+        } else {
+            particleType = photon;
+        }
     }
 
 
