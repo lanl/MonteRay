@@ -2,6 +2,7 @@
 #define MONTERAYCOPYMEMORY_T_HH_
 
 #include "MonteRayCopyMemory.hh"
+#include "GPUErrorCheck.hh"
 
 namespace MonteRay {
 

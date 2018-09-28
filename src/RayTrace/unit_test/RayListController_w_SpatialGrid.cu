@@ -8,13 +8,17 @@
 #include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
-#include "RayListController.hh"
 #include "MonteRay_SpatialGrid.hh"
+#include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
+#include "RayListController.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
+#include "MonteRayCrossSection.hh"
+#include "HashLookup.hh"
+#include "MonteRay_GridSystemInterface.hh"
 
 namespace RayListController_w_SpatialGrid_unit_tester{
 
@@ -22,6 +26,7 @@ using namespace MonteRay;
 
 SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     typedef MonteRay_SpatialGrid Grid_t;
+    typedef Grid_t::Position_t Position_t;
 
     class UnitControllerSetup {
     public:

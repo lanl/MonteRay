@@ -11,20 +11,20 @@ class RayListInterfaceTester
 {
 public:
 
-	RayListInterfaceTester();
+    RayListInterfaceTester();
 
-	~RayListInterfaceTester();
+    ~RayListInterfaceTester();
 
-	void setupTimers();
+    void setupTimers();
 
-	void stopTimers();
+    void stopTimers();
 
-	MonteRay::RayListSize_t launchGetCapacity( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs);
-	gpuFloatType_t launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs);
+    MonteRay::RayListSize_t launchGetCapacity( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs);
+    gpuFloatType_t launchTestSumEnergy( unsigned nBlocks, unsigned nThreads, RayListInterface<N>& CPs);
 
 private:
 #ifdef __CUDACC__
-	cudaEvent_t start, stop;
+    cudaEvent_t start, stop;
 #endif
 
 };

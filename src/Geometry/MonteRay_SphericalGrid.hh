@@ -1,29 +1,12 @@
-/*
- * MonteRaySphericalGrid.hh
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #ifndef MONTERAYSPHERICALGRID_HH_
 #define MONTERAYSPHERICALGRID_HH_
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 #include "MonteRay_GridSystemInterface.hh"
-#include "MonteRay_SingleValueCopyMemory.hh"
-#include "MonteRayCopyMemory.hh"
 
 namespace MonteRay {
 
 class MonteRay_SphericalGrid;
-
-using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_SphericalGrid*>;
-
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR );
-
-CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_SphericalGrid** pInstance);
 
 class MonteRay_SphericalGrid : public MonteRay_GridSystemInterface {
 public:
@@ -62,11 +45,7 @@ public:
     CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t RSq ) const { return pRVertices->getRadialIndexFromRSq(RSq); }
 
     CUDA_CALLABLE_MEMBER unsigned getIndex( const GridBins_t::Position_t& particle_pos) const;
-    CUDA_CALLABLE_MEMBER bool isIndexOutside( unsigned d,  int i) const {
-        MONTERAY_VERIFY( d == 0, "MonteRay_SphericalGrid::isIndexOutside -- Index i must not be negative." );
-        MONTERAY_VERIFY( d == 0, "MonteRay_SphericalGrid::isIndexOutside -- Dimension d must be 0 because spherical geometry is 1-D." );
-        return pRVertices->isIndexOutside(i);
-    }
+    CUDA_CALLABLE_MEMBER bool isIndexOutside( unsigned d,  int i) const;
 
     CUDA_CALLABLE_MEMBER bool isOutside(  const int i[]) const;
 

@@ -5,14 +5,18 @@
  *      Author: jsweezy
  */
 
+#include "MonteRayDefinitions.hh"
 #include "MonteRay_SphericalGrid.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "GPUErrorCheck.hh"
 
 #include <float.h>
 
 namespace MonteRay {
+
+using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_SphericalGrid*>;
 
 CUDA_CALLABLE_KERNEL
 void createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR ) {
@@ -131,6 +135,14 @@ MonteRay_SphericalGrid::getIndex( const Position_t& particle_pos) const{
     if( isIndexOutside(R, index ) ) { return UINT_MAX; }
 
     return index;
+}
+
+CUDA_CALLABLE_MEMBER
+bool
+MonteRay_SphericalGrid::isIndexOutside( unsigned d,  int i) const {
+    MONTERAY_VERIFY( d == 0, "MonteRay_SphericalGrid::isIndexOutside -- Index i must not be negative." );
+    MONTERAY_VERIFY( d == 0, "MonteRay_SphericalGrid::isIndexOutside -- Dimension d must be 0 because spherical geometry is 1-D." );
+    return pRVertices->isIndexOutside(i);
 }
 
 CUDA_CALLABLE_MEMBER

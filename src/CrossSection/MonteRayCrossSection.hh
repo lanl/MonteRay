@@ -9,11 +9,13 @@
 #include <type_traits>
 #include <cmath>
 
-#include "MonteRayDefinitions.hh"
-#include "HashLookup.h"
+#include "MonteRayTypes.hh"
 #include "MonteRayConstants.hh"
 
 namespace MonteRay{
+
+class HashLookup;
+class HashLookupHost;
 
 struct MonteRayCrossSection {
     int id;

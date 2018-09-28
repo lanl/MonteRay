@@ -5,6 +5,7 @@
 #include "MonteRayConstants.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "MonteRay_GridSystemInterface.hh"
 
 #include <stdexcept>
 #include <fstream>

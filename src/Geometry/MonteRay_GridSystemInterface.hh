@@ -1,14 +1,5 @@
-/*
- * MonteRay_GridSystemInterface.hh
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #ifndef MONTERAYGRIDSYSTEMINTERFACE_HH_
 #define MONTERAYGRIDSYSTEMINTERFACE_HH_
-
-#include "MonteRayDefinitions.hh"
 
 #include <utility>
 #include <vector>
@@ -30,12 +21,7 @@ public:
     CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
 
     CUDA_CALLABLE_MEMBER
-    void add( int cell, gpuRayFloat_t dist) {
-        MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
-        CellId[N] = cell;
-        distance[N] = dist;
-        ++N;
-    }
+    void add( int cell, gpuRayFloat_t dist);
 
     CUDA_CALLABLE_MEMBER void clear() { reset(); }
     CUDA_CALLABLE_MEMBER void reset() { N = 0; }
@@ -57,12 +43,7 @@ public:
     CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
 
     CUDA_CALLABLE_MEMBER
-    void add( unsigned cell, gpuRayFloat_t dist) {
-        MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
-        CellId[N] = cell;
-        distance[N] = dist;
-        ++N;
-    }
+    void add( unsigned cell, gpuRayFloat_t dist);
 
     CUDA_CALLABLE_MEMBER void clear() { reset(); }
     CUDA_CALLABLE_MEMBER void reset() { N = 0; }
@@ -107,22 +88,15 @@ public:
 
     CUDA_CALLABLE_MEMBER
     virtual void
-    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
-        ABORT("Single dimension crossingDistance function not implemented for this grid type.");
-    }
+    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     virtual void
-    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
-        ABORT("Single dimension crossingDistance with Position_t and Direction_t function not implemented for this grid type.");
-    }
+    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     virtual void
-    crossingDistance( singleDimRayTraceMap_t&, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
-        ABORT("Multi-dimension crossingDistance function not implemented for this grid type.");
-    }
-
+    crossingDistance( singleDimRayTraceMap_t&, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
     CUDA_CALLABLE_MEMBER
     virtual gpuRayFloat_t getVolume( unsigned index ) const = 0;
 

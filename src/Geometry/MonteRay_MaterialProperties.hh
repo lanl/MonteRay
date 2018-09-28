@@ -9,10 +9,8 @@
 #include <fstream>
 #include <memory>
 
-#include "MonteRay_CellProperties.hh"
 #include "MonteRay_MaterialProperties_FlatLayout.hh"
-
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 
 namespace MonteRay{
 

@@ -10,13 +10,13 @@
 
 #define MAXNUMVERTICES 1001
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 #include "MonteRayVector3D.hh"
-#include "GPUErrorCheck.hh"
-#include "MonteRayCopyMemory.t.hh"
-#include "HashBins.hh"
+#include "MonteRayCopyMemory.hh"
 
 namespace MonteRay{
+
+class HashBins;
 
 typedef gpuFloatType_t float_t;
 typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
@@ -40,62 +40,12 @@ public:
 public:
     using Base = MonteRay::CopyMemoryBase<GridBins> ;
 
-    GridBins() : CopyMemoryBase<GridBins>() {
-        initialize();
-        numVertices = MAXNUMVERTICES*3;
-        vertices = (float_t*) MONTERAYHOSTALLOC( numVertices * sizeof( float_t ), false, std::string("GridBins::vertices") );
+    GridBins();
 
-        for( unsigned i=0; i<numVertices; ++i) {
-            vertices[i] = 0.0;
-        }
-
-    }
-
-    ~GridBins() {
-        if( Base::isCudaIntermediate ) {
-            //printf( "GridBins::dtor -- intermediate -- freeing vertices\n" );
-            MonteRayDeviceFree( vertices );
-        } else {
-            MonteRayHostFree( vertices, Base::isManagedMemory );
-            vertices = NULL;
-            for( unsigned i=0; i<3; ++i) {
-                delete hash[i];
-            }
-        }
-    }
+    ~GridBins();
 
     CUDA_CALLABLE_MEMBER
-    void initialize() {
-        numVertices = 0;
-        offset[0] = 0;
-        offset[1] = MAXNUMVERTICES;
-        offset[2] = MAXNUMVERTICES*2;
-        num[0] = 0;
-        num[1] = 0;
-        num[2] = 0;
-        numXY = 0;
-        regular[0] = true;
-        regular[1] = true;
-        regular[2] = true;
-
-        delta[0] = 0.0;
-        delta[1] = 0.0;
-        delta[2] = 0.0;
-
-        minMax[0] = 0.0;
-        minMax[1] = 0.0;
-        minMax[2] = 0.0;
-        minMax[3] = 0.0;
-        minMax[4] = 0.0;
-        minMax[5] = 0.0;
-
-        vertices = nullptr;
-
-        hash[0] = nullptr;
-        hash[1] = nullptr;
-        hash[2] = nullptr;
-        hashSize = 8000;
-    }
+    void initialize();
 
     std::string className(){ return std::string("GridBins");}
 
@@ -103,120 +53,15 @@ public:
         initialize();
     }
 
-    void copyToGPU(void) {
-        //std::cout << "Debug: GridBins::copyToGPU \n";
-        for( unsigned i=0; i<3; ++i ) {
-            if( hash[i] ) {
-                hash[i]->copyToGPU();
-            }
-        }
+    void copyToGPU(void);
 
-        Base::copyToGPU();
-    }
-
-    void copy(const GridBins* rhs) {
-#ifdef __CUDACC__
-        if( numVertices != 0 && (numVertices != rhs->numVertices) ){
-            std::cout << "Error: GridBins::copy -- can't change grid size after initialization.\n";
-            std::cout << "Error: GridBins::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
-            std::cout << "Error: GridBins::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
-            throw std::runtime_error("GridBins::copy -- can't change grid size after initialization.");
-        }
-
-        if( isCudaIntermediate ) {
-            // host to device
-            //printf( "GridBins.hh::copy -- allocating vertices on device, numVertices = %d\n", rhs->numVertices);
-            vertices = (float_t*) MONTERAYDEVICEALLOC( rhs->numVertices*sizeof(float_t), std::string("device - GridBins::vertices") );
-            MonteRayMemcpy( vertices, rhs->vertices, rhs->numVertices*sizeof(float_t), cudaMemcpyHostToDevice );
-
-            for( unsigned i=0; i<3; ++i ) {
-                if( rhs->hash[i] ) {
-                    hash[i] = rhs->hash[i]->devicePtr;
-                }
-            }
-
-        } else {
-            // device to host
-            MonteRayMemcpy( vertices, rhs->vertices, rhs->numVertices*sizeof(float_t), cudaMemcpyDeviceToHost );
-        }
-
-        numVertices = rhs->numVertices;
-
-        offset[0] = rhs->offset[0];
-        offset[1] = rhs->offset[1];
-        offset[2] = rhs->offset[2];
-
-        num[0] = rhs->num[0];
-        num[1] = rhs->num[1];
-        num[2] = rhs->num[2];
-
-        numXY = rhs->numXY;
-
-        regular[0] = rhs->regular[0];
-        regular[1] = rhs->regular[1];
-        regular[2] = rhs->regular[2];
-
-        delta[0] = rhs->delta[0];
-        delta[1] = rhs->delta[1];
-        delta[2] = rhs->delta[2];
-
-        minMax[0] = rhs->minMax[0];
-        minMax[1] = rhs->minMax[1];
-        minMax[2] = rhs->minMax[2];
-        minMax[3] = rhs->minMax[3];
-        minMax[4] = rhs->minMax[4];
-        minMax[5] = rhs->minMax[5];
-
-        hashSize = rhs->hashSize;
-#else
-        throw std::runtime_error("GridBins::copy -- can NOT copy between host and device without CUDA.");
-#endif
-    }
+    void copy(const GridBins* rhs);
 
     GridBins&
-    operator=( GridBins& rhs ) {
-        numVertices = rhs.numVertices;
-        //vertices = rhs.vertices;
-        offset[0] = rhs.offset[0];
-        offset[1] = rhs.offset[1];
-        offset[2] = rhs.offset[2];
-
-        num[0] = rhs.num[0];
-        num[1] = rhs.num[1];
-        num[2] = rhs.num[2];
-
-        numXY = rhs.numXY;
-
-        regular[0] = rhs.regular[0];
-        regular[1] = rhs.regular[1];
-        regular[2] = rhs.regular[2];
-
-        delta[0] = rhs.delta[0];
-        delta[1] = rhs.delta[1];
-        delta[2] = rhs.delta[2];
-
-        minMax[0] = rhs.minMax[0];
-        minMax[1] = rhs.minMax[1];
-        minMax[2] = rhs.minMax[2];
-        minMax[3] = rhs.minMax[3];
-        minMax[4] = rhs.minMax[4];
-        minMax[5] = rhs.minMax[5];
-
-        hashSize = rhs.hashSize;
-        return *this;
-    }
+    operator=( GridBins& rhs );
 
     template<class READER_T>
-    GridBins( READER_T& reader) : GridBins() {
-        if( reader.getGeometryString() != "XYZ" )  {
-            throw std::runtime_error( "Invalid Geometry type -- MonteRay::GridBins only supports XYZ");
-        }
-        for( unsigned d=0; d < 3; ++d) {
-            std::vector<double> vertices = reader.getVertices(d);
-            setVertices(d, vertices );
-        }
-        finalize();
-    }
+    GridBins( READER_T& reader);
 
     CUDA_CALLABLE_MEMBER
     unsigned getMaxNumVertices() const {
@@ -224,10 +69,7 @@ public:
     }
 
     CUDA_CALLABLE_MEMBER
-    unsigned getOffset( const unsigned dim ) const {
-        MONTERAY_ASSERT( dim < 3);
-        return offset[dim];
-    }
+    unsigned getOffset( const unsigned dim ) const;
 
     void setVertices(unsigned dim, float_t min, float_t max, unsigned numBins);
 
@@ -240,22 +82,13 @@ public:
     }
 
     CUDA_CALLABLE_MEMBER
-    unsigned getNumVertices(const unsigned dim) const {
-        MONTERAY_ASSERT( dim < 3);
-        return num[dim]+1;
-    }
+    unsigned getNumVertices(const unsigned dim) const;
 
     CUDA_CALLABLE_MEMBER
-    unsigned getNumBins(unsigned dim) const {
-        MONTERAY_ASSERT( dim < 3);
-        return num[dim];
-    }
+    unsigned getNumBins(unsigned dim) const;
 
     CUDA_CALLABLE_MEMBER
-    bool isRegular( unsigned dim) const {
-        MONTERAY_ASSERT( dim < 3);
-        return regular[dim];
-    }
+    bool isRegular( unsigned dim) const;
 
     CUDA_CALLABLE_MEMBER
     void finalize();
@@ -264,16 +97,10 @@ public:
     unsigned getNumXY() const { return numXY; }
 
     CUDA_CALLABLE_MEMBER
-    float_t min(const unsigned dim) const {
-        MONTERAY_ASSERT( dim < 3);
-        return minMax[dim*2];
-    }
+    float_t min(const unsigned dim) const;
 
     CUDA_CALLABLE_MEMBER
-    float_t max(const unsigned dim) const {
-        MONTERAY_ASSERT( dim < 3);
-        return minMax[dim*2+1];
-    }
+    float_t max(const unsigned dim) const;
 
     CUDA_CALLABLE_MEMBER
     int getDimIndex(const unsigned dim, const gpuRayFloat_t pos ) const;
@@ -307,17 +134,14 @@ public:
     const HashBins* getHashPtr( unsigned dim ) { return hash[dim]; }
 
     CUDA_CALLABLE_MEMBER
-    void getHashLowerUpperBins(unsigned dim, gpuFloatType_t value, unsigned& lower, unsigned& upper) const {
-        hash[dim]->getLowerUpperBins(value, lower, upper );
-    }
-
+    void getHashLowerUpperBins(unsigned dim, gpuFloatType_t value, unsigned& lower, unsigned& upper) const;
     CUDA_CALLABLE_MEMBER
     void setDefaultHashSize(unsigned n) { hashSize = n;}
 
     CUDA_CALLABLE_MEMBER
     unsigned getDefaultHashSize( void ) const { return hashSize; }
 
-
+    void abort(const char* buffer);
 };
 
 //  static methods
@@ -338,28 +162,16 @@ kernelRayTrace(
         gpuFloatType_t distance,
         bool outsideDistances);
 
-template<typename T>
-void
-GridBins::setVertices( const unsigned dim, const std::vector<T>& verts) {
-    minMax[dim*2] = verts.front();
-    minMax[dim*2+1] = verts.back();
-
-    delta[dim] = -1.0;
-    num[dim] = verts.size()-1;
-
-    if( getNumBins(dim) > MAXNUMVERTICES ) {
-        ABORT("GridBins::setVertices -- exceeding max number of vertices.");
+template<class READER_T>
+GridBins::GridBins( READER_T& reader) : GridBins() {
+    if( reader.getGeometryString() != "XYZ" )  {
+        throw std::runtime_error( "Invalid Geometry type -- MonteRay::GridBins only supports XYZ");
     }
-
-    unsigned counter = 0;
-    for( auto itr = verts.cbegin(); itr != verts.cend(); ++itr) {
-        vertices[offset[dim]+counter] = *itr;
-        ++counter;
+    for( unsigned d=0; d < 3; ++d) {
+        std::vector<double> vertices = reader.getVertices(d);
+        setVertices(d, vertices );
     }
-
-    hash[dim] = new HashBins( vertices + offset[dim], num[dim]+1, hashSize );
-
-    regular[dim] = false;
+    finalize();
 }
 
 }

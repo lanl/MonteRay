@@ -1,4 +1,5 @@
 #include "MonteRay_MaterialProperties_FlatLayout.hh"
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay {
 

@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <limits>
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 
 namespace MonteRay {
 

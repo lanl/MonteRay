@@ -2,8 +2,8 @@
 #define MONTERAYCOPYMEMORY_HH_
 #include <cstring>
 
-#include "GPUErrorCheck.hh"
-#include <MonteRayMemory.hh>
+#include "MonteRayMemory.hh"
+#include "MonteRayTypes.hh"
 
 namespace MonteRay {
 

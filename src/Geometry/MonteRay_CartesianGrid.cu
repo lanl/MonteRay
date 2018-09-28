@@ -6,6 +6,7 @@
  */
 
 #include "MonteRay_CartesianGrid.hh"
+#include "MonteRayDefinitions.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
 
@@ -13,47 +14,49 @@
 
 namespace MonteRay {
 
+using ptrCartesianGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CartesianGrid*>;
+
 CUDA_CALLABLE_KERNEL
 void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
-	*pPtrInstance = new MonteRay_CartesianGrid( 3, pGridX, pGridY, pGridZ );
-	pResult->v = *pPtrInstance;
-	//if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
+    *pPtrInstance = new MonteRay_CartesianGrid( 3, pGridX, pGridY, pGridZ );
+    pResult->v = *pPtrInstance;
+    //if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
 }
 
 CUDA_CALLABLE_KERNEL
 void deleteDeviceInstance(MonteRay_CartesianGrid** pPtrInstance) {
-	delete *pPtrInstance;
+    delete *pPtrInstance;
 }
 
 CUDAHOST_CALLABLE_MEMBER
 MonteRay_CartesianGrid*
 MonteRay_CartesianGrid::getDeviceInstancePtr() {
-	return devicePtr;
+    return devicePtr;
 }
 
 
 CUDA_CALLABLE_MEMBER
 MonteRay_CartesianGrid::MonteRay_CartesianGrid(unsigned dim, pArrayOfpGridInfo_t pBins) :
-    MonteRay_GridSystemInterface(dim)
+MonteRay_GridSystemInterface(dim)
 {
-	MONTERAY_VERIFY( dim == DimMax, "MonteRay_CartesianGrid::ctor -- only 3-D is allowed" ); // No greater than 3-D.
+    MONTERAY_VERIFY( dim == DimMax, "MonteRay_CartesianGrid::ctor -- only 3-D is allowed" ); // No greater than 3-D.
 
-	DIM = 3;
-	for(auto i = 0; i< dim; ++i) {
-		pGridBins[i] = pBins[i];
-	}
+    DIM = 3;
+    for(auto i = 0; i< dim; ++i) {
+        pGridBins[i] = pBins[i];
+    }
 }
 
 CUDA_CALLABLE_MEMBER
 MonteRay_CartesianGrid::MonteRay_CartesianGrid(unsigned dim, GridBins_t* pGridX, GridBins_t* pGridY, GridBins_t* pGridZ ) :
-    MonteRay_GridSystemInterface(dim)
+MonteRay_GridSystemInterface(dim)
 {
-	MONTERAY_VERIFY( dim == DimMax, "MonteRay_CartesianGrid::ctor -- only 3-D is allowed" ); // No greater than 3-D.
+    MONTERAY_VERIFY( dim == DimMax, "MonteRay_CartesianGrid::ctor -- only 3-D is allowed" ); // No greater than 3-D.
 
-	DIM = 3;
-	pGridBins[0] = pGridX;
-	pGridBins[1] = pGridY;
-	pGridBins[2] = pGridZ;
+    DIM = 3;
+    pGridBins[0] = pGridX;
+    pGridBins[1] = pGridY;
+    pGridBins[2] = pGridZ;
 }
 
 CUDA_CALLABLE_MEMBER
@@ -94,16 +97,16 @@ MonteRay_CartesianGrid::copyToGPU(void) {
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CartesianGrid::getIndex( const GridBins_t::Position_t& particle_pos) const{
-	if( debug ) printf("Debug: MonteRay_CartesianGrid::getIndex -- starting\n");
+    if( debug ) printf("Debug: MonteRay_CartesianGrid::getIndex -- starting\n");
 
     int indices[3]= {0,0,0};
     for( auto d = 0; d < DIM; ++d ) {
-    	if( debug ) printf("Debug: MonteRay_CartesianGrid::getIndex -- d = %d\n",d);
+        if( debug ) printf("Debug: MonteRay_CartesianGrid::getIndex -- d = %d\n",d);
         indices[d] = getDimIndex(d, particle_pos[d] );
 
         // outside the grid
         if( isIndexOutside(d, indices[d] ) ) {
-        	return OUTSIDE_INDEX;
+            return OUTSIDE_INDEX;
         }
     }
 
@@ -116,25 +119,25 @@ gpuRayFloat_t
 MonteRay_CartesianGrid::getVolume(unsigned index ) const {
 
     gpuRayFloat_t volume=1.0;
-//    if( regular ) {
-//        for( unsigned d=0; d < DIM; ++d ) {
-//            volume *= pGridBins[d]->delta;
-//        }
-//    } else {
-    	uint3 indices = calcIJK( index );
-    	volume *= pGridBins[0]->vertices[ indices.x + 1 ] - pGridBins[0]->vertices[ indices.x ];
-    	volume *= pGridBins[1]->vertices[ indices.y + 1 ] - pGridBins[1]->vertices[ indices.y ];
-    	volume *= pGridBins[2]->vertices[ indices.z + 1 ] - pGridBins[2]->vertices[ indices.z ];
-//    }
+    //    if( regular ) {
+    //        for( unsigned d=0; d < DIM; ++d ) {
+    //            volume *= pGridBins[d]->delta;
+    //        }
+    //    } else {
+    uint3 indices = calcIJK( index );
+    volume *= pGridBins[0]->vertices[ indices.x + 1 ] - pGridBins[0]->vertices[ indices.x ];
+    volume *= pGridBins[1]->vertices[ indices.y + 1 ] - pGridBins[1]->vertices[ indices.y ];
+    volume *= pGridBins[2]->vertices[ indices.z + 1 ] - pGridBins[2]->vertices[ indices.z ];
+    //    }
     return volume;
 }
 
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CartesianGrid::getNumBins( unsigned d) const {
-	if( debug ) printf("Debug: MonteRay_CartesianGrid::getNumBins -- d= %d\n", d);
-	if( debug ) printf("Debug: MonteRay_CartesianGrid::getNumBins --calling pGridBins[d]->getNumBins()\n");
-	return pGridBins[d]->getNumBins();
+    if( debug ) printf("Debug: MonteRay_CartesianGrid::getNumBins -- d= %d\n", d);
+    if( debug ) printf("Debug: MonteRay_CartesianGrid::getNumBins --calling pGridBins[d]->getNumBins()\n");
+    return pGridBins[d]->getNumBins();
 }
 
 CUDA_CALLABLE_MEMBER
@@ -180,7 +183,7 @@ CUDA_CALLABLE_MEMBER
 bool
 MonteRay_CartesianGrid::isOutside( const int i[] ) const {
     for( unsigned d=0; d<DIM; ++d){
-       if( isIndexOutside(d, i[d]) ) return true;
+        if( isIndexOutside(d, i[d]) ) return true;
     }
     return false;
 }
@@ -188,13 +191,13 @@ MonteRay_CartesianGrid::isOutside( const int i[] ) const {
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_direction, gpuRayFloat_t distance,  bool outsideDistances) const{
-	if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
-	rayTraceList.reset();
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
+    rayTraceList.reset();
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
     multiDimRayTraceMap_t distances;
     for( unsigned d=0; d<DIM; ++d){
-    	distances[d].reset();
+        distances[d].reset();
 
         indices[d] = getDimIndex(d, particle_pos[d] );
 
@@ -219,7 +222,7 @@ MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
-	if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const \n");
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const \n");
     crossingDistance(rayTraceMap, *(pGridBins[d]), pos, dir, distance, false);
     return;
 }
@@ -227,7 +230,7 @@ MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, u
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const {
-	if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const \n");
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const \n");
     int index = Bins.getLinearIndex(pos);
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance -- calling MonteRay_GridSystemInterface::planarCrossingDistance.\n");
     planarCrossingDistance( rayTraceMap, Bins, pos, dir, distance, index);

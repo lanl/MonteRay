@@ -28,4 +28,9 @@ void GenericGPUTestHelper::stopTimers(){
 	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
 }
 
+//#include "MonteRayNextEventEstimator.hh"
+//#inlcude "Monte"
+//
+//template class MonteRay::CopyMemoryBase<MonteRay::MonteRayNextEventEstimator<MonteRay::GridBins>>;
+//template class MonteRay::CopyMemoryBase<MonteRay::MonteRayNextEventEstimator<MonteRay::MonteRay_SpatialGrid>>;
 

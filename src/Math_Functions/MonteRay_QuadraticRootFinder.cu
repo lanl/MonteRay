@@ -1,10 +1,3 @@
-/*
- * MonteRayQuadraticRootFinder.cc
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #include "MonteRay_QuadraticRootFinder.hh"
 
 #include <cmath>
@@ -14,7 +7,7 @@
 #include <math_constants.h>
 #endif
 
-//#include <vector>
+#include "MonteRayDefinitions.hh"
 
 namespace MonteRay {
 
@@ -34,8 +27,6 @@ FindMinPositiveRoot(Float_t A, Float_t B, Float_t C) {
     const Float_t NearEpsilon = 100.0 * FLT_EPSILON;
     Float_t minposRoot = CUDART_INF_F;
 #endif
-
-
 
     Float_t Discriminant = B*B - 4.0 * A * C;
 
@@ -68,7 +59,7 @@ FindMinPositiveRoot(Float_t A, Float_t B, Float_t C) {
 CUDA_CALLABLE_MEMBER
 Roots
 FindPositiveRoots(Float_t A, Float_t B, Float_t C) {
-	//constexpr Float_t inf = std::numeric_limits<double>::infinity();
+    //constexpr Float_t inf = std::numeric_limits<double>::infinity();
     /// For doubles, NearEpsilon ~= 1.0e-14
 #ifndef __CUDA_ARCH__
     const Float_t NearEpsilon = 100.0 * std::numeric_limits<Float_t>::epsilon();
@@ -77,8 +68,8 @@ FindPositiveRoots(Float_t A, Float_t B, Float_t C) {
 #endif
 
 
-//	std::vector<double> roots(2,inf);
-	Roots roots;
+    //	std::vector<double> roots(2,inf);
+    Roots roots;
 
 
     Float_t Discriminant = B*B - 4.0 * A * C;
@@ -93,15 +84,15 @@ FindPositiveRoots(Float_t A, Float_t B, Float_t C) {
     }
 
     Float_t temp = (B < 0.0) ? -0.5*( B - sqrt(Discriminant) ) :
-                               -0.5*( B + sqrt(Discriminant) );
+            -0.5*( B + sqrt(Discriminant) );
     Float_t root1 = temp/A;
     Float_t root2 = C/temp;
 
     if( root1 > NearEpsilon )
-    	roots.R1 = root1;
+        roots.R1 = root1;
 
     if( root2 > NearEpsilon )
-    	roots.R2 = root2;
+        roots.R2 = root2;
 
     return roots;
 }

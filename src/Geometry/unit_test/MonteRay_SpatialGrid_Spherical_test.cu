@@ -3,6 +3,7 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
+#include "MonteRay_GridSystemInterface.hh"
 
 #include <stdexcept>
 #include <fstream>

@@ -25,5 +25,5 @@ message(STATUS "Compiler Install Prefix is [ ${compiler_install_prefix} ]" )
 
 set( Boost_COMPILER "-pgi" )
 set( Boost_SUBDIR "/pgi" )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --c++11" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --c++14" )
 

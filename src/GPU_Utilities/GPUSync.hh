@@ -7,28 +7,28 @@ namespace MonteRay {
 
 class GPUSync {
 public:
-	GPUSync(){
+    GPUSync(){
 #ifdef __CUDACC__
-		cudaEventCreate(&sync_event);
+        cudaEventCreate(&sync_event);
 #endif
-	}
+    }
 
-	~GPUSync(){
+    ~GPUSync(){
 #ifdef __CUDACC__
-		cudaEventDestroy(sync_event);
+        cudaEventDestroy(sync_event);
 #endif
-	}
+    }
 
-	void sync(){
+    void sync(){
 #ifdef __CUDACC__
-		cudaEventRecord(sync_event, 0);
-		cudaEventSynchronize(sync_event);
+        cudaEventRecord(sync_event, 0);
+        cudaEventSynchronize(sync_event);
 #endif
-	}
+    }
 
 private:
 #ifdef __CUDACC__
-	cudaEvent_t sync_event;
+    cudaEvent_t sync_event;
 #endif
 
 };

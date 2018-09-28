@@ -18,10 +18,10 @@ template<unsigned N = 1>
 class RayList_t : public CopyMemoryBase<RayList_t<N>>{
 public:
     using Base = CopyMemoryBase<RayList_t<N>>;
+    using RAY_T = Ray_t<N>;
 
     /// Primary RayList_t constructor.
     /// Takes the size of the list as an argument.
-    typedef Ray_t<N> RAY_T;
     CUDAHOST_CALLABLE_MEMBER RayList_t(RayListSize_t num = 1);
 
     /// Copy constructor

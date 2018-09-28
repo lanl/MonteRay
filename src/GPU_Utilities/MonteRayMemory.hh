@@ -10,58 +10,23 @@
 #include <vector>
 #include <mutex>
 
-#include "MonteRayDefinitions.hh"
-#include "GPUErrorCheck.hh"
+class cudaDeviceProp;
 
 namespace MonteRay {
 
 /// MonteRay GPU Properties class
 class MonteRayGPUProps {
 public:
-    MonteRayGPUProps() :
-        deviceID( -1 ),
-        numDevices( -1 )
-{
-#ifdef __CUDACC__
-        deviceProps = cudaDevicePropDontCare;
-        cudaGetDeviceCount(&numDevices);
+    MonteRayGPUProps();
 
-        if( numDevices <= 0 ) {
-            throw std::runtime_error("MonteRayGPUProps::MonteRayGPUProps() -- No GPU found.");
-        }
+    MonteRayGPUProps( const MonteRayGPUProps& rhs );
 
-        // TODO: setup for multiple devices
-        cudaGetDevice(&deviceID);
+    ~MonteRayGPUProps();
 
-        cudaGetDeviceProperties(&deviceProps , deviceID);
+    int deviceID = -1; ///< GPU ID Number
+    int numDevices = -1;
 
-        if( ! deviceProps.managedMemory ) {
-            std::cout << "MONTERAY WARNING: GPU does not support managed memory.\n";
-        }
-        if( ! deviceProps.concurrentManagedAccess ) {
-            std::cout << "MONTERAY WARNING: GPU does not support concurrent managed memory access.\n";
-        }
-#else
-        throw std::runtime_error("MonteRayGPUProps::MonteRayGPUProps() -- CUDA not enabled.");
-#endif
-}
-
-    MonteRayGPUProps( const MonteRayGPUProps& rhs ) {
-        deviceID = rhs.deviceID;
-        numDevices = rhs.numDevices;
-#ifdef __CUDACC__
-        deviceProps = rhs.deviceProps;
-#endif
-    }
-
-    ~MonteRayGPUProps(){}
-
-    int deviceID; ///< GPU ID Number
-    int numDevices;
-
-#ifdef __CUDACC__
-    cudaDeviceProp deviceProps;
-#endif
+    cudaDeviceProp* deviceProps = nullptr;
 };
 
 typedef size_t alloc_id_t;
@@ -80,18 +45,13 @@ static const bool debugAllocations = false;
 
 class allocationInfo_t {
 public:
-    allocationInfo_t(){
-        name = "";
-        size = 0;
-        ptr = NULL;
-        allocated = false;
-        hostmemory = true;
-    }
+    allocationInfo_t(){}
+
     std::string name;
-    size_t size;
-    void* ptr;
-    bool allocated;
-    bool hostmemory;
+    size_t size = 0;
+    void* ptr = NULL;
+    bool allocated = false;
+    bool hostmemory = true;
 };
 
 static std::mutex allocationMutex;
@@ -192,129 +152,19 @@ public:
     size_t maxGPUMemory;
 };
 
-inline void* MonteRayHostAlloc(size_t len, bool managed = true, std::string name = std::string(""), const char *file = "", int line = -1 ) {
-    const bool debug = false;
-
-    name += "::" + std::string(file) + "[" + std::to_string(line) + "]";
-
-    void *ptr;
-#ifdef __CUDACC__
-    if( managed ) {
-        if( debug ){
-            std::cout << "Debug: MonteRayHostAlloc: allocating " << len << " bytes with cuda managed memory\n";
-        }
-        cudaMallocManaged(&ptr, len + id_offset);
-    } else {
-        if( debug ){
-            std::cout << "Debug: MonteRayHostAlloc: allocating " << len << " bytes with malloc\n";
-        }
-
-        ptr = malloc(len + id_offset );
-    }
-#else
-    ptr = malloc(len + id_offset );
-#endif
-
-    if( trackAllocations ) {
-        long long id = AllocationTracker::getInstance().increment(name, ptr, len+id_offset, true); // get unique id
-        *(long long *)ptr = id; // store id in front of data
-        if( debugAllocations ) {
-            printf( "Debug: MonteRayHostAlloc   -- Allocation ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
-                    id, ptr, len+id_offset, name.c_str() );
-        }
-    }
-    return (char *) ptr + id_offset; // return pointer to data
-}
+void* MonteRayHostAlloc(size_t len, bool managed = true, std::string name = std::string(""), const char *file = "", int line = -1 );
 
 #define MONTERAYHOSTALLOC(len, managed, name)({ MonteRay::MonteRayHostAlloc(len, managed, name, __FILE__, __LINE__); })
 
-inline void* MonteRayDeviceAlloc(size_t len, std::string name = std::string(""), const char *file = "", int line = -1 ){
-    const bool debug = false;
-
-    name += "::" + std::string(file) + "[" + std::to_string(line) + "]";
-
-    void *ptr;
-#ifdef __CUDACC__
-    if( debug ){
-        std::cout << "Debug: MonteRayHostAlloc: allocating " << len << " bytes with cudaMalloc\n";
-    }
-    cudaMalloc(&ptr, len + id_offset );
-
-    if( trackAllocations ) {
-        alloc_id_t id = AllocationTracker::getInstance().increment(name, ptr, len+id_offset,false); // get unique id
-        cudaMemcpy(ptr, &id, id_offset, cudaMemcpyHostToDevice); // store id in front of data
-        if( debugAllocations ) {
-            printf( "Debug: MonteRayDeviceAlloc -- Allocation ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
-                    id, ptr, len+id_offset, name.c_str() );
-        }
-    }
-    return (char *) ptr + id_offset; // return pointer to data
-#else
-    throw std::runtime_error( "MonteRayDeviceAlloc -- can NOT allocate device memory without CUDA." );
-#endif
-}
+void* MonteRayDeviceAlloc(size_t len, std::string name = std::string(""), const char *file = "", int line = -1 );
 
 #define MONTERAYDEVICEALLOC(len, name)({ MonteRay::MonteRayDeviceAlloc(len, name, __FILE__, __LINE__); })
 
-inline void MonteRayHostFree(void* ptr, bool managed ) noexcept {
-    if ( ptr == NULL ) { return; }
+void MonteRayHostFree(void* ptr, bool managed ) noexcept;
 
-    void* realPtr = (char *)ptr - id_offset; // real pointer
+void MonteRayDeviceFree(void* ptr) noexcept;
 
-    if( trackAllocations ) {
-        alloc_id_t id =  *((long long*) realPtr);
-        AllocationTracker::getInstance().decrement(id);
-
-        if( debugAllocations ) {
-            printf( "Debug: MonteRayHostFree -- Deallocating ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
-                    id, realPtr,
-                    AllocationTracker::getInstance().allocationList[id].size,
-                    AllocationTracker::getInstance().allocationList[id].name.c_str() );
-        }
-    }
-
-#ifdef __CUDACC__
-    if( managed ) {
-        cudaFree( realPtr );
-    } else {
-        std::free( realPtr );
-    }
-#else
-    std::free( realPtr );
-#endif
-}
-
-inline void MonteRayDeviceFree(void* ptr) noexcept {
-#ifdef __CUDACC__
-    if( debugAllocations ) {
-        printf( "Debug: MonteRayDeviceFree -- Deallocating   ptr address = %p\n");
-    }
-
-    if( ptr == NULL ) { return; }
-    char* realPtr = (char *)ptr - id_offset; // real pointer
-    if( trackAllocations ){
-        alloc_id_t id;
-        cudaMemcpy(&id, realPtr, id_offset, cudaMemcpyDeviceToHost); // copy id from front of data
-        AllocationTracker::getInstance().decrement(id);
-        if( debugAllocations ) {
-            printf( "Debug: MonteRayDeviceFree -- Deallocating ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
-                    id, realPtr,
-                    AllocationTracker::getInstance().allocationList[id].size,
-                    AllocationTracker::getInstance().allocationList[id].name.c_str() );
-        }
-    }
-
-    cudaFree(realPtr);
-#else
-    //throw std::runtime_error( "MonteRayDeviceFree -- can NOT free device memory without CUDA." );
-#endif
-}
-
-#ifdef __CUDACC__
-inline void MonteRayMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind){
-    CUDA_CHECK_RETURN( cudaMemcpy(dst, src, count, kind) );
-}
-#endif
+void MonteRayMemcpy(void *dst, const void *src, size_t count, int kind);
 
 } // end namespace
 

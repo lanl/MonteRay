@@ -1,12 +1,3 @@
-/*
- * MonteRay_GridBins.hh
- *
- *  Created on: Jan 30, 2018
- *      Author: jsweezy
- *
- *  A port of MCATK's GridBins class to MonteRay/CUDA
- */
-
 #ifndef MonteRay_GridBins_HH_
 #define MonteRay_GridBins_HH_
 
@@ -14,10 +5,9 @@
 #include <vector>
 #endif
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 #include "MonteRayCopyMemory.hh"
 #include "MonteRayVector3D.hh"
-#include "GPUErrorCheck.hh"
 
 #define MAXNUMVERTICES 1001
 
@@ -25,150 +15,48 @@ namespace MonteRay {
 
 class MonteRay_GridBins : public CopyMemoryBase<MonteRay_GridBins>{
 public:
-	using Base = MonteRay::CopyMemoryBase<MonteRay_GridBins> ;
+    using Base = CopyMemoryBase<MonteRay_GridBins> ;
     //typedef MonteRay_GridBins[3] gridInfoArray_t;
-    typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
-    typedef MonteRay::Vector3D<gpuRayFloat_t> Direction_t;
+    typedef Vector3D<gpuRayFloat_t> Position_t;
+    typedef Vector3D<gpuRayFloat_t> Direction_t;
 
     enum coordinate_t{ LINEAR, RADIAL };
 
     CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins(void) {
-    	init();
+        init();
     }
 
 
     CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins) : CopyMemoryBase<MonteRay_GridBins>()  {
-    	init();
+        init();
         initialize( min, max, nBins );
     }
 
     template<typename T>
     CUDAHOST_CALLABLE_MEMBER MonteRay_GridBins( const std::vector<T>& bins ) {
-    	init();
+        init();
         initialize( bins );
     }
 
     MonteRay_GridBins&
-    operator=( MonteRay_GridBins& rhs ) {
-    	nVertices = rhs.nVertices;
-    	nVerticesSq = rhs.nVerticesSq;
-    	vertices = rhs.vertices;
-    	verticesSq = rhs.verticesSq;
-    	delta = rhs.delta;
-    	minVertex = rhs.minVertex;
-    	maxVertex = rhs.maxVertex;
-    	numBins = rhs.numBins;
-    	type = rhs.type;
-    	radialModified = rhs.radialModified;
-
-    	verticesVec = nullptr;
-    	verticesSqVec = nullptr;
-    	return *this;
-    }
+    operator=( MonteRay_GridBins& rhs );
 
     //MonteRay_GridBins(const MonteRay_GridBins&);
 
     //MonteRay_GridBins& operator=( const MonteRay_GridBins& rhs );
 
-    CUDAHOST_CALLABLE_MEMBER ~MonteRay_GridBins(void){
-
-		if( Base::isCudaIntermediate ) {
-			//std::cout << "Debug: MonteRay_GridBins::~MonteRay_GridBins -- isCudaIntermediate \n";
-			MonteRayDeviceFree( vertices );
-			MonteRayDeviceFree( verticesSq );
-		} else {
-			// if managed by std::vector on host - no free needed on host
-			// TODO: use logic if vertices is allocated alone.
-			// MonteRayHostFree( vertices, Base::isManagedMemory );
-			// MonteRayHostFree( verticesSq, Base::isManagedMemory );
-		}
-		if( verticesVec ) {
-			verticesVec->clear();
-			delete verticesVec;
-		}
-		if( verticesSqVec ) {
-			verticesSqVec->clear();
-			delete verticesSqVec;
-		}
-    }
+    CUDAHOST_CALLABLE_MEMBER ~MonteRay_GridBins(void);
 
     CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRay_GridBins");}
 
-    CUDAHOST_CALLABLE_MEMBER void init() {
-		nVertices = 0;
-		nVerticesSq = 0;
-		vertices = NULL;
-		verticesSq = NULL;
-		delta = 0.0;
-		minVertex = 0.0;
-		maxVertex = 0.0;
-		numBins = 0;
-		type = LINEAR;
-		radialModified = false;
-
-		verticesVec= NULL;
-		verticesSqVec= NULL;
-	}
+    CUDAHOST_CALLABLE_MEMBER void init();
 
     CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
-//    	std::cout << "Debug: MonteRay_GridBins::copyToGPU \n";
-		Base::copyToGPU();
-	}
+        //    	std::cout << "Debug: MonteRay_GridBins::copyToGPU \n";
+        Base::copyToGPU();
+    }
 
-    CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_GridBins* rhs) {
-//		if( debug ) {
-//			std::cout << "Debug: MonteRay_GridBins::copy(const MonteRay_GridBins* rhs) \n";
-//		}
-
-#ifdef __CUDACC__
-		if( nVertices != 0 && (nVertices != rhs->nVertices) ) {
-			std::cout << "Error: MonteRay_GridBins::copy -- can't change size of nVertices after initialization.\n";
-			std::cout << "Error: MonteRay_GridBins::copy -- nVertices = " << nVertices << " \n";
-			std::cout << "Error: MonteRay_GridBins::copy -- rhs->nVertices = " << rhs->nVertices << " \n";
-			std::cout << "Error: MonteRay_GridBins::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
-			std::cout << "Error: MonteRay_GridBins::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
-			throw std::runtime_error("MonteRay_GridBins::copy -- can't change size after initialization.");
-		}
-
-		if( nVerticesSq != 0 && (nVerticesSq != rhs->nVerticesSq) ) {
-			std::cout << "Error: MonteRay_GridBins::copy -- can't change size of nVerticesSq after initialization.\n";
-			std::cout << "Error: MonteRay_GridBins::copy -- nVerticesSq = " << nVerticesSq << " \n";
-			std::cout << "Error: MonteRay_GridBins::copy -- rhs->nVerticesSq = " << rhs->nVerticesSq << " \n";
-			std::cout << "Error: MonteRay_GridBins::copy -- isCudaIntermediate = " << isCudaIntermediate << " \n";
-			std::cout << "Error: MonteRay_GridBins::copy -- rhs->isCudaIntermediate = " << rhs->isCudaIntermediate << " \n";
-			throw std::runtime_error("MonteRay_GridBins::copy -- can't change size after initialization.");
-		}
-
-		if( isCudaIntermediate ) {
-			// host to device
-			if( nVertices == 0 && rhs->nVertices > 0 ) {
-				vertices = (gpuRayFloat_t*) MONTERAYDEVICEALLOC( rhs->nVertices*sizeof(gpuRayFloat_t), std::string("device - MonteRay_GridBins::vertices") );
-				MonteRayMemcpy( vertices,   rhs->vertices,   rhs->nVertices*sizeof(gpuRayFloat_t), cudaMemcpyHostToDevice );
-			}
-			if( nVerticesSq == 0 && rhs->nVerticesSq > 0) {
-				verticesSq = (gpuRayFloat_t*) MONTERAYDEVICEALLOC( rhs->nVerticesSq*sizeof(gpuRayFloat_t), std::string("device - MonteRay_GridBins::verticesSq") );
-				MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuRayFloat_t), cudaMemcpyHostToDevice );
-			}
-
-		} else {
-			// device to host
-//			MonteRayMemcpy( vertices, rhs->vertices, rhs->nVertices*sizeof(gpuRayFloat_t), cudaMemcpyDeviceToHost );
-//			MonteRayMemcpy( verticesSq, rhs->verticesSq, rhs->nVerticesSq*sizeof(gpuRayFloat_t), cudaMemcpyDeviceToHost );
-		}
-
-		nVertices = rhs->nVertices;
-		nVerticesSq = rhs->nVerticesSq;
-		delta = rhs->delta;
-		minVertex = rhs->minVertex;
-		maxVertex = rhs->maxVertex;
-		numBins = rhs->numBins;
-		type = rhs->type;
-		radialModified = rhs->radialModified;
-
-#else
-		throw std::runtime_error("MonteRay_GridBins::copy -- can NOT copy between host and device without CUDA.");
-#endif
-	}
+    CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_GridBins* rhs);
 
     void initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nBins);
 
@@ -176,19 +64,19 @@ public:
     CUDAHOST_CALLABLE_MEMBER
     void
     initialize( const std::vector<T>& bins ) {
-    	verticesVec = new std::vector<gpuRayFloat_t>;
-    	verticesVec->resize( bins.size() );
-    	for( unsigned i = 0; i< bins.size(); ++i ) {
-    		verticesVec->at(i) = gpuRayFloat_t( bins[i] );
-    	}
+        verticesVec = new std::vector<gpuRayFloat_t>;
+        verticesVec->resize( bins.size() );
+        for( unsigned i = 0; i< bins.size(); ++i ) {
+            verticesVec->at(i) = gpuRayFloat_t( bins[i] );
+        }
         setup();
     }
 
     CUDAHOST_CALLABLE_MEMBER void setup(void);
 
     CUDA_CALLABLE_MEMBER unsigned getNumBins(void) const {
-    	//if( debug ) printf("Debug: MonteRay_GridBins::getNumBins -- \n");
-    	return numBins;
+        //if( debug ) printf("Debug: MonteRay_GridBins::getNumBins -- \n");
+        return numBins;
     }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getMinVertex(void) const {return minVertex; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getMaxVertex(void) const {return maxVertex; }
@@ -210,11 +98,7 @@ public:
     // and number of bins on the pos side of the mesh
     CUDA_CALLABLE_MEMBER int getLinearIndex(gpuRayFloat_t pos) const;
 
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const {
-    	if( debug ) printf("%f\n", r);
-    	MONTERAY_ASSERT( r >= 0.0 );
-    	return getRadialIndexFromRSq( r*r );
-    }
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const;
     CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t rSq) const;
 
     CUDA_CALLABLE_MEMBER bool isIndexOutside( int i) const { if( i < 0 ||  i >= getNumBins() ) return true; return false; }

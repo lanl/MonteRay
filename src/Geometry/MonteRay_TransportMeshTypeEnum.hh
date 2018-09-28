@@ -1,10 +1,3 @@
-/*
- * MonteRay_TransportMeshTypeEnum.hh
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #ifndef MONTERAY_TRANSPORTMESHTYPEENUM_HH_
 #define MONTERAY_TRANSPORTMESHTYPEENUM_HH_
 
@@ -14,6 +7,5 @@ namespace MonteRay {
         enum TransportMeshTypeEnum_t{NONE=0, Cartesian, Cylindrical, Spherical, MAX};
     }
 }
-
 
 #endif /* MONTERAY_TRANSPORTMESHTYPEENUM_HH_ */

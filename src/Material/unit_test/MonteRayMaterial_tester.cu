@@ -1,6 +1,7 @@
 #include <UnitTest++.h>
 
 #include "MonteRayMaterial.hh"
+#include "MonteRayCrossSection.hh"
 #include "Material_test_helper.hh"
 
 SUITE( MonteRayMaterial_tester ) {

@@ -3,13 +3,13 @@
 
 #include <string>
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 
 namespace MonteRay{
 
 struct gpuTally {
-	unsigned size;
-	gpuTallyType_t* tally;
+    unsigned size;
+    gpuTallyType_t* tally;
 };
 
 void ctor(struct gpuTally*);
@@ -26,7 +26,7 @@ void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value );
 class gpuTallyHost {
 public:
 
-	gpuTallyHost(unsigned num);
+    gpuTallyHost(unsigned num);
 
     ~gpuTallyHost();
 

@@ -7,7 +7,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "MonteRay_MaterialSpec.hh"
 #include "MonteRay_CellProperties.hh"
 
 namespace MonteRay {

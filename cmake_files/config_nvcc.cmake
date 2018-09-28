@@ -1,6 +1,6 @@
 FIND_PACKAGE(CUDA REQUIRED)
 
-INCLUDE(FindCUDA)
+#INCLUDE(FindCUDA)
 
 #CUDA_VERSION_MAJOR
 #CUDA_VERSION_MAJOR
@@ -8,10 +8,19 @@ INCLUDE(FindCUDA)
 #CUDA_SDK_ROOT_DIR
 #CUDA_INCLUDE_DIRS
 
+enable_language(CUDA)
+SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+set(CMAKE_CXX_IGNORE_EXTENSIONS cu )
+set(CMAKE_CUDA_SOURCE_FILE_EXTENSIONS cu )
+
+# TRA - These need to be used and tested in other places besides Shark?
+set(CMAKE_CUDA_STANDARD 14)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
 set( GPUTYPE "NONE" )
 set( GPUCOMPUTECAPABILITY "-arch=sm_30" )
 
-include(IdentifyGPU)
+include(scripts/IdentifyGPU.cmake)
 IdentifyGPU( GPUTYPE GPUCOMPUTECAPABILITY )
 message( STATUS "config_nvcc.cmake -- GPU type = ${GPUTYPE}, Compute capability = ${GPUCOMPUTECAPABILITY}"  )
 
@@ -84,7 +93,11 @@ endif()
 
 #SET(CUDA_SEPARABLE_COMPILATION ON)
 #SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA; -Xcompiler -fPIC;--relocatable-device-code=true;--cudart static)
-SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA;-Xcompiler -fPIC;--relocatable-device-code=true;--cudart shared)
+#SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};${GPUCOMPUTECAPABILITY};-DCUDA;--relocatable-device-code=true;)
+
+add_definitions( -DCUDA )
+add_definitions( -D_GLIBCXX_USE_CXX11_ABI=1 )
+add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
 
 # Titan X -arch=sm_52
 # K40 -arch=compute_35 -code=sm_35
@@ -93,9 +106,9 @@ SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-DCUDA;-Xcompiler -fPIC;--relocatable-dev
 #list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
 
 if(DEFINED GPUCOMPUTECAPABILITY )
-  add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
-  set( Cuda_Flags_Debug "${GPUCOMPUTECAPABILITY} -g -G " )
-  add_definitions( -DCMAKE_CUDA_FLAGS_DEBUG=${Cuda_Flags_Debug} )
+#  add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
+#  set( Cuda_Flags_Debug "${GPUCOMPUTECAPABILITY} -g -G " )
+#  add_definitions( -DCMAKE_CUDA_FLAGS_DEBUG=${Cuda_Flags_Debug} )
 else()
   message( FATAL_ERROR "GPUCOMPUTECAPABILITY was NOT DEFINED!")
 endif()
@@ -110,5 +123,13 @@ endif()
 #list(APPEND CUDA_NVCC_FLAGS "-O3")
 #list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
 #list(APPEND CUDA_NVCC_FLAGS "--x cu")
+
+list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
+list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC")
+list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fpic")
+list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -std=c++14")
+list(APPEND CUDA_NVCC_FLAGS "--cudart shared")
+list(APPEND CUDA_NVCC_FLAGS "--relocatable-device-code=true" )
+list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY} )
 
 message( STATUS "Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")

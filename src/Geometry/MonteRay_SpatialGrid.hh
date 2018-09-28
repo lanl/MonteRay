@@ -1,14 +1,6 @@
-/*
- * MonteRay_SpatialGrid.hh
- *
- *  Created on: Feb 5, 2018
- *      Author: jsweezy
- */
-
 #ifndef MONTERAY_SPATIALGRID_HH_
 #define MONTERAY_SPATIALGRID_HH_
 
-#include "MonteRay_GridSystemInterface.hh"
 #include "MonteRay_TransportMeshTypeEnum.hh"
 
 //#include "Index.hh"
@@ -18,6 +10,11 @@
 #include "MonteRayCopyMemory.hh"
 
 namespace MonteRay {
+
+class MonteRay_GridSystemInterface;
+class MonteRay_GridBins;
+class rayTraceList_t;
+class singleDimRayTraceMap_t;
 
 class MonteRay_SpatialGrid : public CopyMemoryBase<MonteRay_SpatialGrid> {
 public:
@@ -43,59 +40,16 @@ public:
     CUDAHOST_CALLABLE_MEMBER MonteRay_SpatialGrid( const MonteRay_SpatialGrid& );
 
     template<typename READER_T>
-    CUDAHOST_CALLABLE_MEMBER MonteRay_SpatialGrid( READER_T& reader ) : MonteRay_SpatialGrid() {
-        if( reader.getGeometryString() == "XYZ" )  {
-            setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-            const unsigned DIM=3;
-            setDimension(DIM);
-            for( unsigned d=0; d < DIM; ++d) {
-                std::vector<double> vertices = reader.getVertices(d);
-                setGrid(d, vertices );
-            }
-            initialize();
-        }else if( reader.getGeometryString() == "RZ" )  {
-            setCoordinateSystem( TransportMeshTypeEnum::Cylindrical );
-            const unsigned DIM=2;
-            setDimension(DIM);
-            for( unsigned d=0; d < DIM; ++d) {
-                std::vector<double> vertices = reader.getVertices(d);
-                setGrid(d, vertices );
-            }
-            initialize();
-        } else {
-            throw std::runtime_error( "MonteRay_SpatialGrid(reader) -- Geometry type not yet supported." );
-        }
-    }
+    CUDAHOST_CALLABLE_MEMBER MonteRay_SpatialGrid( READER_T& reader );
 
     CUDAHOST_CALLABLE_MEMBER
     ~MonteRay_SpatialGrid(void);
 
     CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRay_SpatialGrid");}
 
-    CUDAHOST_CALLABLE_MEMBER void init() {
-        CoordinateSystem = TransportMeshTypeEnum::NONE;
-        dimension = 0;
-        pGridInfo[0] = nullptr;
-        pGridInfo[1] = nullptr;
-        pGridInfo[2] = nullptr;
-        initialized = false;
-        pGridSystem = nullptr;
-    }
+    CUDAHOST_CALLABLE_MEMBER void init();
 
-    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
-        //if( debug ) std::cout << "Debug: MonteRay_SpatialGrid::copyToGPU \n";
-        if( ! initialized ) {
-            throw std::runtime_error("MonteRay_SpatialGrid::copy -- MonteRay_SpatialGrid object has not been initialized.");
-        }
-
-        pGridInfo[0]->copyToGPU();
-        pGridInfo[1]->copyToGPU();
-        pGridInfo[2]->copyToGPU();
-
-        pGridSystem->copyToGPU();
-
-        Base::copyToGPU();
-    }
+    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void);
 
     CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_SpatialGrid* rhs);
 
@@ -181,24 +135,13 @@ public:
     }
 
     CUDA_CALLABLE_MEMBER
-    unsigned getIndex(Position_t particle_pos) const {
-        MONTERAY_ASSERT_MSG( initialized, "MonteRay_SpatialGrid MUST be initialized before tying to get an index." );
-
-        //        if( transform ) {
-        //            particle_pos = (*transform).counterTransformPos( particle_pos );
-        //        }
-
-        return  pGridSystem->getIndex( particle_pos );
-    }
+    unsigned getIndex(Position_t particle_pos) const;
 
     CUDA_CALLABLE_MEMBER
     gpuRayFloat_t returnCellVolume( unsigned index ) const { return getVolume( index ); }
 
     CUDA_CALLABLE_MEMBER
-    gpuRayFloat_t getVolume( unsigned index ) const {
-        MONTERAY_ASSERT( pGridSystem );
-        return pGridSystem->getVolume( index );
-    }
+    gpuRayFloat_t getVolume( unsigned index ) const;
 
     template<class Particle>
     CUDA_CALLABLE_MEMBER
@@ -213,85 +156,25 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const {
-        const bool debug = false;
-
-        if( debug ) printf("MonteRay_SpatialGrid::rayTrace(rayTraceList_t&, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
-
-        MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-        //        if( transform ) {
-        //            pos = (*transform).counterTransformPos( pos );
-        //            dir = (*transform).counterTransformDir( dir );
-        //        }
-        if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- calling grid system rayTrace \n");
-        pGridSystem->rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
-        return;
-    }
+    rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
 
     /// Call to support call with integer c array of indices
     /// and float c array of distances - may be slow
     CUDA_CALLABLE_MEMBER
     unsigned
-    rayTrace(int* global_indices, gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const {
-        const bool debug = false;
-
-        if( debug ) printf("MonteRay_SpatialGrid::rayTrace(int* global_indices, int* gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
-        MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-        //        if( transform ) {
-        //            pos = (*transform).counterTransformPos( pos );
-        //            dir = (*transform).counterTransformDir( dir );
-        //        }
-        rayTraceList_t rayTraceList;
-        rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
-
-        if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayTraceList.size());
-        for( unsigned i=0; i< rayTraceList.size(); ++i ) {
-            global_indices[i] = rayTraceList.id(i);
-            distances[i] = rayTraceList.dist(i);
-        }
-        return rayTraceList.size();
-    }
+    rayTrace(int* global_indices, gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance) const {
-        MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-        //        if( transform ) {
-        //            pos = (*transform).counterTransformPos( pos );
-        //            dir = (*transform).counterTransformDir( dir );
-        //        }
-        pGridSystem->crossingDistance(rayTraceMap, d, pos, dir, distance );
-        return;
-    }
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const {
-        MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-        //        if( transform ) {
-        //            pos = (*transform).counterTransformPos( pos );
-        //            dir = (*transform).counterTransformDir( dir );
-        //        }
-        pGridSystem->crossingDistance(rayTraceMap, d, pos, dir, distance );
-        return;
-    }
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const {
-        MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-        //        if( transform ) {
-        //            pos = (*transform).counterTransformPos( pos );
-        //            dir = (*transform).counterTransformDir( dir );
-        //        }
-        pGridSystem->crossingDistance(rayTraceMap, pos, dir, distance );
-        return;
-    }
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const;
 
     //void setTransformation( const mcatk::Transformation& T);
     //const mcatk::Transformation* getTransformation( void ) const;
@@ -329,6 +212,32 @@ public:
     void  read_v0(std::istream& infile);
 
 };
+
+template<typename READER_T>
+CUDAHOST_CALLABLE_MEMBER
+MonteRay_SpatialGrid::MonteRay_SpatialGrid( READER_T& reader ) : MonteRay_SpatialGrid() {
+    if( reader.getGeometryString() == "XYZ" )  {
+        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
+        const unsigned DIM=3;
+        setDimension(DIM);
+        for( unsigned d=0; d < DIM; ++d) {
+            std::vector<double> vertices = reader.getVertices(d);
+            setGrid(d, vertices );
+        }
+        initialize();
+    }else if( reader.getGeometryString() == "RZ" )  {
+        setCoordinateSystem( TransportMeshTypeEnum::Cylindrical );
+        const unsigned DIM=2;
+        setDimension(DIM);
+        for( unsigned d=0; d < DIM; ++d) {
+            std::vector<double> vertices = reader.getVertices(d);
+            setGrid(d, vertices );
+        }
+        initialize();
+    } else {
+        throw std::runtime_error( "MonteRay_SpatialGrid(reader) -- Geometry type not yet supported." );
+    }
+}
 
 } /* namespace MonteRay */
 

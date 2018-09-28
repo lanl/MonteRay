@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 
-#include "HashLookup.h"
+#include "HashLookup.hh"
 #include "MonteRayCrossSection.hh"
 #include "HashLookup_test_helper.hh"
 

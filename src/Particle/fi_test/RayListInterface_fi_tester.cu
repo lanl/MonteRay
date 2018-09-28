@@ -7,10 +7,12 @@
 
 #include "GPUUtilityFunctions.hh"
 #include "gpuTally.hh"
-#include "ExpectedPathLength.hh"
+#include "ExpectedPathLength.t.hh"
+#include "MonteRayMaterial.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"
+#include "HashLookup.hh"
 
 #if( true )
 SUITE( RayListInterface_fi_tester ) {

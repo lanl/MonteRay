@@ -13,40 +13,40 @@
 namespace MonteRay{
 
 struct gpuTiming {
-	clock64_t start;
-	clock64_t stop;
+    clock64_t start;
+    clock64_t stop;
 };
 
 inline void ctor(struct gpuTiming* pOrig) {
-	pOrig->start = 0;
-	pOrig->stop = 0;
+    pOrig->start = 0;
+    pOrig->stop = 0;
 }
 
 inline void dtor(struct gpuTiming*){}
 
 inline void copy(struct gpuTiming* pCopy, struct gpuTiming* pOrig) {
-	pCopy->start = pOrig->start;
-	pCopy->stop = pOrig->stop;
+    pCopy->start = pOrig->start;
+    pCopy->stop = pOrig->stop;
 }
 
 class gpuTimingHost {
 public:
-	typedef gpuFloatType_t float_t;
+    typedef gpuFloatType_t float_t;
 
-	gpuTimingHost(){
-		ptr = new gpuTiming;
-	    ctor(ptr);
-	    cudaCopyMade = false;
-	    ptr_device = NULL;
+    gpuTimingHost(){
+        ptr = new gpuTiming;
+        ctor(ptr);
+        cudaCopyMade = false;
+        ptr_device = NULL;
 
-	    rate = 0;
+        rate = 0;
 #ifdef __CUDACC__
-	    setRate( gpuTimingHost::getCyclesPerSecond() );
-	    copyToGPU();
+        setRate( gpuTimingHost::getCyclesPerSecond() );
+        copyToGPU();
 #else
-	    setRate( CLOCKS_PER_SEC );
+        setRate( CLOCKS_PER_SEC );
 #endif
-	}
+    }
 
     ~gpuTimingHost() {
         if( ptr != 0 ) {
@@ -57,43 +57,43 @@ public:
 
 #ifdef __CUDACC__
         if( cudaCopyMade ) {
-        	cudaFree( ptr_device );
+            cudaFree( ptr_device );
         }
 #endif
     }
 
     void copyToGPU(void){
 #ifdef __CUDACC__
-    	if(cudaCopyMade != true ) {
-    		cudaCopyMade = true;
+        if(cudaCopyMade != true ) {
+            cudaCopyMade = true;
 
-    		// allocate target struct
-    		CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( gpuTiming) ));
-    	}
+            // allocate target struct
+            CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( gpuTiming) ));
+        }
 
-    	// copy data
-    	CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof( gpuTiming ), cudaMemcpyHostToDevice));
+        // copy data
+        CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof( gpuTiming ), cudaMemcpyHostToDevice));
 #endif
     }
 
     void copyToCPU(void) {
 #ifdef __CUDACC__
-    	cudaCopyMade = true;
+        cudaCopyMade = true;
 
-    	// copy data
-    	CUDA_CHECK_RETURN( cudaMemcpy(ptr, ptr_device, sizeof( gpuTiming ), cudaMemcpyDeviceToHost));
+        // copy data
+        CUDA_CHECK_RETURN( cudaMemcpy(ptr, ptr_device, sizeof( gpuTiming ), cudaMemcpyDeviceToHost));
 #endif
     }
 
     /// Returns number of cycles required for requested seconds
     static clock64_t getCyclesPerSecond() {
-    	clock64_t Hz = 0;
+        clock64_t Hz = 0;
         // Get device frequency in Hz
-    #ifdef __CUDACC__
+#ifdef __CUDACC__
         cudaDeviceProp prop;
         CUDA_CHECK_RETURN( cudaGetDeviceProperties(&prop, 0));
         Hz = clock64_t(prop.clockRate) * 1000;
-    #endif
+#endif
         return Hz;
     }
 
@@ -106,22 +106,22 @@ public:
     clock64_t getClockStart(){ return ptr->start; }
 
     double getGPUTime(void){
-    	if( rate == 0 ) {
-    		throw std::runtime_error( "GPU rate not set." );
-    	}
+        if( rate == 0 ) {
+            throw std::runtime_error( "GPU rate not set." );
+        }
 #ifdef __CUDACC__
-    	if( !cudaCopyMade ){
-    		throw std::runtime_error( "gpuTiming not sent to GPU." );
-    	}
-    	copyToCPU();
+        if( !cudaCopyMade ){
+            throw std::runtime_error( "gpuTiming not sent to GPU." );
+        }
+        copyToCPU();
 #endif
 
-    	clock64_t deltaT;
-    	clock64_t start = ptr->start;
-    	clock64_t stop = ptr->stop;
-    	deltaT = stop - start;
+        clock64_t deltaT;
+        clock64_t start = ptr->start;
+        clock64_t stop = ptr->stop;
+        deltaT = stop - start;
 
-    	return double(deltaT) / rate;
+        return double(deltaT) / rate;
     }
 
     gpuTiming* getPtr(void) const { return ptr; }

@@ -1,7 +1,8 @@
 #ifndef RAY_H_
 #define RAY_H_
 
-#include "GPUErrorCheck.hh"
+#include "MonteRayTypes.hh"
+#include "MonteRayAssert.hh"
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayConstants.hh"
 

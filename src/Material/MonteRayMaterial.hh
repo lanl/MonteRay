@@ -1,10 +1,16 @@
 #ifndef MONTERAYMATERIAL_HH_
 #define MONTERAYMATERIAL_HH_
 
-#include "MonteRayDefinitions.hh"
-#include "MonteRayCrossSection.hh"
+#include <ostream>
+#include <istream>
+
+#include "MonteRayTypes.hh"
 
 namespace MonteRay{
+
+class MonteRayCrossSection;
+class MonteRayCrossSectionHost;
+class HashLookup;
 
 struct MonteRayMaterial {
     unsigned numIsotopes;
@@ -62,7 +68,7 @@ void cudaAdd(struct MonteRayMaterial* ptr, struct MonteRayCrossSection* xs, unsi
 
 class MonteRayMaterialHost {
 public:
-	typedef gpuFloatType_t float_t;
+    typedef gpuFloatType_t float_t;
 
     MonteRayMaterialHost(unsigned numIsotopes);
 
@@ -80,24 +86,16 @@ public:
         return MonteRay::getFraction(pMat, i);
     }
 
-    gpuFloatType_t getMicroTotalXS(HashLookup* pHash, gpuFloatType_t E ){
-    	unsigned HashBin = getHashBin(pHash, E);
-        return MonteRay::getMicroTotalXS(pMat, pHash, HashBin, E);
-    }
+    gpuFloatType_t getMicroTotalXS(HashLookup* pHash, gpuFloatType_t E );
 
     gpuFloatType_t getTotalXS(gpuFloatType_t E, gpuFloatType_t density=1.0 ){
-    	return MonteRay::getTotalXS(pMat, E, density);
+        return MonteRay::getTotalXS(pMat, E, density);
     }
 
-    gpuFloatType_t getTotalXS(HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density ){
-    	 unsigned HashBin = getHashBin(pHash, E);
-         return MonteRay::getTotalXS(pMat, pHash, HashBin, E, density);
-     }
+    gpuFloatType_t getTotalXS(HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density );
 
     void add(unsigned index, MonteRayCrossSectionHost& xs, gpuFloatType_t frac );
-#ifndef __CUDACC__
     void add(unsigned index, struct MonteRayCrossSection* xs, gpuFloatType_t frac );
-#endif
 
     void setID( unsigned index, unsigned id);
     int getID( unsigned index );

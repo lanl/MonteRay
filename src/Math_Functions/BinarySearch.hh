@@ -1,7 +1,7 @@
 #ifndef BINARYSEARCH_HH_
 #define BINARYSEARCH_HH_
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 
 namespace MonteRay {
 

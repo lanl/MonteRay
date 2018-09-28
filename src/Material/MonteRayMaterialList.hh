@@ -3,12 +3,14 @@
 
 #include <sstream>
 
-#include "MonteRayDefinitions.hh"
-
-#include "MonteRayMaterial.hh"
-#include "HashLookup.h"
+#include "MonteRayConstants.hh"
 
 namespace MonteRay{
+
+class HashLookup;
+class HashLookupHost;
+class MonteRayMaterial;
+class MonteRayMaterialHost;
 
 struct MonteRayMaterialList {
     unsigned numMaterials;
@@ -64,34 +66,14 @@ public:
         return MonteRay::getMaterial( pMatList, i );
     }
 
-    gpuFloatType_t getTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density, ParticleType_t ParticleType = neutron) const {
-    	if( ParticleType == neutron ) {
-    		unsigned index = pHash->getHashBin(E);
-    		return MonteRay::getTotalXS( pMatList, i, pHash->getPtr(), index, E, density);
-    	} else {
-    		return MonteRay::getTotalXS( pMatList, i, E, density);
-    	}
-    }
+    gpuFloatType_t getTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density, ParticleType_t ParticleType = neutron) const;
 
     gpuFloatType_t launchGetTotalXS(unsigned i, gpuFloatType_t E, gpuFloatType_t density) const;
 
-    unsigned materialIDtoIndex(unsigned id) const {
-        for( unsigned i=0; i < getNumberMaterials(); ++i ){
-            if( id == getMaterialID(i) ) {
-                return i;
-            }
-        }
- 		 std::stringstream msg;
-   		 msg << "Can't find index of material ID!\n";
-   		 msg << "Material ID = " << id << "\n";
-   		 msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRayMaterialList::materialIDtoIndex" << "\n\n";
-   		 throw std::runtime_error( msg.str() );
-    }
+    unsigned materialIDtoIndex(unsigned id) const;
 
     void add( unsigned i, MonteRayMaterialHost& mat, unsigned id);
-#ifndef __CUDACC__
     void add( unsigned i, MonteRayMaterial* mat, unsigned id);
-#endif
 
     const MonteRay::MonteRayMaterialList* getPtr(void) const { return pMatList; }
     const MonteRay::HashLookupHost* getHashPtr(void) const { return pHash; }

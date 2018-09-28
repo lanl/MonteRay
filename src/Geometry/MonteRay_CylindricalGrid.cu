@@ -1,4 +1,5 @@
 #include "MonteRay_CylindricalGrid.hh"
+#include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
@@ -6,6 +7,8 @@
 #include <float.h>
 
 namespace MonteRay {
+
+using ptrCylindricalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
 
 CUDA_CALLABLE_KERNEL
 void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ ) {

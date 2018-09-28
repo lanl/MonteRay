@@ -5,9 +5,8 @@
 #include <fstream>
 #include <cstring>
 
-#include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
-#include "MonteRayCopyMemory.t.hh"
+#include "RayList.hh"
 
 namespace MonteRay{
 
@@ -30,6 +29,11 @@ RayListInterface<N>::~RayListInterface() {
             closeInput();
         }
     }
+}
+template< unsigned N>
+void
+RayListInterface<N>::add( const void* ptrRay, unsigned num ) {
+    add( (const ParticleRay_t*) ptrRay, num);
 }
 
 template< unsigned N>
@@ -301,7 +305,9 @@ RayListInterface<N>::debugPrint() const {
     }
 }
 
-}
+template class RayListInterface<1>;
+template class RayListInterface<3>;
 
-template class MonteRay::RayListInterface<1>;
-template class MonteRay::RayListInterface<3>;
+} // end namespace
+
+

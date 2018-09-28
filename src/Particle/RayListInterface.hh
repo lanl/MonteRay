@@ -4,9 +4,7 @@
 #include <cstring>
 #include <fstream>
 
-#include "MonteRayDefinitions.hh"
-#include "GPUErrorCheck.hh"
-
+#include "MonteRayTypes.hh"
 #include "RayList.hh"
 
 namespace MonteRay{
@@ -16,7 +14,11 @@ class RayListInterface {
 public:
     typedef MonteRay::Ray_t<N>      RAY_T;
     typedef MonteRay::RayList_t<N>  RAYLIST_T;
-    typedef MonteRay::RayListSize_t RayListSize_t;
+    typedef unsigned RayListSize_t;
+    typedef gpuFloatType_t* CollisionPosition_t;
+    typedef gpuFloatType_t* CollisionDirection_t;
+    typedef unsigned DetectorIndex_t;
+    typedef MonteRay::ParticleType_t ParticleType_t;
 
     RayListInterface( unsigned num);
 
@@ -48,7 +50,7 @@ public:
     void add( const RAY_T& ray) { ptrPoints->add( ray ); }
 
     void add( const RAY_T* rayArray, unsigned num=1 ) { for( unsigned i=0; i<num; ++i) add( rayArray[i] );}
-    void add( const void* ptrRay, unsigned num=1 ) { add( (const ParticleRay_t*) ptrRay, num); }
+    void add( const void* ptrRay, unsigned num=1 );
 
     void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
             gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,

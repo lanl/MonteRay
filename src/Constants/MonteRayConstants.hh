@@ -2,7 +2,7 @@
 #define MONTERAYCONSTANTS_HH_
 
 #include <limits>
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 
 namespace MonteRay{
 
@@ -16,7 +16,6 @@ const gpuFloatType_t gpu_AvogadroBarn = .602214179f;
 /// PI from CRC Standard Mathematical Tables, 28th Edition, Editor William H. Beyer, CRC Press, 1987
 const gpuFloatType_t pi = 3.14159265358979323846264338;
 
-typedef short int ParticleType_t;
 const ParticleType_t neutron = 0;
 const ParticleType_t photon  = 1;
 

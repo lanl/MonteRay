@@ -4,7 +4,7 @@
 #include "MonteRayConstants.hh"
 #include "MonteRayDefinitions.hh"
 
-#include "HashLookup.h"
+#include "HashLookup.hh"
 
 #ifndef __CUDACC__
 #include "MonteRay_timer.hh"

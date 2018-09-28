@@ -1,22 +1,12 @@
 #ifndef MONTERAYCYLINDRICALGRID_HH_
 #define MONTERAYCYLINDRICALGRID_HH_
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 #include "MonteRay_GridSystemInterface.hh"
-#include "MonteRay_SingleValueCopyMemory.hh"
 
 namespace MonteRay {
 
 class MonteRay_CylindricalGrid;
-
-using ptrCylindricalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
-
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ );
-
-
-CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_CylindricalGrid** pInstance);
 
 class MonteRay_CylindricalGrid : public MonteRay_GridSystemInterface {
 public:

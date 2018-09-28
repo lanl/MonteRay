@@ -8,22 +8,12 @@
 #ifndef MONTERAYCARTESIANGRID_HH_
 #define MONTERAYCARTESIANGRID_HH_
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 #include "MonteRay_GridSystemInterface.hh"
-#include "MonteRay_SingleValueCopyMemory.hh"
 
 namespace MonteRay {
 
 class MonteRay_CartesianGrid;
-
-using ptrCartesianGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CartesianGrid*>;
-
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ );
-
-
-CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_CartesianGrid** pInstance);
 
 class MonteRay_CartesianGrid : public MonteRay_GridSystemInterface {
 public:

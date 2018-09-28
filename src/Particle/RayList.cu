@@ -74,7 +74,11 @@ RayList_t<N>::copy(const RayList_t<N>* rhs) {
 #endif
 }
 
+template class RayList_t<1>;
+template class RayList_t<3>;
+template class CopyMemoryBase<RayList_t<1>>;
+template class CopyMemoryBase<RayList_t<3>>;
+
 } // end namespace
 
-template class MonteRay::RayList_t<1>;
-template class MonteRay::RayList_t<3>;
+

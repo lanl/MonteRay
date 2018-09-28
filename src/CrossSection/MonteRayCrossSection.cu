@@ -6,6 +6,7 @@
 
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
+#include "HashLookup.hh"
 
 namespace MonteRay{
 
@@ -44,26 +45,26 @@ void dtor(struct MonteRayCrossSection* pXS) {
 
 void cudaCtor(MonteRayCrossSection* ptr, unsigned num) {
 #ifdef __CUDACC__
-	 ptr->numPoints = num;
-	 ptr->ParticleType = neutron;
-     unsigned allocSize = sizeof( gpuFloatType_t ) * num;
+    ptr->numPoints = num;
+    ptr->ParticleType = neutron;
+    unsigned allocSize = sizeof( gpuFloatType_t ) * num;
 
-     CUDA_CHECK_RETURN( cudaMalloc(&ptr->energies, allocSize ));
+    CUDA_CHECK_RETURN( cudaMalloc(&ptr->energies, allocSize ));
 
-     CUDA_CHECK_RETURN( cudaMalloc(&ptr->totalXS, allocSize ));
+    CUDA_CHECK_RETURN( cudaMalloc(&ptr->totalXS, allocSize ));
 #endif
 }
 
 void cudaCtor(MonteRayCrossSection* pCopy, MonteRayCrossSection* pOrig) {
 #ifdef __CUDACC__
-	unsigned num = pOrig->numPoints;
-	cudaCtor( pCopy, num);
+    unsigned num = pOrig->numPoints;
+    cudaCtor( pCopy, num);
 
-	pCopy->id = pOrig->id;
-	pCopy->AWR = pOrig->AWR;
-	pCopy->ParticleType = pOrig->ParticleType;
+    pCopy->id = pOrig->id;
+    pCopy->AWR = pOrig->AWR;
+    pCopy->ParticleType = pOrig->ParticleType;
 
-	unsigned allocSize = sizeof( gpuFloatType_t ) * pOrig->numPoints;
+    unsigned allocSize = sizeof( gpuFloatType_t ) * pOrig->numPoints;
 
     CUDA_CHECK_RETURN( cudaMemcpy(pCopy->energies, pOrig->energies, allocSize, cudaMemcpyHostToDevice));
 
@@ -94,24 +95,24 @@ void copy(struct MonteRayCrossSection* pCopy, struct MonteRayCrossSection* pOrig
 
 CUDA_CALLABLE_MEMBER
 ParticleType_t getParticleType(const struct MonteRayCrossSection* pXS) {
-	return pXS->ParticleType;
+    return pXS->ParticleType;
 }
 
 CUDA_CALLABLE_MEMBER
 void setParticleType( struct MonteRayCrossSection* pXS, ParticleType_t type) {
-	pXS->ParticleType = type;
+    pXS->ParticleType = type;
 }
 
 CUDA_CALLABLE_MEMBER
 int getID(const struct MonteRayCrossSection* pXS) {
-	return pXS->id;
+    return pXS->id;
 }
 
 CUDA_CALLABLE_MEMBER
 void setID(struct MonteRayCrossSection* pXS, unsigned i) {
-	if( pXS->id < 0 ) {
-		pXS->id = i;
-	}
+    if( pXS->id < 0 ) {
+        pXS->id = i;
+    }
 }
 
 CUDA_CALLABLE_MEMBER
@@ -127,7 +128,7 @@ gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigne
 CUDA_CALLABLE_MEMBER
 unsigned getIndex(const struct MonteRayCrossSection* pXS, gpuFloatType_t value ){
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
-	return getIndexBinary( pXS, 0, pXS->numPoints-1, value);
+    return getIndexBinary( pXS, 0, pXS->numPoints-1, value);
 }
 
 CUDA_CALLABLE_MEMBER
@@ -156,9 +157,9 @@ CUDA_CALLABLE_MEMBER
 unsigned getIndexLinear(const struct MonteRayCrossSection* pXS, unsigned lower, unsigned upper, gpuFloatType_t value ){
 
     for( unsigned i=lower+1; i < upper+1; ++i ){
-    	if( value < pXS->energies[ i ] ) {
-    		return i-1;
-    	}
+        if( value < pXS->energies[ i ] ) {
+            return i-1;
+        }
     }
     if( value < pXS->energies[ lower ] ) { return lower; }
     return upper;
@@ -166,15 +167,15 @@ unsigned getIndexLinear(const struct MonteRayCrossSection* pXS, unsigned lower, 
 
 CUDA_CALLABLE_MEMBER
 unsigned getIndex(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ){
-	unsigned isotope = MonteRay::getID(pXS);
-	unsigned lowerBin = MonteRay::getLowerBoundbyIndex(pHash, isotope, hashBin);
-	unsigned upperBin = MonteRay::getUpperBoundbyIndex(pHash, isotope, hashBin);
+    unsigned isotope = MonteRay::getID(pXS);
+    unsigned lowerBin = MonteRay::getLowerBoundbyIndex(pHash, isotope, hashBin);
+    unsigned upperBin = MonteRay::getUpperBoundbyIndex(pHash, isotope, hashBin);
 
-	if( upperBin-lowerBin+1 <= 8 ){
-		return getIndexLinear( pXS, lowerBin, upperBin, E);
-	} else {
-		return getIndexBinary( pXS, lowerBin, upperBin, E);
-	}
+    if( upperBin-lowerBin+1 <= 8 ){
+        return getIndexLinear( pXS, lowerBin, upperBin, E);
+    } else {
+        return getIndexBinary( pXS, lowerBin, upperBin, E);
+    }
 
 }
 
@@ -197,15 +198,15 @@ gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigne
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t E ) {
-	if( E >= pXS->energies[ pXS->numPoints-1] ) {
-		gpuFloatType_t value = pXS->totalXS[ pXS->numPoints-1];
-		return value;
-	}
+    if( E >= pXS->energies[ pXS->numPoints-1] ) {
+        gpuFloatType_t value = pXS->totalXS[ pXS->numPoints-1];
+        return value;
+    }
 
-	if( E <= pXS->energies[ 0 ] ) {
-		gpuFloatType_t value = pXS->totalXS[ 0 ];
-		return value;
-	}
+    if( E <= pXS->energies[ 0 ] ) {
+        gpuFloatType_t value = pXS->totalXS[ 0 ];
+        return value;
+    }
 
     unsigned i = getIndex(pXS, E);
     return getTotalXSByIndex( pXS, i, E);
@@ -213,7 +214,7 @@ gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) {
-//	printf("Debug: MonteRayCrossSection::getTotalXS(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E )\n");
+    //	printf("Debug: MonteRayCrossSection::getTotalXS(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E )\n");
     if( E > pXS->energies[ pXS->numPoints-1] ) {
         return pXS->totalXS[ pXS->numPoints-1];
     }
@@ -239,27 +240,27 @@ CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pX
 
 gpuFloatType_t
 launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
-	gpuFloatType_t result[1];
+    gpuFloatType_t result[1];
 
 #ifdef __CUDACC__
-	gpuFloatType_t* result_device;
+    gpuFloatType_t* result_device;
 
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
+    CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
 
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelGetTotalXS<<<1,1>>>( pXS->xs_device, energy, result_device);
-	gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelGetTotalXS<<<1,1>>>( pXS->xs_device, energy, result_device);
+    gpuErrchk( cudaPeekAtLastError() );
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
 
-	cudaFree( result_device );
+    cudaFree( result_device );
 #else
-	kernelGetTotalXS( pXS->getPtr(), energy, result);
+    kernelGetTotalXS( pXS->getPtr(), energy, result);
 #endif
-	return result[0];
+    return result[0];
 }
 
 MonteRayCrossSectionHost::MonteRayCrossSectionHost(unsigned num){
@@ -292,15 +293,15 @@ MonteRayCrossSectionHost::~MonteRayCrossSectionHost(){
 }
 
 gpuFloatType_t MonteRayCrossSectionHost::getTotalXS( const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E ) const {
-	return MonteRay::getTotalXS(xs, pHash, hashBin, E);
+    return MonteRay::getTotalXS(xs, pHash, hashBin, E);
 }
 
 gpuFloatType_t MonteRayCrossSectionHost::getTotalXSByHashIndex(const struct HashLookup* pHash, unsigned i, gpuFloatType_t E) const {
-	return MonteRay::getTotalXS(xs, pHash, i, E);
+    return MonteRay::getTotalXS(xs, pHash, i, E);
 }
 
 unsigned MonteRayCrossSectionHost::getIndex( const HashLookupHost* pHost, unsigned hashBin, gpuFloatType_t e ) const {
-	return MonteRay::getIndex( xs, pHost->getPtr(), hashBin, e);
+    return MonteRay::getIndex( xs, pHost->getPtr(), hashBin, e);
 }
 
 
@@ -329,10 +330,10 @@ void MonteRayCrossSectionHost::load(struct MonteRayCrossSection* ptrXS ) {
 }
 
 void MonteRayCrossSectionHost::write(std::ostream& outf) const{
-	unsigned CrossSectionFileVersion = 0;
-	binaryIO::write(outf, CrossSectionFileVersion );
+    unsigned CrossSectionFileVersion = 0;
+    binaryIO::write(outf, CrossSectionFileVersion );
 
-	binaryIO::write(outf, xs->ParticleType );
+    binaryIO::write(outf, xs->ParticleType );
     binaryIO::write(outf, xs->numPoints );
     binaryIO::write(outf, xs->AWR );
     for( unsigned i=0; i<xs->numPoints; ++i ){
@@ -344,13 +345,13 @@ void MonteRayCrossSectionHost::write(std::ostream& outf) const{
 }
 
 void MonteRayCrossSectionHost::read(std::istream& infile) {
-	const bool debug = false;
-	unsigned CrossSectionFileVersion;
-	binaryIO::read(infile, CrossSectionFileVersion);
-	if( debug ) printf("Debug: MonteRayCrossSectionHost::read -- CrossSectionFileVersion=%d\n", CrossSectionFileVersion);
+    const bool debug = false;
+    unsigned CrossSectionFileVersion;
+    binaryIO::read(infile, CrossSectionFileVersion);
+    if( debug ) printf("Debug: MonteRayCrossSectionHost::read -- CrossSectionFileVersion=%d\n", CrossSectionFileVersion);
 
-	ParticleType_t particleType;
-	binaryIO::read(infile, particleType );
+    ParticleType_t particleType;
+    binaryIO::read(infile, particleType );
 
     unsigned num;
     binaryIO::read(infile, num);
@@ -358,7 +359,7 @@ void MonteRayCrossSectionHost::read(std::istream& infile) {
     ctor( xs, num );
 
     xs->ParticleType = particleType;
-	if( debug ) printf("Debug: MonteRayCrossSectionHost::read -- ParticleType=%d\n", xs->ParticleType);
+    if( debug ) printf("Debug: MonteRayCrossSectionHost::read -- ParticleType=%d\n", xs->ParticleType);
 
     binaryIO::read(infile, xs->AWR );
     for( unsigned i=0; i<num; ++i ){
@@ -430,7 +431,7 @@ MonteRayCrossSectionHost::thinGrid(const totalXSFunct_t& xsFunc, linearGrid_t& l
             // check difference with real xs
             double totalXS = xsFunc( energy );
             double percentDiff = std::abs(totalXS - interpolatedXS ) * 100.0 / totalXS;
-//            printf( "Debug: i=%d  E=%f, interp=%f, real=%f diff=%f \n", i, energy, interpolatedXS, totalXS, percentDiff);
+            //            printf( "Debug: i=%d  E=%f, interp=%f, real=%f diff=%f \n", i, energy, interpolatedXS, totalXS, percentDiff);
             if( percentDiff < max_error * 0.5 ) {
                 linearGrid.erase(itr);
                 done = false;

@@ -1,7 +1,7 @@
 #ifndef GPUADDTWODOUBLES_HH_
 #define GPUADDTWODOUBLES_HH_
 
-#include "MonteRayDefinitions.hh"
+#include "MonteRayTypes.hh"
 
 namespace MonteRay {
 

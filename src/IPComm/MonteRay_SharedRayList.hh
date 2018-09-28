@@ -11,9 +11,9 @@
 
 #include <mpi.h>
 
+#include "MonteRayTypes.hh"
+#include "MonteRayAssert.hh"
 #include "MonteRay_timer.hh"
-#include "MonteRayDefinitions.hh"
-#include "GPUErrorCheck.hh"
 
 namespace MonteRay {
 

@@ -1,7 +1,7 @@
 #ifndef MONTERAY_MATERIALPROPERTIES_T_HH_
 #define MONTERAY_MATERIALPROPERTIES_T_HH_
 
-// DO NOT INCLUDE THIS FILE, it is included by it's associated header
+#include "MonteRay_MaterialProperties.hh"
 
 namespace MonteRay {
 
