@@ -508,12 +508,12 @@ SUITE( shared_collisionPointList_tester ){
          dummyParticle particle;
 
          double prob = 20.0;
-         list.add(particle);
+         list.add(particle,prob);
 
          CHECK_EQUAL( 1, master.size() );
          ray_t stored_ray = master.get(0);
 
-         CHECK_CLOSE( 8.0, stored_ray.getWeight(0), 1e-6);
+         CHECK_CLOSE( 8.0*prob, stored_ray.getWeight(0), 1e-6);
      }
 
 }

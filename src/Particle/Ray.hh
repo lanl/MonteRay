@@ -36,6 +36,24 @@ public:
         index = particle.getLocationIndex();
     }
 
+    template< typename PARTICLE_T,
+              unsigned N_ = N,
+              typename std::enable_if<(N_ == 1)>::type* = nullptr >
+    Ray_t( const PARTICLE_T& particle, double probability ) {
+
+        pos[0] = particle.getPosition()[0];
+        pos[1] = particle.getPosition()[1];
+        pos[2] = particle.getPosition()[2];
+
+        dir[0] = particle.getDirection()[0];
+        dir[1] = particle.getDirection()[1];
+        dir[2] = particle.getDirection()[2];
+
+        energy[0] = particle.getEnergy();
+        weight[0] = particle.getWeight()*probability;
+        index = particle.getLocationIndex();
+    }
+
     template< typename PARTICLE_T, typename SCATTERING_PROBABILITES,
               unsigned N_ = N,
               typename std::enable_if<(N_ == 3)>::type* = nullptr >

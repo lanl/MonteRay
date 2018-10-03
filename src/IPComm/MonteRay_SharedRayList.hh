@@ -343,8 +343,8 @@ public:
     template<typename PARTICLE_T,
              typename Foo = COLLISION_T,
              typename std::enable_if<(Foo::getN() == 1)>::type* = nullptr >
-    void add( const PARTICLE_T& particle ) {
-        COLLISION_T collision( particle );
+    void add( const PARTICLE_T& particle, double probability ) {
+        COLLISION_T collision( particle, probability );
         addCollision( rank, collision);
     }
 

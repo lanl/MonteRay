@@ -85,6 +85,22 @@ SUITE( Ray_simple_tests ) {
         CHECK_CLOSE( 9.0, ray.getIndex(), 1e-6);
     }
 
+    TEST( Ctor2_takes_a_GenericParticle_and_probability ) {
+        dummyParticle particle;
+        double probability = 2.0;
+        ParticleRay_t ray(particle, probability);
+
+        CHECK_CLOSE( 1.0, ray.getPosition()[0], 1e-6);
+        CHECK_CLOSE( 2.0, ray.getPosition()[1], 1e-6);
+        CHECK_CLOSE( 3.0, ray.getPosition()[2], 1e-6);
+        CHECK_CLOSE( 4.0, ray.getDirection()[0], 1e-6);
+        CHECK_CLOSE( 5.0, ray.getDirection()[1], 1e-6);
+        CHECK_CLOSE( 6.0, ray.getDirection()[2], 1e-6);
+        CHECK_CLOSE( 7.0, ray.getEnergy(0), 1e-6);
+        CHECK_CLOSE( 8.0*2.0, ray.getWeight(0), 1e-6);
+        CHECK_CLOSE( 9.0, ray.getIndex(), 1e-6);
+    }
+
     class dummyScatteringProbabilityResult{
     public:
         dummyScatteringProbabilityResult() : probability( 0.0 ), energy( 0.0 ) {}
