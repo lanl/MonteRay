@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs Utilities CrossSection Material lnk3dnt GPU_Utilities RayTrace Geometry Math_Functions )
+set( ToolkitLibs Utilities GPU_Utilities CrossSection Material Geometry lnk3dnt  RayTrace  Math_Functions )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )
