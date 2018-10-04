@@ -5,7 +5,7 @@
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 #else
-typedef unsigned cudaStream_t;
+//typedef unsigned cudaStream_t;
 #endif
 
 #include "MonteRayPreprocessorDefinitions.hh"

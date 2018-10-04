@@ -414,7 +414,7 @@ void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_
 
 template<typename GRID_T>
 template<unsigned N>
-void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t* stream, const RayList_t<N>* pRayList )
+void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList, cudaStream_t* stream )
 {
     const bool debug = false;
 
@@ -431,7 +431,11 @@ void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( unsigned nBlocks, 
         printf("Debug: MonteRayNextEventEstimator::launch_ScoreRayList -- launching kernel_ScoreRayList with %d blocks, %d threads, to process %d rays\n", nBlocks, nThreads, nRays);
     }
 #ifdef __CUDACC__
-    kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr );
+    if( stream ) {
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr );
+    } else {
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr );
+    }
     if( debug ) {
         cudaError_t cudaerr = cudaDeviceSynchronize();
         if( cudaerr != cudaSuccess ) {

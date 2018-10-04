@@ -367,7 +367,7 @@ MonteRay_GridBins::getRadialIndexFromRSq( gpuRayFloat_t rSq) const {
     MONTERAY_ASSERT( rSq >= 0.0 );
     MONTERAY_ASSERT( radialModified );
 
-    printf("%f\n", rSq);
+    //if( debug ) printf("Debug: MonteRay_GridBins::getRadialIndexFromRSq -- %f\n", rSq);
 
     gpuRayFloat_t max = verticesSq[nVerticesSq-1];
 
@@ -383,7 +383,7 @@ MonteRay_GridBins::getRadialIndexFromRSq( gpuRayFloat_t rSq) const {
 CUDA_CALLABLE_MEMBER
 int
 MonteRay_GridBins::getRadialIndexFromR( gpuRayFloat_t r) const {
-    if( debug ) printf("%f\n", r);
+    //if( debug ) printf("Debug: MonteRay_GridBins::getRadialIndexFromR -- %f\n", r);
     MONTERAY_ASSERT( r >= 0.0 );
     return getRadialIndexFromRSq( r*r );
 }

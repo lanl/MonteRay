@@ -135,8 +135,6 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
                 pTally );
 
         RayListInterface<1> bank1(500000);
-        bool end = false;
-        unsigned offset = 0;
 
         double x = 0.0001;
         double y = 0.0001;

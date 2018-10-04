@@ -74,7 +74,7 @@ pTally(NULL)
         const bool debug = false;
         if( currentBank->size() > 0 ) {
             if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
-            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, stream1, currentBank->getPtrPoints());
+            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), stream1 );
         }
     };
 }

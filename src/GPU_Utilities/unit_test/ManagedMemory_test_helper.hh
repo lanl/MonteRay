@@ -1,10 +1,11 @@
 #ifndef MONTERAYMEMORY_TEST_HELPER_HH_
 #define MONTERAYMEMORY_TEST_HELPER_HH_
 
-#include "MonteRayConstants.hh"
-
-#include "MonteRayManagedMemory.hh"
 #include <stdexcept>
+
+#include "MonteRayConstants.hh"
+#include "MonteRayManagedMemory.hh"
+#include "MonteRayDefinitions.hh"
 
 using namespace MonteRay;
 
@@ -25,11 +26,15 @@ public:
     }
 
 #ifdef __CUDACC__
-    CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() ) {
+    CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t* stream = nullptr, MonteRayGPUProps device = MonteRayGPUProps() ) {
         ManagedMemoryBase::copyToGPU( stream, device );
         cudaMemAdvise(elements,  N*sizeof(gpuFloatType_t), cudaMemAdviseSetReadMostly, device.deviceID);
         if( device.deviceProps->concurrentManagedAccess ) {
-            cudaMemPrefetchAsync(elements, N*sizeof(gpuFloatType_t), device.deviceID, stream );
+            if( stream ) {
+                cudaMemPrefetchAsync(elements, N*sizeof(gpuFloatType_t), device.deviceID, *stream );
+            } else {
+                cudaMemPrefetchAsync(elements, N*sizeof(gpuFloatType_t), device.deviceID, NULL );
+            }
         }
     }
 #else
@@ -39,9 +44,13 @@ public:
 #endif
 
 #ifdef __CUDACC__
-    CUDAHOST_CALLABLE_MEMBER void copyToCPU(cudaStream_t stream = NULL) {
+    CUDAHOST_CALLABLE_MEMBER void copyToCPU(cudaStream_t* stream = nullptr) {
         ManagedMemoryBase::copyToCPU( stream );
-        cudaMemPrefetchAsync(elements, N*sizeof(gpuFloatType_t), cudaCpuDeviceId, stream );
+        if( stream ) {
+            cudaMemPrefetchAsync(elements, N*sizeof(gpuFloatType_t), cudaCpuDeviceId, *stream );
+        } else {
+            cudaMemPrefetchAsync(elements, N*sizeof(gpuFloatType_t), cudaCpuDeviceId, NULL );
+        }
     }
 #else
     void copyToCPU(void) {

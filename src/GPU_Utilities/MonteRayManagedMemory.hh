@@ -4,7 +4,10 @@
 #include "MonteRayMemory.hh"
 #include "MonteRayTypes.hh"
 
-//class cudaStream_t;
+#ifndef __CUDACC__
+// forward declare cudaStream_t
+class cudaStream_t;
+#endif
 
 namespace MonteRay {
 
@@ -15,9 +18,9 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER static void* operator new[](size_t len);
 
-    CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t stream = NULL, MonteRayGPUProps device = MonteRayGPUProps() );
+    CUDAHOST_CALLABLE_MEMBER void copyToGPU(cudaStream_t* stream = nullptr, MonteRayGPUProps device = MonteRayGPUProps() );
 
-    CUDAHOST_CALLABLE_MEMBER void copyToCPU(cudaStream_t stream = NULL);
+    CUDAHOST_CALLABLE_MEMBER void copyToCPU(cudaStream_t* stream = nullptr);
 
     CUDAHOST_CALLABLE_MEMBER static void operator delete(void* ptr);
 

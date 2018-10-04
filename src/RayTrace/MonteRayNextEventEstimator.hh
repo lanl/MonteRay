@@ -83,7 +83,7 @@ public:
     }
 
     template<unsigned N>
-    void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, cudaStream_t* stream, const RayList_t<N>* pRayList );
+    void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList, cudaStream_t* stream = nullptr );
 
     CUDAHOST_CALLABLE_MEMBER void setGeometry(const GRID_T* pGrid, const MonteRay_MaterialProperties* pMPs);
 

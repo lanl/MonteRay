@@ -486,7 +486,7 @@ SUITE( NextEventEstimator_Tester ) {
         cudaEventCreate(&stop);
 
         cudaStreamSynchronize(*stream);
-        pEstimator->launch_ScoreRayList(1, 1, stream, pBank.get());
+        pEstimator->launch_ScoreRayList(1, 1, pBank.get(), stream );
 
         cudaEventRecord(stop, 0);
         cudaEventSynchronize(stop);

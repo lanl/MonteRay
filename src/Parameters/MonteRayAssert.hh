@@ -2,9 +2,9 @@
 #define MONTERAYASSERT_HH_
 
 #include <sstream>
+#include <stdexcept>
 
 #include "MonteRayTypes.hh"
-#include <stdexcept>
 
 namespace MonteRay {
 // ABORT

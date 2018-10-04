@@ -28,20 +28,28 @@ ManagedMemoryBase::operator new[](size_t len) {
 
 CUDAHOST_CALLABLE_MEMBER
 void
-ManagedMemoryBase::copyToGPU(cudaStream_t stream, MonteRayGPUProps device ) {
+ManagedMemoryBase::copyToGPU(cudaStream_t* stream, MonteRayGPUProps device ) {
 #ifdef __CUDACC__
     cudaMemAdvise(this, sizeof(*this), cudaMemAdviseSetReadMostly, device.deviceID);
     if( device.deviceProps->concurrentManagedAccess ) {
-        cudaMemPrefetchAsync(this, sizeof(*this), device.deviceID, NULL );
+        if( stream ) {
+            cudaMemPrefetchAsync(this, sizeof(*this), device.deviceID, *stream );
+        } else {
+            cudaMemPrefetchAsync(this, sizeof(*this), device.deviceID, NULL );
+        }
     }
 #endif
 }
 
 CUDAHOST_CALLABLE_MEMBER
 void
-ManagedMemoryBase::copyToCPU(cudaStream_t stream) {
+ManagedMemoryBase::copyToCPU(cudaStream_t* stream) {
 #ifdef __CUDACC__
-    cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, NULL );
+    if( stream ) {
+        cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, *stream );
+    } else {
+        cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, NULL );
+    }
 #endif
 }
 
