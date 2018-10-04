@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "MonteRayTypes.hh"
+#include <stdexcept>
 
 namespace MonteRay {
 // ABORT
