@@ -154,7 +154,7 @@ SUITE( MaterialProperties_tests ) {
 
          TestParticle_t p;
          p.setLocationIndex( 0 );
-#ifdef BOOST_ENABLE_ASSERT_HANDLER
+#ifdef DEBUG
          CHECK_THROW( mp.getCellIndexTester<TestParticle_t>(p), std::runtime_error );
 #endif
      }
@@ -165,7 +165,7 @@ SUITE( MaterialProperties_tests ) {
 
         TestParticle_t p;
         p.setLocationIndex( -2 );
-#ifdef BOOST_ENABLE_ASSERT_HANDLER
+#ifdef DEBUG
         CHECK_THROW( mp.getCellIndexTester<TestParticle_t>(p), std::exception );
 #endif
     }

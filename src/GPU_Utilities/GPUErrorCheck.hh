@@ -35,7 +35,7 @@ namespace MonteRay{
  * \brief Preprocessor defined conditional wrapper to cudaPeekAtLastError()
  */
 
-#ifdef NDEBUG
+#ifndef DEBUG
 #define MonteRaySometimesPeekAtLastError() {}
 #else
 #define MonteRaySometimesPeekAtLastError() { MonteRayAlwaysPeekAtLastError(); }
@@ -63,7 +63,7 @@ namespace MonteRay{
 }
 
 
-#ifndef NDEBUG
+#ifdef DEBUG
 /**
  * This macro checks return value of the CUDA runtime call and exits
  * the application if the call failed.

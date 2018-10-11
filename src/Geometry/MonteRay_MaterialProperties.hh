@@ -324,7 +324,7 @@ public:
 private:
 
     void checkCellIndex(Cell_Index_t index, const char* fname, int line ) const {
-#ifndef NDEBUG
+#ifdef DEBUG
         if( index >= size() ) {
             std::stringstream msg;
             msg << "Error: File= " << std::string(fname) <<":"<< line <<  " -- Cell index is greater than the size of the number of cells.";
@@ -341,7 +341,7 @@ private:
     }
 
     void forceCheckCellIndex(Cell_Index_t index) const {
-#ifndef NDEBUG
+#ifndef DEBUG
         checkCellIndex( index, __FILE__, __LINE__);
 #else
         if( index < 0 || index >= size() ) {
