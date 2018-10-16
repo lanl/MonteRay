@@ -258,7 +258,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
             if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
                 gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
-                CHECK_CLOSE( 0.0, relDiff, 0.20 );
+                CHECK_CLOSE( 0.0, relDiff, 0.221 );
                 if( std::abs(relDiff) > maxdiff ){
                     maxdiff = std::abs(relDiff);
                 }
