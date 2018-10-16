@@ -21,13 +21,19 @@ list( GET MPI_VERSION 2 MPI_REVISION_VERSION )
 message(STATUS "cmake/mpi.cmake -- MPI version is ${MPI_MAJOR_VERSION}.${MPI_MINOR_VERSION}.${MPI_REVISION_VERSION}" )
             
 # For testing, we would like the mpi jobs to run concurrently and not all crowd on CPU #0
-if( MPI_MINOR_VERSION EQUAL 4 )
-    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca mpi_paffinity_alone 0 )
-elseif( MPI_MINOR_VERSION EQUAL 6 )
-    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca btl sm,self --bind-to-none )
+
+if( MPI_MAJOR_VERSION EQUAL 3 ) 
+  set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca btl vader,self --bind-to none )
+  set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca timer_require_monotonic 0 )
 else()
-    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca btl sm,self --bind-to none )
-    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca timer_require_monotonic 0 )
+  if( MPI_MINOR_VERSION EQUAL 4 )
+      set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca mpi_paffinity_alone 0 )
+  elseif( MPI_MINOR_VERSION EQUAL 6 )
+      set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca btl sm,self --bind-to-none )
+  else()
+      set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca btl sm,self --bind-to none )
+      set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca timer_require_monotonic 0 )
+  endif()
 endif()
 
 # This turns OFF the mpi stuff under OpenMPI
