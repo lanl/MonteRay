@@ -202,7 +202,11 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
         }
     }
 
+#ifdef __CUDA_ARCH__
+    unsigned offset = int(signbit(-dir));
+#else
     unsigned offset = int(std::signbit(-dir));
+#endif
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - offset=%d\n", offset );
     int end_index = offset*(nBins-1);;
 
