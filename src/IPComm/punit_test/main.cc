@@ -29,6 +29,12 @@ main( int argc, char* argv[] ) {
     MPI_Allreduce(&NLocalFailing, &NGlobalFailing, 1, MPI_UNSIGNED, MPI_SUM,
                   MPI_COMM_WORLD);
 
-    return NGlobalFailing;
+    MPI_Finalize();
+
+    if( world_rank == 0 ) {
+    	return NGlobalFailing;
+    } else {
+        return 0;
+    }
 
 }
