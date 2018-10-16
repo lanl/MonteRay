@@ -30,11 +30,22 @@ add_definitions( -DENUM_PROBLEMS )
 
 set( CXX_TOOL XLC )
 
+execute_process( COMMAND which ${CMAKE_CXX_COMPILER}
+                 OUTPUT_VARIABLE WhereIsXLC
+                 OUTPUT_STRIP_TRAILING_WHITESPACE )
+get_filename_component( WhereIsXLC ${WhereIsXLC} PATH )
+get_filename_component( mcatk_COMPILER_BIN_DIR ${WhereIsXLC} ABSOLUTE CACHE )
+string( REPLACE "bin" "" mcatk_COMPILER_BASE_DIR ${mcatk_COMPILER_BIN_DIR} )
+
+message( " -- ToolChain_XL.cmake -- XLC bin dir is located in: ${mcatk_COMPILER_BIN_DIR} " )
+message( " -- ToolChain_XL.cmake -- XLC base dir is located in: ${mcatk_COMPILER_BASE_DIR} " )
+
 # To look at all compiler flags set...
 # xlc++   -qshowmacros -E /dev/null
 find_library( mcatk_COMPILER_LIBRARY
               NAMES ibmc++
-              PATHS /opt/ibmcmp/vacpp/bg/12.1/lib64 
+              PATHS ${mcatk_COMPILER_BASE_DIR}
+              PATH_SUFFIXES lib lib64
               NO_DEFAULT_PATH )
 if( NOT mcatk_COMPILER_LIBRARY )
     message( FATAL_ERROR "Unable to locate IBM's c++ library." )
@@ -49,6 +60,10 @@ endif()
 # Suppress spurious warnings
 #  0724 - integer type wrapping in boost/type_traits
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qsuppress=1540-0724" )
+
+# set the flag to force compile of files using C++ for compiling .cu files as c++ files
+# -+  added by Cmake will conflict with -x c++
+set( COMPILER_CPP_FILE_FLAG "-+" )
 
 find_program( MPI_C_COMPILER   mpixlc_r )
 find_program( MPI_CXX_COMPILER mpixlcxx_r )

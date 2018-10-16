@@ -61,3 +61,5 @@ if( Platform STREQUAL "BlueGeneQ" )
 #    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--eh-frame-hdr" )
     set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -dynamic" )
 endif()
+
+set( COMPILER_CPP_FILE_FLAG "-x c++" )

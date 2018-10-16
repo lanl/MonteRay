@@ -87,7 +87,7 @@ if( enable_cuda )
     set_source_files_properties( ${appName}_srcs PROPERTIES LANGUAGE CUDA )
 else()
     set_source_files_properties( ${appName}_srcs PROPERTIES LANGUAGE CXX )
-    set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS "-x c++")
+    set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS ${COMPILER_CPP_FILE_FLAG} )
 endif()
 
 foreach( src ${ExcludeSource} )
@@ -135,7 +135,7 @@ if( NOT enable_cuda )
   # std C++ language properties
   foreach( srcname ${${appName}_srcs} )
     set_source_files_properties( ${srcname} PROPERTIES LANGUAGE CXX )
-    set_source_files_properties( ${srcname} PROPERTIES COMPILE_FLAGS "-x c++")
+    set_source_files_properties( ${srcname} PROPERTIES COMPILE_FLAGS ${COMPILER_CPP_FILE_FLAG} )
   endforeach()
 endif()
 

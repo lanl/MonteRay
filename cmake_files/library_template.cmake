@@ -20,7 +20,7 @@ file( GLOB ${libname}_headers "*.h" "*.hh" )
 if( NOT enable_cuda )
     foreach( cudaFile ${${libname}_cuda_srcs} )
        set_source_files_properties( ${cudaFile} PROPERTIES LANGUAGE CXX )
-       set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS "-x c++")
+       set_source_files_properties( ${cudaFile} PROPERTIES COMPILE_FLAGS ${COMPILER_CPP_FILE_FLAG} )
     endforeach()
 endif()
 
