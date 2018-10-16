@@ -14,7 +14,7 @@ set(CMAKE_CXX_IGNORE_EXTENSIONS cu )
 set(CMAKE_CUDA_SOURCE_FILE_EXTENSIONS cu )
 
 # TRA - These need to be used and tested in other places besides Shark?
-set(CMAKE_CUDA_STANDARD 14)
+set(CMAKE_CUDA_STANDARD 11)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 set( GPUTYPE "NONE" )
@@ -124,10 +124,10 @@ endif()
 #list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
 #list(APPEND CUDA_NVCC_FLAGS "--x cu")
 
-list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
+list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
 list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC")
 list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fpic")
-list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -std=c++14")
+list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -std=c++11")
 list(APPEND CUDA_NVCC_FLAGS "--cudart shared")
 list(APPEND CUDA_NVCC_FLAGS "--relocatable-device-code=true" )
 list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY} )
