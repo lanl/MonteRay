@@ -78,10 +78,10 @@ CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultCla
 class SpatialGridGPUTester {
 public:
     SpatialGridGPUTester(){
-        pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
 #ifdef __CUDACC__
-        setCudaStackSize( 40000 );
+        setCudaStackSize( 100000 );
 #endif
+        pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
     }
 
     ~SpatialGridGPUTester(){}
