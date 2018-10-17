@@ -30,3 +30,5 @@ if( CLANG_ANALYZE )
 #        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-recover=memory -fPIE -pie -fno-omit-frame-pointer -fsanitize-memory-track-origins=2" )
     endif()
 endif()
+
+set( COMPILER_CPP_FILE_FLAG "-x c++" )
