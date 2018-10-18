@@ -59,9 +59,6 @@ gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){
 //	std::cout << "Debug: starting ~gpuDistanceCalculatorTestHelper()" << std::endl;
 
 #ifdef __CUDACC__
-//	if( grid_device != NULL ) {
-//		CUDA_CHECK_RETURN( cudaFree( grid_device ));
-//	}
 	if( distances_device != NULL ) {
 		CUDA_CHECK_RETURN( cudaFree( distances_device ));
 	}
@@ -72,9 +69,6 @@ gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){
 		CUDA_CHECK_RETURN( cudaFree( numCrossings_device ) );
 	}
 #else
-	if( grid_device != NULL ) {
-		free( grid_device );
-	}
 	if( distances_device != NULL ) {
 		free( distances_device );
 	}
@@ -93,9 +87,7 @@ void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 	nCells = grid->getNumCells();
 
 #ifdef __CUDACC__
-	// allocate and copy the grid
-//	CUDA_CHECK_RETURN( cudaMalloc((void**) &grid_device, sizeof(GridBins) ));
-//	CUDA_CHECK_RETURN( cudaMemcpy(grid_device, grid, sizeof(GridBins), cudaMemcpyHostToDevice ));
+	// copy the grid
 	grid->copyToGPU();
 	grid_device = grid->devicePtr;
 
@@ -108,8 +100,7 @@ void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 	// allocate the num crossings
 	CUDA_CHECK_RETURN(cudaMalloc((void**) &numCrossings_device, sizeof(unsigned) ));
 #else
-	grid_device = (MonteRay::GridBins*) malloc( sizeof(GridBins) );
-	memcpy( grid_device, grid, sizeof(GridBins) );
+    grid_device = grid;
 
 	distances_device = (gpuRayFloat_t*) malloc( sizeof(float_t) * nCells );
 	cells_device = (int*) malloc( sizeof(int) * nCells );
