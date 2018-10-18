@@ -21,8 +21,13 @@ list( GET MPI_VERSION 2 MPI_REVISION_VERSION )
 message(STATUS "cmake/mpi.cmake -- MPI version is ${MPI_MAJOR_VERSION}.${MPI_MINOR_VERSION}.${MPI_REVISION_VERSION}" )
             
 # For testing, we would like the mpi jobs to run concurrently and not all crowd on CPU #0
-
-if( MPI_MAJOR_VERSION EQUAL 3 ) 
+if( MPI_MAJOR_VERSION GREATER 9)
+   # Sierra/Shark the MPI version under the hood of Spectrum is 10.x.x. 
+   # Need a way to make this more LLNL/Sierra specific... PlatformOS is power8?
+    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} -btl vader,self --bind-to none )
+    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca timer_require_monotonic 0 )
+    message( "-- mpi.cmake - Setting mpiexec flags for Sierras MPI" )            
+elseif( MPI_MAJOR_VERSION EQUAL 3 ) 
   set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca btl vader,self --bind-to none )
   set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca timer_require_monotonic 0 )
 else()
