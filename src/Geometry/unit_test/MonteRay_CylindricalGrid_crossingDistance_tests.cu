@@ -20,7 +20,6 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
     using Position_t = MonteRay::Vector3D<gpuRayFloat_t>;
 
     const gpuFloatType_t s2 = std::sqrt(2.0);
-    const unsigned OUTSIDE_GRID = MonteRay_GridSystemInterface::OUTSIDE_GRID;
 
     enum coord {R=0,Z=1,Theta=2,DIM=3};
 
