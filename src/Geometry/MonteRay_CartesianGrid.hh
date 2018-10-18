@@ -55,6 +55,11 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
+    crossingDistance(singleDimRayTraceMap_t&, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance ) const;
+
+private:
+    CUDA_CALLABLE_MEMBER
+    void
     crossingDistance(singleDimRayTraceMap_t&, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER

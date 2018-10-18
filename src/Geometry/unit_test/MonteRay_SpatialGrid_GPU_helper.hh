@@ -413,29 +413,6 @@ public:
         return pResult->v;
     }
 
-    singleDimRayTraceMap_t crossingDistance( Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
-
-        using result_t = resultClass<singleDimRayTraceMap_t>;
-        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
-
-#ifdef __CUDACC__
-        pResult->copyToGPU();
-
-        cudaDeviceSynchronize();
-        kernelCrossingDistance<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
-                pos, dir, distance );
-        cudaDeviceSynchronize();
-
-        gpuErrchk( cudaPeekAtLastError() );
-
-        pResult->copyToCPU();
-#else
-        kernelCrossingDistance( pGridInfo.get(), pResult.get(),
-                pos, dir, distance );
-#endif
-        return pResult->v;
-    }
-
     template<typename particle>
     rayTraceList_t rayTrace( particle& p, gpuRayFloat_t distance, bool outside = false) {
 

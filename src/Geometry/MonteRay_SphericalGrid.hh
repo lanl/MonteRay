@@ -59,6 +59,14 @@ public:
     void
     rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuRayFloat_t distance,  bool outsideDistances=false) const;
 
+
+    CUDA_CALLABLE_MEMBER
+    void
+    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance ) const {
+        crossingDistance(rayTraceMap, pos, dir, distance );
+    }
+
+protected:
     CUDA_CALLABLE_MEMBER
     void
     crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;

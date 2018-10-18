@@ -221,6 +221,12 @@ MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
 
 CUDA_CALLABLE_MEMBER
 void
+MonteRay_CartesianGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance ) const {
+    crossingDistance( rayTraceMap, d, pos[d], dir[d], distance);
+}
+
+CUDA_CALLABLE_MEMBER
+void
 MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const \n");
     crossingDistance(rayTraceMap, *(pGridBins[d]), pos, dir, distance, false);

@@ -561,7 +561,9 @@ MonteRay_SpatialGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsi
     //            pos = (*transform).counterTransformPos( pos );
     //            dir = (*transform).counterTransformDir( dir );
     //        }
-    pGridSystem->crossingDistance(rayTraceMap, d, pos, dir, distance );
+    Position_t position; position[d] = pos;
+    Direction_t direction; direction[d] = dir;
+    pGridSystem->crossingDistance(rayTraceMap, d, position, direction, distance );
     return;
 }
 
@@ -578,18 +580,6 @@ MonteRay_SpatialGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsi
     return;
 }
 
-CUDA_CALLABLE_MEMBER
-void
-MonteRay_SpatialGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const {
-    MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-    //        if( transform ) {
-    //            pos = (*transform).counterTransformPos( pos );
-    //            dir = (*transform).counterTransformDir( dir );
-    //        }
-    pGridSystem->crossingDistance(rayTraceMap, pos, dir, distance );
-    return;
-}
 
 void MonteRay_SpatialGrid::write( const std::string& filename ) {
     std::ofstream outfile;

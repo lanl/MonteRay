@@ -54,7 +54,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 1.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -73,7 +73,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 1.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 1, distances.id(0) );
@@ -91,7 +91,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 2.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL(  0, distances.size() );
     }
@@ -105,7 +105,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 2.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL(  0, distances.size() );
     }
@@ -119,7 +119,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 2.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -139,7 +139,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 2.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 20, distances.id(0) );
@@ -159,7 +159,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 21.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 22, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -188,7 +188,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 21.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 22, distances.size() );
         CHECK_EQUAL( 20, distances.id(0) );
@@ -216,7 +216,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 2.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 1, distances.id(0) );
@@ -236,7 +236,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         gpuRayFloat_t distance = 2.0;
 
         distances_t distances;
-        cart.crossingDistance( distances, 0, position[0], direction[0], distance);
+        cart.crossingDistance( distances, 0, position, direction, distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 18, distances.id(0) );
@@ -278,7 +278,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_EQUAL( 2, cart.getNumBins(1) );
         CHECK_EQUAL( 2, cart.getNumBins(2) );
 
-        cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+        cart.crossingDistance( distances, dim, position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -288,7 +288,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
         dim = 1;
         distances.clear();
-        cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+        cart.crossingDistance( distances, dim, position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -322,7 +322,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
         unsigned dim = 0;
         distances_t distances;
-        cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+        cart.crossingDistance( distances, dim, position, direction, distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -338,7 +338,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
         dim = 1;
         distances.clear();
-        cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+        cart.crossingDistance( distances, dim, position, direction, distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -377,7 +377,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
     	unsigned dim = 0;
     	distances_t distances;
-    	cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+    	cart.crossingDistance( distances, dim, position, direction, distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -393,7 +393,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
         dim = 1;
         distances.clear();
-        cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+        cart.crossingDistance( distances, dim, position, direction, distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -432,7 +432,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
     	unsigned dim = 0;
     	distances_t distances;
-    	cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+    	cart.crossingDistance( distances, dim, position, direction, distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( -1, distances.id(0) );
@@ -449,7 +449,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
     	dim = 1;
     	distances.clear();
-    	cart.crossingDistance(distances, dim, position[dim], direction[dim], distance);
+    	cart.crossingDistance(distances, dim, position, direction, distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( -1, distances.id(0) );
@@ -489,7 +489,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
     	unsigned dim = 0;
     	distances_t distances;
-    	cart.crossingDistance( distances, dim, position[dim], direction[dim], distance);
+    	cart.crossingDistance( distances, dim, position, direction, distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( 3, distances.id(0) );
@@ -505,7 +505,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
         dim = 1;
         distances.clear();
-        cart.crossingDistance(distances, dim, position[dim], direction[dim], distance);
+        cart.crossingDistance(distances, dim, position, direction, distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( 3, distances.id(0) );

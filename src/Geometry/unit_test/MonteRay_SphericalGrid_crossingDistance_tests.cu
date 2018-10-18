@@ -13,9 +13,8 @@ using namespace MonteRay;
 
 SUITE( SphericalGrid_crossinDistance_Tests) {
     typedef Vector3D<gpuRayFloat_t> Position_t;
-    using SphericalGrid = MonteRay_SphericalGrid;
-    using GridBins_t = SphericalGrid::GridBins_t;
-    using pArrayOfpGridInfo_t = SphericalGrid::pArrayOfpGridInfo_t;
+    using GridBins_t = MonteRay_SphericalGrid::GridBins_t;
+    using pArrayOfpGridInfo_t = MonteRay_SphericalGrid::pArrayOfpGridInfo_t;
 
     enum coord {R=0,DIM=1};
     class gridTestData {
@@ -30,6 +29,33 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
 
         pArrayOfpGridInfo_t pGridInfo;
     };
+
+    class MonteRay_SphericalGrid_tester : public MonteRay_SphericalGrid {
+    public:
+        MonteRay_SphericalGrid_tester(unsigned d, pArrayOfpGridInfo_t pBins) :
+            MonteRay_SphericalGrid(d,pBins) {}
+
+        MonteRay_SphericalGrid_tester(unsigned d, GridBins_t* pBins ) :
+            MonteRay_SphericalGrid(d,pBins) {}
+
+        void radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap,
+                const Position_t& pos,
+                const Direction_t& dir,
+                gpuRayFloat_t distance,
+                bool outward ) const {
+            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection( rayTraceMap, pos, dir, distance, outward );
+        }
+
+        void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,
+                const Position_t& pos,
+                const Direction_t& dir,
+                gpuRayFloat_t distance ) const {
+            MonteRay_SphericalGrid::radialCrossingDistances( rayTraceMap, pos, dir, distance );
+        }
+
+    };
+
+    using SphericalGrid = MonteRay_SphericalGrid_tester;
 
     typedef singleDimRayTraceMap_t distances_t;
     typedef rayTraceList_t rayTraceList_t;

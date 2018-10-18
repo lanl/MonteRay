@@ -88,15 +88,8 @@ public:
 
     CUDA_CALLABLE_MEMBER
     virtual void
-    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const;
+    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const = 0;
 
-    CUDA_CALLABLE_MEMBER
-    virtual void
-    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
-
-    CUDA_CALLABLE_MEMBER
-    virtual void
-    crossingDistance( singleDimRayTraceMap_t&, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
     CUDA_CALLABLE_MEMBER
     virtual gpuRayFloat_t getVolume( unsigned index ) const = 0;
 

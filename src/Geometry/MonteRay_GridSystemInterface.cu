@@ -83,7 +83,7 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
 
         if( debug )  {
             for( unsigned d = 0; d<DIM; ++d) {
-                printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d, minDistance[%d]=%f\n",d, minDistances[d]);
+                printf( "Debug: GridSystemInterface::orderCrossings -- dim=%u, minDistance[%u]=%f\n",d, d, minDistances[d]);
             }
         }
 
@@ -378,27 +378,5 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
     return rayTerminated;
 
 }
-
-
-CUDA_CALLABLE_MEMBER
-void
-MonteRay_GridSystemInterface::crossingDistance( singleDimRayTraceMap_t&, unsigned dim, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
-    ABORT("Single dimension crossingDistance function not implemented for this grid type.");
-}
-
-CUDA_CALLABLE_MEMBER
-void
-MonteRay_GridSystemInterface::crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
-    ABORT("Single dimension crossingDistance with Position_t and Direction_t function not implemented for this grid type.");
-}
-
-CUDA_CALLABLE_MEMBER
-void
-MonteRay_GridSystemInterface::crossingDistance( singleDimRayTraceMap_t&, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
-    ABORT("Multi-dimension crossingDistance function not implemented for this grid type.");
-}
-
-
-
 
 } /* namespace MonteRay */

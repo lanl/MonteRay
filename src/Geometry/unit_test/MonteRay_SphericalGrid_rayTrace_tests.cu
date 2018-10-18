@@ -36,6 +36,42 @@ SUITE( SphericalGrid_Tests) {
     typedef singleDimRayTraceMap_t rayTraceMap_t;
     typedef rayTraceList_t rayTrace_t;
 
+    class MonteRay_SphericalGrid_tester : public MonteRay_SphericalGrid {
+    public:
+        MonteRay_SphericalGrid_tester(unsigned d, pArrayOfpGridInfo_t pBins) :
+            MonteRay_SphericalGrid(d,pBins) {}
+
+        MonteRay_SphericalGrid_tester(unsigned d, GridBins_t* pBins ) :
+            MonteRay_SphericalGrid(d,pBins) {}
+
+        void radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap,
+                const Position_t& pos,
+                const Direction_t& dir,
+                gpuRayFloat_t distance,
+                bool outward ) const {
+            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection( rayTraceMap, pos, dir, distance, outward );
+        }
+
+        void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,
+                const Position_t& pos,
+                const Direction_t& dir,
+                gpuRayFloat_t distance ) const {
+            MonteRay_SphericalGrid::radialCrossingDistances( rayTraceMap, pos, dir, distance );
+        }
+
+        void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,
+                        const Position_t& pos,
+                        const Direction_t& dir,
+                        unsigned rIndex,
+                        gpuRayFloat_t distance ) const {
+            MonteRay_SphericalGrid::radialCrossingDistances( rayTraceMap, pos, dir, rIndex, distance );
+        }
+
+
+    };
+
+    using SphericalGrid_t = MonteRay_SphericalGrid_tester;
+
     // ************************ rayTrace Testing ****************************
 
 
@@ -43,7 +79,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -6.0, 0.0,  0.0 );
         Position_t direction(   1,   0,    0 );
@@ -77,7 +113,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -6.0, 0.0,  0.0 );
         Position_t direction(   1,   0,    0 );
@@ -109,7 +145,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -6.0, 0.0,  -6.0 );
         Position_t direction(   1,   0,    1 );
@@ -140,7 +176,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -2.0, 0.0,  -2.0 );
         Position_t direction(   -1,   0,    -1 );
@@ -161,7 +197,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -6.0, 0.0, -5.0 );
         Position_t direction(   -1,   0,    0 );
@@ -177,7 +213,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -6.0, 0.0, -0.0 );
         Position_t direction(   1.0,   0,    0 );
@@ -195,7 +231,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -6.0, 0.0, -0.0 );
         Position_t direction(  -1.0,   0,    0 );
@@ -210,7 +246,7 @@ SUITE( SphericalGrid_Tests) {
         // std::cout << "Debug: -------------------------------------" << std::endl;
 
         gridTestData data;
-        MonteRay_SphericalGrid grid(1,data.pGridInfo);
+        SphericalGrid_t grid(1,data.pGridInfo);
 
         Position_t position ( -6.0, 0.0, -6.0 );
         Position_t direction(  1.0,   0,    0 );
