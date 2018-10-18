@@ -93,9 +93,9 @@ SUITE( MonteRay_GridBins_Tester ) {
     };
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void kernelGetNumBins(MonteRay_GridBins* pGridBins, resultClass<gpuRayFloat_t>* pResult) {
+    CUDA_CALLABLE_KERNEL void kernelGetNumBins(MonteRay_GridBins* pGridBins, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getNumBins();
-        printf( "kernelGetNumBins -- value = %d\n",  pResult->v );
+        printf( "kernelGetNumBins -- value = %u\n",  pResult->v );
         return;
     }
 
@@ -106,7 +106,7 @@ SUITE( MonteRay_GridBins_Tester ) {
         };
 
         MonteRay_GridBins* pGridInfo = new MonteRay_GridBins(vertices);
-        resultClass<gpuRayFloat_t>* pResult = new resultClass<gpuRayFloat_t>();
+        resultClass<unsigned>* pResult = new resultClass<unsigned>();
         //
 #ifdef __CUDACC__
         pGridInfo->copyToGPU();
@@ -262,7 +262,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     // kernal call
     CUDA_CALLABLE_KERNEL void kernelGetLinearIndex(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t r) {
         pResult->v = pGridBins->getLinearIndex(r);
-        //printf( "kernelGetNumBins -- value = %d\n",  pResult->v );
+        //printf( "kernelGetLinearIndex -- value = %d\n",  pResult->v );
         return;
     }
 
