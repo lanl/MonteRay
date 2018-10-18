@@ -207,8 +207,8 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         particle(void){};
         SpatialGrid::Position_t pos;
         SpatialGrid::Position_t dir;
-        SpatialGrid::Position_t getPosition(void) const { return pos; }
-        SpatialGrid::Position_t getDirection(void) const { return dir; }
+        CUDA_CALLABLE_MEMBER SpatialGrid::Position_t getPosition(void) const { return pos; }
+        CUDA_CALLABLE_MEMBER SpatialGrid::Position_t getDirection(void) const { return dir; }
     };
 
     TEST( getIndex_particle ){
