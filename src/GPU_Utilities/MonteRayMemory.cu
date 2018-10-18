@@ -71,10 +71,10 @@ void* MonteRayHostAlloc(size_t len, bool managed, std::string name, const char *
 #endif
 
     if( trackAllocations ) {
-        long long id = AllocationTracker::getInstance().increment(name, ptr, len+id_offset, true); // get unique id
-        *(long long *)ptr = id; // store id in front of data
+        alloc_id_t id = AllocationTracker::getInstance().increment(name, ptr, len+id_offset, true); // get unique id
+        *(alloc_id_t *)ptr = id; // store id in front of data
         if( debugAllocations ) {
-            printf( "Debug: MonteRayHostAlloc   -- Allocation ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
+            printf( "Debug: MonteRayHostAlloc   -- Allocation ID = %lu, ptr address = %p, size = %lu bytes, Name = %s\n",
                     id, ptr, len+id_offset, name.c_str() );
         }
     }
@@ -97,7 +97,7 @@ void* MonteRayDeviceAlloc(size_t len, std::string name, const char *file, int li
         alloc_id_t id = AllocationTracker::getInstance().increment(name, ptr, len+id_offset,false); // get unique id
         cudaMemcpy(ptr, &id, id_offset, cudaMemcpyHostToDevice); // store id in front of data
         if( debugAllocations ) {
-            printf( "Debug: MonteRayDeviceAlloc -- Allocation ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
+            printf( "Debug: MonteRayDeviceAlloc -- Allocation ID = %lu, ptr address = %p, size = %lu bytes, Name = %s\n",
                     id, ptr, len+id_offset, name.c_str() );
         }
     }
@@ -117,7 +117,7 @@ void MonteRayHostFree(void* ptr, bool managed ) noexcept {
         AllocationTracker::getInstance().decrement(id);
 
         if( debugAllocations ) {
-            printf( "Debug: MonteRayHostFree -- Deallocating ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
+            printf( "Debug: MonteRayHostFree -- Deallocating ID = %lu, ptr address = %p, size = %lu bytes, Name = %s\n",
                     id, realPtr,
                     AllocationTracker::getInstance().allocationList[id].size,
                     AllocationTracker::getInstance().allocationList[id].name.c_str() );
@@ -148,7 +148,7 @@ void MonteRayDeviceFree(void* ptr) noexcept {
         cudaMemcpy(&id, realPtr, id_offset, cudaMemcpyDeviceToHost); // copy id from front of data
         AllocationTracker::getInstance().decrement(id);
         if( debugAllocations ) {
-            printf( "Debug: MonteRayDeviceFree -- Deallocating ID = %d, ptr address = %p, size = %d bytes, Name = %s\n",
+            printf( "Debug: MonteRayDeviceFree -- Deallocating ID = %lu, ptr address = %p, size = %lu bytes, Name = %s\n",
                     id, realPtr,
                     AllocationTracker::getInstance().allocationList[id].size,
                     AllocationTracker::getInstance().allocationList[id].name.c_str() );

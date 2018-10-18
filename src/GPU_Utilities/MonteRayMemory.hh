@@ -82,7 +82,7 @@ public:
                 std::string name = allocationList[i].name;
                 size_t size =allocationList[i].size;
                 void* ptr = allocationList[i].ptr;
-                printf( "Debug: Allocation ID = %d not freed, ptr address = %p, size = %d bytes, Name = %s\n",
+                printf( "Debug: Allocation ID = %lu not freed, ptr address = %p, size = %lu bytes, Name = %s\n",
                         id, ptr, size, name.c_str() );
             }
         }
