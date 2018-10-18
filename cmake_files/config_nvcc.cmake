@@ -132,4 +132,6 @@ list(APPEND CUDA_NVCC_FLAGS "--cudart shared")
 list(APPEND CUDA_NVCC_FLAGS "--relocatable-device-code=true" )
 list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY} )
 
+#cuda_select_nvcc_arch_flags( ${GPUCOMPUTECAPABILITY} )
+
 message( STATUS "Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")
