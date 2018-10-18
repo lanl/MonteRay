@@ -145,7 +145,7 @@ MonteRay_GridBins::initialize( gpuRayFloat_t min, gpuRayFloat_t max, unsigned nB
     if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- max =%f\n", max);
     if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- nBins =%d\n", nBins);
     verticesVec = new std::vector<gpuRayFloat_t>();
-    if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- verticesVec =%d\n", verticesVec);
+    if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- verticesVec ptr=%p\n", verticesVec);
     delta = (max-min)/nBins;
     if( debug ) printf( "Debug: MonteRay_GridBins::initialize -- delta=%f\n", delta);
     gpuRayFloat_t vertex = min;
@@ -169,7 +169,7 @@ MonteRay_GridBins::removeVertex(unsigned i) {
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_GridBins::setup(void) {
-    if( debug ) printf( "Debug: MonteRay_GridBins::setup -- verticesVec->size() = %d\n", verticesVec->size());
+    if( debug ) printf( "Debug: MonteRay_GridBins::setup -- verticesVec->size() = %zu\n", verticesVec->size());
     if( verticesVec->size() == 1 ) {
         minVertex = 0.0;
         maxVertex = verticesVec->front();
