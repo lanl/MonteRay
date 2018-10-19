@@ -22,9 +22,9 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if( POLICY CMP0022 )
-    cmake_policy( SET CMP0022 OLD )
-endif()
+# if( POLICY CMP0022 )
+#   cmake_policy( SET CMP0022 OLD )
+# endif()
 
 set( cmake_dir "${CMAKE_SOURCE_DIR}/cmake_files" )
 list( APPEND CMAKE_MODULE_PATH ${cmake_dir} )
