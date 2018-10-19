@@ -1,12 +1,12 @@
 function( concatenateInstallSubdirs )
 
    if(NOT DEFINED Standalone ) 
-   if(NOT DEFINED Platform)
-      message( FATAL_ERROR "Variable [ Platform ] not defined. Need to set it or call LocatePackagesDir first.")
-   endif()
-   if(NOT DEFINED compiler_install_prefix)
-      message( FATAL_ERROR "Variable [ compiler_install_prefix ] not defined. Need to set it or call LocatePackagesDir first.")
-   endif()
+   #if(NOT DEFINED Platform)
+   #   message( FATAL_ERROR "Variable [ Platform ] not defined. Need to set it or call LocatePackagesDir first.")
+   #endif()
+   #if(NOT DEFINED compiler_install_prefix)
+   #   message( FATAL_ERROR "Variable [ compiler_install_prefix ] not defined. Need to set it or call LocatePackagesDir first.")
+   #endif()
    endif()
 
    if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
@@ -15,12 +15,12 @@ function( concatenateInstallSubdirs )
      set(debugPrefix "")
    endif()
    
-   #set(library_install_prefix lib/${Platform}/${compiler_install_prefix}${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
-   #set(binary_install_prefix  bin/${Platform}/${compiler_install_prefix}${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
+   set(library_install_prefix lib/${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
+   set(binary_install_prefix  bin/${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
    
    # Don't add specific sub-paths for MonteRay
-   set(library_install_prefix lib CACHE INTERNAL "Holds library install prefix path")
-   set(binary_install_prefix  bin CACHE INTERNAL "Holds library install prefix path")
+   #set(library_install_prefix lib CACHE INTERNAL "Holds library install prefix path")
+   #set(binary_install_prefix  bin CACHE INTERNAL "Holds library install prefix path")
    
    
    message( STATUS "${CMAKE_PROJECT_NAME} Installation Path Settings:" )

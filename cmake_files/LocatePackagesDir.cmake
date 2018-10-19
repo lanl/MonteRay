@@ -6,8 +6,8 @@
 #                                |___/                                              
 #
 # ====================================================================
-include(PlatformInfo)
-PlatformInfo()
+#include(PlatformInfo)
+#PlatformInfo()
 
 #  _____         _   ____            _         
 # |___ / _ __ __| | |  _ \ __ _ _ __| |_ _   _ 
