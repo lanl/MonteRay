@@ -24,7 +24,7 @@ message(STATUS "cmake/mpi.cmake -- MPI version is ${MPI_MAJOR_VERSION}.${MPI_MIN
 if( MPI_MAJOR_VERSION GREATER 9)
    # Sierra/Shark the MPI version under the hood of Spectrum is 10.x.x. 
    # Need a way to make this more LLNL/Sierra specific... PlatformOS is power8?
-    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} -btl vader,self --bind-to none )
+    set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca btl vader,self --bind-to none )
     set( MPIEXEC_PREFLAGS ${MPIEXEC_PREFLAGS} --mca timer_require_monotonic 0 )
     message( "-- mpi.cmake - Setting mpiexec flags for Sierras MPI" )            
 elseif( MPI_MAJOR_VERSION EQUAL 3 ) 
