@@ -61,7 +61,7 @@ public:
         ptrRankInfo = nullptr;
 
         unsigned allocationRanks = nRanks-1; // no allocation for rank 0
-        unsigned offset = 1; // need for MPI 3 shared memory padding for rank 0
+        unsigned offset = 0; // need for MPI 3 shared memory padding for rank 0
 
         if( ! usingMPI ) {
             ptrBucketHeader = new bucket_header_t[offset + nBuckets*allocationRanks];
@@ -70,34 +70,44 @@ public:
         } else if ( usingMPI )  {
             // mpi
             MPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shared_memory_communicator );
+
+            MPI_Info win_info;
+            MPI_Info_create(&win_info);
+            MPI_Info_set(win_info, "alloc_shared_noncontig", "true");
+
             if( rank == 0 ) {
-                MPI_Win_allocate_shared(1*sizeof(bucket_header_t),sizeof(bucket_header_t),MPI_INFO_NULL,shared_memory_communicator, &ptrBucketHeader, &shared_memory_window);
-                MPI_Win_allocate_shared(1*sizeof(COLLISION_T),sizeof(COLLISION_T),MPI_INFO_NULL,shared_memory_communicator, &ptrLocalCollisionPointList, &shared_memory_window);
-                MPI_Win_allocate_shared(1*sizeof(rank_info_t),sizeof(rank_info_t),MPI_INFO_NULL,shared_memory_communicator, &ptrRankInfo, &shared_memory_window);
+                MPI_Win_allocate_shared(nBuckets*allocationRanks*sizeof(bucket_header_t),sizeof(bucket_header_t),win_info,shared_memory_communicator, &ptrBucketHeader, &bucket_header_shared_memory_window);
+                MPI_Win_allocate_shared(nBuckets*particlesPerBucket*allocationRanks*sizeof(COLLISION_T),sizeof(COLLISION_T),win_info,shared_memory_communicator, &ptrLocalCollisionPointList, &collision_shared_memory_window);
+                MPI_Win_allocate_shared(nRanks*sizeof(rank_info_t),sizeof(rank_info_t),win_info,shared_memory_communicator, &ptrRankInfo, &rank_info_shared_memory_window);
             } else {
-                MPI_Win_allocate_shared(nBuckets*sizeof(bucket_header_t),sizeof(bucket_header_t),MPI_INFO_NULL,shared_memory_communicator, &ptrBucketHeader, &shared_memory_window);
-                MPI_Win_allocate_shared(nBuckets*particlesPerBucket*sizeof(COLLISION_T),sizeof(COLLISION_T),MPI_INFO_NULL,shared_memory_communicator, &ptrLocalCollisionPointList, &shared_memory_window);
-                MPI_Win_allocate_shared(1*sizeof(rank_info_t),sizeof(rank_info_t),MPI_INFO_NULL,shared_memory_communicator, &ptrRankInfo, &shared_memory_window);
+                MPI_Win_allocate_shared(0,sizeof(bucket_header_t),win_info,shared_memory_communicator, &ptrBucketHeader, &bucket_header_shared_memory_window);
+                MPI_Win_allocate_shared(0,sizeof(COLLISION_T),win_info,shared_memory_communicator, &ptrLocalCollisionPointList, &collision_shared_memory_window);
+                MPI_Win_allocate_shared(0,sizeof(rank_info_t),win_info,shared_memory_communicator, &ptrRankInfo, &rank_info_shared_memory_window);
             }
+            MPI_Info_free(&win_info);
+
+            MPI_Barrier( shared_memory_communicator );
+            MPI_Win_sync( bucket_header_shared_memory_window );
+            MPI_Win_sync( collision_shared_memory_window );
+            MPI_Win_sync( rank_info_shared_memory_window );
+            MPI_Barrier( shared_memory_communicator );
+
+            int disp_unit;
+            MPI_Aint segment_size;
+            MPI_Win_shared_query(bucket_header_shared_memory_window, 0, &segment_size, &disp_unit, &ptrBucketHeader);
+            MPI_Win_shared_query(collision_shared_memory_window, 0, &segment_size, &disp_unit, &ptrLocalCollisionPointList);
+            MPI_Win_shared_query(rank_info_shared_memory_window, 0, &segment_size, &disp_unit, &ptrRankInfo);
+
+            MPI_Barrier( shared_memory_communicator );
         }
 
-        if( rank == 0 ) {
-            // important that rank 0 knows the others correct offset
-            rankOffset[RANKINFO].push_back( 0 );
-            rankOffset[BUCKETHEADER].push_back( 0 );
-            rankOffset[COLLISIONBUFFER].push_back( 0 );
-            for(unsigned i = 0; i<allocationRanks; ++i ) {
-                rankOffset[RANKINFO].push_back( offset + i );
-                rankOffset[BUCKETHEADER].push_back( offset + nBuckets*i );
-                rankOffset[COLLISIONBUFFER].push_back( offset + nBuckets*particlesPerBucket*i );
-            }
-        } else {
-            // other ranks must know only about themselves
-            for(unsigned i = 0; i<nRanks; ++i ) {
-                rankOffset[RANKINFO].push_back( 0 );
-                rankOffset[BUCKETHEADER].push_back( 0 );
-                rankOffset[COLLISIONBUFFER].push_back( 0 );
-            }
+        rankOffset[RANKINFO].push_back( 0 );
+        rankOffset[BUCKETHEADER].push_back( 0 );
+        rankOffset[COLLISIONBUFFER].push_back( 0 );
+        for(unsigned i = 0; i<allocationRanks; ++i ) {
+            rankOffset[RANKINFO].push_back( offset + i );
+            rankOffset[BUCKETHEADER].push_back( offset + nBuckets*i );
+            rankOffset[COLLISIONBUFFER].push_back( offset + nBuckets*particlesPerBucket*i );
         }
 
         // initialize headers
@@ -202,6 +212,7 @@ public:
         MONTERAY_ASSERT( targetRank > 0 );
         MONTERAY_ASSERT( targetRank < nRanks );
         MONTERAY_ASSERT( bucketID < nBuckets );
+
         return &(ptrBucketHeader[ rankOffset[BUCKETHEADER][targetRank] + bucketID ] );
     }
 
@@ -497,7 +508,9 @@ private:
     rank_info_t*      ptrRankInfo;
     COLLISION_T* ptrLocalCollisionPointList;
 
-    MPI_Win shared_memory_window;
+    MPI_Win bucket_header_shared_memory_window;
+    MPI_Win collision_shared_memory_window;
+    MPI_Win rank_info_shared_memory_window;
     MPI_Comm shared_memory_communicator;
 };
 
