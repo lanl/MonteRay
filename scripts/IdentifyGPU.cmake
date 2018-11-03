@@ -54,6 +54,13 @@ if( output_value STREQUAL "GP104" )
   return()
 endif() 
 
-message( WARNING "MonteRay IndentifyGPU.cmake -- Unknown GPU Type, add your card, to support customized testing." )     
+if( output_value STREQUAL "GV100GL" )
+  add_definitions(-DV100_GPU)
+  set( ${RESULT} "V100" PARENT_SCOPE )
+  set( ${COMPUTECAPABILITY} "-arch=sm_70" PARENT_SCOPE )
+  return()
+endif() 
+
+message( WARNING "MonteRay scripts/IndentifyGPU.cmake -- Unknown GPU Type, add your card, to support customized testing." )     
 
 endfunction()
