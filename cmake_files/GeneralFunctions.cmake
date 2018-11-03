@@ -8,15 +8,9 @@ function( concatenateInstallSubdirs )
    #   message( FATAL_ERROR "Variable [ compiler_install_prefix ] not defined. Need to set it or call LocatePackagesDir first.")
    #endif()
    endif()
-
-   if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
-     set(debugPrefix "/debug")
-   else()
-     set(debugPrefix "")
-   endif()
-   
-   set(library_install_prefix lib/${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
-   set(binary_install_prefix  bin/${debugPrefix} CACHE INTERNAL "Holds library install prefix path")
+ 
+   set(library_install_prefix lib CACHE INTERNAL "Holds library install prefix path")
+   set(binary_install_prefix  bin CACHE INTERNAL "Holds library install prefix path")
    
    # Don't add specific sub-paths for MonteRay
    #set(library_install_prefix lib CACHE INTERNAL "Holds library install prefix path")
