@@ -40,7 +40,7 @@ template< unsigned N>
 void
 RayListInterface<N>::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-        gpuFloatType_t energy, gpuFloatType_t weight,
+        gpuFloatType_t energy, gpuFloatType_t weight, gpuFloatType_t time,
         unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType) {
     RAY_T particle;
     particle.pos[0] = x;
@@ -54,6 +54,7 @@ RayListInterface<N>::add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
     particle.index = index;
     particle.detectorIndex = detectorIndex;
     particle.particleType = particleType;
+    particle.time = time;
     add( particle );
 }
 
@@ -277,7 +278,7 @@ template< unsigned N>
 bool
 RayListInterface<N>::readToBank( const std::string& file, unsigned start ){
     openInput( file );
-    unsigned offset = start * ( RAY_T::filesize() );
+    unsigned offset = start * ( RAY_T::filesize(currentVersion) );
     io.seekg( offset, std::ios::cur); // reposition to offset location
 
     clear();

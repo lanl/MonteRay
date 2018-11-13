@@ -31,21 +31,24 @@ nThreads(threads),
 pGrid( pGB ),
 pMatList( pML ),
 pMatProps( pMP ),
-pTally(pT)
+pTally(pT),
+PA( MonteRayParallelAssistant::getInstance() )
 {
     pNextEventEstimator.reset();
     initialize();
     kernel = [&] ( void ) {
+        if( PA.getSharedMemoryRank() != 0 ) { return; }
 #ifdef __CUDACC__
-rayTraceTally<<<nBlocks,nThreads,0,*stream1>>>(pGrid->getDevicePtr(),
-        currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device,
-        pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
-        pTally->temp->tally);
+        rayTraceTally<<<nBlocks,nThreads,0, *stream1>>>(
+                pGrid->getDevicePtr(),
+                currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device,
+                pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+                pTally->temp->tally );
 #else
-rayTraceTally(pGrid->getPtr(),
-        currentBank->getPtrPoints(), pMatList->getPtr(),
-        pMatProps->getPtr(), pMatList->getHashPtr()->getPtr(),
-        pTally->getPtr()->tally );
+        rayTraceTally( pGrid->getPtr(),
+                       currentBank->getPtrPoints(), pMatList->getPtr(),
+                       pMatProps->getPtr(), pMatList->getHashPtr()->getPtr(),
+                       pTally->getPtr()->tally );
 #endif
     };
 
@@ -65,28 +68,28 @@ nThreads(threads),
 pGrid( pGB ),
 pMatList( pML ),
 pMatProps( pMP ),
-pTally(NULL)
+pTally(NULL),
+PA( MonteRayParallelAssistant::getInstance() )
 {
     pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator<GRID_T>>( numPointDets );
     usingNextEventEstimator = true;
     initialize();
     kernel = [&] ( void ) {
         const bool debug = false;
+
+        //copyPointDetToGPU();
+
         if( currentBank->size() > 0 ) {
+            //if( PA.getSharedMemoryRank() != 0 ) { return; }
             if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
-            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), stream1 );
+            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), stream1.get() );
         }
     };
 }
 
 template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::RayListController( unsigned numPointDets, const std::string& filename ) :
-nBlocks(0),
-nThreads(0),
-pGrid( NULL ),
-pMatList( NULL ),
-pMatProps( NULL ),
-pTally(NULL)
+PA( MonteRayParallelAssistant::getInstance() )
 {
     initialize();
     pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator<GRID_T>>( numPointDets );
@@ -101,87 +104,68 @@ pTally(NULL)
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T, N>::initialize(){
-    nFlushs = 0;
-    cpuTime = 0.0;
-    gpuTime = 0.0;
-    wallTime = 0.0;
-    toFile = false;
-    fileIsOpen = false;
-    bank1 = new RayListInterface<N>(1000000); // default 1 millions
-    bank2 = new RayListInterface<N>(1000000); // default 1 millions
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
 
-    pTimer = new cpuTimer;
+    setCapacity( 1000000 ); // default buffer capacity to 1 million.
+
+    pTimer.reset( new cpuTimer );
 
 #ifdef __CUDACC__
-    stream1   = new cudaStream_t;
-    startGPU  = new cudaEvent_t;
-    stopGPU   = new cudaEvent_t;
-    start     = new cudaEvent_t;
-    stop      = new cudaEvent_t;
-    copySync1 = new cudaEvent_t;
-    copySync2 = new cudaEvent_t;
+    stream1.reset( new cudaStream_t);
+    startGPU.reset( new cudaEvent_t);
+    stopGPU.reset( new cudaEvent_t);
+    start.reset( new cudaEvent_t);
+    stop.reset( new cudaEvent_t);
+    copySync1.reset( new cudaEvent_t);
+    copySync2.reset( new cudaEvent_t);
 
-    cudaStreamCreate( stream1 );
-    cudaEventCreate(start);
-    cudaEventCreate(stop);
-    cudaEventCreate(startGPU);
-    cudaEventCreate(stopGPU);
-    cudaEventCreate(copySync1);
-    cudaEventCreate(copySync2);
-#endif
-
-    currentBank = bank1;
-
-#ifdef __CUDACC__
-    currentCopySync = copySync1;
+    cudaStreamCreate( stream1.get() );
+    cudaEventCreate(start.get());
+    cudaEventCreate(stop.get());
+    cudaEventCreate(startGPU.get());
+    cudaEventCreate(stopGPU.get());
+    cudaEventCreate(copySync1.get());
+    cudaEventCreate(copySync2.get());
+    currentCopySync = copySync1.get();
 #endif
 }
 
 template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::~RayListController(){
-    delete bank1;
-    delete bank2;
-    delete pTimer;
 
-#ifdef __CUDACC
-    cudaStreamDestroy(*stream1);
-
-
-    delete stream1;
-    delete startGPU;
-    delete stopGPU;
-    delete start;
-    delete stop;
-    delete copySync1;
-    delete copySync2;
+#ifdef __CUDACC__
+    if( stream1 ) cudaStreamDestroy( *stream1 );
 #endif
 }
 
 template<typename GRID_T, unsigned N>
 unsigned
 RayListController<GRID_T,N>::capacity(void) const {
-    return currentBank->capacity();
+    if(currentBank) return currentBank->capacity();
+    return 0;
 }
 
 template<typename GRID_T, unsigned N>
 unsigned
 RayListController<GRID_T,N>::size(void) const {
-    return currentBank->size();
+    if(currentBank) return currentBank->size();
+    return 0;
 }
 
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::setCapacity(unsigned n) {
-    delete bank1;
-    delete bank2;
-    bank1 = new RayListInterface<N>(n);
-    bank2 = new RayListInterface<N>(n);
-    currentBank = bank1;
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    bank1.reset( new RayListInterface<N>(n) );
+    bank2.reset( new RayListInterface<N>(n) );
+    currentBank = bank1.get();
 }
 
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::add( const Ray_t<N>& ray){
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     currentBank->add( ray );
     if( size() == capacity() ) {
         std::cout << "Debug: bank full, flushing.\n";
@@ -192,6 +176,8 @@ RayListController<GRID_T,N>::add( const Ray_t<N>& ray){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::add( const Ray_t<N>* rayArray, unsigned num){
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     int NSpaces = capacity() - size();
 
     int NAdding = std::min(NSpaces, int(num));
@@ -209,6 +195,8 @@ RayListController<GRID_T,N>::add( const Ray_t<N>* rayArray, unsigned num){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::flush(bool final){
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     const bool debug = false;
     if( debug ) std::cout << "Debug: RayListController<N>::flush\n";
 
@@ -245,8 +233,8 @@ RayListController<GRID_T,N>::flush(bool final){
     //gpuErrchk( cudaPeekAtLastError() );
 
 #ifdef __CUDACC__
-    gpuErrchk( cudaEventRecord(*stopGPU,*stream1) );
-    gpuErrchk( cudaStreamWaitEvent(*stream1, *stopGPU, 0) );
+    gpuErrchk( cudaEventRecord( *stopGPU, *stream1) );
+    gpuErrchk( cudaStreamWaitEvent( *stream1, *stopGPU, 0) );
 #endif
 
     if( final ) {
@@ -263,6 +251,8 @@ RayListController<GRID_T,N>::flush(bool final){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::flushToFile(bool final){
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     const bool debug = false;
 
     if( debug ) {
@@ -320,6 +310,7 @@ RayListController<GRID_T,N>::flushToFile(bool final){
 template<typename GRID_T, unsigned N>
 size_t
 RayListController<GRID_T,N>::readCollisionsFromFile(std::string name) {
+    if( PA.getSharedMemoryRank() != 0 ) { return 0; }
 
     bool end = false;
     unsigned numParticles = 0;
@@ -335,10 +326,12 @@ template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::startTimers(){
     // start timers
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     pTimer->start();
 #ifdef __CUDACC__
-    gpuErrchk( cudaEventRecord(*start,0) );
-    gpuErrchk( cudaEventRecord(*startGPU,*stream1) );
+    gpuErrchk( cudaEventRecord( *start,0) );
+    gpuErrchk( cudaEventRecord( *startGPU, *stream1) );
 #endif
 }
 
@@ -346,6 +339,7 @@ template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::stopTimers(){
     // stop timers and sync
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
 
     pTimer->stop();
     float_t cpuCycleTime = pTimer->getTime();
@@ -354,7 +348,7 @@ RayListController<GRID_T,N>::stopTimers(){
 #ifdef __CUDACC__
     gpuErrchk( cudaStreamSynchronize( *stream1 ) );
     gpuErrchk( cudaEventRecord(*stop, 0) );
-    gpuErrchk( cudaEventSynchronize(*stop) );
+    gpuErrchk( cudaEventSynchronize( *stop ) );
 
     float_t gpuCycleTime;
     gpuErrchk( cudaEventElapsedTime(&gpuCycleTime, *startGPU, *stopGPU ) );
@@ -378,21 +372,23 @@ RayListController<GRID_T,N>::stopTimers(){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::swapBanks(){
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     // Swap banks
-    if( currentBank == bank1 ) {
-        currentBank = bank2;
+    if( currentBank == bank1.get() ) {
+        currentBank = bank2.get();
 #ifdef __CUDACC__
-        currentCopySync = copySync2;
+        currentCopySync = copySync2.get();
 #endif
     } else {
-        currentBank = bank1;
+        currentBank = bank1.get();
 #ifdef __CUDACC__
-        currentCopySync = copySync1;
+        currentCopySync = copySync1.get();
 #endif
     }
 
 #ifdef __CUDACC__
-    cudaEventSynchronize(*currentCopySync);
+    cudaEventSynchronize( *currentCopySync );
 #endif
     currentBank->clear();
 }
@@ -400,6 +396,8 @@ RayListController<GRID_T,N>::swapBanks(){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::sync(void){
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     GPUSync sync;
     sync.sync();
 }
@@ -407,6 +405,7 @@ RayListController<GRID_T,N>::sync(void){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::clearTally(void) {
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
 
     std::cout << "Debug: clearTally called \n";
 
@@ -418,13 +417,13 @@ RayListController<GRID_T,N>::clearTally(void) {
     //
     //	++nFlushs;
     //
-    //	cudaEventRecord(stopGPU,stream1);
-    //	cudaStreamWaitEvent(stream1, stopGPU, 0);
+    //	cudaEventRecord( stopGPU.get(), stream1.get());
+    //	cudaStreamWaitEvent(stream1.get(), stopGPU.get(), 0);
 
     GPUSync sync;
-    pTally->clear();
-    bank1->clear();
-    bank2->clear();
+    if( pTally ) pTally->clear();
+    if( bank1 ) bank1->clear();
+    if( bank2) bank2->clear();
     sync.sync();
 }
 
@@ -449,6 +448,8 @@ RayListController<GRID_T,N>::printCycleTime(float_t cpu, float_t gpu, float_t wa
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     if( ! usingNextEventEstimator ) {
          throw std::runtime_error( "RayListController::printPointDets  -- only supports printing of Next-Event Estimators." );
      }
@@ -459,6 +460,7 @@ RayListController<GRID_T,N>::printPointDets( const std::string& outputFile, unsi
 template<typename GRID_T, unsigned N>
 unsigned
 RayListController<GRID_T,N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z ){
+    if( PA.getSharedMemoryRank() != 0 ) { return 0; }
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::addPointDet - Next-Event Estimator not enabled." );
     }
@@ -468,6 +470,7 @@ RayListController<GRID_T,N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gp
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::setPointDetExclusionRadius(gpuFloatType_t r){
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::setPointDetExclusionRadius - Next-Event Estimator not enabled." );
     }
@@ -477,6 +480,8 @@ RayListController<GRID_T,N>::setPointDetExclusionRadius(gpuFloatType_t r){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::copyPointDetTallyToCPU(void) {
+    if( PA.getSharedMemoryRank() != 0 ) { return; }
+
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::copyPointDetTallyToCPU - Next-Event Estimator not enabled." );
     }
@@ -485,22 +490,33 @@ RayListController<GRID_T,N>::copyPointDetTallyToCPU(void) {
 
 template<typename GRID_T, unsigned N>
 gpuTallyType_t
-RayListController<GRID_T,N>::getPointDetTally(unsigned i ) const {
+RayListController<GRID_T,N>::getPointDetTally(unsigned spatialIndex, unsigned timeIndex ) const {
+    if( PA.getSharedMemoryRank() != 0 ) { return 0.0; }
+
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::getPointDetTally - Next-Event Estimator not enabled." );
     }
-    return pNextEventEstimator->getTally(i);
+    return pNextEventEstimator->getTally(spatialIndex, timeIndex);
 }
 
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::copyPointDetToGPU(void) {
+
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::getPointDetTally - Next-Event Estimator not enabled." );
     }
 
+    if( ! tallyInitialized ) {
+        tallyInitialized = true;
+    } else {
+        return;
+    }
+
     pNextEventEstimator->setGeometry( pGrid, pMatProps );
     pNextEventEstimator->setMaterialList( pMatList );
+    pNextEventEstimator->setTimeBinEdges( TallyTimeBinEdges );
+    pNextEventEstimator->initialize();
     pNextEventEstimator->copyToGPU();
 }
 

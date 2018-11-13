@@ -114,6 +114,7 @@ SUITE( shared_next_event_ray_list_tester ){
         PositionDouble_t getDirection( void ) const { return dir; }
         double getEnergy() const { return energy; }
         double getWeight() const { return weight; }
+        double getSimulationTime() const { return time; }
         int getLocationIndex() const { return locationIndex; }
         //constexpr static unsigned getNPairs() { return 3;}
 
@@ -124,6 +125,7 @@ SUITE( shared_next_event_ray_list_tester ){
         PositionDouble_t dir = PositionDouble_t( 4.0, 5.0, 6.0 );
         double energy = 7.0;
         double weight = 10.0;
+        double time   = 20.0;
         int locationIndex = 13;
         dummyType* type;
     };

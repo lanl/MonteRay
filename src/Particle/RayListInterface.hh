@@ -54,8 +54,8 @@ public:
 
     void add( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
             gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
-            gpuFloatType_t energy, gpuFloatType_t weight, unsigned index,
-            DetectorIndex_t detectorIndex, ParticleType_t particleType );
+            gpuFloatType_t energy, gpuFloatType_t weight, gpuFloatType_t time,
+            unsigned index, DetectorIndex_t detectorIndex, ParticleType_t particleType );
 
     void clear(void) { ptrPoints->clear(); }
 
@@ -103,7 +103,7 @@ public:
 private:
 
     unsigned numCollisionOnFile = 0 ;
-    unsigned currentVersion = 0;
+    unsigned currentVersion = 1;
     unsigned long long position = 0; ///< position in file (particle number, starting at 1)
     unsigned long long headerPos = 0; ///< position in file in bytes immediately after header (starting position of the first particle record)
     unsigned currentParticlePos = 0;

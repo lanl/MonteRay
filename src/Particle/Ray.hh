@@ -6,6 +6,10 @@
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayConstants.hh"
 
+#ifndef __CUDACC_
+#include <cmath>
+#endif
+
 namespace MonteRay{
 
 typedef gpuFloatType_t* CollisionPosition_t;
@@ -33,6 +37,9 @@ public:
 
         energy[0] = particle.getEnergy();
         weight[0] = particle.getWeight();
+
+        time = particle.getSimulationTime();
+
         index = particle.getLocationIndex();
     }
 
@@ -51,6 +58,9 @@ public:
 
         energy[0] = particle.getEnergy();
         weight[0] = particle.getWeight()*probability;
+
+        time = particle.getSimulationTime();
+
         index = particle.getLocationIndex();
     }
 
@@ -77,6 +87,8 @@ public:
         weight[1] = particle.getWeight()*results.coherent.probability;
         weight[2] = particle.getWeight()*results.pairProduction.probability;
 
+        time = particle.getSimulationTime();
+
         index = particle.getLocationIndex();
         detectorIndex = argDetectorIndex;
 
@@ -92,6 +104,7 @@ public:
     gpuFloatType_t dir[3] = { 0.0 };
     gpuFloatType_t energy[N] = { 0.0 };
     gpuFloatType_t weight[N] = { 0.0 };
+    gpuFloatType_t time = { 0.0 };
     unsigned index = 0; // starting position mesh index
     DetectorIndex_t detectorIndex = 0;  // for next-event estimator
     ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
@@ -118,6 +131,10 @@ public:
         return weight[index];
     }
 
+    CUDA_CALLABLE_MEMBER gpuFloatType_t getTime() {
+        return time;
+    }
+
     CUDA_CALLABLE_MEMBER unsigned getIndex() const {
         return index;
     }
@@ -128,6 +145,19 @@ public:
 
     CUDA_CALLABLE_MEMBER ParticleType_t getParticleType() const {
         return particleType;
+    }
+
+    CUDA_CALLABLE_MEMBER gpuFloatType_t speed(unsigned i=0) const {
+        if( particleType == photon ) {
+            return speed_of_light;
+        } else {
+            // neutron
+#ifdef __CUDACC__
+            return (neutron_speed_from_energy_const() * sqrtf( energy[i] ));
+#else
+            return neutron_speed_from_energy_const() * std::sqrt( energy[i] );
+#endif
+        }
     }
 
     template<typename S>
@@ -142,6 +172,11 @@ public:
         binaryIO::read( inFile, dir );
         binaryIO::read( inFile, energy );
         binaryIO::read( inFile, weight );
+
+        if( version > 0 ) {
+            binaryIO::read( inFile, time );
+        }
+
         binaryIO::read( inFile, index );
         binaryIO::read( inFile, detectorIndex );
         binaryIO::read( inFile, particleType );
@@ -150,7 +185,7 @@ public:
     template<typename S>
     CUDAHOST_CALLABLE_MEMBER void write(S& outFile) const {
 
-        const short unsigned version = 0;
+        const short unsigned version = 1;
         binaryIO::write( outFile, version );
 
         const short unsigned num = N;
@@ -160,18 +195,24 @@ public:
         binaryIO::write( outFile, dir );
         binaryIO::write( outFile, energy );
         binaryIO::write( outFile, weight );
+        binaryIO::write( outFile, time );
         binaryIO::write( outFile, index );
         binaryIO::write( outFile, detectorIndex );
         binaryIO::write( outFile, particleType );
     }
 
-    static unsigned filesize(void) {
+    static unsigned filesize(unsigned version) {
         unsigned total = 0;
         total += 2*sizeof(short unsigned);
         total += sizeof(pos);
         total += sizeof(dir);
         total += sizeof(energy);
         total += sizeof(weight);
+
+        if( version > 0 ) {
+            total += sizeof(time);
+        }
+
         total += sizeof(index);
         total += sizeof(detectorIndex);
         total += sizeof(particleType);

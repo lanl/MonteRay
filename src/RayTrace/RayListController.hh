@@ -2,10 +2,12 @@
 #define RAYLISTCONTROLLER_HH_
 
 #include <string>
+#include <vector>
 #include <memory>
 #include <functional>
 
 #include "MonteRayTypes.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay {
 
@@ -22,11 +24,6 @@ class RayListInterface;
 
 template< unsigned N >
 class Ray_t;
-
-#ifndef __CUDACC__
-class cudaStream_t;
-class cudaEvent_t;
-#endif
 
 template<typename GRID_T, unsigned N = 1>
 class RayListController {
@@ -66,7 +63,7 @@ public:
     unsigned addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z );
     void setPointDetExclusionRadius(gpuFloatType_t r);
     void copyPointDetTallyToCPU(void);
-    gpuTallyType_t getPointDetTally(unsigned i ) const;
+    gpuTallyType_t getPointDetTally(unsigned spatialIndex, unsigned timeIndex=0 ) const;
     void copyPointDetToGPU(void);
     void printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
 
@@ -106,24 +103,44 @@ public:
         return usingNextEventEstimator;
     }
 
+    template<typename T>
+    void setTimeBinEdges( std::vector<T> edges) {
+        TallyTimeBinEdges.resize( edges.size() );
+        for( unsigned i=0; i<edges.size(); ++i) {
+            TallyTimeBinEdges[i] = edges[i];
+        }
+    }
+
+    void gather() {
+        if( pNextEventEstimator ) {
+            pNextEventEstimator->gather();
+        }
+    }
+
 private:
-    unsigned nBlocks;
-    unsigned nThreads;
-    GRID_T* pGrid;
-    MonteRayMaterialListHost* pMatList;
-    MonteRay_MaterialProperties* pMatProps;
-    gpuTallyHost* pTally;
+    unsigned nBlocks = 0;
+    unsigned nThreads = 0;
+    GRID_T* pGrid = nullptr;
+    MonteRayMaterialListHost* pMatList = nullptr;
+    MonteRay_MaterialProperties* pMatProps = nullptr;
+    gpuTallyHost* pTally = nullptr;
+    const MonteRayParallelAssistant& PA;
+
     std::shared_ptr<MonteRayNextEventEstimator<GRID_T>> pNextEventEstimator;
+    std::vector<gpuFloatType_t> TallyTimeBinEdges;
 
-    RayListInterface<N>* currentBank;
-    RayListInterface<N>* bank1;
-    RayListInterface<N>* bank2;
-    unsigned nFlushs;
+    RayListInterface<N>* currentBank = nullptr;
+    std::unique_ptr<RayListInterface<N>> bank1;
+    std::unique_ptr<RayListInterface<N>> bank2;
+    unsigned nFlushs = 0;
 
-    cpuTimer* pTimer;
-    double cpuTime, gpuTime, wallTime;
-    bool toFile;
-    bool fileIsOpen;
+    std::unique_ptr<cpuTimer> pTimer;
+    double cpuTime = 0.0;
+    double gpuTime = 0.0;
+    double wallTime= 0.0;
+    bool toFile = false;
+    bool fileIsOpen = false;
+    bool tallyInitialized = false;
 
     std::string outputFileName;
 
@@ -134,14 +151,14 @@ private:
     typedef std::function<void ( void )> kernel_t;
     kernel_t kernel;
 
-    cudaStream_t* stream1;
-    cudaEvent_t* startGPU;
-    cudaEvent_t* stopGPU;
-    cudaEvent_t* start;
-    cudaEvent_t* stop;
-    cudaEvent_t* copySync1;
-    cudaEvent_t* copySync2;
-    cudaEvent_t* currentCopySync;
+    std::unique_ptr<cudaStream_t> stream1;
+    std::unique_ptr<cudaEvent_t> startGPU;
+    std::unique_ptr<cudaEvent_t> stopGPU;
+    std::unique_ptr<cudaEvent_t> start;
+    std::unique_ptr<cudaEvent_t> stop;
+    std::unique_ptr<cudaEvent_t> copySync1;
+    std::unique_ptr<cudaEvent_t> copySync2;
+    cudaEvent_t* currentCopySync = nullptr;
 };
 
 template<class GRID_T>

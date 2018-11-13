@@ -67,6 +67,10 @@ public:
         return points[i].weight[index];
     }
 
+    CUDA_CALLABLE_MEMBER gpuFloatType_t getTime(RayListSize_t i) const {
+        return points[i].time;
+    }
+
     CUDA_CALLABLE_MEMBER unsigned getIndex(RayListSize_t i) const {
         return points[i].index;
     }

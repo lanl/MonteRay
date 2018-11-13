@@ -491,6 +491,7 @@ SUITE( shared_collisionPointList_tester ){
         PositionDouble_t getDirection( void ) const { return dir; }
         double getEnergy(void) const { return energy; }
         double getWeight(void) const { return weight; }
+        double getSimulationTime(void) const { return time; }
         int getLocationIndex() const { return locationIndex; }
 
     private:
@@ -498,6 +499,7 @@ SUITE( shared_collisionPointList_tester ){
         PositionDouble_t dir = PositionDouble_t( 4.0, 5.0, 6.0 );
         double energy = 7.0;
         double weight = 8.0;
+        double time = 10.0;
         int locationIndex = 9;
 
     };

@@ -57,6 +57,7 @@ SUITE( Ray_simple_tests ) {
         double getEnergy(void) const { return energy; }
         double getWeight(void) const { return weight; }
         int getLocationIndex() const { return locationIndex; }
+        double getSimulationTime(void) const { return time; }
 
         const dummyType* getType() const { return type; }
 
@@ -67,6 +68,7 @@ SUITE( Ray_simple_tests ) {
         double weight = 8.0;
         int locationIndex = 9;
         dummyType* type;
+        double time = 10.0;
 
     };
 
@@ -83,6 +85,7 @@ SUITE( Ray_simple_tests ) {
         CHECK_CLOSE( 7.0, ray.getEnergy(0), 1e-6);
         CHECK_CLOSE( 8.0, ray.getWeight(0), 1e-6);
         CHECK_CLOSE( 9.0, ray.getIndex(), 1e-6);
+        CHECK_CLOSE( 10.0, ray.getTime(), 1e-6);
     }
 
     TEST( Ctor2_takes_a_GenericParticle_and_probability ) {
@@ -99,6 +102,7 @@ SUITE( Ray_simple_tests ) {
         CHECK_CLOSE( 7.0, ray.getEnergy(0), 1e-6);
         CHECK_CLOSE( 8.0*2.0, ray.getWeight(0), 1e-6);
         CHECK_CLOSE( 9.0, ray.getIndex(), 1e-6);
+        CHECK_CLOSE( 10.0, ray.getTime(), 1e-6);
     }
 
     class dummyScatteringProbabilityResult{
@@ -150,6 +154,7 @@ SUITE( Ray_simple_tests ) {
         CHECK_CLOSE( 2.0*8.0, ray.getWeight(2), 1e-6);
         CHECK_EQUAL( 9, ray.getIndex() );
         CHECK_EQUAL( 10, ray.getDetectorIndex() );
+        CHECK_CLOSE( 10.0, ray.getTime(), 1e-6);
     }
 
 }
