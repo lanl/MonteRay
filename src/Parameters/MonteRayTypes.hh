@@ -71,6 +71,10 @@ typedef float3 float3_t;
 #define CUDADEVICE_CALLABLE_MEMBER
 #endif
 
+#ifndef __CUDACC__
+typedef int cudaStream_t;
+typedef int cudaEvent_t;
+#endif
 
 }
 
