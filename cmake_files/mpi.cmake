@@ -4,7 +4,11 @@
 #
 ################################################
 
+message(STATUS "cmake/mpi.cmake -- Searching for MPI" )
+
 find_package(MPI REQUIRED)
+# message(STATUS "cmake/mpi.cmake -- MPI_CXX_INCLUDE_PATH = ${MPI_CXX_INCLUDE_PATH}" )
+set( MPI_INCLUDE_DIRS ${MPI_CXX_INCLUDE_PATH} )
 
 execute_process(COMMAND ${MPIEXEC} --version
                 OUTPUT_VARIABLE MPI_VERSION_STRING 

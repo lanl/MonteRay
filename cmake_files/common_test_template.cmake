@@ -47,18 +47,19 @@ list( FIND ${ParentDir}_packages MPI foundMPI )
 if( foundMPI GREATER -1 )
     set( usingMPI true )
 endif()
-if( parallel OR usingMPI )
-    include_directories( ${MPI_INCLUDE_DIRS} )
-    list( APPEND ${ParentDir}_includes IPComm )
-#    list( INSERT ToolkitLibs     0     IPComm )
-    list( INSERT ${ParentDir}_packages 0 Boost_MPI )
-    if( NOT usingMPI )
-        list( APPEND ${ParentDir}_packages MPI )
-    endif()
-    if( POE )
-        set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -binitfini:poe_remote_main" )
-    endif()
+
+# Use MPI for all unit tests in MonteRay
+#message( "-- common_test_template.cmake -- Directory = ${ParentDir} -- UsingMPI - MPI_INCLUDE_DIRS = ${MPI_INCLUDE_DIRS}" ) 
+include_directories( ${MPI_INCLUDE_DIRS} )
+list( APPEND ${ParentDir}_includes IPComm )
+list( INSERT ${ParentDir}_packages 0 MPI )
+if( NOT usingMPI )
+    list( APPEND ${ParentDir}_packages MPI )
 endif()
+if( POE )
+    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -binitfini:poe_remote_main" )
+endif()
+
 
  
 ########################################
@@ -342,6 +343,7 @@ if( parallel )
             set( CmdTagSuccess "${CmdTag} PASS" )
             add_custom_command( 
                 TARGET ${appName} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy ${appName} ${appName}.copy
                 COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --blue --bold ${CmdTag} 
                 COMMAND ${CMAKE_COMMAND} -DAPP=${appName} -DMPIEXEC=${MPIEXEC} -DNPROCS=${nProcs} -DUNIT=${UnitName} -P ${cmake_dir}/AnalyzeParallelRun${POE}.cmake
                 COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --blue --bold ${CmdTagSuccess} 

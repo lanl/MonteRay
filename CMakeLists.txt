@@ -10,8 +10,9 @@ if( enable_cuda )
     
     PROJECT(MonteRayProject LANGUAGES CXX CUDA )
     
-    include( cmake_files/config_nvcc.cmake )
+    #include( cmake_files/config_nvcc.cmake )
 else()
+    message( STATUS "-- Building without CUDA.")
     enable_language(CXX)
     PROJECT(MonteRayProject LANGUAGES CXX )
 endif()
@@ -36,14 +37,10 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts )
 message( STATUS "-- Loading main.cmake")
 include( main )
 
-# moved above, testing for now, delete this later
-#if( enable_cuda )
-#  message( STATUS "-- Building with CUDA.")
-#  message( STATUS "-- Loading config_nvcc.cmake")
-#  include(config_nvcc )
-#else()
-#  message( STATUS "-- Building without CUDA.")
-#endif()
+if( enable_cuda )
+  # call after main so that MPI include directories are properly set
+  include(config_nvcc )
+endif()
 
 set( SubProjectName "MonteRayLib" )
 

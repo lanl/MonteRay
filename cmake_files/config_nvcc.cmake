@@ -132,6 +132,12 @@ list(APPEND CUDA_NVCC_FLAGS "--cudart shared")
 list(APPEND CUDA_NVCC_FLAGS "--relocatable-device-code=true" )
 list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY} )
 
+# message( "-- config_nvcc.cmake -- libname = ${libname} -- MPI_INCLUDE_DIRS = ${MPI_INCLUDE_DIRS}" )
+if( NOT MPI_INCLUDE_DIRS ) 
+    message( FATAL_ERROR "Location of MPI include files hase not been set." )
+endif()
+list(APPEND CUDA_NVCC_FLAGS "-I${MPI_INCLUDE_DIRS}" )
+
 #cuda_select_nvcc_arch_flags( ${GPUCOMPUTECAPABILITY} )
 
 message( STATUS "Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")

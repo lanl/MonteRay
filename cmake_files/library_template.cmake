@@ -49,6 +49,9 @@ foreach( pkg ${${libname}_packages} )
     include_directories( ${${pkg}_INCLUDE_DIRS} )
 endforeach()
 
+# Always include MPI for MonteRay
+include_directories( ${MPI_INCLUDE_DIRS} )
+
 ########################################
 #  Add these as a new library if there are any sources in the directory
 
