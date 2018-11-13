@@ -67,9 +67,14 @@ int getNumberOfGPUS(void) {
 
 #ifdef __CUDACC__
     cudaGetDeviceCount( &count ) ;
-    count = 1;
 #endif
     return count;
+}
+
+void setCudaDevice(int id) {
+#ifdef __CUDACC__
+    cudaSetDevice( id ) ;
+#endif
 }
 
 void setCudaPrintBufferSize( size_t size) {

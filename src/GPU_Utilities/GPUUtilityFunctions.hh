@@ -17,6 +17,7 @@ void gpuReset();
 void gpuCheck();
 void gpuInfo();
 int getNumberOfGPUS(void);
+void setCudaDevice(int);
 void setCudaPrintBufferSize( size_t size);
 void setCudaStackSize( size_t size);
 
