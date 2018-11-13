@@ -219,7 +219,7 @@ SUITE( NextEventEstimator_Tester ) {
 
             pXS->copyToGPU();
 
-            pEstimator = std::unique_ptr<MonteRayNextEventEstimator<GridBins>>( new MonteRayNextEventEstimator<GridBins>(1) );
+            pEstimator = std::unique_ptr<MonteRayNextEventEstimator<GridBins>>( new MonteRayNextEventEstimator<GridBins>(10) );
             pEstimator->setGeometry( &grid, &matProps );
             pEstimator->setMaterialList( pMatList.get() );
         }
@@ -242,6 +242,7 @@ SUITE( NextEventEstimator_Tester ) {
         CHECK_CLOSE( 1.0, pMat->getTotalXS( 0.5 ), 1e-6 );
 
         unsigned id = pEstimator->add( 1.0, 0.0, 0.0);
+        pEstimator->initialize();
 
         gpuFloatType_t x = 0.0;
         gpuFloatType_t y = 0.0;
@@ -256,12 +257,19 @@ SUITE( NextEventEstimator_Tester ) {
         gpuFloatType_t weight[1];
         weight[0] = 0.5;  // isotropic
 
-        gpuFloatType_t score = pEstimator->calcScore<1>(
-                0,
-                x, y, z,
-                u, v, w,
-                energy, weight,
-                0, photon );
+        Ray_t<> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.weight[0] = weight[0];
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
+        gpuFloatType_t score = pEstimator->calcScore<1>( ray );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-0.0);
         CHECK_CLOSE( expected, score, 1e-6);
@@ -272,6 +280,7 @@ SUITE( NextEventEstimator_Tester ) {
         CHECK_CLOSE( 1.0, pMat->getTotalXS( 0.5 ) , 1e-6 );
 
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
 
         gpuFloatType_t x = 1.0;
         gpuFloatType_t y = 0.0;
@@ -286,12 +295,19 @@ SUITE( NextEventEstimator_Tester ) {
         gpuFloatType_t weight[1];
         weight[0] = 0.5;  // isotropic
 
-        gpuFloatType_t score = pEstimator->calcScore<1>(
-                0,
-                x, y, z,
-                u, v, w,
-                energy, weight,
-                0, photon );
+        Ray_t<> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.weight[0] = weight[0];
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
+        gpuFloatType_t score = pEstimator->calcScore<1>(ray );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-1.0);
         CHECK_CLOSE( expected, score, 1e-6);
@@ -299,6 +315,7 @@ SUITE( NextEventEstimator_Tester ) {
 
     TEST_FIXTURE(CalcScore_test, calcScore_thru_vacuum_and_material ) {
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
 
         gpuFloatType_t x = 0.0;
         gpuFloatType_t y = 0.0;
@@ -313,15 +330,129 @@ SUITE( NextEventEstimator_Tester ) {
         gpuFloatType_t weight[1];
         weight[0] = 0.5;  // isotropic
 
-        gpuFloatType_t score = pEstimator->calcScore<1>(
-                0,
-                x, y, z,
-                u, v, w,
-                energy, weight,
-                0, photon );
+        Ray_t<> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.weight[0] = weight[0];
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
+        gpuFloatType_t score = pEstimator->calcScore<1>(ray );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
         CHECK_CLOSE( expected, score, 1e-6);
+    }
+
+    TEST_FIXTURE(CalcScore_test, getTally ) {
+        unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
+
+        gpuFloatType_t x = 0.0;
+        gpuFloatType_t y = 0.0;
+        gpuFloatType_t z = 0.0;
+        gpuFloatType_t u = 1.0;
+        gpuFloatType_t v = 0.0;
+        gpuFloatType_t w = 0.0;
+
+        gpuFloatType_t energy[1];
+        energy[0]= 0.5;
+
+        gpuFloatType_t weight[1];
+        weight[0] = 0.5;  // isotropic
+
+        Ray_t<> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.weight[0] = weight[0];
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
+        pEstimator->calcScore<1>(ray );
+        gpuFloatType_t score = pEstimator->getTally(0,0);
+
+        gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
+        CHECK_CLOSE( expected, score, 1e-6);
+    }
+
+    TEST_FIXTURE(CalcScore_test, addTimeBins ) {
+        gpuFloatType_t distance1 = 2.0; // score at t=0.006
+        gpuFloatType_t distance2 = 400.0; // score at t=1.33
+
+        pEstimator->add( distance1, 0.0, 0.0);
+        pEstimator->add( distance2, 0.0, 0.0);
+        std::vector<MonteRay::gpuFloatType_t> timeEdges= { 1.0, 2.0, 10.0, 20.0, 100.0 };
+        pEstimator->setTimeBinEdges( timeEdges );
+        pEstimator->initialize();
+
+        gpuFloatType_t x = 0.0;
+        gpuFloatType_t y = 0.0;
+        gpuFloatType_t z = 0.0;
+        gpuFloatType_t u = 1.0;
+        gpuFloatType_t v = 0.0;
+        gpuFloatType_t w = 0.0;
+
+        gpuFloatType_t energy[1];
+        energy[0]= 0.5;
+
+        gpuFloatType_t weight[1];
+        weight[0] = 0.5;  // isotropic
+
+        Ray_t<> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.weight[0] = weight[0];
+        ray.time = 0.0;
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
+        pEstimator->calcScore<1>(ray );
+
+        gpuFloatType_t expected1 = ( 1/ (4.0f * MonteRay::pi * distance1*distance1 ) ) * exp(-1.0);
+        CHECK_CLOSE( expected1, pEstimator->getTally(0,0), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(0,1), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(0,2), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(0,3), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(0,4), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(0,5), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(1,0), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(1,1), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(1,2), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(1,3), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(1,4), 1e-6);
+        CHECK_CLOSE( 0.0,      pEstimator->getTally(1,5), 1e-6);
+
+        ray.detectorIndex = 1;
+        pEstimator->calcScore<1>(ray );
+
+        gpuFloatType_t expected2 = ( 1/ (4.0f * MonteRay::pi * distance2*distance2 ) ) * exp(-1.0);
+
+        CHECK_CLOSE( expected1, pEstimator->getTally(0,0), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(0,1), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(0,2), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(0,3), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(0,4), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(0,5), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(1,0), 1e-6);
+        CHECK_CLOSE( expected2, pEstimator->getTally(1,1), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(1,2), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(1,3), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(1,4), 1e-6);
+        CHECK_CLOSE( 0.0,       pEstimator->getTally(1,5), 1e-6);
     }
 
     TEST_FIXTURE(CalcScore_test, calcScore_thru_material_3_probabilities ) {
@@ -333,6 +464,8 @@ SUITE( NextEventEstimator_Tester ) {
         CHECK_CLOSE( 4.0, pMat->getTotalXS( 3.0 ) , 1e-6 );
 
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
+
         const unsigned N = 3;
 
         gpuFloatType_t x = 0.0;
@@ -352,13 +485,24 @@ SUITE( NextEventEstimator_Tester ) {
         weight[1] = 1.0;
         weight[2] = 2.0;
 
+        Ray_t<N> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.energy[1] = energy[1];
+        ray.energy[2] = energy[2];
+        ray.weight[0] = weight[0];
+        ray.weight[1] = weight[1];
+        ray.weight[2] = weight[2];
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
         //std:: cout << "Debug: *************************\n";
-        gpuFloatType_t score = pEstimator->calcScore<N>(
-                0,
-                x, y, z,
-                u, v, w,
-                energy, weight,
-                0, photon );
+        gpuFloatType_t score = pEstimator->calcScore<N>(ray );
         //std:: cout << "Debug: *************************\n";
 
         gpuFloatType_t expected1 = ( 0.3f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*1.0 );
@@ -374,6 +518,7 @@ SUITE( NextEventEstimator_Tester ) {
     TEST_FIXTURE(CalcScore_test, calcScore_with_RayList ) {
         const unsigned N = 3;
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
 
         gpuFloatType_t x = 0.0;
         gpuFloatType_t y = 0.0;
@@ -426,11 +571,14 @@ SUITE( NextEventEstimator_Tester ) {
 
     }
 #endif
+
     TEST_FIXTURE(CalcScore_test, calc_with_rayList_on_GPU ) {
-        //		std::cout << "Debug: **********************\n";
-        //		std::cout << "Debug: MonteRayNextEventEstimator_unittest.cc -- TEST calc_with_rayList_on_GPU\n";
+
+//        std::cout << "Debug: **********************\n";
+//        std::cout << "Debug: MonteRayNextEventEstimator_unittest.cc -- TEST calc_with_rayList_on_GPU\n";
         const unsigned N = 3;
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
 
         gpuFloatType_t x = 0.0;
         gpuFloatType_t y = 0.0;
@@ -504,7 +652,116 @@ SUITE( NextEventEstimator_Tester ) {
         gpuFloatType_t expected3 = ( 2.0f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*4.0 );
 
         CHECK_CLOSE( 2*(expected1+expected2+expected3), value, 1e-7);
+//        std::cout << "Debug: **********************\n";
     }
+
+    TEST_FIXTURE(CalcScore_test, rayListOnGPU_withTimeBins ) {
+
+ //        std::cout << "Debug: **********************\n";
+ //        std::cout << "Debug: MonteRayNextEventEstimator_unittest.cc -- TEST calc_with_rayList_on_GPU\n";
+         const unsigned N = 3;
+         gpuFloatType_t distance1 = 2.0; // score at t=0.006
+         gpuFloatType_t distance2 = 400.0; // score at t=1.33
+
+         pEstimator->add( distance1, 0.0, 0.0);
+         pEstimator->add( distance2, 0.0, 0.0);
+         std::vector<MonteRay::gpuFloatType_t> timeEdges= { 1.0, 2.0, 10.0, 20.0, 100.0 };
+         pEstimator->setTimeBinEdges( timeEdges );
+         pEstimator->initialize();
+
+         gpuFloatType_t x = 0.0;
+         gpuFloatType_t y = 0.0;
+         gpuFloatType_t z = 0.0;
+         gpuFloatType_t u = 1.0;
+         gpuFloatType_t v = 0.0;
+         gpuFloatType_t w = 0.0;
+
+         gpuFloatType_t energy[N];
+         energy[0]= 0.5;
+         energy[1]= 1.0;
+         energy[2]= 3.0;
+
+         gpuFloatType_t weight[N];
+         weight[0] = 0.3;  // isotropic
+         weight[1] = 1.0;
+         weight[2] = 2.0;
+
+         Ray_t<N> ray;
+         ray.pos[0] = x;
+         ray.pos[1] = y;
+         ray.pos[2] = z;
+         ray.dir[0] = u;
+         ray.dir[1] = v;
+         ray.dir[2] = w;
+
+         for( unsigned i=0;i<N;++i) {
+             ray.energy[i] = energy[i];
+             ray.weight[i] = weight[i];
+         }
+         ray.index = 0;
+         ray.detectorIndex = 0;
+         ray.particleType = photon;
+
+         std::unique_ptr<RayList_t<N>> pBank =  std::unique_ptr<RayList_t<N>>( new RayList_t<N>(4) );
+         pBank->add( ray );
+         pBank->add( ray );
+
+         ray.detectorIndex = 1;
+         pBank->add( ray );
+         pBank->add( ray );
+
+ #ifdef __CUDACC__
+         cudaEvent_t start, stop;
+         cudaEventCreate(&start);
+
+         pBank->copyToGPU();
+         pEstimator->copyToGPU();
+
+         cudaStream_t* stream = NULL;
+         stream = new cudaStream_t;
+         stream[0] = 0;  // use the default stream
+
+         cudaEventRecord(start, 0);
+         cudaEventSynchronize(start);
+
+         cudaEventCreate(&stop);
+
+         cudaStreamSynchronize(*stream);
+         pEstimator->launch_ScoreRayList(1, 1, pBank.get(), stream );
+
+         cudaEventRecord(stop, 0);
+         cudaEventSynchronize(stop);
+         cudaStreamSynchronize(*stream);
+         pEstimator->copyToCPU();
+
+         delete stream;
+ #else
+         pEstimator->launch_ScoreRayList(1,1,pBank.get());
+ #endif
+
+         gpuFloatType_t expected1  = ( 0.3f / (2.0f * MonteRay::pi * distance1*distance1 ) ) * exp( -1.0*1.0 ) +
+                                     ( 1.0f / (2.0f * MonteRay::pi * distance1*distance1 ) ) * exp( -1.0*2.0 ) +
+                                     ( 2.0f / (2.0f * MonteRay::pi * distance1*distance1 ) ) * exp( -1.0*4.0 );
+
+         gpuFloatType_t expected2  = ( 0.3f / (2.0f * MonteRay::pi * distance2*distance2 ) ) * exp( -1.0*1.0 ) +
+                                     ( 1.0f / (2.0f * MonteRay::pi * distance2*distance2 ) ) * exp( -1.0*2.0 ) +
+                                     ( 2.0f / (2.0f * MonteRay::pi * distance2*distance2 ) ) * exp( -1.0*4.0 );
+
+         CHECK_CLOSE( 2*expected1, pEstimator->getTally(0,0), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(0,1), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(0,2), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(0,3), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(0,4), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(0,5), 1e-7);
+
+         CHECK_CLOSE(         0.0, pEstimator->getTally(1,0), 1e-7);
+         CHECK_CLOSE( 2*expected2, pEstimator->getTally(1,1), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(1,2), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(1,3), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(1,4), 1e-7);
+         CHECK_CLOSE(         0.0, pEstimator->getTally(1,5), 1e-7);
+ //        std::cout << "Debug: **********************\n";
+     }
 
     TEST( run_leak_report ) {
 

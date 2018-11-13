@@ -17,13 +17,13 @@ class MonteRay_MaterialProperties;
 class MonteRay_MaterialProperties_Data;
 class MonteRayMaterialListHost;
 class MonteRayMaterialList;
+class MonteRayTally;
 
 template< unsigned N>
 class RayList_t;
 
-#ifndef __CUDACC__
-class cudaStream_t;
-#endif
+template< unsigned N>
+class Ray_t;
 
 template<typename GRID_T>
 class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator<GRID_T>> {
@@ -41,7 +41,12 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER void init();
 
+    void initialize();
+
     CUDAHOST_CALLABLE_MEMBER void copy(const MonteRayNextEventEstimator* rhs);
+
+    void copyToGPU();
+    void copyToCPU();
 
     CUDAHOST_CALLABLE_MEMBER unsigned add( position_t xarg, position_t yarg, position_t zarg);
 
@@ -55,7 +60,7 @@ public:
     CUDA_CALLABLE_MEMBER position_t getY(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return y[i]; }
     CUDA_CALLABLE_MEMBER position_t getZ(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return z[i]; }
 
-    CUDA_CALLABLE_MEMBER tally_t getTally(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return tally[i]; }
+    CUDA_CALLABLE_MEMBER tally_t getTally(unsigned spatialIndex, unsigned timeIndex=0) const;
 
     CUDA_CALLABLE_MEMBER position_t distance(unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos ) const;
 
@@ -63,14 +68,7 @@ public:
             unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos, MonteRay::Vector3D<gpuRayFloat_t>& dir ) const;
 
     template<unsigned N>
-    CUDA_CALLABLE_MEMBER tally_t calcScore(
-            DetectorIndex_t detectorIndex,
-            position_t x, position_t y, position_t z,
-            position_t u, position_t v, position_t w,
-            gpuFloatType_t energies[N], gpuFloatType_t weights[N],
-            unsigned locationIndex,
-            ParticleType_t particleType
-    );
+    CUDA_CALLABLE_MEMBER tally_t calcScore( Ray_t<N>& ray );
 
     template<unsigned N>
     CUDA_CALLABLE_MEMBER void score( const RayList_t<N>* pRayList, unsigned tid );
@@ -98,24 +96,42 @@ public:
     void
     printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
 
+    template<typename T>
+    void setTimeBinEdges( std::vector<T> edges) {
+        pTallyTimeBinEdges = new std::vector<gpuFloatType_t>;
+        pTallyTimeBinEdges->resize( edges.size() );
+        for( unsigned i=0; i<edges.size(); ++i) {
+            (*pTallyTimeBinEdges)[i] = edges[i];
+        }
+    }
+
+    void gather();
+
+    // gather work group is rarely used, mainly for testing
+    void gatherWorkGroup();
+
 private:
     unsigned nUsed;
     unsigned nAllocated;
     position_t radius;
 
-    position_t* x;
-    position_t* y;
-    position_t* z;
+    position_t* x = NULL;
+    position_t* y = NULL;
+    position_t* z = NULL;
 
-    tally_t* tally;
+    MonteRayTally* pTally = NULL;
+    std::vector<gpuFloatType_t>* pTallyTimeBinEdges = NULL;
 
-    const GRID_T* pGridBins;
-    const MonteRay_MaterialProperties* pMatPropsHost;
-    const MonteRay_MaterialProperties_Data* pMatProps;
-    const MonteRayMaterialListHost* pMatListHost;
-    const MonteRayMaterialList* pMatList;
-    const HashLookupHost* pHashHost;
-    const HashLookup* pHash;
+    const GRID_T* pGridBins = NULL;
+    const MonteRay_MaterialProperties* pMatPropsHost = NULL;
+    const MonteRay_MaterialProperties_Data* pMatProps = NULL;
+    const MonteRayMaterialListHost* pMatListHost = NULL;
+    const MonteRayMaterialList* pMatList = NULL;
+    const HashLookupHost* pHashHost = NULL;
+    const HashLookup* pHash = NULL;
+
+    bool initialized = false;
+    bool copiedToGPU = false;
 };
 
 template<typename GRID_T, unsigned N>
