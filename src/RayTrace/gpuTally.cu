@@ -69,7 +69,7 @@ void copy(struct gpuTally* pCopy, struct gpuTally* pOrig) {
 }
 
 CUDA_CALLABLE_MEMBER
-void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value ) {
+void scoreByIndex(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value ) {
     gpu_atomicAdd( &(ptr->tally[cell]), value);
 }
 

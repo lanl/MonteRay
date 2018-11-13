@@ -21,7 +21,13 @@ void cudaCtor(gpuTally*, unsigned num);
 void cudaCtor(gpuTally*, gpuTally*);
 
 CUDA_CALLABLE_MEMBER
-void score(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value );
+void scoreByIndex(struct gpuTally* ptr, unsigned cell, gpuTallyType_t value );
+
+template< typename PARTICLE_T >
+CUDA_CALLABLE_MEMBER
+void score(struct gpuTally* ptr, const PARTICLE_T& particle, gpuTallyType_t value ) {
+    scoreByIndex( ptr, particle.getDetectorIndex(), value );
+}
 
 class gpuTallyHost {
 public:
