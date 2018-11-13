@@ -32,7 +32,7 @@ main( int argc, char* argv[] ) {
     MPI_Finalize();
 
     if( world_rank == 0 ) {
-    	return NGlobalFailing;
+        return NGlobalFailing;
     } else {
         return 0;
     }
