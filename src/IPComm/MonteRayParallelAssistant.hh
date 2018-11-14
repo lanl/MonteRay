@@ -82,6 +82,10 @@ public:
     int getDeviceID(void) const { return deviceID; }
 };
 
+void setMonteRayStackSize( size_t size);
+
+bool isWorkGroupMaster(void);
+
 } // end namespace
 
 

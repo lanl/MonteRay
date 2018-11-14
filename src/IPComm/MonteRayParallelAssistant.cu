@@ -61,8 +61,21 @@ MonteRayParallelAssistant::MonteRayParallelAssistant() {
         INTER_WORK_GROUP_COMM_RANK = -1;
         INTER_WORK_GROUP_COMM_SIZE = 0;
     }
+}
 
+void setMonteRayStackSize( size_t size) {
+    const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
+    if( PA.getWorkGroupRank() == 0 ) {
+        setCudaStackSize( size );
+    }
+}
 
+bool isWorkGroupMaster(void) {
+    const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
+    if( PA.getWorkGroupRank() == 0 ) {
+        return true;
+    }
+    return false;
 }
 
 
