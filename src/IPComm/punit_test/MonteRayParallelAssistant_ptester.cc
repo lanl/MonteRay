@@ -82,7 +82,7 @@ SUITE( MonteRayParallelAssistant_ptester ){
         }
 
         if( PA.getWorldRank() == 0 ) {
-            double expected = ( 10.0 + 1.0*(PA.getWorkGroupSize()-1) ) * PA.getInterWorkGroupSize();
+            double expected = 10.0*PA.getInterWorkGroupSize() + 1.0*(PA.getWorldSize()- PA.getInterWorkGroupSize());
             CHECK_CLOSE( expected, total, 1e-14 );
         } else if ( PA.getWorkGroupRank() == 0 ){
             double expected = ( 10.0 + 1.0*(PA.getWorkGroupSize()-1) );

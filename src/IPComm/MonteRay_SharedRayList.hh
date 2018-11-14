@@ -9,11 +9,10 @@
 #include <cstring>
 #include <type_traits>
 
-#include <mpi.h>
-
 #include "MonteRayTypes.hh"
 #include "MonteRayAssert.hh"
 #include "MonteRay_timer.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay {
 
@@ -39,14 +38,31 @@ public:
     enum offset_types { RANKINFO=0, BUCKETHEADER=1, COLLISIONBUFFER=2};
 
     template<class T>
-    SharedRayList(T& controller, unsigned size, unsigned rankArg, unsigned numRanks, bool useMPI = false, unsigned numBuckets=1000) :
-    nParticles( size ),
-    usingMPI(useMPI),
-    nBuckets(numBuckets),
-    nRanks(numRanks),
-    rank( rankArg ),
-    nMaster( 0 )
+    SharedRayList(T& controller, unsigned size, unsigned numBuckets=1000 ) :
+        PA( MonteRayParallelAssistant::getInstance() )
     {
+        unsigned rankArg = PA.getWorkGroupRank();
+        unsigned numRanks = PA.getWorkGroupSize();
+        bool useMPI = PA.isParallel();
+        init( controller, size, rankArg, numRanks, useMPI, numBuckets );
+    }
+
+    template<class T>
+    SharedRayList(T& controller, unsigned size, unsigned rankArg, unsigned numRanks, bool useMPI = false, unsigned numBuckets=1000) :
+        PA( MonteRayParallelAssistant::getInstance() )
+    {
+        init( controller, size, rankArg, numRanks, useMPI, numBuckets );
+    }
+
+    template<class T>
+    void init(T& controller, unsigned size, unsigned rankArg, unsigned numRanks, bool useMPI, unsigned numBuckets) {
+        nParticles = size;
+        usingMPI = useMPI;
+        nBuckets = numBuckets;
+        nRanks = numRanks;
+        rank = rankArg;
+
+
         if( ! usingMPI ) {
             particlesPerRank = nParticles / nRanks;
         } else {
@@ -69,28 +85,62 @@ public:
             ptrRankInfo = new rank_info_t[nRanks];
         } else if ( usingMPI )  {
             // mpi
-            MPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shared_memory_communicator );
 
             MPI_Info win_info;
             MPI_Info_create(&win_info);
             MPI_Info_set(win_info, "alloc_shared_noncontig", "true");
 
             if( rank == 0 ) {
-                MPI_Win_allocate_shared((1+nBuckets*allocationRanks)*sizeof(bucket_header_t),sizeof(bucket_header_t),win_info,shared_memory_communicator, &ptrBucketHeader, &bucket_header_shared_memory_window);
-                MPI_Win_allocate_shared((1+nBuckets*particlesPerBucket*allocationRanks)*sizeof(COLLISION_T),sizeof(COLLISION_T),win_info,shared_memory_communicator, &ptrLocalCollisionPointList, &collision_shared_memory_window);
-                MPI_Win_allocate_shared(nRanks*sizeof(rank_info_t),sizeof(rank_info_t),win_info,shared_memory_communicator, &ptrRankInfo, &rank_info_shared_memory_window);
+                MPI_Win_allocate_shared( (1+nBuckets*allocationRanks)*sizeof(bucket_header_t),
+                                         sizeof(bucket_header_t),
+                                         win_info,
+                                         PA.getWorkGroupCommunicator(),
+                                         &ptrBucketHeader,
+                                         &bucket_header_shared_memory_window);
+
+                MPI_Win_allocate_shared( (1+nBuckets*particlesPerBucket*allocationRanks)*sizeof(COLLISION_T),
+                                         sizeof(COLLISION_T),
+                                         win_info,
+                                         PA.getWorkGroupCommunicator(),
+                                         &ptrLocalCollisionPointList,
+                                         &collision_shared_memory_window);
+
+                MPI_Win_allocate_shared( nRanks*sizeof(rank_info_t),
+                                         sizeof(rank_info_t),
+                                         win_info,
+                                         PA.getWorkGroupCommunicator(),
+                                         &ptrRankInfo,
+                                         &rank_info_shared_memory_window);
             } else {
-                MPI_Win_allocate_shared(0,sizeof(bucket_header_t),win_info,shared_memory_communicator, &ptrBucketHeader, &bucket_header_shared_memory_window);
-                MPI_Win_allocate_shared(0,sizeof(COLLISION_T),win_info,shared_memory_communicator, &ptrLocalCollisionPointList, &collision_shared_memory_window);
-                MPI_Win_allocate_shared(0,sizeof(rank_info_t),win_info,shared_memory_communicator, &ptrRankInfo, &rank_info_shared_memory_window);
+
+                MPI_Win_allocate_shared( 0,
+                                         sizeof(bucket_header_t),
+                                         win_info,
+                                         PA.getWorkGroupCommunicator(),
+                                         &ptrBucketHeader,
+                                         &bucket_header_shared_memory_window);
+
+                MPI_Win_allocate_shared( 0,
+                                         sizeof(COLLISION_T),
+                                         win_info,
+                                         PA.getWorkGroupCommunicator(),
+                                         &ptrLocalCollisionPointList,
+                                         &collision_shared_memory_window);
+
+                MPI_Win_allocate_shared( 0,
+                                         sizeof(rank_info_t),
+                                         win_info,
+                                         PA.getWorkGroupCommunicator(),
+                                         &ptrRankInfo,
+                                         &rank_info_shared_memory_window);
             }
             MPI_Info_free(&win_info);
 
-            MPI_Barrier( shared_memory_communicator );
+            MPI_Barrier( PA.getWorkGroupCommunicator() );
             MPI_Win_sync( bucket_header_shared_memory_window );
             MPI_Win_sync( collision_shared_memory_window );
             MPI_Win_sync( rank_info_shared_memory_window );
-            MPI_Barrier( shared_memory_communicator );
+            MPI_Barrier( PA.getWorkGroupCommunicator() );
 
             int disp_unit;
             MPI_Aint segment_size;
@@ -98,7 +148,7 @@ public:
             MPI_Win_shared_query(collision_shared_memory_window, 0, &segment_size, &disp_unit, &ptrLocalCollisionPointList);
             MPI_Win_shared_query(rank_info_shared_memory_window, 0, &segment_size, &disp_unit, &ptrRankInfo);
 
-            MPI_Barrier( shared_memory_communicator );
+            MPI_Barrier( PA.getWorkGroupCommunicator() );
         }
 
         rankOffset[RANKINFO].push_back( 0 );
@@ -127,7 +177,7 @@ public:
             }
         }
         if ( usingMPI )  {
-            MPI_Barrier( shared_memory_communicator );
+            MPI_Barrier( PA.getWorkGroupCommunicator() );
         }
 
         store = [=,&controller] (const COLLISION_T* pParticle, unsigned N ) {
@@ -492,26 +542,27 @@ public:
     }
 
 private:
-    unsigned nParticles;
-    bool usingMPI;
-    unsigned nBuckets;
-    unsigned nRanks;
-    unsigned rank;
-    unsigned particlesPerRank;
-    unsigned particlesPerBucket;
-    unsigned nMaster;
+    unsigned nParticles = 0;
+    bool usingMPI = false ;
+    unsigned nBuckets = 1;
+    unsigned nRanks = 0;
+    unsigned rank = 0;
+    unsigned particlesPerRank = 1;
+    unsigned particlesPerBucket = 1;
+    unsigned nMaster = 0;
     bool flushForward = true;
 
     std::array<std::vector<int>, 3> rankOffset;
 
-    bucket_header_t*  ptrBucketHeader;
-    rank_info_t*      ptrRankInfo;
-    COLLISION_T* ptrLocalCollisionPointList;
+    bucket_header_t*  ptrBucketHeader = nullptr;
+    rank_info_t*      ptrRankInfo = nullptr;
+    COLLISION_T* ptrLocalCollisionPointList = nullptr;
 
     MPI_Win bucket_header_shared_memory_window;
     MPI_Win collision_shared_memory_window;
     MPI_Win rank_info_shared_memory_window;
-    MPI_Comm shared_memory_communicator;
+
+    const MonteRayParallelAssistant& PA;
 };
 
 } /* namespace MonteRay*/

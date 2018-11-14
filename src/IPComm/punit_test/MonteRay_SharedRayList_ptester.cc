@@ -122,14 +122,16 @@ SUITE( mpi_shared_rayList_tester ){
 
     class setup{
     public:
-        setup(){
-            MPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shared_memory_communicator );
-            MPI_Comm_size( shared_memory_communicator, &shared_memory_size );
-            MPI_Comm_rank( shared_memory_communicator, &shared_memory_rank );
+        setup() : PA( MonteRayParallelAssistant::getInstance() ) {
+            shared_memory_size = PA.getWorkGroupSize();
+            shared_memory_rank = PA.getWorkGroupRank();
+            MPI_Comm_dup( PA.getWorkGroupCommunicator(), &shared_memory_communicator);
         }
         ~setup(){}
 
         MPI_Comm shared_memory_communicator;
+
+        const MonteRayParallelAssistant& PA;
         int shared_memory_size;
         int shared_memory_rank;
 
@@ -137,26 +139,30 @@ SUITE( mpi_shared_rayList_tester ){
         ParticleSetup p;
     };
 
-    TEST( ctor_defaults ) {
+    TEST( ctor1_defaults ) {
+         //        printf("Debug: ctor1_defaults test\n");
+         const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
+
+         TestMasterList master;
+         rayList_t list(master, 10, 10);
+         CHECK_EQUAL( true, list.isUsingMPI() );
+         CHECK_EQUAL( 10, list.getNBuckets() );
+
+         if( PA.getWorkGroupRank() == 0 ) {
+             CHECK_EQUAL( 0, list.getCurrentBucket(0) );
+         }
+     }
+
+    TEST( ctor2_defaults ) {
         //        printf("Debug: ctor_defaults test\n");
-        int rank, size;
-
-        MPI_Comm_size( MPI_COMM_WORLD, &size );
-        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-        MPI_Comm shared_memory_communicator;
-        int shared_memory_size;
-        int shared_memory_rank;
-        MPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shared_memory_communicator );
-        MPI_Comm_size( shared_memory_communicator, &shared_memory_size );
-        MPI_Comm_rank( shared_memory_communicator, &shared_memory_rank );
+        const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
         TestMasterList master;
-        rayList_t list(master, 10, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 10, PA.getWorkGroupRank(), PA.getWorkGroupSize(), PA.isParallel(), 10);
         CHECK_EQUAL( true, list.isUsingMPI() );
         CHECK_EQUAL( 10, list.getNBuckets() );
 
-        if( shared_memory_rank == 0 ) {
+        if( PA.getWorkGroupRank() == 0 ) {
             CHECK_EQUAL( 0, list.getCurrentBucket(0) );
         }
     }
