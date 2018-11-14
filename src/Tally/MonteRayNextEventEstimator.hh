@@ -96,6 +96,10 @@ public:
     void
     printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
 
+    CUDAHOST_CALLABLE_MEMBER
+    void
+    outputTimeBinnedTotal(std::ostream& out, unsigned nSamples=1, unsigned constantDimension=2);
+
     template<typename T>
     void setTimeBinEdges( std::vector<T> edges) {
         pTallyTimeBinEdges = new std::vector<gpuFloatType_t>;

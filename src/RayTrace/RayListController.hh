@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <iostream>
 
 #include "MonteRayTypes.hh"
 #include "MonteRayParallelAssistant.hh"
@@ -66,6 +67,7 @@ public:
     gpuTallyType_t getPointDetTally(unsigned spatialIndex, unsigned timeIndex=0 ) const;
     void copyPointDetToGPU(void);
     void printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
+    void outputTimeBinnedTotal(std::ostream& out,unsigned nSamples=1, unsigned constantDimension=2);
 
     void flush(bool final=false);
     void finalFlush(void);
@@ -104,11 +106,16 @@ public:
     }
 
     template<typename T>
-    void setTimeBinEdges( std::vector<T> edges) {
+    void setTimeBinEdges( const std::vector<T>& edges) {
         TallyTimeBinEdges.resize( edges.size() );
         for( unsigned i=0; i<edges.size(); ++i) {
             TallyTimeBinEdges[i] = edges[i];
         }
+    }
+
+    template<typename T>
+    void setEnergyBinEdges( const std::vector<T>& edges) {
+        std::cout << "WARNING:  MonteRay does not currently support energy binned tallies.  Ignoring.\n";
     }
 
     void gather();

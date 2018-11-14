@@ -451,10 +451,21 @@ RayListController<GRID_T,N>::printPointDets( const std::string& outputFile, unsi
     if( PA.getWorldRank() != 0 ) { return; }
 
     if( ! usingNextEventEstimator ) {
-         throw std::runtime_error( "RayListController::printPointDets  -- only supports printing of Next-Event Estimators." );
-     }
+        throw std::runtime_error( "RayListController::printPointDets  -- only supports printing of Next-Event Estimators." );
+    }
 
     pNextEventEstimator->printPointDets(outputFile, nSamples, constantDimension );
+}
+
+template<typename GRID_T, unsigned N>
+void
+RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
+    if( PA.getWorldRank() != 0 ) { return; }
+
+    if( ! usingNextEventEstimator ) {
+        throw std::runtime_error( "RayListController::outputTimeBinnedTotal  -- only supports outputting Next-Event Estimator results." );
+    }
+    pNextEventEstimator->outputTimeBinnedTotal(out, nSamples, constantDimension );
 }
 
 template<typename GRID_T, unsigned N>

@@ -373,9 +373,17 @@ MonteRayNextEventEstimator<GRID_T>::printPointDets( const std::string& outputFil
     if( ! out.is_open() ) {
         throw std::runtime_error( "Failure opening output file.  File= " + outputFile );
     }
+    outputTimeBinnedTotal( out, nSamples, constantDimension);
+    out.close();
+}
 
-    // Output Cosine Data
-    out << "#                                       Source       Source  \n";
+template<typename GRID_T>
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
+    out << "#  MonteRay results                                          \n";
+    out << "#                                                            \n";
+    out << "#                                      Score        Score    \n";
     out << "#        X          Y          Z       Average      Rel Err. \n";
     out << "# ________   ________   ________   ___________   ___________ \n";
     //        12345678   12345678   12345678   12345678901   12345678901
@@ -430,7 +438,6 @@ MonteRayNextEventEstimator<GRID_T>::printPointDets( const std::string& outputFil
     out << "# Min value = " << min << "\n";
     out << "# Max value = " << max << "\n";
     out << "# Average value = " << sum / nUsed << "\n";
-    out.close();
 }
 
 template<typename GRID_T, unsigned N>
