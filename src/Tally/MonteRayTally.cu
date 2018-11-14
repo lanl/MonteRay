@@ -97,8 +97,8 @@ MonteRayTally::setupForParallel() {}
 
 void
 MonteRayTally::gather() {
-    if( ! MonteRayParallelAssistant::getInstance().isParallel() ) return;
     copyToCPU();
+    if( ! MonteRayParallelAssistant::getInstance().isParallel() ) return;
 
     gpuTallyType_t* pGlobalData;
 
