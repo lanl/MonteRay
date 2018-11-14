@@ -107,10 +107,7 @@ public:
 
     template<typename T>
     void setTimeBinEdges( const std::vector<T>& edges) {
-        TallyTimeBinEdges.resize( edges.size() );
-        for( unsigned i=0; i<edges.size(); ++i) {
-            TallyTimeBinEdges[i] = edges[i];
-        }
+        TallyTimeBinEdges.assign( edges.begin(), edges.end() );
     }
 
     template<typename T>
