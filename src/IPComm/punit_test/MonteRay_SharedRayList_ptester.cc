@@ -452,7 +452,7 @@ SUITE( mpi_shared_rayList_tester ){
 
         if(shared_memory_rank==1 ) {
             // indicate rank 1 is done
-            list.flush(1);
+            list.flushRank(1, false);
         }
         MPI_Barrier( shared_memory_communicator );
 
@@ -470,7 +470,7 @@ SUITE( mpi_shared_rayList_tester ){
             // add to rank
             list.addCollision(rank,setup.particle);
         }
-        list.flush(rank);
+        list.flushRank(rank, false);
     };
 
     TEST_FIXTURE(setup, rank0_finishhes_waits_on_rank1 ) {
@@ -501,7 +501,7 @@ SUITE( mpi_shared_rayList_tester ){
 
         if(shared_memory_rank==0 ) {
             CHECK_EQUAL( 9U, list.getMasterSize() );
-            list.flush(0,true);
+            list.flushRank(0,true);
             CHECK_EQUAL( 0U, list.getMasterSize() );
             CHECK_EQUAL( 34U, master.size() );
 
@@ -540,7 +540,7 @@ SUITE( mpi_shared_rayList_tester ){
 
         if(shared_memory_rank==0 ) {
             CHECK_EQUAL( 9U, list.getMasterSize() );
-            list.flush(0,true);
+            list.flushRank(0,true);
         }
         MPI_Barrier( shared_memory_communicator );
         if(shared_memory_rank==0 ) {
@@ -576,7 +576,7 @@ SUITE( mpi_shared_rayList_tester ){
 
         if(shared_memory_rank==0 ) {
             CHECK_EQUAL( 9U, list.getMasterSize() );
-            list.flush(0,true);
+            list.flushRank(0,true);
         }
         MPI_Barrier( shared_memory_communicator );
         if(shared_memory_rank==0 ) {

@@ -167,7 +167,7 @@ SUITE( shared_next_event_ray_list_tester ){
 
          double prob = 20.0;
          list.add(particle, probs, detectorID);
-         list.flush(0,true);
+         list.flushRank(0,true);
 
          CHECK_EQUAL( 1, master.size() );
          ray3_t stored_ray = master.get(0);

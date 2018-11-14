@@ -484,8 +484,11 @@ public:
         return true;
     }
 
-    void flush( unsigned targetRank, bool final=false) {
+    void flush( bool final=false ) {
+        flushRank( PA.getWorkGroupRank(), final);
+    }
 
+    void flushRank( unsigned targetRank, bool final=false) {
         MONTERAY_ASSERT( targetRank < nRanks );
 
         if( targetRank == 0 ) {

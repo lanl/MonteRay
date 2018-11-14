@@ -351,7 +351,7 @@ SUITE( shared_collisionPointList_tester ){
         CHECK_EQUAL( false, list.isBucketDone(1,1) );
 
         // indicate rank 1 is done
-        list.flush(1);
+        list.flushRank(1);
         CHECK_EQUAL( true, list.isBucketDone(1,1) );
         CHECK_EQUAL( true, list.isRankDone(1));
         CHECK_EQUAL( true, list.allDone());
@@ -364,7 +364,7 @@ SUITE( shared_collisionPointList_tester ){
             // add to rank
             list.addCollision(rank,setup.particle);
         }
-        list.flush(rank);
+        list.flushRank(rank);
     };
 
     TEST_FIXTURE(ParticleSetup, rank0_finishhes_waits_on_rank1 ){
@@ -383,7 +383,7 @@ SUITE( shared_collisionPointList_tester ){
         CHECK_EQUAL( 9U, list.getMasterSize() );
         thread1.join();
 
-        list.flush(0, true);
+        list.flushRank(0, true);
         CHECK_EQUAL( 0U, list.getMasterSize() );
         CHECK_EQUAL( 34U, master.size() );
 
@@ -409,7 +409,7 @@ SUITE( shared_collisionPointList_tester ){
             list.addCollision(0,particle);
         }
         CHECK_EQUAL( 9U, list.getMasterSize() );
-        list.flush(0, true);
+        list.flushRank(0, true);
 
         thread1.join();
         CHECK_EQUAL( 0U, list.getMasterSize() );
@@ -433,7 +433,7 @@ SUITE( shared_collisionPointList_tester ){
             list.addCollision(0,particle);
         }
         CHECK_EQUAL( 9U, list.getMasterSize() );
-        list.flush(0,true);
+        list.flushRank(0,true);
         CHECK_EQUAL( 0U, list.getMasterSize() );
         CHECK_EQUAL( 11009U, master.size() );
 
@@ -458,7 +458,7 @@ SUITE( shared_collisionPointList_tester ){
             list.addCollision(0,particle);
         }
         CHECK_EQUAL( 9U, list.getMasterSize() );
-        list.flush(0,true);
+        list.flushRank(0,true);
         CHECK_EQUAL( 0U, list.getMasterSize() );
         CHECK_EQUAL( 3509U, master.size() );
 
