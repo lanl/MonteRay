@@ -111,11 +111,7 @@ public:
         }
     }
 
-    void gather() {
-        if( pNextEventEstimator ) {
-            pNextEventEstimator->gather();
-        }
-    }
+    void gather();
 
 private:
     unsigned nBlocks = 0;

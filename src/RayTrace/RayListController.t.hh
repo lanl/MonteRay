@@ -37,7 +37,7 @@ PA( MonteRayParallelAssistant::getInstance() )
     pNextEventEstimator.reset();
     initialize();
     kernel = [&] ( void ) {
-        if( PA.getSharedMemoryRank() != 0 ) { return; }
+        if( PA.getWorkGroupRank() != 0 ) { return; }
 #ifdef __CUDACC__
         rayTraceTally<<<nBlocks,nThreads,0, *stream1>>>(
                 pGrid->getDevicePtr(),
@@ -80,7 +80,7 @@ PA( MonteRayParallelAssistant::getInstance() )
         //copyPointDetToGPU();
 
         if( currentBank->size() > 0 ) {
-            //if( PA.getSharedMemoryRank() != 0 ) { return; }
+            //if( PA.getWorkGroupRank() != 0 ) { return; }
             if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
             pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), stream1.get() );
         }
@@ -104,7 +104,7 @@ PA( MonteRayParallelAssistant::getInstance() )
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T, N>::initialize(){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     setCapacity( 1000000 ); // default buffer capacity to 1 million.
 
@@ -155,7 +155,7 @@ RayListController<GRID_T,N>::size(void) const {
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::setCapacity(unsigned n) {
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
     bank1.reset( new RayListInterface<N>(n) );
     bank2.reset( new RayListInterface<N>(n) );
     currentBank = bank1.get();
@@ -164,7 +164,7 @@ RayListController<GRID_T,N>::setCapacity(unsigned n) {
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::add( const Ray_t<N>& ray){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     currentBank->add( ray );
     if( size() == capacity() ) {
@@ -176,7 +176,7 @@ RayListController<GRID_T,N>::add( const Ray_t<N>& ray){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::add( const Ray_t<N>* rayArray, unsigned num){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     int NSpaces = capacity() - size();
 
@@ -195,7 +195,7 @@ RayListController<GRID_T,N>::add( const Ray_t<N>* rayArray, unsigned num){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::flush(bool final){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     const bool debug = false;
     if( debug ) std::cout << "Debug: RayListController<N>::flush\n";
@@ -251,7 +251,7 @@ RayListController<GRID_T,N>::flush(bool final){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::flushToFile(bool final){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorldRank() != 0 ) { return; }
 
     const bool debug = false;
 
@@ -310,7 +310,7 @@ RayListController<GRID_T,N>::flushToFile(bool final){
 template<typename GRID_T, unsigned N>
 size_t
 RayListController<GRID_T,N>::readCollisionsFromFile(std::string name) {
-    if( PA.getSharedMemoryRank() != 0 ) { return 0; }
+    if( PA.getWorldRank() != 0 ) { return 0; }
 
     bool end = false;
     unsigned numParticles = 0;
@@ -326,7 +326,7 @@ template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::startTimers(){
     // start timers
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     pTimer->start();
 #ifdef __CUDACC__
@@ -339,7 +339,7 @@ template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::stopTimers(){
     // stop timers and sync
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     pTimer->stop();
     float_t cpuCycleTime = pTimer->getTime();
@@ -372,7 +372,7 @@ RayListController<GRID_T,N>::stopTimers(){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::swapBanks(){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     // Swap banks
     if( currentBank == bank1.get() ) {
@@ -396,7 +396,7 @@ RayListController<GRID_T,N>::swapBanks(){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::sync(void){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     GPUSync sync;
     sync.sync();
@@ -405,7 +405,7 @@ RayListController<GRID_T,N>::sync(void){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::clearTally(void) {
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     std::cout << "Debug: clearTally called \n";
 
@@ -448,7 +448,7 @@ RayListController<GRID_T,N>::printCycleTime(float_t cpu, float_t gpu, float_t wa
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorldRank() != 0 ) { return; }
 
     if( ! usingNextEventEstimator ) {
          throw std::runtime_error( "RayListController::printPointDets  -- only supports printing of Next-Event Estimators." );
@@ -460,7 +460,7 @@ RayListController<GRID_T,N>::printPointDets( const std::string& outputFile, unsi
 template<typename GRID_T, unsigned N>
 unsigned
 RayListController<GRID_T,N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z ){
-    if( PA.getSharedMemoryRank() != 0 ) { return 0; }
+    if( PA.getWorkGroupRank() != 0 ) { return 0; }
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::addPointDet - Next-Event Estimator not enabled." );
     }
@@ -470,7 +470,7 @@ RayListController<GRID_T,N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gp
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::setPointDetExclusionRadius(gpuFloatType_t r){
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::setPointDetExclusionRadius - Next-Event Estimator not enabled." );
     }
@@ -480,7 +480,7 @@ RayListController<GRID_T,N>::setPointDetExclusionRadius(gpuFloatType_t r){
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::copyPointDetTallyToCPU(void) {
-    if( PA.getSharedMemoryRank() != 0 ) { return; }
+    if( PA.getWorkGroupRank() != 0 ) { return; }
 
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::copyPointDetTallyToCPU - Next-Event Estimator not enabled." );
@@ -491,7 +491,7 @@ RayListController<GRID_T,N>::copyPointDetTallyToCPU(void) {
 template<typename GRID_T, unsigned N>
 gpuTallyType_t
 RayListController<GRID_T,N>::getPointDetTally(unsigned spatialIndex, unsigned timeIndex ) const {
-    if( PA.getSharedMemoryRank() != 0 ) { return 0.0; }
+    if( PA.getWorldRank() != 0 ) { return 0.0; }
 
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::getPointDetTally - Next-Event Estimator not enabled." );
@@ -518,6 +518,14 @@ RayListController<GRID_T,N>::copyPointDetToGPU(void) {
     pNextEventEstimator->setTimeBinEdges( TallyTimeBinEdges );
     pNextEventEstimator->initialize();
     pNextEventEstimator->copyToGPU();
+}
+
+template<typename GRID_T, unsigned N>
+void
+RayListController<GRID_T,N>::gather() {
+    if( pNextEventEstimator ) {
+        pNextEventEstimator->gather();
+    }
 }
 
 
