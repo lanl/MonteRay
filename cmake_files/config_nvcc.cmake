@@ -97,20 +97,12 @@ endif()
 
 add_definitions( -DCUDA )
 add_definitions( -D_GLIBCXX_USE_CXX11_ABI=1 )
-add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
-
-# Titan X -arch=sm_52
-# K40 -arch=compute_35 -code=sm_35
-# Moonlight Tesla M2090 -arch=compute_20 -code=sm_20
-# Quadro K420 - 3.0
-#list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY})
 
 if(DEFINED GPUCOMPUTECAPABILITY )
-#  add_definitions( -DCMAKE_CUDA_FLAGS=${GPUCOMPUTECAPABILITY} )
-#  set( Cuda_Flags_Debug "${GPUCOMPUTECAPABILITY} -g -G " )
-#  add_definitions( -DCMAKE_CUDA_FLAGS_DEBUG=${Cuda_Flags_Debug} )
+    # Setting CMAKE_CUDA_FLAGS removes the warning "nvlink warning : SM Arch ('sm_30') not found in ... "
+    set( CMAKE_CUDA_FLAGS ${GPUCOMPUTECAPABILITY} )
 else()
-  message( FATAL_ERROR "GPUCOMPUTECAPABILITY was NOT DEFINED!")
+    message( FATAL_ERROR "GPUCOMPUTECAPABILITY was NOT DEFINED!")
 endif()
 
 if( CMAKE_BUILD_TYPE STREQUAL "Debug" ) 
@@ -120,9 +112,6 @@ else()
     list(APPEND CUDA_NVCC_FLAGS "-O3")
     list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
 endif()
-#list(APPEND CUDA_NVCC_FLAGS "-O3")
-#list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
-#list(APPEND CUDA_NVCC_FLAGS "--x cu")
 
 list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
 list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC")
@@ -132,6 +121,8 @@ list(APPEND CUDA_NVCC_FLAGS "--cudart shared")
 list(APPEND CUDA_NVCC_FLAGS "--relocatable-device-code=true" )
 list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY} )
 
+string( REPLACE ";" " " CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" )
+
 # message( "-- config_nvcc.cmake -- libname = ${libname} -- MPI_INCLUDE_DIRS = ${MPI_INCLUDE_DIRS}" )
 if( NOT MPI_INCLUDE_DIRS ) 
     message( FATAL_ERROR "Location of MPI include files hase not been set." )
@@ -140,4 +131,5 @@ list(APPEND CUDA_NVCC_FLAGS "-I${MPI_INCLUDE_DIRS}" )
 
 #cuda_select_nvcc_arch_flags( ${GPUCOMPUTECAPABILITY} )
 
-message( STATUS "Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")
+message( STATUS "-- config_nvcc.cmake -- Using CUDA_NVCC_FLAGS=${CUDA_NVCC_FLAGS}")
+message( STATUS "-- config_nvcc.cmake -- Using CMAKE_CUDA_FLAGS=${CMAKE_CUDA_FLAGS}")
