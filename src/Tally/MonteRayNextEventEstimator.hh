@@ -103,10 +103,7 @@ public:
     template<typename T>
     void setTimeBinEdges( std::vector<T> edges) {
         pTallyTimeBinEdges = new std::vector<gpuFloatType_t>;
-        pTallyTimeBinEdges->resize( edges.size() );
-        for( unsigned i=0; i<edges.size(); ++i) {
-            (*pTallyTimeBinEdges)[i] = edges[i];
-        }
+        pTallyTimeBinEdges->assign( edges.begin(), edges.end() );
     }
 
     void gather();
