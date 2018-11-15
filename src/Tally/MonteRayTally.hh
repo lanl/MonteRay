@@ -133,6 +133,13 @@ public:
         return numTimeBinElements;
     }
 
+    gpuFloatType_t getTimeBinEdge(unsigned i ) const {
+        if( pTimeBinEdges ) {
+            return pTimeBinEdges->at(i);
+        }
+        return 0.0;
+    }
+
     CUDA_CALLABLE_MEMBER
     unsigned getIndex(unsigned spatial_index, unsigned time_index) const {
         // layout is first by spatial index, then by time index
