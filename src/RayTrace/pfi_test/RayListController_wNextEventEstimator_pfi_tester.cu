@@ -60,7 +60,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         void setup(){
             const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
-            if( PA.getSharedMemoryRank() !=0  ) return;
+            if( PA.getWorkGroupRank() !=0  ) return;
             pGrid->copyToGPU();
 
             pXS->setParticleType( photon );
@@ -169,7 +169,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         controller.add( ray );
         controller.add( ray );
 
-        if( PA.getSharedMemoryRank() == 0 ) {
+        if( PA.getWorkGroupRank() == 0 ) {
             CHECK_EQUAL( 2, controller.size());
             CHECK_EQUAL(10, controller.capacity());
         } else {
@@ -190,7 +190,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
                                     ( 2.0f / (2.0f * MonteRay::pi * distance1*distance1 ) ) * exp( -1.0*4.0 );
 
         if( PA.getWorldRank() == 0 ) {
-            CHECK_CLOSE( 2*(expected1)*PA.getWorldSize()/PA.getSharedMemorySize(), controller.getPointDetTally(0), 1e-7);
+            CHECK_CLOSE( 2*(expected1)*PA.getInterWorkGroupSize(), controller.getPointDetTally(0), 1e-7);
         } else {
             CHECK_CLOSE(           0.0, controller.getPointDetTally(0), 1e-7);
         }
