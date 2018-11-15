@@ -381,14 +381,14 @@ template<typename GRID_T>
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
-    out << "#  MonteRay results                                          \n";
-    out << "#                                                            \n";
-    out << "#                                      Score        Score    \n";
-    out << "#        X          Y          Z       Average      Rel Err. \n";
-    out << "# ________   ________   ________   ___________   ___________ \n";
-    //        12345678   12345678   12345678   12345678901   12345678901
-    //     "12        123        123        123           123
-    //boost::format fmt( "  %1$8.3f   %2$8.3f   %3$8.3f   %4$11.4e   %5$11.4e\n" );
+    out << "#  MonteRay results                                                    \n";
+    out << "#                                                                      \n";
+    out << "#       X          Y          Z      Time        Score        Score    \n";
+    out << "#     (cm)       (cm)       (cm)   (shakes)      Average      Rel Err. \n";
+    out << "# ________   ________   ________   ________   ___________   ___________ \n";
+    //        12345678   12345678   12345678   12345678   12345678901   12345678901
+    //     "12        123        123        123        123           123
+    //boost::format fmt( "  %1$8.3f   %2$8.3f   %3$8.3f   %4$8.3f   %5$11.4e   %6$11.4e\n" );
 
     gpuFloatType_t sum = 0.0;
     gpuFloatType_t min = std::numeric_limits<double>::infinity();
@@ -416,23 +416,27 @@ MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsi
     double previousSecondDimPosition = pos[dim2];
 
     for( unsigned i=0; i < nUsed; ++i ) {
-        Vector3D<gpuFloatType_t> pos = getPoint(i);
-        gpuFloatType_t value = getTally(i) / nSamples;
+        for( int j=0; j < pTally->getNumTimeBins(); ++j ) {
 
-        if(  pos[dim2] < previousSecondDimPosition ) {
-            out << "\n";
+            double time = pTally->getTimeBinEdge(j);
+            Vector3D<gpuFloatType_t> pos = getPoint(i);
+            gpuFloatType_t value = getTally(i,j) / nSamples;
+
+            if(  pos[dim2] < previousSecondDimPosition ) {
+                out << "\n";
+            }
+
+            char buffer[200];
+            snprintf( buffer, 200, "  %8.3f   %8.3f   %8.3f   %8.3f   %11.4e   %11.4e\n",
+                                     pos[0], pos[1], pos[2],   time,   value,     0.0 );
+            out << buffer;
+
+            previousSecondDimPosition = pos[dim2];
+
+            if( value < min ) min = value;
+            if( value > max ) max = value;
+            sum += value;
         }
-
-        char buffer[200];
-        snprintf( buffer, 200, "   %8.3f   %8.3f   %8.3f   %11.4e   %511.4e\n",
-                                  pos[0], pos[1], pos[2],  value,       0.0 );
-        out << buffer;
-
-        previousSecondDimPosition = pos[dim2];
-
-        if( value < min ) min = value;
-        if( value > max ) max = value;
-        sum += value;
     }
     out << "\n#\n";
     out << "# Min value = " << min << "\n";
