@@ -70,6 +70,15 @@ void cudaDtor(MonteRayMaterialList* ptr) {
 }
 
 MonteRayMaterialListHost::MonteRayMaterialListHost(unsigned num, unsigned maxNumIsotopes, unsigned nBins) {
+    if( num > MAXNUMMATERIALS ) {
+        std::stringstream msg;
+        msg << "MonteRay -- MonteRayMaterialListHost::MonteRayMaterialListHost.\n" <<
+               "The requested number of materials(" << num << "), " <<
+               "exceeds the maximum number of materials, MAXNUMMATERIALS = " << MAXNUMMATERIALS <<" !\n"
+                << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "\n\n";
+        throw std::runtime_error( msg.str() );
+    }
+
     pMatList = new MonteRayMaterialList;
     ctor( pMatList, num);
     temp = NULL;

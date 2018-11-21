@@ -4,8 +4,6 @@
 #include <functional>
 #include "RayListInterface.hh"
 
-#define MAXNUMMATERIALS 10
-
 namespace MonteRay{
 
 class gpuTimingHost;

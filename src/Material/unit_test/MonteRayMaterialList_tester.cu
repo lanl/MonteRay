@@ -206,4 +206,10 @@ SUITE( MonteRayMaterialList_tester ) {
         delete xs;
     }
 
+    TEST( requested_num_materials_exceeds_limit_fail ){
+         unsigned limit = MAXNUMMATERIALS;
+
+         CHECK_THROW( MonteRayMaterialListHost matList(limit+1,1,10), std::runtime_error);
+     }
+
 }
