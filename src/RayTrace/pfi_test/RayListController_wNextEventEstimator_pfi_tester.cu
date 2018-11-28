@@ -31,6 +31,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
     class ControllerSetup {
     public:
         ControllerSetup(){
+            const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
             //cudaReset();
             //gpuCheck();
