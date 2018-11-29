@@ -6,6 +6,7 @@
 #include "GPUErrorCheck.hh"
 #include "GPUAtomicAdd.hh"
 #include "MonteRay_binaryIO.hh"
+#include "MonteRayMemory.hh"
 
 namespace MonteRay{
 
@@ -36,7 +37,8 @@ void cudaCtor(gpuTally* ptr, unsigned num) {
     ptr->size = num;
     unsigned allocSize = sizeof( gpuTallyType_t ) * num;
 
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr->tally, allocSize ));
+    ptr->tally = (gpuTallyType_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuTally::tally") );
+
 #endif
 }
 
@@ -53,7 +55,7 @@ void cudaCtor(gpuTally* pCopy, gpuTally* pOrig) {
 
 void cudaDtor(gpuTally* ptr) {
 #ifdef __CUDACC__
-    cudaFree( ptr->tally );
+    MonteRayDeviceFree( ptr->tally );
 #endif
 }
 
@@ -96,7 +98,7 @@ void gpuTallyHost::dtor() {
         cudaDtor( temp );
         delete temp;
 #ifdef __CUDACC__
-        cudaFree( ptr_device );
+        MonteRayDeviceFree( ptr_device );
 #endif
     }
 }
@@ -121,7 +123,8 @@ void gpuTallyHost::clear(void) {
 
 void gpuTallyHost::copyToGPU(void) {
 #ifdef __CUDACC__
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( gpuTally) ));
+    //CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( gpuTally) ));
+    ptr_device = (gpuTally*) MONTERAYDEVICEALLOC( sizeof( gpuTally), std::string("gpuTallyHost::ptr_device") );
 
     cudaCopyMade = true;
 

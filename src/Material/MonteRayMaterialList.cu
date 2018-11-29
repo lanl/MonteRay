@@ -4,6 +4,7 @@
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
 #include "HashLookup.hh"
+#include "MonteRayMemory.hh"
 
 namespace MonteRay{
 
@@ -34,11 +35,11 @@ void cudaCtor(MonteRayMaterialList* pCopy, unsigned num) {
 
     // materialID
     unsigned allocSize = sizeof(unsigned)*num;
-    CUDA_CHECK_RETURN( cudaMalloc(&pCopy->materialID, allocSize ));
+    pCopy->materialID = (unsigned*) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRayMaterialList::materialID") );
 
     // materials
     allocSize = sizeof(MonteRayMaterial*)*num;
-    CUDA_CHECK_RETURN( cudaMalloc(&pCopy->materials, allocSize ));
+    pCopy->materials = (MonteRayMaterial**) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRayMaterialList::materials") );
 #endif
 }
 
@@ -64,8 +65,8 @@ void dtor(MonteRayMaterialList* ptr) {
 
 void cudaDtor(MonteRayMaterialList* ptr) {
 #ifdef __CUDACC__
-    cudaFree( ptr->materialID );
-    cudaFree( ptr->materials );
+    MonteRayDeviceFree( ptr->materialID );
+    MonteRayDeviceFree( ptr->materials );
 #endif
 }
 
@@ -103,7 +104,7 @@ MonteRayMaterialListHost::~MonteRayMaterialListHost() {
     if( cudaCopyMade ) {
         cudaDtor( temp );
         delete temp;
-        cudaFree( ptr_device );
+        MonteRayDeviceFree( ptr_device );
     }
     free( material_device_ptr_list );
 #endif
@@ -121,7 +122,7 @@ void MonteRayMaterialListHost::copyToGPU(void) {
     temp->numMaterials = pMatList->numMaterials;
 
     // allocate target struct
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( MonteRayMaterialList ) ));
+    ptr_device = (MonteRayMaterialList*) MONTERAYDEVICEALLOC( sizeof( MonteRayMaterialList ), std::string("MonteRayMaterialListHost::ptr_device") );
 
     // allocate target dynamic memory
     cudaCtor( temp, pMatList);
@@ -212,7 +213,7 @@ gpuFloatType_t MonteRayMaterialListHost::launchGetTotalXS(unsigned i, gpuFloatTy
 #ifdef __CUDACC__
     type_t* result_device;
 
-    CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
+    result_device = (type_t*) MONTERAYDEVICEALLOC( sizeof( type_t) * 1, std::string("MonteRayMaterialListHost::launchGetTotalXS::result_device") );
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
@@ -223,7 +224,7 @@ gpuFloatType_t MonteRayMaterialListHost::launchGetTotalXS(unsigned i, gpuFloatTy
 
     CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
-    cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 
 #else
     kernelGetTotalXS(pMatList, i, pHash->getPtr(), HashBin, E, density, result);

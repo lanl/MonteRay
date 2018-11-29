@@ -6,6 +6,7 @@
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayCrossSection.hh"
 #include "MonteRayConstants.hh"
+#include "MonteRayMemory.hh"
 
 namespace MonteRay{
 
@@ -37,7 +38,7 @@ void cudaCtor(HashLookup* pCopy, unsigned num, unsigned nBins) {
 
     // binBounds
     unsigned allocSize = sizeof(unsigned)*num*nBins;
-    CUDA_CHECK_RETURN( cudaMalloc(&pCopy->binBounds, allocSize ));
+    pCopy->binBounds = (unsigned*) MONTERAYDEVICEALLOC( allocSize, std::string("cudaCtor(HashLookup*)") );
 #endif
 }
 
@@ -61,7 +62,7 @@ void dtor(HashLookup* ptr) {
 
 void cudaDtor(HashLookup* ptr) {
 #ifdef __CUDACC__
-    cudaFree( ptr->binBounds );
+    MonteRayDeviceFree( ptr->binBounds );
 #endif
 }
 
@@ -82,7 +83,7 @@ HashLookupHost::~HashLookupHost() {
     if( cudaCopyMade ) {
         cudaDtor( temp );
         delete temp;
-        cudaFree( ptr_device );
+        MonteRayDeviceFree( ptr_device );
     }
 #endif
 }
@@ -97,7 +98,7 @@ void HashLookupHost::copyToGPU(void) {
     unsigned num = ptr->maxNumIsotopes;
 
     // allocate target struct
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( HashLookup ) ));
+    ptr_device = (HashLookup*) MONTERAYDEVICEALLOC( sizeof( HashLookup ), std::string("HashLookupHost::ptr_device") );
 
     // allocate target dynamic memory
     cudaCtor( temp, ptr);

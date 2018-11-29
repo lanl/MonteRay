@@ -7,6 +7,7 @@
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
 #include "HashLookup.hh"
+#include "MonteRayMemory.hh"
 
 namespace MonteRay{
 
@@ -49,9 +50,8 @@ void cudaCtor(MonteRayCrossSection* ptr, unsigned num) {
     ptr->ParticleType = neutron;
     unsigned allocSize = sizeof( gpuFloatType_t ) * num;
 
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr->energies, allocSize ));
-
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr->totalXS, allocSize ));
+    ptr->energies = (gpuFloatType_t*) MONTERAYDEVICEALLOC( allocSize, std::string("cudaCtor::ptr->energies") );
+    ptr->totalXS = (gpuFloatType_t*) MONTERAYDEVICEALLOC( allocSize, std::string("cudaCtor::ptr->totalXS") );
 #endif
 }
 
@@ -74,8 +74,8 @@ void cudaCtor(MonteRayCrossSection* pCopy, MonteRayCrossSection* pOrig) {
 
 void cudaDtor(MonteRayCrossSection* ptr) {
 #ifdef __CUDACC__
-    cudaFree( ptr->energies );
-    cudaFree( ptr->totalXS );
+    MonteRayDeviceFree( ptr->energies );
+    MonteRayDeviceFree( ptr->totalXS );
 #endif
 }
 
@@ -245,7 +245,7 @@ launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
 #ifdef __CUDACC__
     gpuFloatType_t* result_device;
 
-    CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( gpuFloatType_t) * 1 ));
+    result_device = (gpuFloatType_t*) MONTERAYDEVICEALLOC( sizeof( gpuFloatType_t) * 1, std::string("launchGetTotalXS::result_device") );
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
@@ -256,7 +256,7 @@ launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
 
     CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
 
-    cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 #else
     kernelGetTotalXS( pXS->getPtr(), energy, result);
 #endif
@@ -271,7 +271,7 @@ MonteRayCrossSectionHost::MonteRayCrossSectionHost(unsigned num){
     temp = NULL;
 
 #ifdef __CUDACC__
-    CUDA_CHECK_RETURN( cudaMalloc(&xs_device, sizeof( MonteRayCrossSection) ));
+    xs_device = (MonteRayCrossSection*) MONTERAYDEVICEALLOC( sizeof( MonteRayCrossSection), std::string("MonteRayCrossSectionHost::xs_device") );
 #endif
 }
 
@@ -288,7 +288,7 @@ MonteRayCrossSectionHost::~MonteRayCrossSectionHost(){
         delete temp;
     }
 #ifdef __CUDACC__
-    cudaFree( xs_device );
+    MonteRayDeviceFree( xs_device );
 #endif
 }
 

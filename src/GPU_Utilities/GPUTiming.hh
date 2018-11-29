@@ -33,69 +33,16 @@ class gpuTimingHost {
 public:
     typedef gpuFloatType_t float_t;
 
-    gpuTimingHost(){
-        ptr = new gpuTiming;
-        ctor(ptr);
-        cudaCopyMade = false;
-        ptr_device = NULL;
+    gpuTimingHost();
 
-        rate = 0;
-#ifdef __CUDACC__
-        setRate( gpuTimingHost::getCyclesPerSecond() );
-        copyToGPU();
-#else
-        setRate( CLOCKS_PER_SEC );
-#endif
-    }
+    ~gpuTimingHost();
 
-    ~gpuTimingHost() {
-        if( ptr != 0 ) {
-            dtor( ptr );
-            delete ptr;
-            ptr = 0;
-        }
+    void copyToGPU(void);
 
-#ifdef __CUDACC__
-        if( cudaCopyMade ) {
-            cudaFree( ptr_device );
-        }
-#endif
-    }
-
-    void copyToGPU(void){
-#ifdef __CUDACC__
-        if(cudaCopyMade != true ) {
-            cudaCopyMade = true;
-
-            // allocate target struct
-            CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( gpuTiming) ));
-        }
-
-        // copy data
-        CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, ptr, sizeof( gpuTiming ), cudaMemcpyHostToDevice));
-#endif
-    }
-
-    void copyToCPU(void) {
-#ifdef __CUDACC__
-        cudaCopyMade = true;
-
-        // copy data
-        CUDA_CHECK_RETURN( cudaMemcpy(ptr, ptr_device, sizeof( gpuTiming ), cudaMemcpyDeviceToHost));
-#endif
-    }
+    void copyToCPU(void);
 
     /// Returns number of cycles required for requested seconds
-    static clock64_t getCyclesPerSecond() {
-        clock64_t Hz = 0;
-        // Get device frequency in Hz
-#ifdef __CUDACC__
-        cudaDeviceProp prop;
-        CUDA_CHECK_RETURN( cudaGetDeviceProperties(&prop, 0));
-        Hz = clock64_t(prop.clockRate) * 1000;
-#endif
-        return Hz;
-    }
+    static clock64_t getCyclesPerSecond();
 
     void setRate( clock64_t Hz) { rate = Hz; }
     clock64_t getRate( void ) const { return rate; }
@@ -105,24 +52,7 @@ public:
     clock64_t getClockStop(){ return ptr->stop; }
     clock64_t getClockStart(){ return ptr->start; }
 
-    double getGPUTime(void){
-        if( rate == 0 ) {
-            throw std::runtime_error( "GPU rate not set." );
-        }
-#ifdef __CUDACC__
-        if( !cudaCopyMade ){
-            throw std::runtime_error( "gpuTiming not sent to GPU." );
-        }
-        copyToCPU();
-#endif
-
-        clock64_t deltaT;
-        clock64_t start = ptr->start;
-        clock64_t stop = ptr->stop;
-        deltaT = stop - start;
-
-        return double(deltaT) / rate;
-    }
+    double getGPUTime(void);
 
     gpuTiming* getPtr(void) const { return ptr; }
 

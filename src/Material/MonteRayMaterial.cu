@@ -6,6 +6,7 @@
 #include "MonteRay_binaryIO.hh"
 #include "HashLookup.hh"
 #include "MonteRayCrossSection.hh"
+#include "MonteRayMemory.hh"
 
 namespace MonteRay{
 
@@ -38,11 +39,11 @@ void cudaCtor(MonteRayMaterial* pCopy, unsigned num) {
 
     // fractions
     unsigned allocSize = sizeof(gpuFloatType_t)*num;
-    CUDA_CHECK_RETURN( cudaMalloc(&pCopy->fraction, allocSize ));
+    pCopy->fraction = (gpuFloatType_t*) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRayMaterial::fraction") );
 
     // MonteRayCrossSections
     allocSize = sizeof(MonteRayCrossSection*)*num;
-    CUDA_CHECK_RETURN( cudaMalloc(&pCopy->xs, allocSize ));
+    pCopy->xs = (MonteRayCrossSection**) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRayMaterial::xs") );
 #endif
 }
 
@@ -67,8 +68,8 @@ void dtor(struct MonteRayMaterial* ptr){
 
 void cudaDtor(MonteRayMaterial* ptr) {
 #ifdef __CUDACC__
-    cudaFree( ptr->fraction );
-    cudaFree( ptr->xs );
+    MonteRayDeviceFree( ptr->fraction );
+    MonteRayDeviceFree( ptr->xs );
 #endif
 }
 
@@ -94,7 +95,7 @@ MonteRayMaterialHost::~MonteRayMaterialHost() {
 
     if( cudaCopyMade ) {
 #ifdef __CUDACC__
-        cudaFree( ptr_device );
+        MonteRayDeviceFree( ptr_device );
         cudaDtor( temp );
         delete temp;
 #endif
@@ -115,7 +116,7 @@ void MonteRayMaterialHost::copyToGPU(void) {
     temp->AtomicWeight = pMat->AtomicWeight;
 
     // allocate target struct
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr_device, sizeof( MonteRayMaterial) ));
+    ptr_device = (MonteRayMaterial*) MONTERAYDEVICEALLOC( sizeof( MonteRayMaterial), std::string("MonteRayMaterialHost::ptr_device") );
 
     // allocate target dynamic memory
     cudaCtor( temp, pMat);
@@ -276,7 +277,7 @@ unsigned MonteRayMaterialHost::launchGetNumIsotopes(void) {
 #ifdef __CUDACC__
     type_t* result_device;
 
-    CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
+    result_device = (type_t*) MONTERAYDEVICEALLOC( sizeof( type_t) * 1, std::string("MonteRayMaterialHost::launchGetNumIsotopes::result_device") );
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
@@ -287,7 +288,7 @@ unsigned MonteRayMaterialHost::launchGetNumIsotopes(void) {
 
     CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
-    cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 #else
     kernelGetNumIsotopes(pMat, result);
 #endif

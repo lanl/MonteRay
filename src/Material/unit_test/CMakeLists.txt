@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs Utilities CrossSection )
+set( ToolkitLibs Utilities CrossSection GPU_Utilities)
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

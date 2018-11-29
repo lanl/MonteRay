@@ -10,7 +10,7 @@
 
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
-
+#include "MonteRayMemory.hh"
 
 namespace MonteRay{
 typedef MonteRay_MaterialProperties_Data::offset_t offset_t;
@@ -64,20 +64,20 @@ void cudaCtor(MonteRay_MaterialProperties_Data* ptr, unsigned numCells, unsigned
 
 #ifdef __CUDACC__
     unsigned long long allocSize = sizeof(offset_t)*(numCells+1);
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr->offset, allocSize ));
+    ptr->offset = (offset_t*) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRay_MaterialProperties_Data::offset") );
 
     allocSize = sizeof(MatID_t)*numComponents;
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr->ID, allocSize ));
+    ptr->ID = (MatID_t*) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRay_MaterialProperties_Data::ID") );
 
     allocSize = sizeof(Density_t)*numComponents;
-    CUDA_CHECK_RETURN( cudaMalloc(&ptr->density, allocSize ));
+    ptr->density = (Density_t*) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRay_MaterialProperties_Data::density") );
 #endif
 }
 
 void cudaCtor(struct MonteRay_MaterialProperties_Data* pCopy, struct MonteRay_MaterialProperties_Data* pOrig){
-	unsigned numCells = pOrig->numCells;
-	unsigned numComponents = pOrig->numMaterialComponents;
-	cudaCtor( pCopy, numCells, numComponents);
+    unsigned numCells = pOrig->numCells;
+    unsigned numComponents = pOrig->numMaterialComponents;
+    cudaCtor( pCopy, numCells, numComponents);
 }
 
 
@@ -87,20 +87,20 @@ void dtor(struct MonteRay_MaterialProperties_Data* ptr){
         ptr->offset = 0;
     }
     if( ptr->ID != 0 ) {
-    	free(ptr->ID);
-    	ptr->ID = 0;
+        free(ptr->ID);
+        ptr->ID = 0;
     }
     if( ptr->density != 0 ) {
-    	free(ptr->density);
-    	ptr->density = 0;
+        free(ptr->density);
+        ptr->density = 0;
     }
 }
 
 void cudaDtor(MonteRay_MaterialProperties_Data* ptr) {
 #ifdef __CUDACC__
-	cudaFree( ptr->offset );
-	cudaFree( ptr->ID );
-	cudaFree( ptr->density );
+    MonteRayDeviceFree( ptr->offset );
+    MonteRayDeviceFree( ptr->ID );
+    MonteRayDeviceFree( ptr->density );
 #endif
 }
 
@@ -108,7 +108,7 @@ void cudaDtor(MonteRay_MaterialProperties_Data* ptr) {
 void MonteRay_MaterialProperties::cudaDtor(void) {
 #ifdef __CUDACC__
     if( cudaCopyMade ) {
-        cudaFree( ptrData_device );
+        MonteRayDeviceFree( ptrData_device );
         MonteRay::cudaDtor( tempData );
         delete tempData;
     }
@@ -117,41 +117,41 @@ void MonteRay_MaterialProperties::cudaDtor(void) {
 
 void MonteRay_MaterialProperties::copyToGPU(void) {
 #ifdef __CUDACC__
-	cudaCopyMade = true;
-	tempData = new MonteRay_MaterialProperties_Data;
+    cudaCopyMade = true;
+    tempData = new MonteRay_MaterialProperties_Data;
 
-	// allocate target dynamic memory
-	MonteRay::cudaCtor( tempData, size(), numMatSpecs() );
+    // allocate target dynamic memory
+    MonteRay::cudaCtor( tempData, size(), numMatSpecs() );
 
-	// allocate target struct
-	CUDA_CHECK_RETURN( cudaMalloc(&ptrData_device, sizeof( MonteRay_MaterialProperties_Data) ));
+    // allocate target struct
+    ptrData_device = (MonteRay_MaterialProperties_Data*) MONTERAYDEVICEALLOC( sizeof( MonteRay_MaterialProperties_Data), std::string("MonteRay_MaterialProperties::ptrData_device") );
 
-	// copy allocated data arrays
-	unsigned long long allocSize = sizeof(offset_t)*(tempData->numCells+1);
-	CUDA_CHECK_RETURN( cudaMemcpy(tempData->offset, getOffsetData(), allocSize, cudaMemcpyHostToDevice));
+    // copy allocated data arrays
+    unsigned long long allocSize = sizeof(offset_t)*(tempData->numCells+1);
+    CUDA_CHECK_RETURN( cudaMemcpy(tempData->offset, getOffsetData(), allocSize, cudaMemcpyHostToDevice));
 
-	allocSize = sizeof(MatID_t)*tempData->numMaterialComponents;
-	CUDA_CHECK_RETURN( cudaMemcpy(tempData->ID, getMaterialIDData(), allocSize, cudaMemcpyHostToDevice));
+    allocSize = sizeof(MatID_t)*tempData->numMaterialComponents;
+    CUDA_CHECK_RETURN( cudaMemcpy(tempData->ID, getMaterialIDData(), allocSize, cudaMemcpyHostToDevice));
 
-	allocSize = sizeof(Density_t)*tempData->numMaterialComponents;
-	CUDA_CHECK_RETURN( cudaMemcpy(tempData->density, getMaterialDensityData(), allocSize, cudaMemcpyHostToDevice));
+    allocSize = sizeof(Density_t)*tempData->numMaterialComponents;
+    CUDA_CHECK_RETURN( cudaMemcpy(tempData->density, getMaterialDensityData(), allocSize, cudaMemcpyHostToDevice));
 
-	// copy struct
-	CUDA_CHECK_RETURN( cudaMemcpy(ptrData_device, tempData, sizeof( MonteRay_MaterialProperties_Data ), cudaMemcpyHostToDevice));
+    // copy struct
+    CUDA_CHECK_RETURN( cudaMemcpy(ptrData_device, tempData, sizeof( MonteRay_MaterialProperties_Data ), cudaMemcpyHostToDevice));
 #else
-	ptrData = new MonteRay_MaterialProperties_Data;
+    ptrData = new MonteRay_MaterialProperties_Data;
 
-	// allocate target dynamic memory
-	MonteRay::ctor( ptrData, size(), numMatSpecs() );
+    // allocate target dynamic memory
+    MonteRay::ctor( ptrData, size(), numMatSpecs() );
 
-	unsigned long long allocSize = sizeof(offset_t)*(ptrData->numCells+1);
-	memcpy( ptrData->offset,  getOffsetData(), allocSize);
+    unsigned long long allocSize = sizeof(offset_t)*(ptrData->numCells+1);
+    memcpy( ptrData->offset,  getOffsetData(), allocSize);
 
-	allocSize = sizeof(MatID_t)*ptrData->numMaterialComponents;
-	memcpy( ptrData->ID,      getMaterialIDData(), allocSize);
+    allocSize = sizeof(MatID_t)*ptrData->numMaterialComponents;
+    memcpy( ptrData->ID,      getMaterialIDData(), allocSize);
 
-	allocSize = sizeof(Density_t)*ptrData->numMaterialComponents;
-	memcpy( ptrData->density, getMaterialDensityData(), allocSize);
+    allocSize = sizeof(Density_t)*ptrData->numMaterialComponents;
+    memcpy( ptrData->density, getMaterialDensityData(), allocSize);
 #endif
 }
 
@@ -172,181 +172,181 @@ Density_t getDensity(const struct MonteRay_MaterialProperties_Data* ptr, unsigne
 
 CUDA_CALLABLE_MEMBER
 MatID_t getMatID(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum ){
-	return ptr->ID[ ptr->offset[cellNum] + matNum];
+    return ptr->ID[ ptr->offset[cellNum] + matNum];
 }
 
 CUDA_CALLABLE_KERNEL void kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results ) {
-     results[0] = getNumCells(mp);
+    results[0] = getNumCells(mp);
 }
 
 CUDA_CALLABLE_KERNEL void kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results ) {
-	results[0] = getNumMats(mp, cellNum);
+    results[0] = getNumMats(mp, cellNum);
 }
 
 CUDA_CALLABLE_KERNEL void kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results ) {
-	results[0] = getMatID(mp, cellNum, i);
+    results[0] = getMatID(mp, cellNum, i);
 }
 
 CUDA_CALLABLE_KERNEL void kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results ) {
-	results[0] = getDensity(mp, cellNum, i);
+    results[0] = getDensity(mp, cellNum, i);
 }
 
 CUDA_CALLABLE_KERNEL void kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteRay_MaterialProperties_Data::MatID_t matIndex, MonteRay_MaterialProperties_Data::Density_t* results ) {
     gpuFloatType_t sum = 0.0f;
     for( unsigned cell=0; cell < getNumCells(mp); ++cell) {
-         for( unsigned matNum=0; matNum < getNumMats(mp, cell); ++matNum ) {
+        for( unsigned matNum=0; matNum < getNumMats(mp, cell); ++matNum ) {
 
-        	 Density_t density = getDensity(mp, cell, matNum);
-        	 MatID_t matID = getMatID(mp, cell, matNum);
+            Density_t density = getDensity(mp, cell, matNum);
+            MatID_t matID = getMatID(mp, cell, matNum);
 
-             if( matID == matIndex ) {
-                 sum += density;
-             }
-         }
-     }
-     results[0] = sum;
+            if( matID == matIndex ) {
+                sum += density;
+            }
+        }
+    }
+    results[0] = sum;
 }
 
 size_t MonteRay_MaterialProperties::launchGetNumCells(void) const{
-	typedef unsigned type_t;
-	type_t result[1];
+    typedef unsigned type_t;
+    type_t result[1];
 
 #ifdef __CUDACC__
-	type_t* result_device;
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
+    type_t* result_device;
+    result_device = (type_t*) MONTERAYDEVICEALLOC( sizeof( type_t) * 1, std::string("MonteRay_MaterialProperties::launchGetNumCells::result_device") );
 
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelGetNumCells<<<1,1>>>(ptrData_device, result_device);
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelGetNumCells<<<1,1>>>(ptrData_device, result_device);
     gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
-	cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 #else
-	kernelGetNumCells(ptrData, result);
+    kernelGetNumCells(ptrData, result);
 #endif
 
-	return result[0];
+    return result[0];
 }
 
 
 MonteRay_MaterialProperties::Material_Index_t MonteRay_MaterialProperties::launchGetNumMaterials( Cell_Index_t cellID ) const {
-	typedef Material_Index_t type_t;
-	type_t result[1];
+    typedef Material_Index_t type_t;
+    type_t result[1];
 
 #ifdef __CUDACC__
-	type_t* result_device;
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
+    type_t* result_device;
+    result_device = (type_t*) MONTERAYDEVICEALLOC( sizeof( type_t) * 1, std::string("MonteRay_MaterialProperties::launchGetNumMaterials::result_device") );
 
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelGetNumMaterials<<<1,1>>>(ptrData_device, cellID, result_device);
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelGetNumMaterials<<<1,1>>>(ptrData_device, cellID, result_device);
     gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
-	cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 #else
-	kernelGetNumMaterials(ptrData, cellID, result);
+    kernelGetNumMaterials(ptrData, cellID, result);
 #endif
-	return result[0];
+    return result[0];
 }
 
 
 MonteRay_MaterialProperties::MatID_t MonteRay_MaterialProperties::launchGetMaterialID( Cell_Index_t cellID, Material_Index_t i ) const {
-	typedef MatID_t type_t;
-	type_t result[1];
+    typedef MatID_t type_t;
+    type_t result[1];
 
 #ifdef __CUDACC__
-	type_t* result_device;
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
+    type_t* result_device;
+    result_device = (type_t*) MONTERAYDEVICEALLOC( sizeof( type_t) * 1, std::string("MonteRay_MaterialProperties::launchGetMaterialID::result_device") );
 
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelGetMaterialID<<<1,1>>>(ptrData_device, cellID, i, result_device);
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelGetMaterialID<<<1,1>>>(ptrData_device, cellID, i, result_device);
     gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
-	cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 #else
-	kernelGetMaterialID(ptrData, cellID, i, result);
+    kernelGetMaterialID(ptrData, cellID, i, result);
 #endif
 
-	return result[0];
+    return result[0];
 }
 
 MonteRay_MaterialProperties::Density_t MonteRay_MaterialProperties::launchGetMaterialDensity( Cell_Index_t cellID, Material_Index_t i ) const {
-	typedef Density_t type_t;
-	type_t result[1];
+    typedef Density_t type_t;
+    type_t result[1];
 
 #ifdef __CUDACC__
-	type_t* result_device;
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
+    type_t* result_device;
+    result_device = (type_t*) MONTERAYDEVICEALLOC( sizeof( type_t) * 1, std::string("MonteRay_MaterialProperties::launchGetMaterialDensity::result_device") );
 
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelGetMaterialDensity<<<1,1>>>(ptrData_device, cellID, i, result_device);
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelGetMaterialDensity<<<1,1>>>(ptrData_device, cellID, i, result_device);
     gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
-	cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 #else
-	kernelGetMaterialDensity(ptrData, cellID, i, result);
+    kernelGetMaterialDensity(ptrData, cellID, i, result);
 #endif
 
-	return result[0];
+    return result[0];
 }
 
 Density_t MonteRay_MaterialProperties::launchSumMatDensity(MatID_t matID) const{
-	typedef Density_t type_t;
+    typedef Density_t type_t;
 
-	type_t* result_device;
-	type_t result[1];
+    type_t* result_device;
+    type_t result[1];
 
 #ifdef __CUDACC__
-	CUDA_CHECK_RETURN( cudaMalloc( &result_device, sizeof( type_t) * 1 ));
+    result_device = (type_t*) MONTERAYDEVICEALLOC( sizeof( type_t) * 1, std::string("MonteRay_MaterialProperties::launchSumMatDensity::result_device") );
 
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelSumMatDensity<<<1,1>>>(ptrData_device, matID, result_device);
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelSumMatDensity<<<1,1>>>(ptrData_device, matID, result_device);
     gpuErrchk( cudaPeekAtLastError() );
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
 
-	CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(type_t)*1, cudaMemcpyDeviceToHost));
 
-	cudaFree( result_device );
+    MonteRayDeviceFree( result_device );
 #else
-	kernelSumMatDensity(ptrData, matID, result);
+    kernelSumMatDensity(ptrData, matID, result);
 #endif
-	return result[0];
+    return result[0];
 }
 
 Density_t MonteRay_MaterialProperties::sumMatDensity( MatID_t matIndex) const {
-	Density_t sum = 0.0f;
+    Density_t sum = 0.0f;
     for( unsigned cell=0; cell < size(); ++cell) {
-         for( unsigned matNum=0; matNum < getNumMaterials(cell); ++matNum ) {
+        for( unsigned matNum=0; matNum < getNumMaterials(cell); ++matNum ) {
 
-        	 Density_t density = getMaterialDensity(cell, matNum);
-             MatID_t matID = getMaterialID(cell, matNum);
+            Density_t density = getMaterialDensity(cell, matNum);
+            MatID_t matID = getMaterialID(cell, matNum);
 
-             if( matID == matIndex ) {
-                 sum += density;
-             }
-         }
-     }
-     return sum;
+            if( matID == matIndex ) {
+                sum += density;
+            }
+        }
+    }
+    return sum;
 }
 
 

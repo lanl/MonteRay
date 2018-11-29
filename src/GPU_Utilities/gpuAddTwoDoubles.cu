@@ -2,6 +2,7 @@
 #include "GPUAtomicAdd.hh"
 #include "GPUSync.hh"
 #include "MonteRayDefinitions.hh"
+#include "MonteRayMemory.hh"
 
 #include <iostream>
 #include <stdio.h>
@@ -86,9 +87,9 @@ double gpuAddTwoDoubles( double A, double B) {
 
     GPUSync sync;
 
-    cudaMalloc( &pA_device, allocSize );
-    cudaMalloc( &pB_device, allocSize );
-    cudaMalloc( &pC_device, allocSize );
+    pA_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoDoubles::pA_device") );
+    pB_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoDoubles::pB_device") );
+    pC_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoDoubles::pC_device") );
 
     cudaMemcpy( pA_device, a_host, allocSize, cudaMemcpyHostToDevice);
     cudaMemcpy( pB_device, b_host, allocSize, cudaMemcpyHostToDevice);
@@ -99,9 +100,9 @@ double gpuAddTwoDoubles( double A, double B) {
 
     cudaMemcpy( c_host, pC_device, allocSize, cudaMemcpyDeviceToHost);
 
-    cudaFree( pA_device );
-    cudaFree( pB_device );
-    cudaFree( pC_device );
+    MonteRayDeviceFree( pA_device );
+    MonteRayDeviceFree( pB_device );
+    MonteRayDeviceFree( pC_device );
 #else
     add_double(N, a_host, b_host, c_host );
 #endif
@@ -133,9 +134,9 @@ float gpuAddTwoFloats( float A, float B) {
     value_t* pB_device;
     value_t* pC_device;
 
-    cudaMalloc( &pA_device, allocSize );
-    cudaMalloc( &pB_device, allocSize );
-    cudaMalloc( &pC_device, allocSize );
+    pA_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoFloats::pA_device") );
+    pB_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoFloats::pB_device") );
+    pC_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoFloats::pC_device") );
 
     GPUSync sync;
 
@@ -149,9 +150,9 @@ float gpuAddTwoFloats( float A, float B) {
     cudaMemcpy( c_host, pC_device, allocSize, cudaMemcpyDeviceToHost);
 
 
-    cudaFree( pA_device );
-    cudaFree( pB_device );
-    cudaFree( pC_device );
+    MonteRayDeviceFree( pA_device );
+    MonteRayDeviceFree( pB_device );
+    MonteRayDeviceFree( pC_device );
 #else
     add_single(N, a_host, b_host, c_host );
 #endif
