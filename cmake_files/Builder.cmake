@@ -22,6 +22,8 @@ configureToolset( ${toolset} )
 
 if( BatchMode )
     set( BatchFlag "-DBatchMode=ON" )
+else()
+    set( BatchFlag "-DBatchMode=OFF" )
 endif()
 
 if( GNU_VER )
