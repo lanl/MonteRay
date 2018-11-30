@@ -19,7 +19,7 @@ if( enable_cuda )
   cuda_include_directories( ${MPI_INCLUDE_DIRS} )
   
   set_target_properties(${MonteRayLibName}  PROPERTIES CUDA_SEPERABLE_COMPILATION ON )
-  target_link_libraries( ${MonteRayLibName} cuda ) 
+  target_link_libraries( ${MonteRayLibName} ${CUDA_LIB_PATH} ) 
   CUDA_COMPILE( MONTERAY_O ${AllCudaFiles} )
   SET( CUDA_SEPARABLE_COMPILATION ON )
   #message(STATUS "src/CMakeLists.txt :: MONTERAY_O=${MONTERAY_O}")

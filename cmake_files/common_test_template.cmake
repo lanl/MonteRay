@@ -175,7 +175,7 @@ endif()
 
 # CUDA libraries
 if( enable_cuda ) 
-    target_link_libraries( ${appName} PRIVATE cuda )
+    target_link_libraries( ${appName} PRIVATE ${CUDA_LIB_PATH} )
     target_link_libraries( ${appName} PRIVATE ${CUDA_LIBRARIES} )
 endif()
 

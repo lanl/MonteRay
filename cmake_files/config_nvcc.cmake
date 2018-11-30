@@ -42,7 +42,10 @@ set( CUDA_LIBRARY_DIRS ${CUDART_LIB_DIR} )
 
 find_library( CUDA_LIB_PATH 
                   NAMES cuda
-                  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64
+                  PATHS /usr/lib
+                        /usr/lib64
+                        /usr/lib/nvidia
+                        ${CUDA_TOOLKIT_ROOT_DIR}/lib64
                         ${CUDA_TOOLKIT_ROOT_DIR}/lib
                   PATH_SUFFIXES stubs
                   DOC "The cuda stub library."
