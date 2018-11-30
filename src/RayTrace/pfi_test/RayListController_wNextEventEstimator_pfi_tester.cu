@@ -113,6 +113,8 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
                      ", world_size=" << PA.getWorldSize() <<
                      ", shared_memory_rank=" << PA.getSharedMemoryRank() <<
                      ", shared_memory_size=" << PA.getSharedMemorySize() <<
+                     ", work_group_rank=" << PA.getWorkGroupRank() <<
+                     ", work_group_size=" << PA.getWorkGroupSize() <<
                      "\n";
         }
 

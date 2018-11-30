@@ -12,6 +12,7 @@ SUITE( MonteRayParallelAssistant_tester ){
     TEST( ctor ) {
         const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
         CHECK_EQUAL( false, PA.isParallel() );
+        CHECK_EQUAL( false, PA.usingSingleProcWorkGroup() );
         CHECK_EQUAL(     0, PA.getWorldRank() );
         CHECK_EQUAL(     0, PA.getWorldSize() );
         CHECK_EQUAL(     0, PA.getSharedMemoryRank() );

@@ -1,5 +1,8 @@
 #include <mpi.h>
 
+#include <cstdlib>
+#include <iostream>
+
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
 
@@ -32,21 +35,39 @@ MonteRayParallelAssistant::MonteRayParallelAssistant() {
     if( shared_memory_rank == 0 ){
         numberOfGPUs = getNumberOfGPUS();
         if( numberOfGPUs == 0 ) {
-            // if not using GPUs, setup to use on cpu process per work group
+            // if not using GPUs, setup to use one cpu process per work group
             numberOfGPUs = shared_memory_size;
         }
     }
     // scatter numberOfGPUs to all processes on the node
     MPI_Bcast( &numberOfGPUs, 1, MPI_INT, 0, MONTRERAY_COMM_SHMEM);
 
-    // split MONTRERAY_COMM_SHMEM into numberOfGPUs work groups
-    if( numberOfGPUs <= 1 ) {
-        deviceID = 0;
-        MPI_Comm_dup(MONTRERAY_COMM_SHMEM, &WORK_GROUP_COMM);
-    } else {
-        deviceID = calcDeviceID(shared_memory_size, numberOfGPUs, shared_memory_rank );
-        MPI_Comm_split(MONTRERAY_COMM_SHMEM, deviceID, shared_memory_rank, &WORK_GROUP_COMM);
+    // Check SINGLEPROC_WORKGROUP environment variable
+    char* pSINGLEPROC_WORKGROUP;
+    pSINGLEPROC_WORKGROUP = std::getenv("SINGLEPROC_WORKGROUP");
+    if (pSINGLEPROC_WORKGROUP != NULL) {
+
+        if( world_rank == 0 ) {
+            std::cout << "Warning -- MonteRay is using a single process per workgroup. Each process will issue it's own GPU kernel calls.\n";
+        }
+        useSingleProcWorkGroup = true;
     }
+
+    // split MONTRERAY_COMM_SHMEM into numberOfGPUs work groups
+    if( !useSingleProcWorkGroup ) {
+        if( numberOfGPUs <= 1 ) {
+            deviceID = 0;
+            MPI_Comm_dup(MONTRERAY_COMM_SHMEM, &WORK_GROUP_COMM);
+        } else {
+            deviceID = calcDeviceID(shared_memory_size, numberOfGPUs, shared_memory_rank );
+            MPI_Comm_split(MONTRERAY_COMM_SHMEM, deviceID, shared_memory_rank, &WORK_GROUP_COMM);
+        }
+    } else {
+        //std::cout << "Debug: Splitting MONTRERAY_COMM_SHMEM into one process per WORK_GROUP_COMM. \n";
+        deviceID = calcDeviceID(shared_memory_size, numberOfGPUs, shared_memory_rank );
+        MPI_Comm_split(MONTRERAY_COMM_SHMEM, shared_memory_rank, shared_memory_rank, &WORK_GROUP_COMM);
+    }
+
     MPI_Comm_size( WORK_GROUP_COMM, &WORK_GROUP_COMM_SIZE );
     MPI_Comm_rank( WORK_GROUP_COMM, &WORK_GROUP_COMM_RANK );
     setCudaDevice( deviceID );

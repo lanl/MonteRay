@@ -14,6 +14,8 @@ private:
     // private member data
 
     bool parallel = false;
+    bool useSingleProcWorkGroup = false;
+
     int world_size = 0;
     int world_rank = 0;
     int shared_memory_size = 0;
@@ -80,6 +82,8 @@ public:
     }
 
     int getDeviceID(void) const { return deviceID; }
+
+    bool usingSingleProcWorkGroup() const { return useSingleProcWorkGroup; }
 };
 
 void setMonteRayStackSize( size_t size);
