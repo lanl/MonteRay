@@ -118,13 +118,17 @@ void MonteRay_MaterialProperties::cudaDtor(void) {
 void MonteRay_MaterialProperties::copyToGPU(void) {
 #ifdef __CUDACC__
     cudaCopyMade = true;
-    tempData = new MonteRay_MaterialProperties_Data;
 
-    // allocate target dynamic memory
-    MonteRay::cudaCtor( tempData, size(), numMatSpecs() );
+    if( !tempData ) {
+        tempData = new MonteRay_MaterialProperties_Data;
+        // allocate target dynamic memory
+        MonteRay::cudaCtor( tempData, size(), numMatSpecs() );
+    }
 
-    // allocate target struct
-    ptrData_device = (MonteRay_MaterialProperties_Data*) MONTERAYDEVICEALLOC( sizeof( MonteRay_MaterialProperties_Data), std::string("MonteRay_MaterialProperties::ptrData_device") );
+    if( !ptrData_device ) {
+        // allocate target struct
+        ptrData_device = (MonteRay_MaterialProperties_Data*) MONTERAYDEVICEALLOC( sizeof( MonteRay_MaterialProperties_Data), std::string("MonteRay_MaterialProperties::ptrData_device") );
+    }
 
     // copy allocated data arrays
     unsigned long long allocSize = sizeof(offset_t)*(tempData->numCells+1);
@@ -139,10 +143,13 @@ void MonteRay_MaterialProperties::copyToGPU(void) {
     // copy struct
     CUDA_CHECK_RETURN( cudaMemcpy(ptrData_device, tempData, sizeof( MonteRay_MaterialProperties_Data ), cudaMemcpyHostToDevice));
 #else
-    ptrData = new MonteRay_MaterialProperties_Data;
 
-    // allocate target dynamic memory
-    MonteRay::ctor( ptrData, size(), numMatSpecs() );
+    if( ! ptrData ) {
+        ptrData = new MonteRay_MaterialProperties_Data;
+
+        // allocate target dynamic memory
+        MonteRay::ctor( ptrData, size(), numMatSpecs() );
+    }
 
     unsigned long long allocSize = sizeof(offset_t)*(ptrData->numCells+1);
     memcpy( ptrData->offset,  getOffsetData(), allocSize);
