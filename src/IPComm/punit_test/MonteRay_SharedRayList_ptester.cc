@@ -608,8 +608,8 @@ SUITE( mpi_shared_rayList_tester ){
 
         if(shared_memory_rank==0 ) {
             CHECK_EQUAL( 9U, list.getMasterSize() );
-            list.clear(0);
         }
+        list.clear();
         MPI_Barrier( shared_memory_communicator );
         if(shared_memory_rank==0 ) {
             CHECK_EQUAL( 0U, list.getMasterSize() );

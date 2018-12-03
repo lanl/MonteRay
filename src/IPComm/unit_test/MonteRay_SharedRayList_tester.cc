@@ -479,7 +479,7 @@ SUITE( shared_collisionPointList_tester ){
         }
 
         CHECK_EQUAL( 9U, master.size() );
-        list.clear(0);
+        list.clearRank(0);
         CHECK_EQUAL( 0U, list.getMasterSize() );
         CHECK_EQUAL( 0U, master.size() );
     }

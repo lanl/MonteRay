@@ -507,8 +507,14 @@ public:
         }
     }
 
-    void clear(unsigned targetRank, bool clearController=true) {
+    void clear(bool clearController=true) {
+        clearRank( PA.getWorkGroupRank(), clearController );
+    }
+
+    void clearRank(unsigned targetRank, bool clearController=true) {
         MONTERAY_ASSERT( targetRank < nRanks );
+
+        if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
         if( targetRank == 0 ) {
             if( clearController ) {
                 controllerClear();
@@ -523,10 +529,16 @@ public:
                 header->done = false;
             }
         }
+        if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
     }
 
-    void restart(unsigned targetRank, bool clearController=true) {
+    void restart() {
+        restart( PA.getWorkGroupRank() );
+    }
+
+    void restart(unsigned targetRank) {
         MONTERAY_ASSERT( targetRank < nRanks );
+        if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
         if( targetRank == 0 ) {
             nMaster = 0;
         } else {
@@ -538,6 +550,7 @@ public:
                 header->done = false;
             }
         }
+        if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
     }
 
     void debugPrint() {
