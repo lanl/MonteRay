@@ -315,30 +315,30 @@ MonteRay_MaterialProperties_FlatLayout::initializeMaterialDescription( const std
 template<typename MaterialIDType, typename DensityType, typename TempType>
 void
 MonteRay_MaterialProperties_FlatLayout::copyMaterialProperties(
-		size_t nCells, size_t nMatSpecs, const size_t* pOffsetData, const TempType* pTemps,
-		const MaterialIDType* pMatIDs, const DensityType* pDensities)
+        size_t nCells, size_t nMatSpecs, const size_t* pOffsetData, const TempType* pTemps,
+        const MaterialIDType* pMatIDs, const DensityType* pDensities)
 {
-	clear();
-	numCells = nCells;
-	totalNumComponents = nMatSpecs;
+    clear();
+    numCells = nCells;
+    totalNumComponents = nMatSpecs;
     numReservedCells = numCells;
     memoryReductionDisabled = true;
 
     offset.resize( nCells + 1 );
     for( unsigned i=0; i< nCells+1; ++i) {
-    	offset[i] = pOffsetData[i];
+        offset[i] = pOffsetData[i];
     }
 
     temperature.resize( nCells );
     for( unsigned i=0; i< nCells; ++i) {
-    	temperature[i] = pTemps[i];
+        temperature[i] = pTemps[i];
     }
 
     componentMatID.resize( nMatSpecs );
     componentDensity.resize( nMatSpecs );
     for( unsigned i=0; i< nMatSpecs; ++i) {
-    	componentMatID[i] = pMatIDs[i];
-    	componentDensity[i] = pDensities[i];
+        componentMatID[i] = pMatIDs[i];
+        componentDensity[i] = pDensities[i];
     }
 }
 
