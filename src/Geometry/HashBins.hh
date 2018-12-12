@@ -17,9 +17,13 @@ private:
 public:
     using Base = MonteRay::CopyMemoryBase<HashBins>;
 
+    HashBins(){}
+
     HashBins(gpuFloatType_t *vertices, unsigned nVertices, unsigned nHashBinEdges = 8000);
 
     ~HashBins();
+
+    void reallocate( gpuFloatType_t *vertices, unsigned nVertices, unsigned nHashBinEdges = 8000);
 
     std::string className(){ return std::string("HashBins");}
 
@@ -48,6 +52,11 @@ public:
     CUDA_CALLABLE_MEMBER
     void getLowerUpperBins( double value, unsigned& lower, unsigned& upper) const;
 
+    void writeToFile( const std::string& fileName );
+    void readFromFile( const std::string& fileName );
+
+    void write(std::ostream& outf) const;
+    void read(std::istream& infile);
 };
 
 

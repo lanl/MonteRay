@@ -581,13 +581,13 @@ MonteRay_SpatialGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsi
 }
 
 
-void MonteRay_SpatialGrid::write( const std::string& filename ) {
+void MonteRay_SpatialGrid::write( const std::string& filename ) const {
     std::ofstream outfile;
 
     outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
     if( ! outfile.is_open() ) {
         fprintf(stderr, "MonteRay_SpatialGrid::write -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
-        exit(1);
+        throw std::runtime_error("MonteRay_SpatialGrid::write -- Failure to open file" );
     }
     assert( outfile.good() );
     outfile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
@@ -604,7 +604,7 @@ void MonteRay_SpatialGrid::read( const std::string& filename ) {
 
     if( ! infile.is_open() ) {
         fprintf(stderr, "Debug:  MonteRay_SpatialGrid::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
-        exit(1);
+        throw std::runtime_error("MonteRay_SpatialGrid::read -- Failure to open file" );
     }
     assert( infile.good() );
     infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );

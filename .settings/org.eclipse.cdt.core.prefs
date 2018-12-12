@@ -12,7 +12,7 @@ environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/B
 environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/BINARY_DIR/value=/projects/mcatk/user/jsweezy/obj/gnu-debug-MonteRaySerial
 environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/InstallDir/delimiter=\:
 environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/InstallDir/operation=replace
-environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/InstallDir/value=/projects/mcatk/user/jsweezy/obj/gnu-debug-MonteRay/SandboxRelease
+environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/InstallDir/value=/projects/mcatk/user/jsweezy/obj/gnu-release-MonteRay/SandboxRelease
 environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/PlatformOS/delimiter=\:
 environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/PlatformOS/operation=replace
 environment/project/com.nvidia.cuda.ide.on_path.configuration.debug.1204392945/PlatformOS/value=rhel7

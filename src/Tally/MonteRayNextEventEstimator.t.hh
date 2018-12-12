@@ -1,6 +1,9 @@
 #ifndef MONTERAYNEXTEVENTESTIMATOR_T_HH_
 #define MONTERAYNEXTEVENTESTIMATOR_T_HH_
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "MonteRayNextEventEstimator.hh"
 
 #include "MonteRayDefinitions.hh"
@@ -24,14 +27,27 @@ CUDAHOST_CALLABLE_MEMBER
 MonteRayNextEventEstimator<GRID_T>::MonteRayNextEventEstimator(unsigned num) {
     if( num == 0 ) { num = 1; }
     if( Base::debug ) {
-        std::cout << "RayList_t::RayList_t(n), n=" << num << " \n";
+        std::cout << "MonteRayNextEventEstimator::MonteRayNextEventEstimator(n), n=" << num << " \n";
     }
+    reallocate(num);
+}
+
+template<typename GRID_T>
+void
+MonteRayNextEventEstimator<GRID_T>::reallocate(unsigned num) {
+    if( x != NULL )     { MonteRayHostFree( x, Base::isManagedMemory ); }
+    if( y != NULL )     { MonteRayHostFree( y, Base::isManagedMemory ); }
+    if( z != NULL )     { MonteRayHostFree( z, Base::isManagedMemory ); }
+    if( pTally != NULL ) { delete pTally; }
+    if( pTallyTimeBinEdges != NULL ) { delete pTallyTimeBinEdges; }
+
     init();
     x = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "x" );
     y = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "y" );
     z = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "z" );
     nAllocated = num;
 }
+
 
 template<typename GRID_T>
 CUDAHOST_CALLABLE_MEMBER
@@ -476,26 +492,42 @@ void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_
 
 template<typename GRID_T>
 template<unsigned N>
-void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList, cudaStream_t* stream )
+void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, cudaStream_t* stream, bool dumpOnFailure )
 {
-    const bool debug = false;
-    if( !initialized ) { initialize(); }
+    // negative nBlocks and nThreads forces to specified value,
+    // otherwise reasonable values are used based on the specified ones
 
-    if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    //const bool debug = false;
+    if( !initialized ) { initialize(); }
+    const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
+
+    if( PA.getWorkGroupRank() != 0 ) return;
+
+    unsigned nThreads = std::abs(nThreadsArg);
+    unsigned nBlocks = std::abs(nBlocksArg);
 
     const unsigned nRays = pRayList->size();
-    if( nThreads > nRays ) {
-        nThreads = nRays;
+    if( nThreadsArg > 0 ) {
+        if( nThreads > nRays ) {
+            nThreads = nRays;
+        }
+        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
     }
-    nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
 
-    const unsigned numThreadOverload = nBlocks;
-    nBlocks = std::min(( nRays + numThreadOverload*nThreads -1 ) / (numThreadOverload*nThreads), 65535U);
-
-    if( debug ) {
-        printf("Debug: MonteRayNextEventEstimator::launch_ScoreRayList -- launching kernel_ScoreRayList with %d blocks, %d threads, to process %d rays\n", nBlocks, nThreads, nRays);
+    if( nBlocksArg > 0 ) {
+        const unsigned numThreadOverload = nBlocks;
+        nBlocks = std::min(( nRays + numThreadOverload*nThreads -1 ) / (numThreadOverload*nThreads), 65535U);
     }
+
+#ifdef DEBUG
+        std::cout << "Debug: MonteRayNextEventEstimator::launch_ScoreRayList -- launching kernel_ScoreRayList on " <<
+                     PA.info() << " with " << nBlocks << " blocks, " << nThreads <<
+                     " threads, to process " << nRays << " rays\n";
+#endif
+
 #ifdef __CUDACC__
+#ifndef DEBUG
+    // Release compile
     if( stream ) {
         kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr );
     } else {
@@ -508,8 +540,100 @@ void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( unsigned nBlocks, 
         }
     }
 #else
+    // Debug compile
+    kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr );
+
+    bool failure = false;
+    std::stringstream msg;
+
+    // first check launch failure
+    cudaError_t error = cudaPeekAtLastError();
+    if( error != cudaSuccess ) {
+        failure = true;
+        msg << "ERROR:  MonteRayNextEventEstimator::launch_ScoreRayList -- kernel_ScoreRayList launch on " <<
+                PA.info() << " failed with error " << cudaGetErrorString(error) << ".\n";
+    }
+
+    // second check successful kernel completion.
+    error = cudaDeviceSynchronize();
+    if( !failure and error != cudaSuccess ) {
+        failure = true;
+        msg << "ERROR:  MonteRayNextEventEstimator::launch_ScoreRayList -- kernel_ScoreRayList execution on " <<
+                PA.info() << " failed with error " << cudaGetErrorString(error) << ".\n";
+    }
+
+    if( failure ) {
+        std::cout << msg.str();
+        if( dumpOnFailure ) dumpState(pRayList);
+        throw std::runtime_error( msg.str() );
+    }
+
+#endif
+#else
     kernel_ScoreRayList( this, pRayList );
 #endif
+}
+
+template<typename GRID_T>
+void
+MonteRayNextEventEstimator<GRID_T>::writeToFile( const std::string& filename) {
+    std::ofstream state;
+    state.open( filename.c_str(), std::ios::binary | std::ios::out);
+    write( state );
+    state.close();
+}
+
+
+template<typename GRID_T>
+void
+MonteRayNextEventEstimator<GRID_T>::readFromFile( const std::string& filename) {
+    std::ifstream state;
+    state.open( filename.c_str(), std::ios::binary | std::ios::in);
+    if( ! state.good() ) {
+        throw std::runtime_error( "MonteRayNextEventEstimator::read -- can't open file for reading" );
+    }
+    read( state );
+    state.close();
+}
+
+template<typename GRID_T>
+template<unsigned N>
+void
+MonteRayNextEventEstimator<GRID_T>::dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName ) {
+    const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
+
+    std::string baseName;
+
+    if( optBaseName.empty() ) {
+        pid_t processID = getpid();
+
+        baseName =  PA.hostname() + std::string("_") +
+                    std::to_string( PA.getDeviceID() ) + std::string("_") +
+                    std::to_string( processID ) + std::string(".bin");
+    } else {
+        baseName = optBaseName + std::string(".bin");
+    }
+
+    // write out state of MonteRayNextEventEstimator class
+    std::string filename = std::string("nee_state_") + baseName;
+    writeToFile( filename );
+
+    // write out particle list
+    filename = std::string("raylist_") + baseName;
+    pRayList->writeToFile( filename );
+
+    // write out geometry
+    filename = std::string("geometry_") + baseName;
+    pGridBins->writeToFile( filename );
+
+    // write out material properties
+    filename = std::string("matProps_") + baseName;
+    pMatPropsHost->writeToFile( filename );
+
+    // write out materials
+    filename = std::string("materialList_") + baseName;
+    pMatListHost->writeToFile( filename );
+
 }
 
 template<typename GRID_T>
@@ -552,7 +676,59 @@ MonteRayNextEventEstimator<GRID_T>::gatherWorkGroup() {
     pTally->gatherWorkGroup();
 }
 
+template<typename GRID_T>
+template<typename IOTYPE>
+void
+MonteRayNextEventEstimator<GRID_T>::write(IOTYPE& out) {
+    unsigned version = 0;
+    binaryIO::write( out, version );
+    binaryIO::write( out, nAllocated );
+    binaryIO::write( out, nUsed );
+    binaryIO::write( out, radius );
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, x[i] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, y[i] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, z[i] ); }
+
+    bool hasTimeBinEdges = false;
+    if( pTallyTimeBinEdges ) {
+        hasTimeBinEdges = true;
+    }
+    binaryIO::write( out, hasTimeBinEdges );
+    if( hasTimeBinEdges ) {
+        binaryIO::write( out, *pTallyTimeBinEdges );
+    }
+
 }
+
+template<typename GRID_T>
+template<typename IOTYPE>
+void
+MonteRayNextEventEstimator<GRID_T>::read(IOTYPE& in) {
+    initialized = false;
+    copiedToGPU = false;
+
+    unsigned version = 0;
+    binaryIO::read( in, version );
+    binaryIO::read( in, nAllocated );
+    reallocate(nAllocated);
+    binaryIO::read( in, nUsed );
+    binaryIO::read( in, radius );
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, x[i] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, y[i] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, z[i] ); }
+
+    bool hasTimeBinEdges = true;
+    binaryIO::read( in, hasTimeBinEdges );
+    if( hasTimeBinEdges ) {
+        pTallyTimeBinEdges = new std::vector<gpuFloatType_t>;
+        binaryIO::read( in, *pTallyTimeBinEdges );
+    }
+
+    initialize();
+
+}
+
+} // end namespace
 
 #endif /* MONTERAYNEXTEVENTESTIMATOR_T_HH_ */
 

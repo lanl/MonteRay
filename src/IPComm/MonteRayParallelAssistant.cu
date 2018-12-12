@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <unistd.h>
 
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
@@ -9,6 +10,11 @@
 namespace MonteRay {
 
 MonteRayParallelAssistant::MonteRayParallelAssistant() {
+    char host[1024];
+    gethostname(host,1024);
+    host[1023] = '\0';
+    name = std::string( host );
+
     int mpi_initialized = 0;
     MPI_Initialized( &mpi_initialized );
 

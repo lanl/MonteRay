@@ -763,6 +763,90 @@ SUITE( NextEventEstimator_Tester ) {
  //        std::cout << "Debug: **********************\n";
      }
 
+    TEST_FIXTURE(CalcScore_test, write ) {
+
+         const unsigned N = 3;
+         gpuFloatType_t distance1 = 2.0; // score at t=0.006
+         gpuFloatType_t distance2 = 400.0; // score at t=1.33
+
+         pEstimator->add( distance1, 0.0, 0.0);
+         pEstimator->add( distance2, 0.0, 0.0);
+         std::vector<MonteRay::gpuFloatType_t> timeEdges= { 1.0, 2.0, 10.0, 20.0, 100.0 };
+         pEstimator->setTimeBinEdges( timeEdges );
+         pEstimator->initialize();
+
+         gpuFloatType_t x = 0.0;
+         gpuFloatType_t y = 0.0;
+         gpuFloatType_t z = 0.0;
+         gpuFloatType_t u = 1.0;
+         gpuFloatType_t v = 0.0;
+         gpuFloatType_t w = 0.0;
+
+         gpuFloatType_t energy[N];
+         energy[0]= 0.5;
+         energy[1]= 1.0;
+         energy[2]= 3.0;
+
+         gpuFloatType_t weight[N];
+         weight[0] = 0.3;  // isotropic
+         weight[1] = 1.0;
+         weight[2] = 2.0;
+
+         Ray_t<N> ray;
+         ray.pos[0] = x;
+         ray.pos[1] = y;
+         ray.pos[2] = z;
+         ray.dir[0] = u;
+         ray.dir[1] = v;
+         ray.dir[2] = w;
+
+         for( unsigned i=0;i<N;++i) {
+             ray.energy[i] = energy[i];
+             ray.weight[i] = weight[i];
+         }
+         ray.index = 0;
+         ray.detectorIndex = 0;
+         ray.particleType = photon;
+
+         std::unique_ptr<RayList_t<N>> pBank =  std::unique_ptr<RayList_t<N>>( new RayList_t<N>(4) );
+         pBank->add( ray );
+         pBank->add( ray );
+
+         ray.detectorIndex = 1;
+         pBank->add( ray );
+         pBank->add( ray );
+
+         // write out state of MonteRayNextEventEstimator class
+         std::string filename = std::string("nee_write_state_test.bin");
+         pEstimator->writeToFile( filename );
+
+         // read
+         {
+             MonteRayNextEventEstimator<GridBins> estimator(0);
+
+             // test file exists
+             std::ifstream exists(filename.c_str());
+             CHECK_EQUAL( true, exists.good() );
+             exists.close();
+
+             estimator.readFromFile( filename );
+
+             CHECK_EQUAL( 2, estimator.size() );
+             CHECK_EQUAL( 10, estimator.capacity() );
+
+             CHECK_CLOSE( 2.0, estimator.getX(0), 1e-6 );
+             CHECK_CLOSE( 0.0, estimator.getY(0), 1e-6 );
+             CHECK_CLOSE( 0.0, estimator.getZ(0), 1e-6 );
+
+             CHECK_CLOSE( 400.0, estimator.getX(1), 1e-6 );
+             CHECK_CLOSE( 0.0, estimator.getY(1), 1e-6 );
+             CHECK_CLOSE( 0.0, estimator.getZ(1), 1e-6 );
+
+             std::vector<gpuFloatType_t> timeBins = estimator.getTimeBinEdges();
+             CHECK_EQUAL( 5, timeBins.size() );
+         }
+    }
+
     TEST( run_leak_report ) {
 
 #ifdef MEMCHECK

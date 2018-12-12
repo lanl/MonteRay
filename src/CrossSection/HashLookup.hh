@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <iostream>
 #include "MonteRayTypes.hh"
 
 namespace MonteRay{
@@ -104,9 +105,14 @@ public:
     const MonteRay::HashLookup* getPtr(void) const { return ptr; }
     const MonteRay::HashLookup* getPtrDevice(void) const { return ptr_device; }
 
+    void write(std::ostream& outfile) const;
+    void read(std::istream& infile);
+    void writeToFile( const std::string& filename) const;
+    void readFromFile( const std::string& filename);
+
 private:
-    MonteRay::HashLookup* ptr;
-    MonteRay::HashLookup* temp;
+    MonteRay::HashLookup* ptr = nullptr;
+    MonteRay::HashLookup* temp = nullptr;
     bool cudaCopyMade;
 
     std::vector<MonteRay::MonteRayCrossSection*> xsList;

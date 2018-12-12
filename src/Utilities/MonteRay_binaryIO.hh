@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cassert>
+#include <vector>
 
 namespace MonteRay{
 
@@ -60,6 +61,18 @@ write( S& outFile, const std::string& value)
 {
     // Convert the string to char* and call the standard array write function
     write( outFile, value.c_str(), value.size()+1 );
+}
+
+// Write vector
+template<typename S, typename T>
+void
+write( S& outFile, const std::vector<T>& value)
+{
+    size_t num = value.size();
+    write( outFile, num );
+    for( unsigned i = 0; i < num; ++i ) {
+        write( outFile, value[i] );
+    }
 }
 
 // Read scalars and statically allocated arrays
@@ -128,6 +141,29 @@ read( S& inFile, std::string& value)
     char* buffer = 0;
     read( inFile, buffer );
     value = buffer;
+}
+
+// Read vector
+template<typename S, typename T>
+void
+read( S& inFile, std::vector<T>& value)
+{
+    if( !inFile.eof() ) {
+        size_t num;
+        read( inFile, num );
+
+        std::vector<T> temp(num);
+        for( unsigned i = 0; i < num; ++i ) {
+            read( inFile, temp[i] );
+        }
+        value.swap(temp);
+
+    } else {
+        throw std::logic_error("binaryIO::read -- End of file reached");
+    }
+    if( inFile.fail() ) {
+        throw std::logic_error("binaryIO::read -- Failed to read Value");
+    }
 }
 
 }

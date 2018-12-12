@@ -161,6 +161,7 @@ RayListController<GRID_T,N>::setCapacity(unsigned n) {
     currentBank = bank1.get();
 }
 
+
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::add( const Ray_t<N>& ray){
@@ -171,6 +172,12 @@ RayListController<GRID_T,N>::add( const Ray_t<N>& ray){
         std::cout << "Debug: bank full, flushing.\n";
         flush();
     }
+}
+
+template<typename GRID_T, unsigned N>
+unsigned
+RayListController<GRID_T,N>::getWorldRank() {
+    return PA.getWorldRank();
 }
 
 template<typename GRID_T, unsigned N>
@@ -314,11 +321,23 @@ RayListController<GRID_T,N>::readCollisionsFromFile(std::string name) {
 
     bool end = false;
     unsigned numParticles = 0;
+
     do  {
         end = currentBank->readToBank(name, numParticles);
         numParticles += currentBank->size();
         flush(end);
     } while ( ! end );
+    return numParticles;
+}
+
+template<typename GRID_T, unsigned N>
+size_t
+RayListController<GRID_T,N>::readCollisionsFromFileToBuffer(std::string name){
+    if( PA.getWorldRank() != 0 ) { return 0; }
+
+    unsigned numParticles = 0;
+    currentBank->readToBank(name, numParticles);
+    numParticles += currentBank->size();
     return numParticles;
 }
 
@@ -529,6 +548,14 @@ RayListController<GRID_T,N>::copyPointDetToGPU(void) {
     pNextEventEstimator->setTimeBinEdges( TallyTimeBinEdges );
     pNextEventEstimator->initialize();
     pNextEventEstimator->copyToGPU();
+}
+
+template<typename GRID_T, unsigned N>
+void
+RayListController<GRID_T,N>::dumpPointDetForDebug(const std::string& baseFileName ) {
+    // ensures setup - the copy to the GPU is not used
+    copyPointDetToGPU();
+    pNextEventEstimator->dumpState(currentBank->getPtrPoints(), baseFileName);
 }
 
 template<typename GRID_T, unsigned N>

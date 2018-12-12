@@ -701,6 +701,92 @@ GridBins::setVertices( const unsigned dim, const std::vector<T>& verts) {
     regular[dim] = false;
 }
 
+void
+GridBins::writeToFile( const std::string& filename ) const {
+    std::ofstream outfile;
+
+    outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
+    if( ! outfile.is_open() ) {
+        fprintf(stderr, "GridBins::writeToFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        throw std::runtime_error("GridBins::writeToFile  -- Failure to open file" );
+    }
+    assert( outfile.good() );
+    outfile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    write( outfile );
+    outfile.close();
+}
+
+void
+GridBins::readFromFile( const std::string& filename ){
+    std::ifstream infile;
+    if( infile.is_open() ) {
+        infile.close();
+    }
+    infile.open( filename.c_str(), std::ios::binary | std::ios::in);
+
+    if( ! infile.is_open() ) {
+        fprintf(stderr, "Error:  GridBins::readFromFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        throw std::runtime_error("GridBins::readFromFile -- Failure to open file" );
+    }
+    assert( infile.good() );
+    infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    read(infile);
+    infile.close();
+}
+
+void
+GridBins::write(std::ostream& outf) const {
+    unsigned version = 0;
+    binaryIO::write(outf, version );
+
+    binaryIO::write(outf, numVertices);
+    binaryIO::write(outf, numXY);
+    binaryIO::write(outf, num);
+    binaryIO::write(outf, offset);
+    binaryIO::write(outf, regular);
+    binaryIO::write(outf, delta);
+    binaryIO::write(outf, minMax);
+
+    for( unsigned i = 0; i<numVertices; ++i) {
+        binaryIO::write(outf, vertices[i]);
+    }
+    for( unsigned i = 0; i<3; ++i) {
+        hash[i]->write(outf);
+    }
+    binaryIO::write(outf, hashSize);
+}
+
+void
+GridBins::read(std::istream& infile) {
+    unsigned version;
+    binaryIO::read(infile, version );
+
+    binaryIO::read(infile, numVertices);
+    binaryIO::read(infile, numXY);
+    binaryIO::read(infile, num);
+    binaryIO::read(infile, offset);
+    binaryIO::read(infile, regular);
+    binaryIO::read(infile, delta);
+    binaryIO::read(infile, minMax);
+
+    if( vertices ) {
+        MonteRayHostFree( vertices, Base::isManagedMemory );
+    }
+    vertices = (float_t*) MONTERAYHOSTALLOC( numVertices * sizeof( float_t ), false, std::string("GridBins::vertices") );
+    for( unsigned i = 0; i<numVertices; ++i) {
+        binaryIO::read(infile, vertices[i]);
+    }
+
+    for( unsigned dim = 0; dim<3; ++dim) {
+        if( hash[dim] ) {
+            delete hash[dim];
+        }
+        hash[dim] = new HashBins();
+        hash[dim]->read(infile);
+    }
+    binaryIO::read(infile, hashSize);
+}
+
 template void GridBins::setVertices<double>( const unsigned dim, const std::vector<double>& verts);
 template void GridBins::setVertices<float>( const unsigned dim, const std::vector<float>& verts);
 

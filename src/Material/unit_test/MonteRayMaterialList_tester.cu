@@ -1,5 +1,7 @@
 #include <UnitTest++.h>
 
+#include <fstream>
+
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
 #include "MonteRayCrossSection.hh"
@@ -176,7 +178,7 @@ SUITE( MonteRayMaterialList_tester ) {
         stopTimers();
         CHECK_CLOSE( 0.025643f, result, 1e-7 );
     }
-    TEST( get_hash_grom_materialList ){
+    TEST( get_hash_from_materialList ){
         MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(10);
         xs->setTotalXS(0, 1.0, 1.0 );
         xs->setTotalXS(1, 1.25, 4.0 );
@@ -204,6 +206,113 @@ SUITE( MonteRayMaterialList_tester ) {
         CHECK_EQUAL( 1, hash->getNumIsotopes() );
 
         delete xs;
+    }
+
+    TEST( read_write ) {
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost h1s(1);
+        u235s.read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin" );
+
+        MonteRayMaterialHost mat1(2);
+        mat1.add(0, u235s, 0.5);
+        mat1.add(1, h1s, 0.5);
+
+        MonteRayMaterialHost mat2(1);
+        mat2.add(0, u235s, 1.0);
+
+        MonteRayMaterialListHost write_matList(2);
+        write_matList.add( 0, mat1, 0 );
+        write_matList.add( 1, mat2, 1 );
+
+        CHECK_EQUAL( 2, write_matList.getHashPtr()->getNumIsotopes() );
+
+        write_matList.writeToFile( "matList_write_test1.bin" );
+
+        // test file exists
+        std::ifstream exists("matList_write_test1.bin");
+        CHECK_EQUAL( true, exists.good() );
+        exists.close();
+
+        MonteRayMaterialListHost matList(1);
+        matList.readFromFile( "matList_write_test1.bin" );
+
+        CHECK_EQUAL( 2, matList.getNumberMaterials() );
+        gpuFloatType_t energy=2.0;
+        gpuFloatType_t density = 1.0;
+
+        CHECK_CLOSE( 0.025643, matList.getTotalXS(0, energy, density ), 1e-6);
+        CHECK_CLOSE( 0.0183133, matList.getTotalXS(1, energy, density ), 1e-6);
+
+        CHECK_EQUAL(0, u235s.getID() );
+        CHECK_EQUAL(1, h1s.getID() );
+
+        const HashLookupHost* hash = matList.getHashPtr();
+        CHECK_EQUAL( 3, hash->getNumIsotopes() );
+
+        unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy);
+        CHECK_CLOSE(  0.025643f, getTotalXS(matList.getPtr(), 0U, matList.getHashPtr()->getPtr(), HashBin, energy, 1.0), 1e-5);
+    }
+
+    TEST_FIXTURE(MaterialTestHelper, read_sent_to_gpu_getTotalXS )
+    {
+        MonteRayCrossSectionHost u235s(1);
+        MonteRayCrossSectionHost h1s(1);
+        u235s.read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin" );
+        h1s.read( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin" );
+
+        MonteRayMaterialHost mat1(2);
+        mat1.add(0, u235s, 0.5);
+        mat1.add(1, h1s, 0.5);
+        mat1.copyToGPU();
+
+        MonteRayMaterialHost mat2(1);
+        mat2.add(0, u235s, 1.0);
+        mat2.copyToGPU();
+
+        MonteRayMaterialListHost write_matList(2,2,8192);
+        write_matList.add( 0, mat1, 0 );
+        write_matList.add( 1, mat2, 1 );
+        write_matList.writeToFile( "matList_write_test2.bin" );
+
+//        write_matListmatList.copyToGPU();
+//        u235s.copyToGPU();
+//        h1s.copyToGPU();
+
+        MonteRayMaterialListHost read_matList(1);
+        read_matList.readFromFile( "matList_write_test2.bin" );
+        read_matList.copyToGPU();
+
+        gpuFloatType_t energy=2.0;
+        gpuFloatType_t density = 1.0;
+
+        setupTimers();
+//              printf("Debug: Calling matList.launchGetTotalXS -- %s %d\n", __FILE__, __LINE__);
+        gpuFloatType_t result = read_matList.launchGetTotalXS(0U, energy, density );
+//              printf("Debug: return from matList.launchGetTotalXS -- %s %d\n", __FILE__, __LINE__);
+        stopTimers();
+        CHECK_CLOSE( 0.025643f, result, 1e-7 );
+    }
+
+    TEST_FIXTURE(MaterialTestHelper, readonly_sent_to_gpu_getTotalXS ) {
+        // test file exists
+        std::ifstream exists("matList_write_test1.bin");
+        CHECK_EQUAL( true, exists.good() );
+        exists.close();
+
+        MonteRayMaterialListHost read_matList(1);
+        read_matList.readFromFile( "matList_write_test1.bin" );
+        read_matList.copyToGPU();
+
+        gpuFloatType_t energy=2.0;
+        gpuFloatType_t density = 1.0;
+
+        setupTimers();
+//              printf("Debug: Calling matList.launchGetTotalXS -- %s %d\n", __FILE__, __LINE__);
+        gpuFloatType_t result = read_matList.launchGetTotalXS(0, energy, density );
+//              printf("Debug: return from matList.launchGetTotalXS -- %s %d\n", __FILE__, __LINE__);
+        stopTimers();
+        CHECK_CLOSE( 0.025643f, result, 1e-7 );
     }
 
     TEST( requested_num_materials_exceeds_limit_fail ){

@@ -1,5 +1,7 @@
 #include "MonteRayMaterial.hh"
 
+#include <fstream>
+
 #include "MonteRayDefinitions.hh"
 #include "GPUErrorCheck.hh"
 #include "MonteRayConstants.hh"
@@ -76,9 +78,6 @@ void cudaDtor(MonteRayMaterial* ptr) {
 MonteRayMaterialHost::MonteRayMaterialHost(unsigned numIsotopes) {
     pMat = new MonteRayMaterial;
     ctor(pMat, numIsotopes );
-    cudaCopyMade = false;
-    ptr_device = NULL;
-    temp = NULL;
 
     isotope_device_ptr_list = (MonteRayCrossSection**) malloc( sizeof(MonteRayCrossSection* )*numIsotopes );
     for( unsigned i=0; i< numIsotopes; ++i ){
@@ -87,15 +86,23 @@ MonteRayMaterialHost::MonteRayMaterialHost(unsigned numIsotopes) {
 }
 
 MonteRayMaterialHost::~MonteRayMaterialHost() {
-    if( pMat != 0 ) {
+    //std::cout << "Debug: MonteRayMaterialHost::~MonteRayMaterialHost()\n" << std::endl;
+    if( pMat ) {
         dtor( pMat );
         delete pMat;
         pMat = 0;
     }
 
-    if( cudaCopyMade ) {
+    for( auto itr = ownedCrossSections.begin(); itr != ownedCrossSections.end(); ++itr) {
+        delete (*itr);
+    }
+    ownedCrossSections.clear();
+
+    if( ptr_device ) MonteRayDeviceFree( ptr_device );
+    ptr_device = nullptr;
+
+    if( temp ) {
 #ifdef __CUDACC__
-        MonteRayDeviceFree( ptr_device );
         cudaDtor( temp );
         delete temp;
 #endif
@@ -106,7 +113,16 @@ MonteRayMaterialHost::~MonteRayMaterialHost() {
 void MonteRayMaterialHost::copyToGPU(void) {
 #ifdef __CUDACC__
     cudaCopyMade = true;
+
+    if( temp ) {
+        cudaDtor( temp );
+        delete temp;
+    }
     temp = new MonteRayMaterial;
+
+    for( auto itr = ownedCrossSections.begin(); itr != ownedCrossSections.end(); ++itr) {
+        (*itr)->copyToGPU();
+    }
 
     copy(temp, pMat);
 
@@ -116,6 +132,9 @@ void MonteRayMaterialHost::copyToGPU(void) {
     temp->AtomicWeight = pMat->AtomicWeight;
 
     // allocate target struct
+    if( ptr_device ) {
+        MonteRayDeviceFree(ptr_device);
+    }
     ptr_device = (MonteRayMaterial*) MONTERAYDEVICEALLOC( sizeof( MonteRayMaterial), std::string("MonteRayMaterialHost::ptr_device") );
 
     // allocate target dynamic memory
@@ -155,6 +174,17 @@ unsigned getNumIsotopes(struct MonteRayMaterial* ptr ) { return ptr->numIsotopes
 
 CUDA_CALLABLE_KERNEL void kernelGetNumIsotopes(MonteRayMaterial* pMat, unsigned* results){
     results[0] = getNumIsotopes(pMat);
+    return;
+}
+
+CUDA_CALLABLE_KERNEL void kernelGetTotalXS(MonteRayMaterial* pMat, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
+    results[0] = getTotalXS(pMat, E, density);
+    return;
+}
+
+CUDA_CALLABLE_KERNEL void kernelGetTotalXS(MonteRayMaterial* pMat, HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
+    unsigned HashBin = getHashBin(pHash,E);
+    results[0] = getTotalXS(pMat, pHash, HashBin, E, density);
     return;
 }
 
@@ -223,6 +253,9 @@ gpuFloatType_t getMicroTotalXS(const struct MonteRayMaterial* ptr, gpuFloatType_
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density){
     //	printf("Debug: MonteRayMaterials::getTotalXS(const struct MonteRayMaterial* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density)\n");
+//    printf("Debug: MonteRayMaterial.cu :getTotalXS(const MonteRayMaterialList* ptr, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density)\n");
+//    printf("Debug: ptr=%p\n", ptr);
+//    printf("Debug: pHash=%p\n", pHash);
     return getMicroTotalXS(ptr, pHash, HashBin, E ) * density * gpu_AvogadroBarn / ptr->AtomicWeight;
 }
 
@@ -296,6 +329,55 @@ unsigned MonteRayMaterialHost::launchGetNumIsotopes(void) {
     return result[0];
 }
 
+gpuFloatType_t MonteRayMaterialHost::launchGetTotalXS(gpuFloatType_t E, gpuFloatType_t density ) {
+    gpuFloatType_t result[1];
+
+#ifdef __CUDACC__
+    gpuFloatType_t* result_device;
+
+    result_device = (gpuFloatType_t*) MONTERAYDEVICEALLOC( sizeof( gpuFloatType_t) * 1, std::string("launchGetTotalXS::result_device") );
+
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelGetTotalXS<<<1,1>>>( ptr_device, E, density, result_device);
+    gpuErrchk( cudaPeekAtLastError() );
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
+
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
+
+    MonteRayDeviceFree( result_device );
+#else
+    kernelGetTotalXS( ptr_device, energy, density, result);
+#endif
+    return result[0];
+}
+
+gpuFloatType_t MonteRayMaterialHost::launchGetTotalXSViaHash(HashLookupHost hash, gpuFloatType_t E, gpuFloatType_t density ) {
+    gpuFloatType_t result[1];
+
+#ifdef __CUDACC__
+    gpuFloatType_t* result_device;
+
+    result_device = (gpuFloatType_t*) MONTERAYDEVICEALLOC( sizeof( gpuFloatType_t) * 1, std::string("launchGetTotalXS::result_device") );
+
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    hash.copyToGPU();
+    kernelGetTotalXS<<<1,1>>>( ptr_device, hash.ptr_device, E, density, result_device);
+    gpuErrchk( cudaPeekAtLastError() );
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
+
+    CUDA_CHECK_RETURN(cudaMemcpy(result, result_device, sizeof(gpuFloatType_t)*1, cudaMemcpyDeviceToHost));
+
+    MonteRayDeviceFree( result_device );
+#else
+    kernelGetTotalXS( ptr_device, energy, density, result);
+#endif
+    return result[0];
+}
+
 
 void MonteRayMaterialHost::add(unsigned index,struct MonteRayCrossSection* xs, gpuFloatType_t frac ) {
     if( index > getNumIsotopes() ) {
@@ -307,6 +389,37 @@ void MonteRayMaterialHost::add(unsigned index,struct MonteRayCrossSection* xs, g
     pMat->xs[index] = xs;
 
     calcAWR();
+}
+
+void MonteRayMaterialHost::readFromFile( const std::string& filename, HashLookupHost* pHash ) {
+    std::ifstream infile;
+    if( infile.is_open() ) {
+        infile.close();
+    }
+    infile.open( filename.c_str(), std::ios::binary | std::ios::in);
+
+    if( ! infile.is_open() ) {
+        fprintf(stderr, "Error:  MonteRayMaterialHost::readFromFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        throw std::runtime_error("MonteRayMaterialHost::readFromFile -- Failure to open file" );
+    }
+    assert( infile.good() );
+    infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    read(infile, pHash);
+    infile.close();
+}
+
+void MonteRayMaterialHost::writeToFile( const std::string& filename ) const {
+    std::ofstream outfile;
+
+    outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
+    if( ! outfile.is_open() ) {
+        fprintf(stderr, "MonteRayMaterialHost::writeToFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        throw std::runtime_error("MonteRayMaterialHost::writeToFile -- Failure to open file" );
+    }
+    assert( outfile.good() );
+    outfile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    write( outfile );
+    outfile.close();
 }
 
 void MonteRayMaterialHost::write(std::ostream& outf) const{
@@ -335,13 +448,14 @@ void MonteRayMaterialHost::write(std::ostream& outf) const{
     }
 }
 
-void MonteRayMaterialHost::read(std::istream& infile) {
+void MonteRayMaterialHost::read(std::istream& infile, HashLookupHost* pHash) {
     unsigned num;
     binaryIO::read(infile, num);
     dtor( pMat );
     ctor( pMat, num );
 
     binaryIO::read(infile, pMat->AtomicWeight );
+
     for( unsigned i=0; i<num; ++i ){
         gpuFloatType_t fraction;
         binaryIO::read(infile, fraction );
@@ -349,9 +463,12 @@ void MonteRayMaterialHost::read(std::istream& infile) {
     }
 
     for( unsigned i=0; i<num; ++i ){
-        MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1); // TODO: need shared ptr here
-        xs->read( infile );
-        add(i, *xs, pMat->fraction[i]);
+        ownedCrossSections.push_back( new MonteRayCrossSectionHost(1) ); // TODO: need shared ptr here
+        ownedCrossSections.back()->read( infile );
+        add(i, *(ownedCrossSections.back()), pMat->fraction[i]);
+        if( pHash ) {
+            pHash->addIsotope( ownedCrossSections.back() );
+        }
     }
 }
 

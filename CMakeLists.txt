@@ -50,6 +50,8 @@ include(CMakeUninstallTarget)
 
 add_subdirectory( src )
 
+add_subdirectory( apps )
+
 message( STATUS "-- Loading BuildSubPackage.cmake")
 include( BuildSubPackage )
 

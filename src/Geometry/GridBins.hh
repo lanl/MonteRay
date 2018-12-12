@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <vector>
 #include <limits>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 #define MAXNUMVERTICES 1001
 
@@ -142,6 +145,12 @@ public:
     unsigned getDefaultHashSize( void ) const { return hashSize; }
 
     void abort(const char* buffer);
+
+    void writeToFile( const std::string& fileName ) const;
+    void readFromFile( const std::string& fileName );
+
+    void write(std::ostream& outfile) const;
+    void  read(std::istream& infile);
 };
 
 //  static methods

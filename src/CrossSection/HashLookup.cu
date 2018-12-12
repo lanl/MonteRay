@@ -1,5 +1,6 @@
 #include "HashLookup.hh"
 
+#include <fstream>
 #include <math.h>
 
 #include "GPUErrorCheck.hh"
@@ -22,7 +23,8 @@ void ctor(HashLookup* ptr, unsigned num, unsigned nBins ) {
 
     unsigned allocSize = sizeof(unsigned)*nBins*num;
 
-    ptr->binBounds  = (unsigned*) malloc( allocSize);
+    ptr->binBounds = (unsigned*) MONTERAYHOSTALLOC( allocSize, false, std::string("HashLookup::binBounds") );
+
     if(ptr->binBounds == 0) abort ();
 
     for( unsigned i=0; i<num*nBins; ++i ){
@@ -54,15 +56,18 @@ void cudaCtor(struct HashLookup* pCopy, struct HashLookup* pOrig){
 }
 
 void dtor(HashLookup* ptr) {
-    if( ptr->binBounds != 0 ) {
-        free( ptr->binBounds );
-        ptr->binBounds = 0;
+    if( ptr->binBounds ) {
+        //free( ptr->binBounds );
+        MonteRayHostFree(ptr->binBounds, false);
+        ptr->binBounds = nullptr;
     }
 }
 
 void cudaDtor(HashLookup* ptr) {
 #ifdef __CUDACC__
-    MonteRayDeviceFree( ptr->binBounds );
+    if( ptr->binBounds ) {
+        MonteRayDeviceFree( ptr->binBounds );
+    }
 #endif
 }
 
@@ -260,6 +265,92 @@ unsigned HashLookupHost::getLowerBoundbyIndex( unsigned isotope, unsigned index)
 
 unsigned HashLookupHost::getUpperBoundbyIndex( unsigned isotope, unsigned index) const {
     return MonteRay::getUpperBoundbyIndex(ptr, isotope, index);
+}
+
+void HashLookupHost::readFromFile( const std::string& filename ) {
+    std::ifstream infile;
+    if( infile.is_open() ) {
+        infile.close();
+    }
+    infile.open( filename.c_str(), std::ios::binary | std::ios::in);
+
+    if( ! infile.is_open() ) {
+        fprintf(stderr, "Error:  HashLookupHost::readFromFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        throw std::runtime_error("HashLookupHost::readFromFile -- Failure to open file" );
+    }
+    assert( infile.good() );
+    infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    read(infile);
+    infile.close();
+}
+
+void HashLookupHost::writeToFile( const std::string& filename ) const {
+    std::ofstream outfile;
+
+    outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
+    if( ! outfile.is_open() ) {
+        fprintf(stderr, "HashLookupHost::writeToFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+        throw std::runtime_error("HashLookupHost::writeToFile -- Failure to open file" );
+    }
+    assert( outfile.good() );
+    outfile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+    write( outfile );
+    outfile.close();
+}
+
+void
+HashLookupHost::write(std::ostream& outf) const {
+    unsigned version = 0;
+    binaryIO::write(outf, version );
+
+    MONTERAY_VERIFY( ptr, "HashLookupHost::ptr does not exist, can not write to file");
+
+    binaryIO::write(outf, ptr->maxNumIsotopes);
+    binaryIO::write(outf, ptr->N);
+
+    binaryIO::write(outf, ptr->numIsotopes);
+    binaryIO::write(outf, ptr->eMin);
+    binaryIO::write(outf, ptr->eMax);
+    binaryIO::write(outf, ptr->delta);
+
+    unsigned binBoundsSize =  ptr->numIsotopes * ptr->N;
+    binaryIO::write(outf, binBoundsSize);
+    for( unsigned i = 0; i<binBoundsSize; ++i) {
+        binaryIO::write(outf, ptr->binBounds[i]);
+    }
+
+}
+
+void
+HashLookupHost::read(std::istream& infile) {
+    unsigned version;
+    binaryIO::read(infile, version );
+
+    unsigned maxNumIsotopes;
+    unsigned nBins;
+
+    binaryIO::read(infile, maxNumIsotopes);
+    binaryIO::read(infile, nBins);
+
+    if( ptr ) { dtor(ptr); delete ptr; }
+    ptr = new HashLookup;
+    ctor( ptr, maxNumIsotopes, nBins);
+
+    binaryIO::read(infile, ptr->numIsotopes);
+    binaryIO::read(infile, ptr->eMin);
+    binaryIO::read(infile, ptr->eMax);
+    binaryIO::read(infile, ptr->delta);
+
+    if( ptr->binBounds ) {
+        MonteRayHostFree( ptr->binBounds, false );
+    }
+    unsigned binBoundsSize;
+    binaryIO::read(infile, binBoundsSize);
+    ptr->binBounds = (unsigned*) MONTERAYHOSTALLOC( binBoundsSize * sizeof( unsigned ), false, std::string("HashLookupHost::read -- ptr->binBounds") );
+
+    for( unsigned i = 0; i<binBoundsSize; ++i) {
+        binaryIO::read(infile, ptr->binBounds[i]);
+    }
 }
 
 }

@@ -198,6 +198,11 @@ public:
     /// checks for null material
     MatID_t getMaterialID( Cell_Index_t cellID, Material_Index_t i ) const;
 
+    void writeToFile( const std::string& filename) const;
+    void readFromFile( const std::string& filename);
+    void write(std::ostream& outfile) const;
+    void  read(std::istream& infile);
+
 private:
     /// Provides an internal method for returning the material ID by cell, doesn't check for null material
     MatID_t getMaterialIDNotSafe( Cell_Index_t cellID, Material_Index_t i ) const {

@@ -2,6 +2,7 @@
 #define MONTERAYPARALLELASSISTANT_HH_
 
 #include <vector>
+#include <string>
 #include <mpi.h>
 
 namespace MonteRay {
@@ -21,6 +22,7 @@ private:
     int shared_memory_size = 0;
     int shared_memory_rank = 0;
     int deviceID = 0;
+    std::string name;
 
     // MonteRay's duplicate of MPI_COMM_WORLD
     MPI_Comm MONTERAY_COMM_WORLD;
@@ -84,6 +86,10 @@ public:
     int getDeviceID(void) const { return deviceID; }
 
     bool usingSingleProcWorkGroup() const { return useSingleProcWorkGroup; }
+
+    std::string hostname(void) const { return name; }
+
+    std::string info(void) const { return std::string(" host=") + name + std::string(", device=") + std::to_string( deviceID ); }
 };
 
 void setMonteRayStackSize( size_t size);

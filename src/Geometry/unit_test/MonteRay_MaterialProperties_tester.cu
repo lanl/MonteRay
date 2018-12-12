@@ -781,6 +781,65 @@ SUITE( MaterialProperties_tests ) {
         CHECK_CLOSE(  14.1, mp.getMaterialDensity(cell,4), 1e-5 );
     }
 
+    TEST(  read_write ) {
+        std::vector<int> matid;
+        std::vector<double> density;
+
+        unsigned NTotalCells = 3;
+        unsigned NumMatsPerCell = 5;
+        for( unsigned i = 0; i < NumMatsPerCell*NTotalCells; ++i ) {
+            matid.push_back( i );
+            density.push_back( double(i) + 0.1 );
+        }
+
+        MaterialProperties write_mp;
+        write_mp.initializeMaterialDescription( matid, density, NTotalCells );
+        write_mp.writeToFile( "materialProperties_write_test1.bin" );
+
+        //read into mp
+        MaterialProperties mp;
+        mp.readFromFile( "materialProperties_write_test1.bin" );
+
+        CHECK_EQUAL( 3, mp.size() );
+        CHECK_EQUAL( 5, mp.getNumMaterials(0) );
+
+        int cell = 0;
+        CHECK_EQUAL(  0, mp.getMaterialID(cell,0) );
+        CHECK_CLOSE(  0.1, mp.getMaterialDensity(cell,0), 1e-5 );
+        CHECK_EQUAL(  3, mp.getMaterialID(cell,1) );
+        CHECK_CLOSE(  3.1, mp.getMaterialDensity(cell,1), 1e-5 );
+        CHECK_EQUAL(  6, mp.getMaterialID(cell,2) );
+        CHECK_CLOSE(  6.1, mp.getMaterialDensity(cell,2), 1e-5 );
+        CHECK_EQUAL(  9, mp.getMaterialID(cell,3) );
+        CHECK_CLOSE(  9.1, mp.getMaterialDensity(cell,3), 1e-5 );
+        CHECK_EQUAL(  12, mp.getMaterialID(cell,4) );
+        CHECK_CLOSE(  12.1, mp.getMaterialDensity(cell,4), 1e-5 );
+
+        cell = 1;
+        CHECK_EQUAL(  1, mp.getMaterialID(cell,0) );
+        CHECK_CLOSE(  1.1, mp.getMaterialDensity(cell,0), 1e-5 );
+        CHECK_EQUAL(  4, mp.getMaterialID(cell,1) );
+        CHECK_CLOSE(  4.1, mp.getMaterialDensity(cell,1), 1e-5 );
+        CHECK_EQUAL(  7, mp.getMaterialID(cell,2) );
+        CHECK_CLOSE(  7.1, mp.getMaterialDensity(cell,2), 1e-5 );
+        CHECK_EQUAL(  10, mp.getMaterialID(cell,3) );
+        CHECK_CLOSE(  10.1, mp.getMaterialDensity(cell,3), 1e-5 );
+        CHECK_EQUAL(  13, mp.getMaterialID(cell,4) );
+        CHECK_CLOSE(  13.1, mp.getMaterialDensity(cell,4), 1e-5 );
+
+        cell = 2;
+        CHECK_EQUAL(  2, mp.getMaterialID(cell,0) );
+        CHECK_CLOSE(  2.1, mp.getMaterialDensity(cell,0), 1e-5 );
+        CHECK_EQUAL(  5, mp.getMaterialID(cell,1) );
+        CHECK_CLOSE(  5.1, mp.getMaterialDensity(cell,1), 1e-5 );
+        CHECK_EQUAL(  8, mp.getMaterialID(cell,2) );
+        CHECK_CLOSE(  8.1, mp.getMaterialDensity(cell,2), 1e-5 );
+        CHECK_EQUAL(  11, mp.getMaterialID(cell,3) );
+        CHECK_CLOSE(  11.1, mp.getMaterialDensity(cell,3), 1e-5 );
+        CHECK_EQUAL(  14, mp.getMaterialID(cell,4) );
+        CHECK_CLOSE(  14.1, mp.getMaterialDensity(cell,4), 1e-5 );
+    }
+
 #if false
     TEST( bytesize_empty ) {
         MaterialProperties mp;

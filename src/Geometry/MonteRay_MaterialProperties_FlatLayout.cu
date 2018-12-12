@@ -1,5 +1,6 @@
 #include "MonteRay_MaterialProperties_FlatLayout.hh"
 #include "MonteRayDefinitions.hh"
+#include "MonteRay_binaryIO.hh"
 
 namespace MonteRay {
 
@@ -263,4 +264,39 @@ MonteRay_MaterialProperties_FlatLayout::disableMemoryReduction() {
         throw std::runtime_error( msg.str() );
     }
 }
+
+void MonteRay_MaterialProperties_FlatLayout::write(std::ostream& out) const {
+    unsigned version = 0;
+    binaryIO::write( out, version );
+    binaryIO::write( out, numCells );
+    binaryIO::write( out, numReservedCells );
+    binaryIO::write( out, totalNumComponents );
+    binaryIO::write( out, maxNumComponents );
+    binaryIO::write( out, singleTemp );
+    binaryIO::write( out, singleNumComponents );
+    binaryIO::write( out, memoryReductionDisabled );
+
+    binaryIO::write( out, offset );
+    binaryIO::write( out, temperature );
+    binaryIO::write( out, componentMatID );
+    binaryIO::write( out, componentDensity );
+}
+
+void MonteRay_MaterialProperties_FlatLayout::read(std::istream& in) {
+    unsigned version;
+    binaryIO::read( in, version );
+    binaryIO::read( in, numCells );
+    binaryIO::read( in, numReservedCells );
+    binaryIO::read( in, totalNumComponents );
+    binaryIO::read( in, maxNumComponents );
+    binaryIO::read( in, singleTemp );
+    binaryIO::read( in, singleNumComponents );
+    binaryIO::read( in, memoryReductionDisabled );
+
+    binaryIO::read( in, offset );
+    binaryIO::read( in, temperature );
+    binaryIO::read( in, componentMatID );
+    binaryIO::read( in, componentDensity );
+}
+
 } // end namespace

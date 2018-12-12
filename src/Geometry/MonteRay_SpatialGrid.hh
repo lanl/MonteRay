@@ -185,8 +185,11 @@ public:
     CUDA_CALLABLE_MEMBER
     std::string getGeometryType(void) const { return std::string("SpatialGrid"); }
 
-    void write( const std::string& fileName );
+    void write( const std::string& fileName ) const;
     void read( const std::string& fileName );
+
+    void writeToFile( const std::string& fileName ) const { write(fileName); }
+    void readFromFile( const std::string& fileName ) { read(fileName); }
 
 private:
     TransportMeshTypeEnum::TransportMeshTypeEnum_t CoordinateSystem = TransportMeshTypeEnum::NONE;

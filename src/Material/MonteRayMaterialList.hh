@@ -2,6 +2,7 @@
 #define MONTERAYMATERIALLIST_HH_
 
 #include <sstream>
+#include <vector>
 
 #include "MonteRayConstants.hh"
 
@@ -12,10 +13,11 @@ class HashLookupHost;
 class MonteRayMaterial;
 class MonteRayMaterialHost;
 
-struct MonteRayMaterialList {
-    unsigned numMaterials;
-    unsigned* materialID;
-    struct MonteRayMaterial** materials;
+class MonteRayMaterialList {
+public:
+    unsigned numMaterials = 0;
+    unsigned* materialID = nullptr;
+    struct MonteRayMaterial** materials = nullptr;
 };
 
 void ctor(MonteRayMaterialList* ptr, unsigned num );
@@ -52,6 +54,8 @@ public:
 
     ~MonteRayMaterialListHost();
 
+    void reallocate( unsigned numMaterials );
+
     void copyToGPU(void);
 
     unsigned getNumberMaterials(void) const {
@@ -78,19 +82,27 @@ public:
     const MonteRay::MonteRayMaterialList* getPtr(void) const { return pMatList; }
     const MonteRay::HashLookupHost* getHashPtr(void) const { return pHash; }
 
+
     void write(std::ostream& outfile) const;
-    void  read(std::istream& infile);
+    void read(std::istream& infile);
+    void writeToFile( const std::string& filename) const;
+    void readFromFile( const std::string& filename);
+
 
 private:
-    MonteRay::MonteRayMaterialList* pMatList;
-    MonteRay::MonteRayMaterialList* temp;
+    MonteRay::MonteRayMaterialList* pMatList = nullptr;
+    MonteRay::MonteRayMaterialList* temp = nullptr;
     bool cudaCopyMade;
+    unsigned numMats = 0;
+    unsigned nBinsHash = 0;
 
-    HashLookupHost* pHash;
+    HashLookupHost* pHash = nullptr;
+
+    std::vector< MonteRayMaterialHost* > ownedMaterials;
 
 public:
-    MonteRay::MonteRayMaterialList* ptr_device;
-    MonteRay::MonteRayMaterial** material_device_ptr_list;
+    MonteRay::MonteRayMaterialList* ptr_device = nullptr;
+    MonteRay::MonteRayMaterial** material_device_ptr_list = nullptr;
 
 };
 

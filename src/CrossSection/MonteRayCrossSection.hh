@@ -245,12 +245,12 @@ public:
     const MonteRayCrossSection* getPtr() const { return xs; }
 
 private:
-    struct MonteRayCrossSection* xs;
-    MonteRayCrossSection* temp;
-    bool cudaCopyMade;
+    struct MonteRayCrossSection* xs = nullptr;
+    MonteRayCrossSection* temp = nullptr;
+    bool cudaCopyMade = false;
 
 public:
-    MonteRayCrossSection* xs_device;
+    MonteRayCrossSection* xs_device = nullptr;
 
 };
 

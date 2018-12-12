@@ -10,9 +10,18 @@ RayList_t<N>::RayList_t(RayListSize_t num) {
     if( Base::debug ) {
         std::cout << "RayList_t::RayList_t(n), n=" << num << " \n";
     }
+    reallocate( num );
+}
+
+template<unsigned N>
+CUDAHOST_CALLABLE_MEMBER
+void
+RayList_t<N>::reallocate(size_t n) {
+    if( points != NULL ) { MonteRayHostFree( points, Base::isManagedMemory ); }
+
     init();
-    points = (RAY_T*) MONTERAYHOSTALLOC( num*sizeof( RAY_T ), Base::isManagedMemory, "host RayList_t::points" );
-    nAllocated = num;
+    points = (RAY_T*) MONTERAYHOSTALLOC( n*sizeof( RAY_T ), Base::isManagedMemory, "host RayList_t::points" );
+    nAllocated = n;
 }
 
 template<unsigned N>
@@ -72,6 +81,28 @@ RayList_t<N>::copy(const RayList_t<N>* rhs) {
 #else
     throw std::runtime_error("RayList_t::copy -- Only valid when compiling with CUDA.");
 #endif
+}
+
+
+template<unsigned N>
+void
+RayList_t<N>::writeToFile( const std::string& filename) const {
+    std::ofstream out;
+    out.open( filename.c_str(), std::ios::binary | std::ios::out);
+    write( out );
+    out.close();
+}
+
+template<unsigned N>
+void
+RayList_t<N>::readFromFile( const std::string& filename) {
+    std::ifstream in;
+    in.open( filename.c_str(), std::ios::binary | std::ios::in);
+    if( ! in.good() ) {
+        throw std::runtime_error( "MonteRayNextEventEstimator::readFromFile -- can't open file for reading" );
+    }
+    read( in );
+    in.close();
 }
 
 template class RayList_t<1>;

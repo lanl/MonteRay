@@ -1,6 +1,7 @@
 #include <UnitTest++.h>
 
 #include <iostream>
+#include <fstream>
 
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
@@ -155,6 +156,46 @@ SUITE( Ray_simple_tests ) {
         CHECK_EQUAL( 9, ray.getIndex() );
         CHECK_EQUAL( 10, ray.getDetectorIndex() );
         CHECK_CLOSE( 10.0, ray.getTime(), 1e-6);
+    }
+
+    TEST( read_write ) {
+        dummyParticle particle;
+        dummuyPhotonScatteringProbabilities probs;
+        unsigned detectorID = 10;
+
+        PointDetRay_t write_ray(particle, probs, detectorID);
+
+        std::string filename("particle_1_test.bin");
+        std::ofstream out;
+        out.open( filename.c_str(), std::ios::binary | std::ios::out);
+        write_ray.write( out );
+        out.close();
+
+        {
+            PointDetRay_t ray;
+
+            std::ifstream in;
+            in.open( filename.c_str(), std::ios::binary | std::ios::in);
+            CHECK_EQUAL( true, in.good() );
+            ray.read( in );
+            in.close();
+
+            CHECK_CLOSE( 1.0, ray.getPosition()[0], 1e-6);
+            CHECK_CLOSE( 2.0, ray.getPosition()[1], 1e-6);
+            CHECK_CLOSE( 3.0, ray.getPosition()[2], 1e-6);
+            CHECK_CLOSE( 4.0, ray.getDirection()[0], 1e-6);
+            CHECK_CLOSE( 5.0, ray.getDirection()[1], 1e-6);
+            CHECK_CLOSE( 6.0, ray.getDirection()[2], 1e-6);
+            CHECK_CLOSE( 1.1, ray.getEnergy(0), 1e-6);
+            CHECK_CLOSE( 2.2, ray.getEnergy(1), 1e-6);
+            CHECK_CLOSE( 0.511, ray.getEnergy(2), 1e-6);
+            CHECK_CLOSE( 1.5*8.0, ray.getWeight(0), 1e-6);
+            CHECK_CLOSE( 4.0*8.0, ray.getWeight(1), 1e-6);
+            CHECK_CLOSE( 2.0*8.0, ray.getWeight(2), 1e-6);
+            CHECK_EQUAL( 9, ray.getIndex() );
+            CHECK_EQUAL( 10, ray.getDetectorIndex() );
+            CHECK_CLOSE( 10.0, ray.getTime(), 1e-6);
+        }
     }
 
 }

@@ -137,10 +137,14 @@ public:
             MPI_Info_free(&win_info);
 
             MPI_Barrier( PA.getWorkGroupCommunicator() );
-            MPI_Win_sync( bucket_header_shared_memory_window );
-            MPI_Win_sync( collision_shared_memory_window );
-            MPI_Win_sync( rank_info_shared_memory_window );
-            MPI_Barrier( PA.getWorkGroupCommunicator() );
+
+            // Disabling MPI_Win_sync, causes failure in IBM Spectrum MPI
+            // Removal doesn't seem to affect correctness
+            //
+            // MPI_Win_sync( bucket_header_shared_memory_window );
+            // MPI_Win_sync( collision_shared_memory_window );
+            // MPI_Win_sync( rank_info_shared_memory_window );
+            // MPI_Barrier( PA.getWorkGroupCommunicator() );
 
             int disp_unit;
             MPI_Aint segment_size;

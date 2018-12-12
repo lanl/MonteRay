@@ -316,6 +316,46 @@ SUITE( GridBins_Tester ) {
 
     }
 
+    TEST( pwr_vertices_read_write ) {
+            GridBins write_grid;
+
+            //     0      1       2        3      4       5        6       7       8      9
+            std::vector<gpuFloatType_t> vertices  {
+                -40.26, -20.26, -10.26, -10.08,  -9.90,  -9.84,  -9.06,  -9.00,  -8.64,  -8.58,
+                -7.80,  -7.74,  -7.38,  -7.32,  -6.54,  -6.48,  -6.12,  -6.06,  -5.28,  -5.22,
+                -4.86,  -4.80,  -4.02,  -3.96,  -3.60,  -3.54,  -2.76,  -2.70,  -2.34,  -2.28,
+                -1.50,  -1.44,  -1.08,  -1.02,  -0.24,  -0.18,   0.18,   0.24,   1.02,   1.08,
+                1.44,   1.50,   2.28,   2.34,   2.70,   2.76,   3.54,   3.60,   3.96,   4.02,
+                4.80,   4.86,   5.22,   5.28,   6.06,   6.12,   6.48,   6.54,   7.32,   7.38,
+                7.74,   7.80,   8.58,   8.64,   9.00,   9.06,   9.84,   9.90,  10.08,  10.26,
+                20.26,  40.26};
+
+            std::vector<gpuFloatType_t> zvertices { -80, -60, -50, 50, 60, 80 };
+            write_grid.setVertices( 0, vertices );
+            write_grid.setVertices( 1, vertices );
+            write_grid.setVertices( 2, zvertices );
+
+            write_grid.writeToFile( "Gridbins_write_test1.bin");
+
+            // test file exists
+            std::ifstream exists("Gridbins_write_test1.bin");
+            CHECK_EQUAL( true, exists.good() );
+            exists.close();
+
+            GridBins grid;
+            grid.readFromFile( "Gridbins_write_test1.bin");
+            CHECK_EQUAL(  0, grid.getDimIndex( 0, -25)  );
+            CHECK_EQUAL(  1, grid.getDimIndex( 0, -20)  );
+            CHECK_EQUAL(  10, grid.getDimIndex( 0, -7.75)  );
+            CHECK_EQUAL(  60, grid.getDimIndex( 0,  7.75)  );
+            CHECK_EQUAL(  70, grid.getDimIndex( 0,  21.0)  );
+            CHECK_EQUAL(  69, grid.getDimIndex( 0, 11.21220650 )  );
+            CHECK_EQUAL(  51, grid.getDimIndex( 0,  5.200257 )  );
+
+            CHECK_EQUAL( 2, grid.getDimIndex( 2, -16.975525) );
+
+        }
+
     class ClassGridBinsRayTraceTest{
     public:
 

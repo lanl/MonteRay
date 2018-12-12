@@ -39,6 +39,8 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER ~MonteRayNextEventEstimator();
 
+    void reallocate(unsigned num);
+
     CUDAHOST_CALLABLE_MEMBER void init();
 
     void initialize();
@@ -81,7 +83,10 @@ public:
     }
 
     template<unsigned N>
-    void launch_ScoreRayList( unsigned nBlocks, unsigned nThreads, const RayList_t<N>* pRayList, cudaStream_t* stream = nullptr );
+    void launch_ScoreRayList( int nBlocks, int nThreads, const RayList_t<N>* pRayList, cudaStream_t* stream = nullptr, bool dumpOnFailure = true );
+
+    template<unsigned N>
+    void dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName  = std::string("") );
 
     CUDAHOST_CALLABLE_MEMBER void setGeometry(const GRID_T* pGrid, const MonteRay_MaterialProperties* pMPs);
 
@@ -106,10 +111,28 @@ public:
         pTallyTimeBinEdges->assign( edges.begin(), edges.end() );
     }
 
+    std::vector<gpuFloatType_t> getTimeBinEdges() {
+        if( ! pTallyTimeBinEdges ) {
+            return std::vector<gpuFloatType_t>();
+        } else {
+            return *pTallyTimeBinEdges;
+        }
+    }
+
     void gather();
 
     // gather work group is rarely used, mainly for testing
     void gatherWorkGroup();
+
+    template<typename IOTYPE>
+    void write(IOTYPE& out);
+
+    template<typename IOTYPE>
+    void read(IOTYPE& in);
+
+    // write out state of MonteRayNextEventEstimator class
+    void writeToFile( const std::string& fileName);
+    void readFromFile( const std::string& fileName);
 
 private:
     unsigned nUsed;

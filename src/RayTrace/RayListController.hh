@@ -66,6 +66,7 @@ public:
     void copyPointDetTallyToCPU(void);
     gpuTallyType_t getPointDetTally(unsigned spatialIndex, unsigned timeIndex=0 ) const;
     void copyPointDetToGPU(void);
+    void dumpPointDetForDebug(const std::string& baseFileName = std::string() );
     void printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
     void outputTimeBinnedTotal(std::ostream& out,unsigned nSamples=1, unsigned constantDimension=2);
 
@@ -95,6 +96,10 @@ public:
 
     size_t readCollisionsFromFile(std::string name);
 
+    // reads a single block of rays to a buffer but doesn't flush them
+    // usually for testing or debugging
+    size_t readCollisionsFromFileToBuffer(std::string name);
+
     void flushToFile(bool final=false);
 
     void debugPrint() {
@@ -110,9 +115,13 @@ public:
         TallyTimeBinEdges.assign( edges.begin(), edges.end() );
     }
 
+    unsigned getWorldRank();
+
     template<typename T>
     void setEnergyBinEdges( const std::vector<T>& edges) {
-        std::cout << "WARNING:  MonteRay does not currently support energy binned tallies.  Ignoring.\n";
+        if( getWorldRank() == 0 ) {
+            std::cout << "WARNING:  MonteRay does not currently support energy binned tallies.  Ignoring.\n";
+        }
     }
 
     void gather();

@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <istream>
+#include <vector>
 
 #include "MonteRayTypes.hh"
 
@@ -11,6 +12,7 @@ namespace MonteRay{
 class MonteRayCrossSection;
 class MonteRayCrossSectionHost;
 class HashLookup;
+class HashLookupHost;
 
 struct MonteRayMaterial {
     unsigned numIsotopes;
@@ -94,6 +96,9 @@ public:
 
     gpuFloatType_t getTotalXS(HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density );
 
+    gpuFloatType_t launchGetTotalXS(gpuFloatType_t E, gpuFloatType_t density=1.0 );
+    gpuFloatType_t launchGetTotalXSViaHash(HashLookupHost hash, gpuFloatType_t E, gpuFloatType_t density );
+
     void add(unsigned index, MonteRayCrossSectionHost& xs, gpuFloatType_t frac );
     void add(unsigned index, struct MonteRayCrossSection* xs, gpuFloatType_t frac );
 
@@ -105,21 +110,26 @@ public:
 
     gpuFloatType_t getAtomicWeight(void) const { return MonteRay::getAtomicWeight(pMat); }
 
+
     void write(std::ostream& outfile) const;
-    void  read(std::istream& infile);
+    void  read(std::istream& infile, HashLookupHost* pHash = nullptr);
+    void writeToFile( const std::string& filename) const;
+    void readFromFile( const std::string& filename, HashLookupHost* pHash = nullptr);
 
     void load(MonteRayMaterial* ptrMat );
 
     struct MonteRayMaterial* getPtr(void) { return pMat; }
 
 private:
-    struct MonteRayMaterial* pMat;
-    MonteRayMaterial* temp;
-    bool cudaCopyMade;
+    struct MonteRayMaterial* pMat = nullptr;
+    MonteRayMaterial* temp = nullptr;
+    bool cudaCopyMade = false;
+
+    std::vector<MonteRayCrossSectionHost*> ownedCrossSections;
 
 public:
-    MonteRayMaterial* ptr_device;
-    MonteRayCrossSection** isotope_device_ptr_list;
+    MonteRayMaterial* ptr_device = nullptr;
+    MonteRayCrossSection** isotope_device_ptr_list = nullptr;
 
 };
 

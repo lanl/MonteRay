@@ -31,6 +31,8 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER std::string className() { return std::string("RayList_t");}
 
+    CUDAHOST_CALLABLE_MEMBER void reallocate(size_t n);
+
     CUDAHOST_CALLABLE_MEMBER void init() {
         nAllocated = 0;
         nUsed = 0;
@@ -120,9 +122,35 @@ public:
         return N;
     }
 
+    void writeToFile( const std::string& filename) const;
+    void readFromFile( const std::string& filename);
+
     RayListSize_t nAllocated = 0 ;
     RayListSize_t nUsed = 0;
     RAY_T* points = NULL;
+
+    template<typename IOTYPE>
+    void write(IOTYPE& out) const {
+        unsigned version = 0;
+        binaryIO::write( out, version );
+        binaryIO::write( out, nAllocated );
+        binaryIO::write( out, nUsed );
+        for( unsigned i = 0; i < nUsed; ++i ) {
+            points[i].write(out);
+        }
+    }
+
+    template<typename IOTYPE>
+    void read(IOTYPE& in) {
+        unsigned version;
+        binaryIO::read( in, version );
+        binaryIO::read( in, nAllocated );
+        reallocate( nAllocated );
+        binaryIO::read( in, nUsed );
+        for( unsigned i = 0; i < nUsed; ++i ) {
+            points[i].read(in);
+        }
+    }
 
 };
 

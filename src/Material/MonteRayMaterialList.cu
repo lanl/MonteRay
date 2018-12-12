@@ -1,5 +1,7 @@
 #include "MonteRayMaterialList.hh"
 
+#include <fstream>
+
 #include "MonteRayMaterial.hh"
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
@@ -14,12 +16,19 @@ void ctor(MonteRayMaterialList* ptr, unsigned num ) {
 
     unsigned allocSize = sizeof(unsigned)*num;
 
+    if( ptr->materialID ) {
+        free(ptr->materialID);
+    }
     ptr->materialID  = (unsigned*) malloc( allocSize);
-    if(ptr->materialID == 0) abort ();
+    if(ptr->materialID == NULL) abort ();
 
     allocSize = sizeof(MonteRayMaterial*)*num;
+
+    if( ptr->materials ) {
+        free( ptr->materials );
+    }
     ptr->materials = (MonteRayMaterial**) malloc( allocSize );
-    if(ptr->materials == 0) abort ();
+    if(ptr->materials == NULL) abort ();
 
     for( unsigned i=0; i<num; ++i ){
         ptr->materialID[i] = 0;
@@ -35,10 +44,16 @@ void cudaCtor(MonteRayMaterialList* pCopy, unsigned num) {
 
     // materialID
     unsigned allocSize = sizeof(unsigned)*num;
+    if( pCopy->materialID ) {
+        MonteRayDeviceFree( pCopy->materialID );
+    }
     pCopy->materialID = (unsigned*) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRayMaterialList::materialID") );
 
     // materials
     allocSize = sizeof(MonteRayMaterial*)*num;
+    if( pCopy->materials ) {
+        MonteRayDeviceFree( pCopy->materials );
+    }
     pCopy->materials = (MonteRayMaterial**) MONTERAYDEVICEALLOC( allocSize, std::string("MonteRayMaterialList::materials") );
 #endif
 }
@@ -80,15 +95,39 @@ MonteRayMaterialListHost::MonteRayMaterialListHost(unsigned num, unsigned maxNum
         throw std::runtime_error( msg.str() );
     }
 
+    nBinsHash = nBins;
+    pHash = new HashLookupHost( maxNumIsotopes, nBins);
+    reallocate(num);
+}
+
+void
+MonteRayMaterialListHost::reallocate(unsigned num) {
+    numMats = num;
+
+    if( pMatList ) {
+        delete pMatList;
+    }
     pMatList = new MonteRayMaterialList;
+
     ctor( pMatList, num);
-    temp = NULL;
-    ptr_device = NULL;
+
+    if( temp ) {
+        delete temp;
+    }
+    temp = nullptr;
+
+    if( ptr_device ) {
+        MonteRayDeviceFree( ptr_device );
+    }
+    ptr_device = nullptr;
+
     cudaCopyMade = false;
 
-    pHash = new HashLookupHost( maxNumIsotopes, nBins);
-
 #ifdef __CUDACC__
+    if( material_device_ptr_list ) {
+        free(material_device_ptr_list);
+        material_device_ptr_list = nullptr;
+    }
     material_device_ptr_list = (MonteRayMaterial**) malloc( sizeof(MonteRayMaterial* )*num );
     for( unsigned i=0; i< num; ++i ){
         material_device_ptr_list[i] = 0;
@@ -108,18 +147,24 @@ MonteRayMaterialListHost::~MonteRayMaterialListHost() {
     }
     free( material_device_ptr_list );
 #endif
+
+    for( auto itr = ownedMaterials.begin(); itr != ownedMaterials.end(); ++itr) {
+        delete (*itr);
+    }
+    ownedMaterials.clear();
 }
 
 void MonteRayMaterialListHost::copyToGPU(void) {
 #ifdef __CUDACC__
     pHash->copyToGPU();
+
+    for( auto itr = ownedMaterials.begin(); itr != ownedMaterials.end(); ++itr) {
+       (*itr)->copyToGPU();
+    }
+
     cudaCopyMade = true;
     temp = new MonteRayMaterialList;
-    copy(temp, pMatList);
-
     unsigned num = pMatList->numMaterials;
-
-    temp->numMaterials = pMatList->numMaterials;
 
     // allocate target struct
     ptr_device = (MonteRayMaterialList*) MONTERAYDEVICEALLOC( sizeof( MonteRayMaterialList ), std::string("MonteRayMaterialListHost::ptr_device") );
@@ -177,8 +222,12 @@ const MonteRayMaterial* getMaterial(const MonteRayMaterialList* ptr, unsigned i 
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const MonteRayMaterialList* ptr, unsigned i, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density) {
-    //	printf("Debug: MonteRayMaterials::getTotalXS(const MonteRayMaterialList* ptr, unsigned i, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density)\n");
-    return getTotalXS( getMaterial(ptr,i), pHash, HashBin, E, density );
+//    printf("Debug: MonteRayMaterials::getTotalXS(const MonteRayMaterialList* ptr, unsigned i, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density)\n");
+//    printf("Debug: ptr=%p\n", ptr);
+//    printf("Debug: pHash=%p\n", pHash);
+//    printf("Debug: i=%u\n", i);
+//    printf("Debug: getMaterial(ptr,i)=%p\n", getMaterial(ptr,i));
+    return getTotalXS( getMaterial(ptr,i) , pHash, HashBin, E, density );
 }
 
 CUDA_CALLABLE_MEMBER
@@ -200,6 +249,9 @@ unsigned materialIDtoIndex(MonteRayMaterialList* ptr, unsigned id ) {
 }
 
 CUDA_CALLABLE_KERNEL void kernelGetTotalXS(struct MonteRayMaterialList* pMatList, unsigned matIndex, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density, gpuFloatType_t* results){
+//    printf("Debug: kernelGetTotalXS \n");
+//    printf("Debug: pMatList=%p\n", pMatList);
+//    printf("Debug: pHash=%p\n", pHash);
     results[0] = getTotalXS(pMatList, matIndex, pHash, HashBin, E, density);
     return;
 }
@@ -217,6 +269,10 @@ gpuFloatType_t MonteRayMaterialListHost::launchGetTotalXS(unsigned i, gpuFloatTy
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
+
+//    printf("Debug: MonteRayMaterialListHost::launchGetTotalXS \n");
+//    printf("Debug: ptr_device=%p\n", ptr_device);
+//    printf("Debug: pHash->getPtrDevice()=%p\n", pHash->getPtrDevice());
     kernelGetTotalXS<<<1,1>>>(ptr_device, i, pHash->getPtrDevice(), HashBin, E, density, result_device);
     gpuErrchk( cudaPeekAtLastError() );
     cudaEventRecord(sync, 0);
@@ -272,46 +328,82 @@ void MonteRayMaterialListHost::add( unsigned index, MonteRayMaterial* mat, unsig
 }
 
 
+void MonteRayMaterialListHost::writeToFile( const std::string& filename) const {
+    std::ofstream out;
+    out.open( filename.c_str(), std::ios::binary | std::ios::out);
+    write( out );
+    out.close();
+}
+
+void MonteRayMaterialListHost::readFromFile( const std::string& filename) {
+    std::ifstream in;
+    in.open( filename.c_str(), std::ios::binary | std::ios::in);
+    if( ! in.good() ) {
+        throw std::runtime_error( "MonteRayMaterialListHost::readFromFile -- can't open file for reading" );
+    }
+    read( in );
+    in.close();
+}
+
 void MonteRayMaterialListHost::write(std::ostream& outfile) const {
-    unsigned realNumMaterials = 0;
-    for( unsigned i=0; i<getNumberMaterials(); ++i ){
-        if( getPtr()->materials[i] != 0 ) {
-            ++realNumMaterials;
-        }
-    }
-    binaryIO::write(outfile, realNumMaterials );
+    unsigned version = 0;
+    binaryIO::write(outfile, version );
+    binaryIO::write(outfile, pMatList->numMaterials );
 
-    for( unsigned i=0; i<getNumberMaterials(); ++i ){
-        if( getPtr()->materials[i] != 0 ) {
-            binaryIO::write(outfile, getMaterialID(i) );
-        }
+    MONTERAY_VERIFY( pMatList->materialID, "MonteRayMaterialListHost::write -- no materials loaded" )
+    for( unsigned i=0; i<pMatList->numMaterials; ++i ){
+       binaryIO::write(outfile, pMatList->materialID[i] );
     }
 
-    for( unsigned i=0; i<getNumberMaterials(); ++i ){
+    // count the number of total isotopes - may be duplicates.
+    // need to hash bin
+    unsigned maxNumIsotopes = 0;
+    for( unsigned i=0; i<pMatList->numMaterials; ++i ){
+        if( pMatList->materials[i] != 0 ) {
+            maxNumIsotopes += pMatList->materials[i]->numIsotopes;
+        }
+    }
+    binaryIO::write(outfile, maxNumIsotopes );
+    binaryIO::write(outfile, nBinsHash );
+
+    for( unsigned i=0; i<pMatList->numMaterials; ++i ){
         MonteRayMaterialHost mat(1);
         if( getPtr()->materials[i] != 0 ) {
-            mat.load( getPtr()->materials[i] );
+            mat.load( pMatList->materials[i] );
             mat.write( outfile );
         }
     }
 }
 
 void MonteRayMaterialListHost::read(std::istream& infile) {
+    unsigned version;
+    binaryIO::read(infile, version );
+
     unsigned num;
     binaryIO::read(infile, num);
-    dtor( pMatList );
-    ctor( pMatList, num );
+
+    reallocate( num );
 
     for( unsigned i=0; i<num; ++i ){
-        unsigned id;
-        binaryIO::read(infile, id );
-        pMatList->materialID[i] = id;
+        binaryIO::read(infile, pMatList->materialID[i] );
     }
+
+    // need to construct a new hash bin
+    unsigned maxNumIsotopes;
+    binaryIO::read(infile, maxNumIsotopes );
+    binaryIO::read(infile, nBinsHash );
+    if( pHash ) {
+        delete pHash;
+    }
+    pHash = new HashLookupHost( maxNumIsotopes, nBinsHash);
+
     for( unsigned i=0; i<num; ++i ){
-        MonteRayMaterialHost* mat = new MonteRayMaterialHost(1); // TODO: need shared ptr here
-        mat->read(infile);
-        add( i, *mat, pMatList->materialID[i] );
+        ownedMaterials.push_back( new MonteRayMaterialHost(1) ); // TODO: need shared ptr here
+        ownedMaterials.back()->read(infile );
+        ownedMaterials.back()->copyToGPU();
+        add( i, *(ownedMaterials.back()), pMatList->materialID[i] );
     }
+
 }
 
 gpuFloatType_t

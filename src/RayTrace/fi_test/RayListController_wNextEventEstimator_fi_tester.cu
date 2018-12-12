@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "GPUUtilityFunctions.hh"
+#include "GPUSync.hh"
 
 #include "gpuTally.hh"
 
@@ -305,9 +306,14 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         CHECK_CLOSE( AW, Mat_AWR , 1e-3 );
 
         controller.copyPointDetToGPU();
+
         controller.sync();
-        unsigned numParticles = controller.readCollisionsFromFile("MonteRayTestFiles/U-04p_slab_single_source_ray_collisionFile.bin");
+        unsigned numParticles = controller.readCollisionsFromFileToBuffer("MonteRayTestFiles/U-04p_slab_single_source_ray_collisionFile.bin");
+        controller.dumpPointDetForDebug( "nee_debug_dump_test1");
+
         CHECK_EQUAL( 1, numParticles );
+
+        controller.flush(true);
         controller.sync();
         controller.copyPointDetTallyToCPU();
 
@@ -323,6 +329,77 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         CHECK_CLOSE( expectedScore, monteRayValue, 1e-7);
         CHECK_CLOSE( 0.0014527244, monteRayValue, 1e-8 );
         //		CHECK(false);
+    }
+
+    bool exists( const std::string& filename ) {
+        bool good = false;
+        std::ifstream file(filename.c_str());
+        good = file.good();
+        file.close();
+        return good;
+    }
+
+    TEST( read_nee_debug_dump_test1 ) {
+        // next-event estimator
+        // test nee save state file exists
+        std::string optBaseName = "nee_debug_dump_test1";
+        std::string baseName = optBaseName + std::string(".bin");
+
+        std::string filename = std::string("nee_state_") + baseName;
+        CHECK_EQUAL( true, exists(filename) );
+
+        MonteRayNextEventEstimator<GridBins> estimator(0);
+        estimator.readFromFile( filename );
+
+        // raylist
+        filename = std::string("raylist_") + baseName;
+        CHECK_EQUAL( true, exists(filename) );
+        RayList_t<3> raylist(1);
+        raylist.readFromFile( filename );
+
+        CHECK_EQUAL( 1, raylist.size() );
+        CHECK_CLOSE( 1.0, raylist.getEnergy(0), 1e-6);
+
+        // geometry
+        filename = std::string("geometry_") + baseName;
+        CHECK_EQUAL( true, exists(filename) );
+        GridBins grid;
+        grid.readFromFile( filename );
+
+        // material properties
+        MonteRay_MaterialProperties matprops;
+        filename = std::string("matProps_") + baseName;
+        CHECK_EQUAL( true, exists(filename) );
+        matprops.readFromFile( filename );
+
+        // materials
+        MonteRayMaterialListHost matlist(1);
+        filename = std::string("materialList_") + baseName;
+        CHECK_EQUAL( true, exists(filename) );
+        matlist.readFromFile( filename );
+
+        grid.copyToGPU();
+        matlist.copyToGPU();
+        matprops.copyToGPU();
+
+        estimator.setGeometry( &grid, &matprops );
+        estimator.setMaterialList( &matlist );
+        estimator.copyToGPU();
+        estimator.dumpState( &raylist, "nee_debug_dump_test2" );
+
+        Ray_t<3> ray;
+        ray = raylist.getParticle(0);
+        raylist.copyToGPU();
+
+        GPUSync sync1; sync1.sync();
+
+        estimator.launch_ScoreRayList(1U,1U, &raylist);
+
+        GPUSync sync2; sync2.sync();
+
+        estimator.copyToCPU();
+        double monteRayValue = estimator.getTally(0);
+        CHECK_CLOSE( 0.0014527244, monteRayValue, 1e-8 );
     }
 #endif
 }

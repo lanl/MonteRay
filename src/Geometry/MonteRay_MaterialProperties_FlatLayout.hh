@@ -179,6 +179,9 @@ public:
     const MatID_t* getMaterialIDData(void) const { return componentMatID.data(); }
     const Density_t* getMaterialDensityData(void) const { return componentDensity.data(); }
 
+    void write(std::ostream& outfile) const;
+    void  read(std::istream& infile);
+
 protected:
     std::vector<offset_t> offset; ///< offset[cell] into component arrays with size of numCells+1
     std::vector<Temperature_t> temperature; ///< temperature[cell] with size of numCells

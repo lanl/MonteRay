@@ -264,11 +264,9 @@ launchGetTotalXS( MonteRayCrossSectionHost* pXS, gpuFloatType_t energy){
 }
 
 MonteRayCrossSectionHost::MonteRayCrossSectionHost(unsigned num){
-    xs = (struct MonteRayCrossSection*) malloc( sizeof(struct MonteRayCrossSection) );
-    ctor(xs,num);
+    xs = (struct MonteRayCrossSection*) MONTERAYHOSTALLOC( sizeof(struct MonteRayCrossSection), false, std::string("MonteRayCrossSectionHost::xs") );
 
-    cudaCopyMade = false;
-    temp = NULL;
+    ctor(xs,num);
 
 #ifdef __CUDACC__
     xs_device = (MonteRayCrossSection*) MONTERAYDEVICEALLOC( sizeof( MonteRayCrossSection), std::string("MonteRayCrossSectionHost::xs_device") );
@@ -279,7 +277,7 @@ MonteRayCrossSectionHost::~MonteRayCrossSectionHost(){
     dtor(xs);
 
     if( xs != 0 ) {
-        free(xs);
+        MonteRayHostFree( xs, false );
         xs = 0;
     }
 
@@ -308,6 +306,11 @@ unsigned MonteRayCrossSectionHost::getIndex( const HashLookupHost* pHost, unsign
 void MonteRayCrossSectionHost::copyToGPU(void) {
 #ifdef __CUDACC__
     cudaCopyMade = true;
+
+    if( temp ) {
+        cudaDtor(temp);
+        delete temp;
+    }
     temp = new MonteRayCrossSection;
     cudaCtor(temp, xs );
     CUDA_CHECK_RETURN( cudaMemcpy(xs_device, temp, sizeof( MonteRayCrossSection ), cudaMemcpyHostToDevice));

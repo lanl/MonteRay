@@ -1,5 +1,7 @@
 #include <UnitTest++.h>
 
+#include <fstream>
+
 #include "HashBins.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "GPUUtilityFunctions.hh"
@@ -137,6 +139,52 @@ SUITE( HashBins_Tester ) {
         CHECK_EQUAL( 8, lower_bin );
         CHECK_EQUAL( 9, upper_bin );
     }
+
+    TEST( read_write ) {
+         unsigned N= 10;
+         gpuFloatType_t values[N];
+
+         values[0] = -1.0;
+         values[1] = -0.5;
+         values[2] = 0.1;
+         values[3] = 0.2;
+         values[4] = 3.0;
+         values[5] = 6.0;
+         values[6] = 6.1;
+         values[7] = 6.15;
+         values[8] = 8.0;
+         values[9] = 10.0;
+
+         HashBins write_hash(values,N,12);
+         write_hash.writeToFile( "HashBins_save_test1.bin");
+
+         // test file exists
+         std::ifstream exists("HashBins_save_test1.bin");
+         CHECK_EQUAL( true, exists.good() );
+         exists.close();
+
+         HashBins hash;
+         hash.readFromFile( "HashBins_save_test1.bin");
+
+         unsigned lower_bin;
+         unsigned upper_bin;
+
+         hash.getLowerUpperBins(-0.5, lower_bin, upper_bin);
+         CHECK_EQUAL( 0, lower_bin );
+         CHECK_EQUAL( 1, upper_bin );
+
+         hash.getLowerUpperBins(0.0, lower_bin, upper_bin);
+         CHECK_EQUAL( 1, lower_bin );
+         CHECK_EQUAL( 3, upper_bin );
+
+         hash.getLowerUpperBins(1.0, lower_bin, upper_bin);
+         CHECK_EQUAL( 3, lower_bin );
+         CHECK_EQUAL( 3, upper_bin );
+
+         hash.getLowerUpperBins(9.9, lower_bin, upper_bin);
+         CHECK_EQUAL( 8, lower_bin );
+         CHECK_EQUAL( 9, upper_bin );
+     }
 
     template<typename T>
     using resultClass = MonteRay_SingleValueCopyMemory<T>;

@@ -419,4 +419,34 @@ MonteRay_MaterialProperties::getMaterialID( Cell_Index_t cellID, Material_Index_
     return ID;
 }
 
+void
+MonteRay_MaterialProperties::writeToFile( const std::string& filename) const {
+    std::ofstream out;
+    out.open( filename.c_str(), std::ios::binary | std::ios::out);
+    write( out );
+    out.close();
+}
+
+void
+MonteRay_MaterialProperties::readFromFile( const std::string& filename) {
+    std::ifstream in;
+    in.open( filename.c_str(), std::ios::binary | std::ios::in);
+    if( ! in.good() ) {
+        throw std::runtime_error( "MonteRay_MaterialProperties::readFromFile -- can't open file for reading" );
+    }
+    read( in );
+    in.close();
+}
+
+void
+MonteRay_MaterialProperties::write(std::ostream& outfile) const{
+    pMemoryLayout->write(outfile);
+}
+
+void
+MonteRay_MaterialProperties::read(std::istream& infile){
+    pMemoryLayout->read(infile);
+    setupPtrData();
+}
+
 } /* End namespace MonteRay */

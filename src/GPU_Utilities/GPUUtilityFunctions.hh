@@ -12,14 +12,17 @@
 
 namespace MonteRay {
 
-void cudaReset(void);
-void gpuReset();
+void cudaReset(const bool verbose = false);
+void gpuReset(const bool verbose = false);
+void gpuCheck( const bool verbose );
 void gpuCheck();
+
 void gpuInfo();
-int getNumberOfGPUS(void);
-void setCudaDevice(int);
-void setCudaPrintBufferSize( size_t size);
-void setCudaStackSize( size_t size);
+int getNumberOfGPUS(const bool verbose = false);
+void setCudaDevice(int deviceID, const bool verbose = false);
+int getCudaDevice( const bool verbose );
+void setCudaPrintBufferSize( size_t size, const bool verbose = false);
+void setCudaStackSize( size_t size, const bool verbose = false );
 
 } /* namespace MonteRay */
 
