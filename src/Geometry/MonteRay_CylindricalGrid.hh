@@ -105,7 +105,9 @@ private:
 
     //bool regular = false;
 
+#ifdef DEBUG
     static const bool debug = false;
+#endif
 };
 
 } /* namespace MonteRay */

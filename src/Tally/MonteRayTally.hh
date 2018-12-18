@@ -73,7 +73,11 @@ public:
 
         if( ! Base::isCudaIntermediate ) {
             pData = (gpuTallyType_t*) MONTERAYHOSTALLOC( (data_size)*sizeof( gpuTallyType_t ), isManagedMemory, std::string("MonteRayTally::pData") );
+
+#ifdef DEBUG
             if( debug ) printf("Debug: MonteRayTally::copy -- allocated pData on the host ptr=%p, size = %d\n",pData, data_size);
+#endif
+
         }
 
         memset( pData, 0, data_size*sizeof( gpuTallyType_t ) );

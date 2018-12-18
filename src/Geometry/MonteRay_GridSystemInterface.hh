@@ -21,14 +21,14 @@ public:
     CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
 
     CUDA_CALLABLE_MEMBER
-    void add( int cell, gpuRayFloat_t dist);
+    void add( const int cell, const gpuRayFloat_t dist);
 
     CUDA_CALLABLE_MEMBER void clear() { reset(); }
     CUDA_CALLABLE_MEMBER void reset() { N = 0; }
     CUDA_CALLABLE_MEMBER unsigned size() const { return N; }
 
-    CUDA_CALLABLE_MEMBER int id(size_t i) const { return CellId[i]; }
-    CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
+    CUDA_CALLABLE_MEMBER int id( const size_t i) const { return CellId[i]; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(const size_t i) const { return distance[i]; }
 };
 
 class rayTraceList_t {
@@ -43,14 +43,14 @@ public:
     CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
 
     CUDA_CALLABLE_MEMBER
-    void add( unsigned cell, gpuRayFloat_t dist);
+    void add( const unsigned cell, const gpuRayFloat_t dist);
 
     CUDA_CALLABLE_MEMBER void clear() { reset(); }
     CUDA_CALLABLE_MEMBER void reset() { N = 0; }
     CUDA_CALLABLE_MEMBER unsigned size() const { return N; }
 
-    CUDA_CALLABLE_MEMBER unsigned id(size_t i) const { return CellId[i]; }
-    CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
+    CUDA_CALLABLE_MEMBER unsigned id(const size_t i) const { return CellId[i]; }
+    CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(const size_t i) const { return distance[i]; }
 };
 
 template<unsigned DIM = 3>
@@ -62,8 +62,8 @@ public:
     const unsigned N = DIM;
     singleDimRayTraceMap_t traceMapList[DIM];
 
-    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t& operator[] (size_t i ) { return traceMapList[i];}
-    CUDA_CALLABLE_MEMBER const singleDimRayTraceMap_t& operator[] (size_t i ) const { return traceMapList[i];}
+    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t& operator[] (const size_t i ) { return traceMapList[i];}
+    CUDA_CALLABLE_MEMBER const singleDimRayTraceMap_t& operator[] ( const size_t i ) const { return traceMapList[i];}
 
 };
 

@@ -60,7 +60,9 @@ tallyCellSegment( const MonteRayMaterialList* pMatList,
         gpuFloatType_t weight,
         gpuTallyType_t opticalPathLength ) {
 
+#ifdef DEBUG
     const bool debug = false;
+#endif
 
     typedef gpuTallyType_t xs_t;
     typedef gpuTallyType_t attenuation_t;
@@ -68,9 +70,13 @@ tallyCellSegment( const MonteRayMaterialList* pMatList,
 
     xs_t totalXS = 0.0;
     unsigned numMaterials = getNumMats( pMatProps, cell);
+
+#ifdef DEBUG
     if( debug ) {
         printf("GPU::tallyCellSegment:: cell=%d, numMaterials=%d\n", cell, numMaterials);
     }
+#endif
+
     for( unsigned i=0; i<numMaterials; ++i ) {
 
         unsigned matID = getMatID(pMatProps, cell, i);
@@ -95,9 +101,11 @@ tallyCellSegment( const MonteRayMaterialList* pMatList,
 
     gpu_atomicAdd( &tally[cell], score);
 
+#ifdef DEBUG
     if( debug ) {
         printf("GPU::tallyCellSegment:: total score=%f\n", tally[cell] );
     }
+#endif
 
     return cellOpticalPathLength;
 }

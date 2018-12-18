@@ -514,9 +514,12 @@ MonteRay_SpatialGrid::getNumVerticesSq(unsigned i) const{
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances) const {
+
+#ifdef DEBUG
     const bool debug = false;
 
     if( debug ) printf("MonteRay_SpatialGrid::rayTrace(rayTraceList_t&, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
+#endif
 
     MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
@@ -524,7 +527,12 @@ MonteRay_SpatialGrid::rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Dir
     //            pos = (*transform).counterTransformPos( pos );
     //            dir = (*transform).counterTransformDir( dir );
     //        }
+
+
+#ifdef DEBUG
     if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- calling grid system rayTrace \n");
+#endif
+
     pGridSystem->rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
     return;
 }
@@ -532,9 +540,12 @@ MonteRay_SpatialGrid::rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Dir
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_SpatialGrid::rayTrace(int* global_indices, gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances) const {
-    const bool debug = false;
 
+#ifdef DEBUG
+    const bool debug = false;
     if( debug ) printf("MonteRay_SpatialGrid::rayTrace(int* global_indices, int* gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
+#endif
+
     MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
     //        if( transform ) {
@@ -544,7 +555,10 @@ MonteRay_SpatialGrid::rayTrace(int* global_indices, gpuRayFloat_t* distances, Po
     rayTraceList_t rayTraceList;
     rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
 
+#ifdef DEBUG
     if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayTraceList.size());
+#endif
+
     for( unsigned i=0; i< rayTraceList.size(); ++i ) {
         global_indices[i] = rayTraceList.id(i);
         distances[i] = rayTraceList.dist(i);

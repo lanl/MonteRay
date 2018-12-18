@@ -75,13 +75,17 @@ PA( MonteRayParallelAssistant::getInstance() )
     usingNextEventEstimator = true;
     initialize();
     kernel = [&] ( void ) {
+#ifdef DEBUG
         const bool debug = false;
+#endif
 
         //copyPointDetToGPU();
 
         if( currentBank->size() > 0 ) {
             //if( PA.getWorkGroupRank() != 0 ) { return; }
+#ifdef DEBUG
             if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
+#endif
             pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), stream1.get() );
         }
     };
@@ -204,8 +208,10 @@ void
 RayListController<GRID_T,N>::flush(bool final){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
+#ifdef DEBUG
     const bool debug = false;
     if( debug ) std::cout << "Debug: RayListController<N>::flush\n";
+#endif
 
     if( isSendingToFile() ) { flushToFile(final); }
 
@@ -260,6 +266,7 @@ void
 RayListController<GRID_T,N>::flushToFile(bool final){
     if( PA.getWorldRank() != 0 ) { return; }
 
+#ifdef DEBUG
     const bool debug = false;
 
     if( debug ) {
@@ -269,10 +276,13 @@ RayListController<GRID_T,N>::flushToFile(bool final){
             std::cout << "Debug: RayListController::flushToFile - starting -- final = false \n";
         }
     }
+#endif
 
     if( ! fileIsOpen ) {
         try {
+#ifdef DEBUG
             if( debug ) std::cout << "Debug: RayListController::flushToFile - opening file, filename=" << outputFileName << "\n";
+#endif
             currentBank->openOutput( outputFileName );
         } catch ( ... ) {
             std::stringstream msg;
@@ -286,7 +296,9 @@ RayListController<GRID_T,N>::flushToFile(bool final){
     }
 
     try {
+#ifdef DEBUG
         if( debug )  std::cout << "Debug: RayListController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
+#endif
         currentBank->writeBank();
     } catch ( ... ) {
         std::stringstream msg;
@@ -300,7 +312,9 @@ RayListController<GRID_T,N>::flushToFile(bool final){
 
     if( final ) {
         try {
+#ifdef DEBUG
             if( debug ) std::cout << "Debug: RayListController::flushToFile - file flush, closing collision file\n";
+#endif
             currentBank->closeOutput();
         } catch ( ... ) {
             std::stringstream msg;

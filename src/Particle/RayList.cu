@@ -7,9 +7,13 @@ template<unsigned N>
 CUDAHOST_CALLABLE_MEMBER
 RayList_t<N>::RayList_t(RayListSize_t num) {
     if( num == 0 ) { num = 1; }
+
+#ifdef DEBUG
     if( Base::debug ) {
         std::cout << "RayList_t::RayList_t(n), n=" << num << " \n";
     }
+#endif
+
     reallocate( num );
 }
 
@@ -49,9 +53,12 @@ CUDAHOST_CALLABLE_MEMBER void
 RayList_t<N>::copy(const RayList_t<N>* rhs) {
 
 #ifdef __CUDACC__
+
+#ifdef DEBUG
     if( Base::debug ) {
         std::cout << "Debug: RayList_t::copy (const RayList_t<N>& rhs) \n";
     }
+#endif
 
     if( Base::isCudaIntermediate && rhs->isCudaIntermediate ) {
         throw std::runtime_error("RayList_t::copy -- can NOT copy CUDA intermediate to CUDA intermediate.");

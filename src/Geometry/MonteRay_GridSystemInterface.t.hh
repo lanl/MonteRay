@@ -30,12 +30,18 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
     const gpuRayFloat_t Epsilon = 100.0 * DBL_EPSILON;
 #endif
 #endif
+
     const bool outward = OUTWARD;
 
+#ifdef DEBUG
     const bool debug = false;
+#endif
+
+#ifdef DEBUG
     if( debug ){
         printf("Debug: MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection -- \n");
     }
+#endif
 
     // Test to see if very near the surface and directed outward.
     // If so skip the surface
@@ -102,9 +108,12 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
             minDistance = rayDistances.R2;
             maxDistance = rayDistances.R1;
         }
+
+#ifdef DEBUG
         if( debug ){
             printf("Debug: minDistance=%f, maxDistance=%f\n", minDistance, maxDistance);
         }
+#endif
 
         if( minDistance == inf ) {
             // ray doesn't cross cylinder, terminate search

@@ -29,9 +29,11 @@ MonteRayTally::copy(const MonteRayTally* rhs) {
         throw std::runtime_error( "MonteRayTally::copy -- tally not initialized!!");
     }
 
+#ifdef DEBUG
     if( debug ) {
         std::cout << "Debug: MonteRayTally::copy(const MonteRayTally* rhs) \n";
     }
+#endif
 
     if( isCudaIntermediate && rhs->isCudaIntermediate ) {
         throw std::runtime_error("MonteRayTally::copy -- can NOT copy CUDA intermediate to CUDA intermediate.");
@@ -50,7 +52,11 @@ MonteRayTally::copy(const MonteRayTally* rhs) {
 
         if( data_size == 0 ) {
             pData = (gpuTallyType_t*) MONTERAYDEVICEALLOC( (rhs->data_size)*sizeof(gpuTallyType_t), std::string("device - MonteRayTally::pData") );
+
+#ifdef DEBUG
             if( debug ) printf("Debug: MonteRayTally::copy -- allocated pData on the device ptr=%p, size = %d\n",pData, rhs->data_size);
+#endif
+
         }
         MonteRayMemcpy( pData, rhs->pData, rhs->data_size*sizeof(gpuTallyType_t), cudaMemcpyHostToDevice );
 
@@ -59,7 +65,10 @@ MonteRayTally::copy(const MonteRayTally* rhs) {
         numSpatialBins = rhs->numSpatialBins;
     } else {
         // device to host
+
+#ifdef DEBUG
         if( debug ) printf("Debug: MonteRayTally::copy -- device to host , host pData=%p, device pData ptr=%p, nElements=%d\n", pData, rhs->pData, data_size);
+#endif
 
         gpuTallyType_t* pTempGPUTally =  (gpuTallyType_t*) MONTERAYHOSTALLOC( (data_size)*sizeof( gpuTallyType_t ), isManagedMemory, std::string("MonteRayTally::copy::pTempGPUTally") );
         MonteRayMemcpy( pTempGPUTally, rhs->pData, (data_size)*sizeof(gpuTallyType_t), cudaMemcpyDeviceToHost );

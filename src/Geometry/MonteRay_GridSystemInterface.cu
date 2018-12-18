@@ -12,7 +12,7 @@ namespace MonteRay {
 
 CUDA_CALLABLE_MEMBER
 void
-singleDimRayTraceMap_t::add( int cell, gpuRayFloat_t dist) {
+singleDimRayTraceMap_t::add( const int cell, const gpuRayFloat_t dist) {
     MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
     CellId[N] = cell;
     distance[N] = dist;
@@ -21,7 +21,7 @@ singleDimRayTraceMap_t::add( int cell, gpuRayFloat_t dist) {
 
 CUDA_CALLABLE_MEMBER
 void
-rayTraceList_t::add( unsigned cell, gpuRayFloat_t dist) {
+rayTraceList_t::add( const unsigned cell, const gpuRayFloat_t dist) {
     MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
     CellId[N] = cell;
     distance[N] = dist;
@@ -34,6 +34,7 @@ void
 MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t<NUMDIM>& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances ) const {
     // Order the distance crossings to provide a rayTrace
 
+#ifdef DEBUG
     const bool debug = false;
 
     if( debug ) {
@@ -49,6 +50,7 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
             }
         }
     }
+#endif
 
     unsigned start[NUMDIM]; // current location in the distance[i] vector
     unsigned   end[NUMDIM]; //    last location in the distance[i] vector
@@ -60,7 +62,9 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         maxNumCrossings += end[i];
     }
 
+#ifdef DEBUG
     if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- maxNumCrossings=%d\n",maxNumCrossings);
+#endif
 
     // reset raylist
     rayTraceList.reset();
@@ -80,11 +84,13 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
             }
         }
 
+#ifdef DEBUG
         if( debug )  {
             for( unsigned d = 0; d<NUMDIM; ++d) {
                 printf( "Debug: GridSystemInterface::orderCrossings -- dim=%u, minDistance[%u]=%f\n",d, d, minDistances[d]);
             }
         }
+#endif
 
         //unsigned minDim = std::distance(minDistances, std::min_element(minDistances,minDistances+DIM) );
         unsigned minDim = 0;
@@ -96,8 +102,10 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
             }
         }
 
+#ifdef DEBUG
         if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- minDim=%d\n",minDim);
         if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- minDist=%f\n",minDist);
+#endif
 
         //indices[minDim] = distances[minDim][start[minDim]].first;
         indices[minDim] = distances[minDim].id( start[minDim] );
@@ -105,10 +113,12 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         // test for outside of the grid
         outside = isOutside( indices );
 
+#ifdef DEBUG
         if( debug ) {
             if( outside )  printf( "Debug: ray is outside \n" );
             if( !outside ) printf( "Debug: ray is inside \n" );
         }
+#endif
 
         //gpuRayFloat_t currentDistance = distances[minDim][start[minDim]].second;
         gpuRayFloat_t currentDistance = distances[minDim].dist( start[minDim] );
@@ -127,6 +137,7 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
             }
             rayTraceList.add( global_index, deltaDistance );
 
+#ifdef DEBUG
             if( debug ) {
                 printf( "Debug: ****************** \n" );
                 printf( "Debug:  Entry Num    = %d\n", rayTraceList.size() );
@@ -135,12 +146,15 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
                 printf( "Debug:     index[2]  = %d\n", indices[2] );
                 printf( "Debug:     distance  = %f\n", deltaDistance );
             }
+#endif
+
         }
 
         if( currentDistance >= distance ) {
             break;
         }
 
+#ifdef DEBUG
         if( debug ) {
             if( start[minDim]+1 >= distances[minDim].size() ) {
                 printf( "Debug: Error - start[minDim]+1 >= distances[minDim].size() \n");
@@ -149,8 +163,9 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
                 printf( "Debug: distances[minDim].size() = %d\n", distances[minDim].size() );
             }
         }
+#endif
 
-        MONTERAY_ASSERT( minDim < 3 );
+        MONTERAY_ASSERT( minDim < NUMDIM );
         //MONTERAY_ASSERT( minDim < distances.size() );
         MONTERAY_ASSERT( start[minDim]+1 < distances[minDim].size() );
 
@@ -189,8 +204,11 @@ MonteRay_GridSystemInterface::orderCrossings<3U>(rayTraceList_t& rayTraceList, c
 CUDA_CALLABLE_MEMBER
 void
 MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, int index) const {
+#ifdef DEBUG
     const bool debug = false;
+
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
+#endif
 
     //	constexpr gpuRayFloat_t epsilon = std::numeric_limits<gpuRayFloat_t>::epsilon();
 #ifdef __CUDACC__
@@ -199,8 +217,9 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
     if( std::abs(dir) <= FLT_EPSILON ) { return; }
 #endif
 
-
+#ifdef DEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance  -- Bins=%p \n", &Bins );
+#endif
 
     int start_index = index;
     int cell_index = start_index;
@@ -212,7 +231,11 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
     }
 
     int nBins = Bins.getNumBins();
+
+#ifdef DEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - nBins=%d\n", nBins );
+#endif
+
     if( start_index >= nBins ) {
         if( dir > 0.0 ) {
             return;
@@ -224,7 +247,11 @@ MonteRay_GridSystemInterface::planarCrossingDistance(singleDimRayTraceMap_t& dis
 #else
     unsigned offset = int(std::signbit(-dir));
 #endif
+
+#ifdef DEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - offset=%d\n", offset );
+#endif
+
     int end_index = offset*(nBins-1);;
 
 #ifdef __CUDA_ARCH__

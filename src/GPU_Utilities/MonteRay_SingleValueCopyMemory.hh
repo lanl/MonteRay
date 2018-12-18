@@ -38,9 +38,11 @@ public:
     }
 
     void copy(const MonteRay_SingleValueCopyMemory<T>* rhs) {
+#ifdef DEBUG
         if( this->debug ) {
             std::cout << "Debug: 1- MonteRay_SingleValueCopyMemory::copy(const resultClass* rhs) \n";
         }
+#endif
 
         if( this->isCudaIntermediate && rhs->isCudaIntermediate ) {
             throw std::runtime_error("MonteRay_SingleValueCopyMemory::copy -- can NOT copy CUDA intermediate to CUDA intermediate.");

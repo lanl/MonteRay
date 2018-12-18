@@ -41,7 +41,10 @@ public:
     bool isCudaIntermediate = false;
 
     static const bool isManagedMemory = false;
+
+#ifdef DEBUG
     static const bool debug = false;
+#endif
 };
 
 } // end namespace

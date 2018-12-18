@@ -23,6 +23,7 @@ tallyCollision(const GRIDTYPE* pGrid,
         gpuTallyType_t* pTally,
         unsigned tid )
 {
+#ifdef DEBUG
     const bool debug = false;
 
     if( debug ) {
@@ -40,6 +41,7 @@ tallyCollision(const GRIDTYPE* pGrid,
                 p->index
         );
     }
+#endif
 
     typedef gpuTallyType_t enteringFraction_t;
 
@@ -149,7 +151,9 @@ CUDA_CALLABLE_KERNEL void rayTraceTally(
         const HashLookup* pHash,
         gpuTallyType_t* tally){
 
+#ifdef DEBUG
     const bool debug = false;
+#endif
 
 #ifdef __CUDACC__
     unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -159,11 +163,14 @@ CUDA_CALLABLE_KERNEL void rayTraceTally(
 
     unsigned num = pCP->size();
 
+#ifdef DEBUG
     if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
+#endif
 
     while( tid < num ) {
         Ray_t<N> p = pCP->getParticle(tid);
 
+#ifdef DEBUG
         if( debug ) {
             printf("--------------------------------------------------------------------------------------------------------\n");
             printf("GPU::rayTraceTally:: tid=%d\n", tid );
@@ -177,6 +184,7 @@ CUDA_CALLABLE_KERNEL void rayTraceTally(
             printf("GPU::rayTraceTally:: weight=%f\n", p.weight[0] );
             printf("GPU::rayTraceTally:: index=%d\n", p.index );
         }
+#endif
 
         tallyCollision(pGrid, pMatList, pMatProps, pHash, &p, tally);
 

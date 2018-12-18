@@ -26,9 +26,13 @@ template<typename GRID_T>
 CUDAHOST_CALLABLE_MEMBER
 MonteRayNextEventEstimator<GRID_T>::MonteRayNextEventEstimator(unsigned num) {
     if( num == 0 ) { num = 1; }
+
+#ifdef DEBUG
     if( Base::debug ) {
         std::cout << "MonteRayNextEventEstimator::MonteRayNextEventEstimator(n), n=" << num << " \n";
     }
+#endif
+
     reallocate(num);
 }
 
@@ -127,9 +131,12 @@ MonteRayNextEventEstimator<GRID_T>::copy(const MonteRayNextEventEstimator* rhs) 
     }
 
 #ifdef __CUDACC__
+
+#ifdef DEBUG
     if( Base::debug ) {
         std::cout << "Debug: MonteRayNextEventEstimator::copy (const MonteRayNextEventEstimator* rhs) \n";
     }
+#endif
 
     if( Base::isCudaIntermediate && rhs->isCudaIntermediate ) {
         throw std::runtime_error(" MonteRayNextEventEstimator::copy -- can NOT copy CUDA intermediate to CUDA intermediate.");
@@ -189,10 +196,12 @@ MonteRayNextEventEstimator<GRID_T>::copy(const MonteRayNextEventEstimator* rhs) 
     }
 
 
-
+#ifdef DEBUG
     if( Base::debug ) {
         std::cout << "Debug: MonteRayNextEventEstimator::copy -- exiting." << std::endl;
     }
+#endif
+
 #else
 
 #endif
@@ -268,10 +277,12 @@ CUDA_CALLABLE_MEMBER
 typename MonteRayNextEventEstimator<GRID_T>::tally_t
 MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
 
+#ifdef DEBUG
     const bool debug = false;
+#endif
 
     if( ray.detectorIndex >= nUsed ) {
-        printf("Debug: MonteRayNextEventEstimator::calcScore -- ray.detectorIndex < nUsed,  ray.detectorIndex = %d, nUsed  = %d\n", ray.detectorIndex, nUsed );
+        printf("ERROR: MonteRayNextEventEstimator::calcScore -- ray.detectorIndex < nUsed,  ray.detectorIndex = %d, nUsed  = %d\n", ray.detectorIndex, nUsed );
     }
     MONTERAY_ASSERT( ray.detectorIndex < nUsed);
     tally_t score = 0.0;
@@ -288,7 +299,10 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
             ray.detectorIndex,
             pos,
             dir );
+
+#ifdef DEBUG
     if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- distance to detector = %20.12f\n",dist );
+#endif
 
     gpuFloatType_t time = ray.time + dist / ray.speed();
 
@@ -306,16 +320,23 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
 
         tally_t partialScore = 0.0;
 
+#ifdef DEBUG
         if( debug ) {
             printf("Debug: MonteRayNextEventEstimator::calcScore -- energyIndex=%d, energy=%f, weight=%f\n", energyIndex, energy,  weight);
         }
+#endif
+
         gpuFloatType_t materialXS[MAXNUMMATERIALS];
         for( unsigned i=0; i < pMatList->numMaterials; ++i ){
+#ifdef DEBUG
             if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d\n", i);
+#endif
             materialXS[i] = getTotalXS( pMatList, i, energy, 1.0);
+#ifdef DEBUG
             if( debug ) {
                 printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d, materialXS=%f\n", i, materialXS[i]);
             }
+#endif
         }
 
         tally_t opticalThickness = 0.0;
@@ -326,30 +347,41 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
 
             gpuFloatType_t totalXS = 0.0;
             unsigned numMaterials = getNumMats( pMatProps, cell);
+
+#ifdef DEBUG
             if( debug ) {
                 printf("Debug: MonteRayNextEventEstimator::calcScore -- cell=%d, cellDistance=%f, numMaterials=%d\n", cell, cellDistance, numMaterials);
             }
+#endif
+
             for( unsigned matIndex=0; matIndex<numMaterials; ++matIndex ) {
                 unsigned matID = getMatID(pMatProps, cell, matIndex);
                 gpuFloatType_t density = getDensity(pMatProps, cell, matIndex );
                 gpuFloatType_t xs = materialXS[matID]*density;
                 totalXS += xs;
+#ifdef DEBUG
                 if( debug ) {
                     printf("Debug: MonteRayNextEventEstimator::calcScore -- materialID=%d, density=%f, materialXS=%f, xs=%f, totalxs=%f\n", matID, density, materialXS[matID], xs, totalXS);
                 }
+#endif
             }
 
             opticalThickness += totalXS * cellDistance;
+#ifdef DEBUG
             if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- optialThickness= %20.12f\n",opticalThickness );
+#endif
         }
 
         partialScore = ( weight / (2.0 * MonteRay::pi * dist*dist)  ) * exp( - opticalThickness);
         score += partialScore;
     }
 
+#ifdef DEBUG
     if( debug ) {
         printf("Debug: MonteRayNextEventEstimator::calcScore -- value=%e .\n" , score);
     }
+#endif
+
 //    gpu_atomicAdd( &tally[ray.detectorIndex], score );
     pTally->score(score, ray.detectorIndex, time);
 
@@ -361,12 +393,14 @@ template<unsigned N>
 CUDA_CALLABLE_MEMBER
 void
 MonteRayNextEventEstimator<GRID_T>::score( const RayList_t<N>* pRayList, unsigned tid ) {
+#ifdef DEBUG
     const bool debug = false;
 
     if( debug ) {
         printf("Debug: MonteRayNextEventEstimator::score -- tid=%d, particle=%d .\n",
                 tid,  pRayList->points[tid].particleType);
     }
+#endif
 
     // Neutrons are not yet supported
     if( pRayList->points[tid].particleType == neutron ) return;
@@ -463,11 +497,13 @@ MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsi
 template<typename GRID_T, unsigned N>
 CUDA_CALLABLE_KERNEL
 void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList ) {
+#ifdef DEBUG
     const bool debug = false;
 
     if( debug ) {
         printf("Debug: MonteRayNextEventEstimator::kernel_ScoreRayList\n");
     }
+#endif
 
 #ifdef __CUDACC__
     unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -477,9 +513,13 @@ void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_
 
     unsigned num = pRayList->size();
     while( tid < num ) {
+
+#ifdef DEBUG
         if( debug ) {
             printf("Debug: MonteRayNextEventEstimator::kernel_ScoreRayList -- tid=%d\n", tid);
         }
+#endif
+
         ptr->score(pRayList,tid);
 
 #ifdef __CUDACC__
@@ -532,12 +572,6 @@ void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, in
         kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr );
     } else {
         kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr );
-    }
-    if( debug ) {
-        cudaError_t cudaerr = cudaDeviceSynchronize();
-        if( cudaerr != cudaSuccess ) {
-            printf("MonteRayNextEventEstimator::launch_ScoreRayList -- kernel_ScoreRayList launch failed with error \"%s\".\n", cudaGetErrorString(cudaerr));
-        }
     }
 #else
     // Debug compile

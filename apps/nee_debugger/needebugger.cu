@@ -8,15 +8,16 @@
 #include "gpuTally.hh"
 
 #include "MonteRay_timer.hh"
-#include "RayListController.hh"
+#include "RayListController.t.hh"
 #include "GridBins.hh"
+#include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MonteRay_MaterialProperties.t.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 
 namespace nee_debugger_app {
@@ -39,6 +40,10 @@ nee_debugger::checkFileExists(const std::string& filename){
 
 void
 nee_debugger::launch(const std::string& optBaseName){
+
+    using Geom_t = MonteRay_SpatialGrid;
+    //using Geom_t = GridBins;
+
     // next-event estimator
     // test nee save state file exists
     std::string baseName = optBaseName + std::string(".bin");
@@ -46,7 +51,7 @@ nee_debugger::launch(const std::string& optBaseName){
     std::string filename = std::string("nee_state_") + baseName;
     checkFileExists(filename);
 
-    MonteRayNextEventEstimator<GridBins> estimator(0);
+    MonteRayNextEventEstimator<Geom_t> estimator(0);
     estimator.readFromFile( filename );
 
     // raylist
@@ -58,7 +63,7 @@ nee_debugger::launch(const std::string& optBaseName){
     // geometry
     filename = std::string("geometry_") + baseName;
     checkFileExists(filename);
-    GridBins grid;
+    Geom_t grid;
     grid.readFromFile( filename );
 
     // material properties

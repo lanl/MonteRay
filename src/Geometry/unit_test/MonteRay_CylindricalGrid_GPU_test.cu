@@ -78,9 +78,12 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
         }
 
         void copy(const resultClass* rhs) {
+
+#ifdef DEBUG
             if( this->debug ) {
                 std::cout << "Debug: 1- resultClass::copy(const resultClass* rhs) \n";
             }
+#endif
 
             if( this->isCudaIntermediate && rhs->isCudaIntermediate ) {
                 throw std::runtime_error("resultClass::copy -- can NOT copy CUDA intermediate to CUDA intermediate.");

@@ -314,7 +314,9 @@ public:
     void addCollisionLocal(unsigned targetRank, const COLLISION_T& collision) {
         MONTERAY_ASSERT( targetRank < nRanks );
 
+#ifdef DEBUG
         const bool debug = false;
+#endif
 
         // store particle in local memory
         bool stored = false;
@@ -333,7 +335,10 @@ public:
                 // store particle
                 ptrLocalCollisionPointList[ getCollisionBufferOffset(targetRank,currentBucket)  + header->size] = collision;
                 ++header->size;
+
+#ifdef DEBUG
                 if( debug ) printf( "Debug: addCollisionLocal - add particle, rank = %d, bucket = %d, size = %d\n", targetRank, currentBucket, header->size );
+#endif
 
                 stored = true;
                 if( header->size == particlesPerBucket ) {
@@ -450,7 +455,9 @@ public:
     }
 
     COLLISION_T getCollisionFromLocal( unsigned targetRank, unsigned bucket, unsigned i ){
+#ifdef DEBUG
         const bool debug = false;
+#endif
 
         if( rank != 0 ) {
             throw std::runtime_error("SharedRayList::getCollisionFromLocal -- can only perform operation from rank 0 ");
@@ -458,7 +465,10 @@ public:
         unsigned offset = getCollisionBufferOffset(targetRank,bucket);
         unsigned index = offset + i;
 
+#ifdef DEBUG
         if( debug ) printf( "Debug: getCollisionFromLocal -- index = %d, x=%f\n",index,ptrLocalCollisionPointList[index].pos[0]);
+#endif
+
         return ptrLocalCollisionPointList[ index ];
     }
 

@@ -35,9 +35,11 @@ SUITE( CopyMemory_tester ) {
         }
 
         void copy(const testCopyClass* rhs) {
+#ifdef DEBUG
             if( debug ) {
                 std::cout << "Debug: testCopyClass::operator= (const RayList_t<N>& rhs) \n";
             }
+#endif
 
             if( isCudaIntermediate && rhs->isCudaIntermediate ) {
                 throw std::runtime_error("RayList_t::operator= -- can NOT copy CUDA intermediate to CUDA intermediate.");
