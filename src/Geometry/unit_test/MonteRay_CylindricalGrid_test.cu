@@ -66,7 +66,7 @@ SUITE( MonteRay_CylindricalGrid_basic_tests ) {
 
         CHECK_EQUAL(  3, pCylindrical->getNumBins(0) );
         CHECK_EQUAL( 20, pCylindrical->getNumBins(1) );
-        CHECK_EQUAL(  1, pCylindrical->getNumBins(2) );
+        //CHECK_EQUAL(  1, pCylindrical->getNumBins(2) );
     }
 
     TEST( ctor_2args ) {
@@ -76,7 +76,7 @@ SUITE( MonteRay_CylindricalGrid_basic_tests ) {
 
         CHECK_EQUAL(  3, pCylindrical->getNumBins(0) );
         CHECK_EQUAL( 20, pCylindrical->getNumBins(1) );
-        CHECK_EQUAL(  1, pCylindrical->getNumBins(2) );
+        //CHECK_EQUAL(  1, pCylindrical->getNumBins(2) );
 
         CHECK_CLOSE(   1.3, pCylindrical->getRVertex(0), 1e-5 );
         CHECK_CLOSE( -10.1, pCylindrical->getZVertex(0), 1e-5 );

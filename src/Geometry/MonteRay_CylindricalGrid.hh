@@ -63,7 +63,7 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuRayFloat_t distance,  bool outsideDistances=false) const;
+    rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t&, const GridBins_t::Position_t&, const gpuRayFloat_t distance,  bool outsideDistances=false) const;
 
     CUDA_CALLABLE_MEMBER
     void
@@ -71,7 +71,7 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, unsigned rIndex, gpuRayFloat_t distance ) const;
+    radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, const double rSq, const unsigned rIndex, const gpuRayFloat_t distance) const;
 
     CUDA_CALLABLE_MEMBER
     void
@@ -93,6 +93,7 @@ public:
 
 private:
     static constexpr gpuRayFloat_t inf = std::numeric_limits<gpuRayFloat_t>::infinity();
+    static const unsigned COORD_DIM = 2;
 
     pGridInfo_t pRVertices = nullptr;
     pGridBins_t pZVertices = nullptr;
@@ -104,7 +105,7 @@ private:
 
     //bool regular = false;
 
-    const bool debug = false;
+    static const bool debug = false;
 };
 
 } /* namespace MonteRay */

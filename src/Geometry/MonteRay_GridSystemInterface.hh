@@ -16,7 +16,7 @@ private:
     gpuRayFloat_t distance[MAXNUMVERTICES];
 
 public:
-    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t() : N(0) {}
+    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t() {}
     CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(unsigned n) : N(n) {}
     CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
 
@@ -31,14 +31,14 @@ public:
     CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
 };
 
-struct rayTraceList_t {
+class rayTraceList_t {
 private:
-    unsigned N;
+    unsigned N = 0;
     unsigned CellId[MAXNUMVERTICES*2];
     gpuRayFloat_t distance[MAXNUMVERTICES*2];
 
 public:
-    CUDA_CALLABLE_MEMBER rayTraceList_t() : N(0) {}
+    CUDA_CALLABLE_MEMBER rayTraceList_t() {}
     CUDA_CALLABLE_MEMBER rayTraceList_t(unsigned n) : N(n) {}
     CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
 
@@ -53,13 +53,14 @@ public:
     CUDA_CALLABLE_MEMBER gpuRayFloat_t dist(size_t i) const { return distance[i]; }
 };
 
+template<unsigned DIM = 3>
 class multiDimRayTraceMap_t {
 public:
     CUDA_CALLABLE_MEMBER multiDimRayTraceMap_t(){}
     CUDA_CALLABLE_MEMBER ~multiDimRayTraceMap_t(){}
 
-    const unsigned N = 3 ;  // hardcoded to 3D for now.
-    singleDimRayTraceMap_t traceMapList[3];
+    const unsigned N = DIM;
+    singleDimRayTraceMap_t traceMapList[DIM];
 
     CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t& operator[] (size_t i ) { return traceMapList[i];}
     CUDA_CALLABLE_MEMBER const singleDimRayTraceMap_t& operator[] (size_t i ) const { return traceMapList[i];}
@@ -112,8 +113,9 @@ public:
     virtual MonteRay_GridSystemInterface* getDeviceInstancePtr(void) = 0;
 
 protected:
+    template<unsigned NUMDIM = 3>
     CUDA_CALLABLE_MEMBER
-    void orderCrossings( rayTraceList_t&, const multiDimRayTraceMap_t& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances=false ) const;
+    void orderCrossings( rayTraceList_t&, const multiDimRayTraceMap_t<NUMDIM>& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances=false ) const;
 
     CUDA_CALLABLE_MEMBER
     void planarCrossingDistance( singleDimRayTraceMap_t&, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, int index) const;

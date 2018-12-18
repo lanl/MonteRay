@@ -195,7 +195,7 @@ MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t
     rayTraceList.reset();
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
-    multiDimRayTraceMap_t distances;
+    multiDimRayTraceMap_t<3> distances;
     for( unsigned d=0; d<DIM; ++d){
         distances[d].reset();
 

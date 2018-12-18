@@ -28,10 +28,10 @@ rayTraceList_t::add( unsigned cell, gpuRayFloat_t dist) {
     ++N;
 }
 
-
+template<unsigned NUMDIM>
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances ) const {
+MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t<NUMDIM>& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances ) const {
     // Order the distance crossings to provide a rayTrace
 
     const bool debug = false;
@@ -42,7 +42,7 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
     }
 
     if( debug )  {
-        for( unsigned d = 0; d<DIM; ++d) {
+        for( unsigned d = 0; d<NUMDIM; ++d) {
             printf( "Debug: GridSystemInterface::orderCrossings -- dim=%d\n",d);
             for( unsigned i = 0; i<distances[d].size(); ++i) {
                 printf( "Debug: ----------------------------------- -- distances[%d].id[%d]=%d, distances[%d].dist[%d]=%f\n", d,i, distances[d].id(i), d,i, distances[d].dist(i));
@@ -50,10 +50,12 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         }
     }
 
-    unsigned   end[3] = {0, 0, 0}; //    last location in the distance[i] vector
+    unsigned start[NUMDIM]; // current location in the distance[i] vector
+    unsigned   end[NUMDIM]; //    last location in the distance[i] vector
 
     unsigned maxNumCrossings = 0;
-    for( unsigned i=0; i<DIM; ++i){
+    for( unsigned i=0; i<NUMDIM; ++i){
+        start[i] = 0;
         end[i] = distances[i].size();
         maxNumCrossings += end[i];
     }
@@ -63,14 +65,14 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
     // reset raylist
     rayTraceList.reset();
 
-    gpuRayFloat_t minDistances[MAXDIM];
+    gpuRayFloat_t minDistances[NUMDIM];
 
     bool outside;
     gpuRayFloat_t priorDistance = 0.0;
-    unsigned start[3] = {0, 0, 0}; // current location in the distance[i] vector
+
     for( unsigned i=0; i<maxNumCrossings; ++i){
 
-        for( unsigned d = 0; d<DIM; ++d) {
+        for( unsigned d = 0; d<NUMDIM; ++d) {
             if( start[d] < end[d] ) {
                 minDistances[d] = distances[d].dist( start[d] );
             } else {
@@ -79,7 +81,7 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         }
 
         if( debug )  {
-            for( unsigned d = 0; d<DIM; ++d) {
+            for( unsigned d = 0; d<NUMDIM; ++d) {
                 printf( "Debug: GridSystemInterface::orderCrossings -- dim=%u, minDistance[%u]=%f\n",d, d, minDistances[d]);
             }
         }
@@ -87,7 +89,7 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
         //unsigned minDim = std::distance(minDistances, std::min_element(minDistances,minDistances+DIM) );
         unsigned minDim = 0;
         gpuRayFloat_t minDist = minDistances[0];
-        for( unsigned i = 1; i<DIM; ++i){
+        for( unsigned i = 1; i<NUMDIM; ++i){
             if( minDistances[i] < minDist ) {
                 minDim = i;
                 minDist = minDistances[i];
@@ -168,6 +170,21 @@ MonteRay_GridSystemInterface::orderCrossings(rayTraceList_t& rayTraceList, const
 
     return;
 }
+
+template
+CUDA_CALLABLE_MEMBER
+void
+MonteRay_GridSystemInterface::orderCrossings<1U>(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t<1U>& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances ) const;
+
+template
+CUDA_CALLABLE_MEMBER
+void
+MonteRay_GridSystemInterface::orderCrossings<2U>(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t<2U>& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances ) const;
+
+template
+CUDA_CALLABLE_MEMBER
+void
+MonteRay_GridSystemInterface::orderCrossings<3U>(rayTraceList_t& rayTraceList, const multiDimRayTraceMap_t<3U>& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances ) const;
 
 CUDA_CALLABLE_MEMBER
 void

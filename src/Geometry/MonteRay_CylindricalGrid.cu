@@ -252,22 +252,23 @@ MonteRay_CylindricalGrid::getVolume( unsigned index ) const {
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CylindricalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance,  bool outsideDistances/*=false*/) const {
-    if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- \n");
-    rayTraceList.reset();
-    int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
+MonteRay_CylindricalGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, const gpuRayFloat_t distance,  bool outsideDistances/*=false*/) const {
 
-    multiDimRayTraceMap_t distances;
+    if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- \n");
+
+    rayTraceList.reset();
+    int indices[COORD_DIM]; // current position indices in the grid, must be int because can be outside
+
+    multiDimRayTraceMap_t<COORD_DIM> distances;
 
     // Crossing distance in R direction
     {
-        distances[R].reset();
         gpuRayFloat_t particleRSq = calcParticleRSq( pos );
         indices[R] = pRVertices->getRadialIndexFromRSq(particleRSq);
 
         if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- R Direction -  dimension=%d, index=%d\n", R, indices[R]);
 
-        radialCrossingDistances( distances[R], pos, dir, indices[R], distance );
+        radialCrossingDistances( distances[R], pos, dir, particleRSq, indices[R], distance );
 
         if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- R Direction -  dimension=%d, number of radial crossings = %d\n", R, distances[R].size() );
 
@@ -303,8 +304,9 @@ CUDA_CALLABLE_MEMBER
 void
 MonteRay_CylindricalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const {
     if( d == R ) {
-        int index = pRVertices->getRadialIndexFromRSq(calcParticleRSq(pos));
-        radialCrossingDistances( rayTraceMap, pos, dir, index, distance );
+        double rSq = calcParticleRSq(pos);
+        int index = pRVertices->getRadialIndexFromRSq(rSq);
+        radialCrossingDistances( rayTraceMap, pos, dir, rSq, index, distance );
     }
 
     if( d == Z ) {
@@ -316,13 +318,11 @@ MonteRay_CylindricalGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, 
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CylindricalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, unsigned rIndex, gpuRayFloat_t distance ) const {
+MonteRay_CylindricalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, const double particleRSq, const unsigned rIndex, const gpuRayFloat_t distance ) const {
     //------ Distance to Sphere's Radial-boundary
     if( debug ) {
         printf("Debug: MonteRay_CylindricalGrid::radialCrossingDistances -- \n");
     }
-
-    gpuRayFloat_t particleRSq = calcParticleRSq( pos );
 
     gpuRayFloat_t           A = calcQuadraticA( dir );
     gpuRayFloat_t           B = calcQuadraticB( pos, dir);
@@ -354,13 +354,13 @@ void
 MonteRay_CylindricalGrid::radialCrossingDistances( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance ) const {
     gpuRayFloat_t particleRSq = calcParticleRSq( pos );
     unsigned rIndex = pRVertices->getRadialIndexFromRSq(particleRSq);
-    radialCrossingDistances( rayTraceMap, pos, dir, rIndex, distance );
+    radialCrossingDistances( rayTraceMap, pos, dir, particleRSq, rIndex, distance );
 }
 
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CylindricalGrid::getNumBins( unsigned d) const {
-    MONTERAY_ASSERT( d < 3 );
+    MONTERAY_ASSERT( d < COORD_DIM );
     if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins -- d= %d\n", d);
     if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins --calling pGridBins[d]->getNumBins()\n");
     if( d == 0 ) {
@@ -368,9 +368,6 @@ MonteRay_CylindricalGrid::getNumBins( unsigned d) const {
     }
     if( d == 1 ) {
         return pZVertices->getNumBins();
-    }
-    if( d == 2 ) {
-        return 1;
     }
     return 0;
 }
