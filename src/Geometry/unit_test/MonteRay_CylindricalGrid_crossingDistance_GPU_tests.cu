@@ -159,11 +159,16 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
 
         distances_t distances = crossingDistance( R, position, direction, distance );
 
-        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 4, distances.size() );
+        CHECK_EQUAL( 3, distances.id(0) );
+        CHECK_CLOSE( 3.5, distances.dist(0), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(1) );
+        CHECK_CLOSE( 3.5, distances.dist(1), 1e-5 );
+        CHECK_EQUAL( 3, distances.id(2) );
+        CHECK_CLOSE( 7.5, distances.dist(2), 1e-5 );
+        CHECK_EQUAL( 4, distances.id(3) );
+        CHECK_CLOSE( 9.0, distances.dist(3), 1e-5 );
 
-        checkDistances( std::vector<unsigned>({3,4}),
-                std::vector<gpuFloatType_t>({3.5f+last_dist, 9.0}),
-                distances );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_tanget_to_first_inner_cylinder_negY ) {
@@ -182,11 +187,20 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
 
         distances_t distances = crossingDistance( R, position, direction, distance );
 
-        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 4, distances.size() );
+        CHECK_EQUAL( 3, distances.id(0) );
+        CHECK_CLOSE( 3.5, distances.dist(0), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(1) );
+        CHECK_CLOSE( 3.5, distances.dist(1), 1e-5 );
+        CHECK_EQUAL( 3, distances.id(2) );
+        CHECK_CLOSE( 7.5, distances.dist(2), 1e-5 );
+        CHECK_EQUAL( 4, distances.id(3) );
+        CHECK_CLOSE( 9.0, distances.dist(3), 1e-5 );
 
-        checkDistances( std::vector<unsigned>({3,4}),
-                std::vector<gpuFloatType_t>({3.5f+last_dist, 9.0}),
-                distances );
+
+//        checkDistances( std::vector<unsigned>({3,4}),
+//                std::vector<gpuFloatType_t>({3.5f+last_dist, 9.0}),
+//                distances );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_tanget_to_first_second_cylinder_posY ) {
@@ -202,15 +216,19 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
 
         distances_t distances = crossingDistance( R, position, direction, distance );
 
-        CHECK_EQUAL( 4, distances.size() );
+        CHECK_EQUAL( 6, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
         CHECK_CLOSE( 4.0 - std::sqrt(9.0-4.0), distances.dist(0), 1e-5 );
         CHECK_EQUAL( 2, distances.id(1) );
-        CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(1), 1e-5 );
-        CHECK_EQUAL( 3, distances.id(2) );
-        CHECK_CLOSE( 4.0 + std::sqrt(25.0-4.0), distances.dist(2), 1e-5 );
-        CHECK_EQUAL( 4, distances.id(3) );
-        CHECK_CLOSE( distance, distances.dist(3), 1e-5 );
+        CHECK_CLOSE( 4.0, distances.dist(1), 1e-5 );
+        CHECK_EQUAL( 1, distances.id(2) );
+        CHECK_CLOSE( 4.0, distances.dist(2), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(3) );
+        CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(3), 1e-5 );
+        CHECK_EQUAL( 3, distances.id(4) );
+        CHECK_CLOSE( 4.0 + std::sqrt(25.0-4.0), distances.dist(4), 1e-5 );
+        CHECK_EQUAL( 4, distances.id(5) );
+        CHECK_CLOSE( distance, distances.dist(5), 1e-5 );
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_outward_from_Origin_posX_to_outside ) {

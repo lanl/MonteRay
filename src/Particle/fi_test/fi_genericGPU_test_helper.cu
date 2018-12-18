@@ -10,13 +10,11 @@
 template<unsigned N>
 FIGenericGPUTestHelper<N>::FIGenericGPUTestHelper(unsigned num){
     nCells = num;
-    tally = NULL;
-    grid_device = NULL;
 }
 
 template<unsigned N>
 FIGenericGPUTestHelper<N>::~FIGenericGPUTestHelper(){
-    if( tally != NULL ) {
+    if( tally ) {
         free( tally );
     }
 }
@@ -87,7 +85,14 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
         const MonteRayCrossSectionHost* pXS )
         {
     unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
+
+    if( tally ) {
+        free( tally );
+    }
     tally = (gpuTallyType_t*) malloc ( allocSize );
+    for( unsigned i=0; i<nCells; ++i) {
+        tally[i] = 0.0;
+    }
 
 #ifdef __CUDACC__
     gpuTallyType_t* tally_device;
@@ -372,7 +377,13 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
         {
 
     unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
+    if( tally ) {
+        free( tally );
+    }
     tally = (gpuTallyType_t*) malloc ( allocSize );
+    for( unsigned i=0; i < nCells; ++i ) {
+        tally[i] = 0.0;
+    }
 
 #ifdef __CUDACC__
     gpuTallyType_t* tally_device;

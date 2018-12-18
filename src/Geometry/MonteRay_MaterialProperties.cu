@@ -144,12 +144,12 @@ void MonteRay_MaterialProperties::copyToGPU(void) {
     CUDA_CHECK_RETURN( cudaMemcpy(ptrData_device, tempData, sizeof( MonteRay_MaterialProperties_Data ), cudaMemcpyHostToDevice));
 #else
 
-    if( ! ptrData ) {
-        ptrData = new MonteRay_MaterialProperties_Data;
+    delete ptrData;
 
-        // allocate target dynamic memory
-        MonteRay::ctor( ptrData, size(), numMatSpecs() );
-    }
+    ptrData = new MonteRay_MaterialProperties_Data;
+
+    // allocate target dynamic memory
+    MonteRay::ctor( ptrData, size(), numMatSpecs() );
 
     unsigned long long allocSize = sizeof(offset_t)*(ptrData->numCells+1);
     memcpy( ptrData->offset,  getOffsetData(), allocSize);

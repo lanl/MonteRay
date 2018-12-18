@@ -1,5 +1,7 @@
 #include <UnitTest++.h>
 
+#include <float.h>
+
 #include "MonteRay_CylindricalGrid.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayVector3D.hh"
@@ -92,7 +94,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 100.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 8,  distances.size() );
         checkDistances( std::vector<unsigned>({4,3,2,1,0,1,2,3}),
@@ -110,7 +112,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 6.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 5,  distances.size() );
         checkDistances( std::vector<unsigned>({4,3,2,1,0}),
@@ -128,7 +130,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 9.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 7,  distances.size() );
         checkDistances( std::vector<unsigned>({4,3,2,1,0,1,2}),
@@ -147,7 +149,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 9.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 2,  distances.size() );
         checkDistances( std::vector<unsigned>({3,2}),
@@ -167,9 +169,38 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 9.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
-        CHECK_EQUAL( 0, distances.size() );
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 3, distances.id(0) );
+        CHECK_CLOSE( 3.5, distances.dist(0), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(1) );
+        CHECK_CLOSE( 3.5, distances.dist(1), 1e-5 );
+    }
+    TEST( CrossingDistance_particle_almost_on_cylinder ) {
+        gridTestData data;
+        CylindricalGrid grid(2, data.pGridInfo );
+
+#if RAY_DOUBLEPRECISION < 1
+    const gpuRayFloat_t Epsilon = 100.0 * FLT_EPSILON / 2.0;
+#else
+    const gpuRayFloat_t Epsilon = 100.0 * DBL_EPSILON / 2.0;
+#endif
+
+        gpuFloatType_t x =  2.0 - Epsilon;
+        gpuFloatType_t y =  0.0;
+        Position_t position (  x, y, 0.0 );
+        Position_t direction(    1,   0,    0 );
+        gpuFloatType_t distance = 9.0;
+
+        singleDimRayTraceMap_t distances;
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+
+        CHECK_EQUAL( 3, distances.size() );
+        CHECK_EQUAL( 2, distances.id(0) );
+        CHECK_CLOSE( 1.0+Epsilon, distances.dist(0), 1e-5 );
+        CHECK_EQUAL( 3, distances.id(1) );
+        CHECK_CLOSE( 3.0+Epsilon, distances.dist(1), 1e-5 );
     }
     TEST( CrossingDistance_tanget_to_first_inner_cylinder_negY ) {
         gridTestData data;
@@ -183,9 +214,13 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 9.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
-        CHECK_EQUAL( 0, distances.size() );
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 3, distances.id(0) );
+        CHECK_CLOSE( 3.5, distances.dist(0), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(1) );
+        CHECK_CLOSE( 3.5, distances.dist(1), 1e-5 );
     }
     TEST( CrossingDistance_tanget_to_first_second_cylinder_posY ) {
         gridTestData data;
@@ -197,13 +232,17 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 9.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
-        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
         CHECK_CLOSE( 4.0 - std::sqrt(9.0-4.0), distances.dist(0), 1e-5 );
         CHECK_EQUAL( 2, distances.id(1) );
-        CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(1), 1e-5 );
+        CHECK_CLOSE( 4.0, distances.dist(1), 1e-5 );
+        CHECK_EQUAL( 1, distances.id(2) );
+        CHECK_CLOSE( 4.0, distances.dist(2), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(3) );
+        CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(3), 1e-5 );
     }
 
     TEST( CrossingDistance_outward_from_Origin_posX_to_outside ) {
@@ -216,7 +255,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 9.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -240,7 +279,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 4.5;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -264,7 +303,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 9.0;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -283,7 +322,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         gpuFloatType_t distance = 7.5;
 
         singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
 
         CHECK_EQUAL( 1, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );

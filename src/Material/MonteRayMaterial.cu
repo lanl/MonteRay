@@ -182,7 +182,7 @@ CUDA_CALLABLE_KERNEL void kernelGetTotalXS(MonteRayMaterial* pMat, gpuFloatType_
     return;
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(MonteRayMaterial* pMat, HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL void kernelGetTotalXS(MonteRayMaterial* pMat, const HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
     unsigned HashBin = getHashBin(pHash,E);
     results[0] = getTotalXS(pMat, pHash, HashBin, E, density);
     return;
@@ -348,7 +348,7 @@ gpuFloatType_t MonteRayMaterialHost::launchGetTotalXS(gpuFloatType_t E, gpuFloat
 
     MonteRayDeviceFree( result_device );
 #else
-    kernelGetTotalXS( ptr_device, energy, density, result);
+    kernelGetTotalXS( pMat, E, density, result);
 #endif
     return result[0];
 }
@@ -373,7 +373,7 @@ gpuFloatType_t MonteRayMaterialHost::launchGetTotalXSViaHash(HashLookupHost hash
 
     MonteRayDeviceFree( result_device );
 #else
-    kernelGetTotalXS( ptr_device, energy, density, result);
+    kernelGetTotalXS( pMat, hash.getPtr(), E, density, result);
 #endif
     return result[0];
 }

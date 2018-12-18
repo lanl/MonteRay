@@ -118,8 +118,9 @@ protected:
     CUDA_CALLABLE_MEMBER
     void planarCrossingDistance( singleDimRayTraceMap_t&, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, int index) const;
 
+    template<bool OUTWARD>
     CUDA_CALLABLE_MEMBER
-    bool radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index, bool outward ) const;
+    bool radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index) const;
 
 public:
     static constexpr unsigned OUTSIDE_GRID = UINT_MAX;

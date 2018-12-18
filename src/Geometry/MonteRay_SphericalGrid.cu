@@ -6,7 +6,7 @@
  */
 
 #include "MonteRayDefinitions.hh"
-#include "MonteRay_SphericalGrid.hh"
+#include "MonteRay_SphericalGrid.t.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
@@ -228,7 +228,7 @@ MonteRay_SphericalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTrace
     gpuRayFloat_t           B = calcQuadraticB( pos, dir);
 
     // trace inward
-    bool rayTerminated = radialCrossingDistanceSingleDirection(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex, false);
+    bool rayTerminated = radialCrossingDistanceSingleDirection<false>(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex);
 
     if( debug ) {
         printf("Debug: Inward ray trace size=%d\n",rayTraceMap.size());
@@ -242,7 +242,7 @@ MonteRay_SphericalGrid::radialCrossingDistances(singleDimRayTraceMap_t& rayTrace
     // trace outward
     if( ! rayTerminated ) {
         if( !isIndexOutside(R, rIndex) ) {
-            radialCrossingDistanceSingleDirection(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex, true);
+            radialCrossingDistanceSingleDirection<true>(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex);
         } else {
             rayTraceMap.add(rIndex, distance);
         }
@@ -257,18 +257,14 @@ MonteRay_SphericalGrid::radialCrossingDistances( singleDimRayTraceMap_t& rayTrac
     radialCrossingDistances( rayTraceMap, pos, dir, rIndex, distance );
 }
 
+template
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outward ) const {
-    // helper function to wrap generalized radialCrossingDistancesSingleDirection
-    gpuRayFloat_t particleRSq = calcParticleRSq( pos );
-    unsigned rIndex = pRVertices->getRadialIndexFromRSq(particleRSq);
+MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<true>( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance) const;
 
-    gpuRayFloat_t A = calcQuadraticA( dir );
-    gpuRayFloat_t B = calcQuadraticB( pos, dir);
-
-    // ray-trace
-    radialCrossingDistanceSingleDirection(rayTraceMap, *pRVertices, particleRSq, A, B, distance, rIndex, outward);
-}
+template
+CUDA_CALLABLE_MEMBER
+void
+MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<false>( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance) const;
 
 } /* namespace MonteRay */

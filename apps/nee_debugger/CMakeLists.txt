@@ -1,5 +1,10 @@
-add_executable ( nee_debugger main.cu needebugger.hh needebugger.cu )
+add_executable ( nee_debugger main.cc needebugger.hh needebugger.cu )
 add_dependencies( nee_debugger MonteRay )
+
+if(NOT enable_cuda )
+  set_source_files_properties(  needebugger.cu PROPERTIES LANGUAGE CXX )
+  set_source_files_properties(  needebugger.cu PROPERTIES COMPILE_FLAGS ${COMPILER_CPP_FILE_FLAG} )
+endif()
 
 target_include_directories(nee_debugger PUBLIC ${CMAKE_SOURCE_DIR}/src/Constants )
 target_include_directories(nee_debugger PUBLIC ${CMAKE_SOURCE_DIR}/src/CrossSection )

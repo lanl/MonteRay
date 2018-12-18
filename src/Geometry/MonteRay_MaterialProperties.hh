@@ -103,7 +103,7 @@ public:
     ///Default Dtor
     virtual ~MonteRay_MaterialProperties(void) {
         cudaDtor();
-        delete ptrData;
+        if( ptrData) delete ptrData;
     }
 
     void cudaDtor(void);
@@ -319,12 +319,12 @@ public:
     }
 private:
     pMemoryLayout_t pMemoryLayout;
-    MonteRay_MaterialProperties_Data* ptrData = NULL;
-    MonteRay_MaterialProperties_Data* tempData = NULL;
+    MonteRay_MaterialProperties_Data* ptrData = nullptr;
+    MonteRay_MaterialProperties_Data* tempData = nullptr;
     bool cudaCopyMade = false;
 
 public:
-    MonteRay_MaterialProperties_Data* ptrData_device = NULL;
+    MonteRay_MaterialProperties_Data* ptrData_device = nullptr;
 
 private:
 

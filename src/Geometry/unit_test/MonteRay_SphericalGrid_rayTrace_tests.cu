@@ -44,12 +44,12 @@ SUITE( SphericalGrid_Tests) {
         MonteRay_SphericalGrid_tester(unsigned d, GridBins_t* pBins ) :
             MonteRay_SphericalGrid(d,pBins) {}
 
+        template<bool OUTWARD>
         void radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap,
                 const Position_t& pos,
                 const Direction_t& dir,
-                gpuRayFloat_t distance,
-                bool outward ) const {
-            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection( rayTraceMap, pos, dir, distance, outward );
+                gpuRayFloat_t distance ) const {
+            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<OUTWARD>( rayTraceMap, pos, dir, distance );
         }
 
         void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,

@@ -79,9 +79,10 @@ protected:
     void
     radialCrossingDistances( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance ) const;
 
+    template<bool OUTWARD>
     CUDA_CALLABLE_MEMBER
     void
-    radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outward ) const;
+    radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance ) const;
 
 protected:
     CUDA_CALLABLE_MEMBER gpuRayFloat_t calcParticleRSq( const gpuRayFloat_t&  pos) const { return pos*pos; }

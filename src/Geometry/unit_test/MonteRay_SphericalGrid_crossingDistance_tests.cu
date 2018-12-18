@@ -38,12 +38,12 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         MonteRay_SphericalGrid_tester(unsigned d, GridBins_t* pBins ) :
             MonteRay_SphericalGrid(d,pBins) {}
 
+        template<bool OUTWARD>
         void radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap,
                 const Position_t& pos,
                 const Direction_t& dir,
-                gpuRayFloat_t distance,
-                bool outward ) const {
-            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection( rayTraceMap, pos, dir, distance, outward );
+                gpuRayFloat_t distance) const {
+            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<OUTWARD>( rayTraceMap, pos, dir, distance);
         }
 
         void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,
@@ -69,7 +69,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 100.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 8, distances.size() );
         CHECK_EQUAL( 4, distances.id(0) );
@@ -98,7 +98,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 100.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 6, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -123,7 +123,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 6.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 4, distances.id(0) );
@@ -146,7 +146,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 9.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
         CHECK_EQUAL( 7, distances.size() );
         CHECK_EQUAL( 4, distances.id(0) );
@@ -174,7 +174,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 9.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>(distances, position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -194,9 +194,13 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 9.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
-        CHECK_EQUAL( 0, distances.size() );
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 3, distances.id(0) );
+        CHECK_CLOSE( 3.5, distances.dist(0), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(1) );
+        CHECK_CLOSE( 3.5, distances.dist(1), 1e-5 );
     }
     TEST( CrossingDistance_tanget_to_first_inner_sphere_negY ) {
         gridTestData data;
@@ -210,9 +214,13 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 9.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
-        CHECK_EQUAL( 0, distances.size() );
+        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 3, distances.id(0) );
+        CHECK_CLOSE( 3.5, distances.dist(0), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(1) );
+        CHECK_CLOSE( 3.5, distances.dist(1), 1e-5 );
     }
     TEST( CrossingDistance_tanget_to_first_second_sphere_posY ) {
         gridTestData data;
@@ -224,13 +232,17 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 9.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, false);
+        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
 
-        CHECK_EQUAL( 2, distances.size() );
+        CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
         CHECK_CLOSE( 4.0 - std::sqrt(9.0-4.0), distances.dist(0), 1e-5 );
         CHECK_EQUAL( 2, distances.id(1) );
-        CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(1), 1e-5 );
+        CHECK_CLOSE( 4.0, distances.dist(1), 1e-5 );
+        CHECK_EQUAL( 1, distances.id(2) );
+        CHECK_CLOSE( 4.0, distances.dist(2), 1e-5 );
+        CHECK_EQUAL( 2, distances.id(3) );
+        CHECK_CLOSE( 4.0 + std::sqrt(9.0-4.0), distances.dist(3), 1e-5 );
     }
 
     TEST( CrossingDistance_outward_from_Origin_posX_to_outside ) {
@@ -243,7 +255,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 9.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -267,7 +279,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 4.5;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -290,7 +302,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 9.0;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -309,7 +321,7 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         gpuRayFloat_t distance = 7.5;
 
         distances_t distances;
-        grid.radialCrossingDistancesSingleDirection( distances, position, direction, distance, true);
+        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance );
 
         CHECK_EQUAL( 1, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );

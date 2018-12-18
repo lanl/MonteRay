@@ -24,8 +24,13 @@ FindMinPositiveRoot(Float_t A, Float_t B, Float_t C) {
     const Float_t NearEpsilon = 100.0 * std::numeric_limits<Float_t>::epsilon();
     Float_t minposRoot = std::numeric_limits<Float_t>::infinity();
 #else
+#if RAY_DOUBLEPRECISION < 1
     const Float_t NearEpsilon = 100.0 * FLT_EPSILON;
     Float_t minposRoot = CUDART_INF_F;
+#else
+    const Float_t NearEpsilon = 100.0 * DBL_EPSILON;
+    Float_t minposRoot = CUDART_INF;
+#endif
 #endif
 
     Float_t Discriminant = B*B - 4.0 * A * C;
@@ -62,9 +67,15 @@ FindPositiveRoots(Float_t A, Float_t B, Float_t C) {
     //constexpr Float_t inf = std::numeric_limits<double>::infinity();
     /// For doubles, NearEpsilon ~= 1.0e-14
 #ifndef __CUDA_ARCH__
-    const Float_t NearEpsilon = 100.0 * std::numeric_limits<Float_t>::epsilon();
+    //const Float_t NearEpsilon = 100.0 * std::numeric_limits<Float_t>::epsilon();
 #else
-    const Float_t NearEpsilon = 100.0 * FLT_EPSILON;
+#if RAY_DOUBLEPRECISION < 1
+    //const Float_t NearEpsilon = 100.0 * FLT_EPSILON;
+    Float_t minposRoot = CUDART_INF_F;
+#else
+    //const Float_t NearEpsilon = 100.0 * DBL_EPSILON;
+    Float_t minposRoot = CUDART_INF;
+#endif
 #endif
 
 
@@ -79,7 +90,9 @@ FindPositiveRoots(Float_t A, Float_t B, Float_t C) {
     // best to ignore the intersection since the enter/exit points are so close that
     // they become numerically difficult to differentiate, AND any tally contribution
     // would be negligible.
-    if( Discriminant < NearEpsilon ){
+
+    //if( Discriminant < NearEpsilon ){
+    if( Discriminant < 0.0 ){
         return roots;
     }
 
@@ -88,10 +101,12 @@ FindPositiveRoots(Float_t A, Float_t B, Float_t C) {
     Float_t root1 = temp/A;
     Float_t root2 = C/temp;
 
-    if( root1 > NearEpsilon )
+    //if( root1 > NearEpsilon )
+    if( root1 > 0.0 )
         roots.R1 = root1;
 
-    if( root2 > NearEpsilon )
+    //if( root2 > NearEpsilon )
+    if( root2 > 0.0 )
         roots.R2 = root2;
 
     return roots;
