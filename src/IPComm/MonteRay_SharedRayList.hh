@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstring>
 #include <type_traits>
+#include <atomic>
 
 #include "MonteRayTypes.hh"
 #include "MonteRayAssert.hh"
@@ -18,7 +19,7 @@ namespace MonteRay {
 
 struct bucket_header_t{
     unsigned size; // current number of collisions in bucket
-    bool done; // bucket is full or process is done with partial fill
+    std::atomic<bool> done; // bucket is full or process is done with partial fill
 };
 
 struct rank_info_t{
@@ -282,9 +283,11 @@ public:
 
     bool isBucketFull( unsigned targetRank, unsigned bucketID ) const {
         if( targetRank == 0 ) return false;
+        if( isBucketDone(targetRank, bucketID ) ) {
+            return true;
+        }
 
         bucket_header_t* header = getBucketHeader( targetRank, bucketID );
-        if( header->done ) return true;
         if( header->size >= particlesPerBucket ) return true;
         return false;
     }
@@ -293,7 +296,12 @@ public:
         if( targetRank == 0 ) return false;
 
         bucket_header_t* header = getBucketHeader( targetRank, bucketID );
-        return header->done;
+        
+        if( header->done.load() ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     unsigned bucketSize( unsigned targetRank, unsigned bucketID, int offset = 0 ) const {
@@ -317,6 +325,7 @@ public:
 
             bucket_header_t* header = getBucketHeader( targetRank, currentBucket );
             if( ! header->done ) {
+                bucket_header_t* header = getBucketHeader( targetRank, currentBucket );
                 //            if( header->size < particlesPerBucket ) {
                 //                if( header->size == 0 ) {
                 //                   header->done = false;
@@ -328,7 +337,7 @@ public:
 
                 stored = true;
                 if( header->size == particlesPerBucket ) {
-                    header->done = true;
+                    header->done.store( true );
                     ++currentBucket;
                 }
             } else {
@@ -427,11 +436,11 @@ public:
         for( unsigned i=0; i<nBuckets; ++i ){
             // search for full or done buckets;
             bucket_header_t* header = getBucketHeader( targetRank, i );
-            if( header->done && header->size > 0 ) {
+            if( isBucketDone(targetRank, i) && header->size > 0 ) {
                 unsigned offset = getCollisionBufferOffset(targetRank,i);
                 store_collision( ptrLocalCollisionPointList + offset, header->size  );
                 header->size = 0;
-                header->done = false;
+                header->done.store( false );
             }
         }
     }
@@ -503,7 +512,7 @@ public:
             for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
                 // search for full or done buckets;
                 bucket_header_t* header = getBucketHeader( targetRank, bucket );
-                header->done = true;
+                header->done.store( true );
             }
 
             // mark process as done;
@@ -530,7 +539,7 @@ public:
                 // search for full or done buckets;
                 bucket_header_t* header = getBucketHeader( targetRank, bucket );
                 header->size = 0U;
-                header->done = false;
+                header->done.store( false );
             }
         }
         if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
@@ -548,10 +557,10 @@ public:
         } else {
             getRankInfo(targetRank)->allDone = false;
             for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
-                // search for full or done buckets;
+                // reset buckets;
                 bucket_header_t* header = getBucketHeader( targetRank, bucket );
                 header->size = 0U;
-                header->done = false;
+                header->done.store( false );
             }
         }
         if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
