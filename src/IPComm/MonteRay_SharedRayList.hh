@@ -23,7 +23,7 @@ struct bucket_header_t{
 };
 
 struct rank_info_t{
-    bool allDone; // rank is done with work.
+    std::atomic<bool> allDone; // rank is done with work.
     unsigned currentBucket;
 };
 
@@ -487,7 +487,7 @@ public:
     bool isRankDone(unsigned targetRank) const {
         MONTERAY_ASSERT( targetRank < nRanks );
 
-        return getRankInfo(targetRank)->allDone;
+        return getRankInfo(targetRank)->allDone.load();
     }
 
     bool allEmpty() const {
@@ -526,7 +526,7 @@ public:
             }
 
             // mark process as done;
-            getRankInfo(targetRank)->allDone = true;
+            getRankInfo(targetRank)->allDone.store( true );
         }
     }
 
@@ -544,7 +544,7 @@ public:
             }
             nMaster = 0;
         } else {
-            getRankInfo(targetRank)->allDone = false;
+            getRankInfo(targetRank)->allDone.store( false );
             for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
                 // search for full or done buckets;
                 bucket_header_t* header = getBucketHeader( targetRank, bucket );
@@ -565,7 +565,7 @@ public:
         if( targetRank == 0 ) {
             nMaster = 0;
         } else {
-            getRankInfo(targetRank)->allDone = false;
+            getRankInfo(targetRank)->allDone.store( false );
             for( unsigned bucket=0; bucket<nBuckets; ++bucket ){
                 // reset buckets;
                 bucket_header_t* header = getBucketHeader( targetRank, bucket );
