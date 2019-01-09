@@ -22,7 +22,7 @@ CUDA_CALLABLE_MEMBER
 bool
 MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index ) const {
 #ifndef __CUDA_ARCH__
-    const gpuRayFloat_t Epsilon = 100.0 * std::numeric_limits<Float_t>::epsilon();
+    const gpuRayFloat_t Epsilon = 100.0 * std::numeric_limits<gpuRayFloat_t>::epsilon();
 #else
 #if RAY_DOUBLEPRECISION < 1
     const gpuRayFloat_t Epsilon = 100.0 * FLT_EPSILON;

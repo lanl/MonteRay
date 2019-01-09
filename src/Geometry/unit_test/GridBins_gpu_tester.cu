@@ -191,10 +191,10 @@ SUITE( GridBins_gpu_Tester ) {
 
     TEST_FIXTURE(GridBinsGPUHelper, ctor_class_getMaxNumVertices ) {
         copyToGPU();
-        CHECK_EQUAL( 1001, getMaxNumVertices() );
+        CHECK_EQUAL( 1000, getMaxNumVertices() );
         CHECK_EQUAL( 0,      getOffset(0) );
-        CHECK_EQUAL( 1001,   getOffset(1) );
-        CHECK_EQUAL( 1001*2, getOffset(2) );
+        CHECK_EQUAL( 1000,   getOffset(1) );
+        CHECK_EQUAL( 1000*2, getOffset(2) );
     }
 
     TEST_FIXTURE(GridBinsGPUHelper, class_setVertices ) {

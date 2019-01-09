@@ -180,6 +180,10 @@ void MonteRayMaterialListHost::copyToGPU(void) {
 
     // copy data
     CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( MonteRayMaterialList ), cudaMemcpyHostToDevice));
+
+    for( auto itr = ownedMaterials.begin(); itr != ownedMaterials.end(); ++itr) {
+          (*itr)->copyOwnedCrossSectionsToGPU();
+       }
 #endif
 }
 

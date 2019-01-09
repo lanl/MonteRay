@@ -13,10 +13,10 @@ SUITE( GridBins_Tester ) {
         //gpuReset();
 
         GridBins grid;
-        CHECK_EQUAL( 1001, grid.getMaxNumVertices() );
+        CHECK_EQUAL( 1000, grid.getMaxNumVertices() );
         CHECK_EQUAL( 0, grid.getOffset(0) );
-        CHECK_EQUAL( 1001, grid.getOffset(1) );
-        CHECK_EQUAL( 1001*2, grid.getOffset(2) );
+        CHECK_EQUAL( 1000, grid.getOffset(1) );
+        CHECK_EQUAL( 1000*2, grid.getOffset(2) );
     }
 
     TEST( class_setVertices ) {

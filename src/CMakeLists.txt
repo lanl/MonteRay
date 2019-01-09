@@ -8,6 +8,17 @@ message( STATUS "src/CmakeLists.txt: -- Starting")
 
 set( MonteRayLibName MonteRay )
 
+############################################
+#  Toolkit Version Creation
+#message( STATUS "%%%%%%%%%%DEBUG: Starting src/CmakeLists.txt")
+includeAllHeaders( ${TestDirNames} )
+
+set( ExportName "Toolkit" )
+
+set_property( GLOBAL PROPERTY NightlyCount "0" )
+
+addCMakeDirs()
+
 #################################################################################
 if( enable_cuda )
   # Create MonteRay CUDA library
@@ -15,8 +26,11 @@ if( enable_cuda )
   globCudaFiles( "${TestDirNames}" AllCudaFiles)
   set_source_files_properties( ${AllCudaFiles} PROPERTIES LANGUAGE CUDA )
 
-  cuda_add_library(${MonteRayLibName}  SHARED ${AllCudaFiles} )
+  cuda_add_library( ${MonteRayLibName} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Parameters/MonteRayDefinitions.hh )
+  #cuda_add_library(${MonteRayLibName}  SHARED ${AllCudaFiles} )
   cuda_include_directories( ${MPI_INCLUDE_DIRS} )
+  
+  target_link_libraries( ${MonteRayLibName} ${Toolkit_libs} )
   
   set_target_properties(${MonteRayLibName}  PROPERTIES CUDA_SEPERABLE_COMPILATION ON )
   target_link_libraries( ${MonteRayLibName} ${CUDA_LIB_PATH} ) 
@@ -31,16 +45,7 @@ else()
 endif()
 #################################################################################
 
-############################################
-#  Toolkit Version Creation
-#message( STATUS "%%%%%%%%%%DEBUG: Starting src/CmakeLists.txt")
-includeAllHeaders( ${TestDirNames} )
 
-set( ExportName "Toolkit" )
-
-set_property( GLOBAL PROPERTY NightlyCount "0" )
-
-addCMakeDirs()
 
 if( NOT enable_cuda )
     ############################################

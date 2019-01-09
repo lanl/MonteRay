@@ -77,6 +77,7 @@ public:
     ~MonteRayMaterialHost();
 
     void copyToGPU(void);
+    void copyOwnedCrossSectionsToGPU(void);
 
     unsigned getNumIsotopes(void) const {
         return MonteRay::getNumIsotopes( pMat );

@@ -9,8 +9,6 @@
 #include "MonteRayCopyMemory.hh"
 #include "MonteRayVector3D.hh"
 
-#define MAXNUMVERTICES 1001
-
 namespace MonteRay {
 
 class MonteRay_GridBins : public CopyMemoryBase<MonteRay_GridBins>{

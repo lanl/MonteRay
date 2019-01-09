@@ -22,7 +22,7 @@ singleDimRayTraceMap_t::add( const int cell, const gpuRayFloat_t dist) {
 CUDA_CALLABLE_MEMBER
 void
 rayTraceList_t::add( const unsigned cell, const gpuRayFloat_t dist) {
-    MONTERAY_ASSERT( N < MAXNUMVERTICES-1);
+    MONTERAY_ASSERT( N < 2*MAXNUMVERTICES-1);
     CellId[N] = cell;
     distance[N] = dist;
     ++N;

@@ -155,7 +155,11 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_GPU_Tests) {
         CHECK_EQUAL(   11,  distances.size() );
 
         // 3rd entry can be 1 or 6, 8th can be 10 or 13
+#if RAY_DOUBLEPRECISION < 1
         checkDistances( std::vector<unsigned>({3,2,6,5,4,8,9,10,14,15,19}), std::vector<gpuFloatType_t>({2*s2,s2,0,s2,s2,s2,s2,0, s2, s2,s2}), distances );
+#else
+        checkDistances( std::vector<unsigned>({3,2,1,5,4,8,9,10,14,15,19}), std::vector<gpuFloatType_t>({2*s2,s2,0,s2,s2,s2,s2,0, s2, s2,s2}), distances );
+#endif
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, rayTrace_in_RZDir_inside_to_outside_at_45degrees_thru_a_corner ) {
@@ -234,9 +238,15 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_GPU_Tests) {
         CHECK_EQUAL( 13,  distances.size() );
 
         // 5th entry can be 1 or 6, 10th can be 10 or 13
+#if RAY_DOUBLEPRECISION < 1
         checkDistances( std::vector<unsigned>( {OUTSIDE_GRID,OUTSIDE_GRID,3,2,6,5,4,8,9,10,14,15,19}),
                         std::vector<gpuFloatType_t>({s2,0,2*s2,s2,0,s2,s2,s2,s2,0,s2,s2,s2}),
                         distances );
+#else
+        checkDistances( std::vector<unsigned>( {OUTSIDE_GRID,OUTSIDE_GRID,3,2,1,5,4,8,9,10,14,15,19}),
+                                std::vector<gpuFloatType_t>({s2,0,2*s2,s2,0,s2,s2,s2,s2,0,s2,s2,s2}),
+                                distances );
+#endif
     }
 
 #endif

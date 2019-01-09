@@ -101,28 +101,25 @@ endif()
 add_definitions( -DCUDA )
 add_definitions( -D_GLIBCXX_USE_CXX11_ABI=1 )
 
-if(DEFINED GPUCOMPUTECAPABILITY )
-    # Setting CMAKE_CUDA_FLAGS removes the warning "nvlink warning : SM Arch ('sm_30') not found in ... "
-    set( CMAKE_CUDA_FLAGS ${GPUCOMPUTECAPABILITY} )
-else()
-    message( FATAL_ERROR "GPUCOMPUTECAPABILITY was NOT DEFINED!")
-endif()
-
 if( CMAKE_BUILD_TYPE STREQUAL "Debug" ) 
     list(APPEND CUDA_NVCC_FLAGS "-G")
-    list(APPEND CUDA_NVCC_FLAGS "-g")
+    #list(APPEND CUDA_NVCC_FLAGS "-g")
 else()
-    list(APPEND CUDA_NVCC_FLAGS "-O3")
+    #list(APPEND CUDA_NVCC_FLAGS "-O3")
     list(APPEND CUDA_NVCC_FLAGS "--use_fast_math")
 endif()
 
-list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+#list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
 list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC")
 list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fpic")
-list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -std=c++11")
+#list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -std=c++11")
 list(APPEND CUDA_NVCC_FLAGS "--cudart shared")
 list(APPEND CUDA_NVCC_FLAGS "--relocatable-device-code=true" )
 list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY} )
+
+unset( CMAKE_CUDA_FLAGS )
+unset( CMAKE_CUDA_FLAGS CACHE )
+set( CMAKE_CUDA_FLAGS "${CUDA_NVCC_FLAGS}" )
 
 string( REPLACE ";" " " CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" )
 

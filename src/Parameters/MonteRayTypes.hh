@@ -4,7 +4,9 @@
 #define TALLY_DOUBLEPRECISION 1 // turn on (1) and off (0) for double precision tally array and compute
 #define RAY_DOUBLEPRECISION 0 // turn on (1) and off (0) for double precision tally array and compute
 
-#define MAXNUMMATERIALS 100
+#define MAXNUMMATERIALS 70
+#define MAXNUMVERTICES 1000
+#define MAXNUMRAYCELLS 2000 // 2*MAXNUMVERTICES
 
 namespace MonteRay{
 

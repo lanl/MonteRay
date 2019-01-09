@@ -120,10 +120,6 @@ void MonteRayMaterialHost::copyToGPU(void) {
     }
     temp = new MonteRayMaterial;
 
-    for( auto itr = ownedCrossSections.begin(); itr != ownedCrossSections.end(); ++itr) {
-        (*itr)->copyToGPU();
-    }
-
     copy(temp, pMat);
 
     unsigned num = pMat->numIsotopes;
@@ -148,6 +144,14 @@ void MonteRayMaterialHost::copyToGPU(void) {
 
     // copy data
     CUDA_CHECK_RETURN( cudaMemcpy(ptr_device, temp, sizeof( MonteRayMaterial ), cudaMemcpyHostToDevice));
+#endif
+}
+
+void MonteRayMaterialHost::copyOwnedCrossSectionsToGPU(void) {
+#ifdef __CUDACC__
+    for( auto itr = ownedCrossSections.begin(); itr != ownedCrossSections.end(); ++itr) {
+        (*itr)->copyToGPU();
+    }
 #endif
 }
 

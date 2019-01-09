@@ -492,7 +492,11 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         CHECK_EQUAL(  11,  distances.size() );
 
         // expectedIndex[2] can be 1 or 6
+#if RAY_DOUBLEPRECISION < 1
         std::vector<unsigned> expectedIndex = { 3, 2, 6, 5, 4, 8, 9, 10, 14, 15, 19 };
+#else
+        std::vector<unsigned> expectedIndex = { 3, 2, 1, 5, 4, 8, 9, 10, 14, 15, 19 };
+#endif
         double s2 = std::sqrt(2.0);
 
         std::vector<double> expectedDistance = {2.0*s2, s2, 0.0, s2, s2, s2, s2, 0.0, s2, s2, s2, s2 };

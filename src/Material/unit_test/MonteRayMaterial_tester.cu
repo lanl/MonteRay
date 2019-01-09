@@ -103,6 +103,7 @@ SUITE( MonteRayMaterial_tester ) {
         mat.readFromFile( "MonteRayMaterialHost_save_test1.bin" );
 
         mat.copyToGPU();
+        mat.copyOwnedCrossSectionsToGPU();
 
         setupTimers();
         unsigned numIsotopes = mat.launchGetNumIsotopes();
@@ -128,6 +129,7 @@ SUITE( MonteRayMaterial_tester ) {
         mat.readFromFile( "MonteRayMaterialHost_save_test1.bin", &hash );
 
         mat.copyToGPU();
+        mat.copyOwnedCrossSectionsToGPU();
 
         setupTimers();
         unsigned numIsotopes = mat.launchGetNumIsotopes();

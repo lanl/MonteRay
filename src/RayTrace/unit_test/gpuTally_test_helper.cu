@@ -22,9 +22,10 @@ void GPUTallyTestHelper::launchAddTally( MonteRay::gpuTallyHost* tally, unsigned
 	cudaEvent_t sync;
 	cudaEventCreate(&sync);
 	kernelAddTally<<<1,1>>>( tally->ptr_device, i, a, b);
-	MONTERAY_PEAKATLASTERROR(true);
+
 	cudaEventRecord(sync, 0);
 	cudaEventSynchronize(sync);
+	MONTERAY_PEAKATLASTERROR(true);
 #else
 	kernelAddTally( tally->getPtr(), i, a, b);
 #endif

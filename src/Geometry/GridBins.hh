@@ -11,8 +11,6 @@
 #include <iostream>
 #include <fstream>
 
-#define MAXNUMVERTICES 1001
-
 #include "MonteRayTypes.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRayCopyMemory.hh"

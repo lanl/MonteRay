@@ -162,27 +162,27 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRVertex(Grid_t** pGrid, resultClass<gpuFloatType_t>* pResult, unsigned i) {
+    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRVertex(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
         pResult->v = (*pGrid)->getRVertex(i);
     }
 #else
-    void kernelCylindricalGridGetRVertex(Grid_t Grid, resultClass<gpuFloatType_t>* pResult, unsigned i) {
+    void kernelCylindricalGridGetRVertex(Grid_t Grid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
         pResult->v = Grid.getRVertex(i);
     }
 #endif
 
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetZVertex(Grid_t** pGrid, resultClass<gpuFloatType_t>* pResult, unsigned i) {
+    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetZVertex(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
         pResult->v = (*pGrid)->getZVertex(i);
     }
 #else
-    void kernelCylindricalGridGetZVertex(Grid_t Grid, resultClass<gpuFloatType_t>* pResult, unsigned i) {
+    void kernelCylindricalGridGetZVertex(Grid_t Grid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
         pResult->v = Grid.getZVertex(i);
     }
 #endif
 
-    gpuFloatType_t launchGetRVertex(Grid_t& Grid, unsigned i ) {
-        using T = gpuFloatType_t;
+    gpuRayFloat_t launchGetRVertex(Grid_t& Grid, unsigned i ) {
+        using T = gpuRayFloat_t;
 
         resultClass<T>* pResult = new resultClass<T>();
 #ifdef __CUDACC__
@@ -210,8 +210,8 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
         return value;
     }
 
-    gpuFloatType_t launchGetZVertex(Grid_t& Grid, unsigned i ) {
-        using T = gpuFloatType_t;
+    gpuRayFloat_t launchGetZVertex(Grid_t& Grid, unsigned i ) {
+        using T = gpuRayFloat_t;
 
         resultClass<T>* pResult = new resultClass<T>();
 #ifdef __CUDACC__
@@ -271,17 +271,17 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridConvertFromCartesian(Grid_t** pGrid, resultClass<Vector3D<gpuFloatType_t>>* pResult, Vector3D<gpuFloatType_t> pos) {
+    CUDA_CALLABLE_KERNEL void kernelCylindricalGridConvertFromCartesian(Grid_t** pGrid, resultClass<Vector3D<gpuRayFloat_t>>* pResult, Vector3D<gpuRayFloat_t> pos) {
         pResult->v = (*pGrid)->convertFromCartesian(pos);
     }
 #else
-    void kernelCylindricalGridConvertFromCartesian(Grid_t Grid, resultClass<Vector3D<gpuFloatType_t>>* pResult, Vector3D<gpuFloatType_t> pos) {
+    void kernelCylindricalGridConvertFromCartesian(Grid_t Grid, resultClass<Vector3D<gpuRayFloat_t>>* pResult, Vector3D<gpuRayFloat_t> pos) {
         pResult->v = Grid.convertFromCartesian(pos);
     }
 #endif
 
-    Vector3D<gpuFloatType_t> launchConvertFromCartesian(Grid_t& Grid, Vector3D<gpuFloatType_t> pos ) {
-        using T = Vector3D<gpuFloatType_t>;
+    Vector3D<gpuRayFloat_t> launchConvertFromCartesian(Grid_t& Grid, Vector3D<gpuRayFloat_t> pos ) {
+        using T = Vector3D<gpuRayFloat_t>;
 
         resultClass<T>* pResult = new resultClass<T>();
 #ifdef __CUDACC__
@@ -346,16 +346,16 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRadialIndexFromR(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuFloatType_t pos) {
+    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRadialIndexFromR(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuRayFloat_t pos) {
         pResult->v = (*pGrid)->getRadialIndexFromR(pos);
     }
 #else
-    void kernelCylindricalGridGetRadialIndexFromR(Grid_t Grid, resultClass<unsigned>* pResult, gpuFloatType_t pos) {
+    void kernelCylindricalGridGetRadialIndexFromR(Grid_t Grid, resultClass<unsigned>* pResult, gpuRayFloat_t pos) {
         pResult->v = Grid.getRadialIndexFromR(pos);
     }
 #endif
 
-    unsigned launchGetRadialIndexFromR(Grid_t& Grid, gpuFloatType_t r ) {
+    unsigned launchGetRadialIndexFromR(Grid_t& Grid, gpuRayFloat_t r ) {
         using T = unsigned;
         resultClass<T>* pResult = new resultClass<T>();
 
@@ -419,16 +419,16 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRadialIndexFromRSq(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuFloatType_t rSq) {
+    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRadialIndexFromRSq(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuRayFloat_t rSq) {
         pResult->v = (*pGrid)->getRadialIndexFromRSq(rSq);
     }
 #else
-    void kernelCylindricalGridGetRadialIndexFromRSq(Grid_t Grid, resultClass<unsigned>* pResult, gpuFloatType_t rSq) {
+    void kernelCylindricalGridGetRadialIndexFromRSq(Grid_t Grid, resultClass<unsigned>* pResult, gpuRayFloat_t rSq) {
         pResult->v = Grid.getRadialIndexFromRSq(rSq);
     }
 #endif
 
-    unsigned launchGetRadialIndexFromRSq(Grid_t& Grid, gpuFloatType_t rSq ) {
+    unsigned launchGetRadialIndexFromRSq(Grid_t& Grid, gpuRayFloat_t rSq ) {
         using T = unsigned;
 
         resultClass<T>* pResult = new resultClass<T>();
@@ -489,16 +489,16 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetAxialIndex(Grid_t** pGrid, resultClass<int>* pResult, gpuFloatType_t z) {
+    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetAxialIndex(Grid_t** pGrid, resultClass<int>* pResult, gpuRayFloat_t z) {
         pResult->v = (*pGrid)->getAxialIndex(z);
     }
 #else
-    void kernelCylindricalGridGetAxialIndex(Grid_t Grid, resultClass<int>* pResult, gpuFloatType_t z) {
+    void kernelCylindricalGridGetAxialIndex(Grid_t Grid, resultClass<int>* pResult, gpuRayFloat_t z) {
         pResult->v = Grid.getAxialIndex(z);
     }
 #endif
 
-    int launchGetAxialIndex(Grid_t& Grid, gpuFloatType_t z ) {
+    int launchGetAxialIndex(Grid_t& Grid, gpuRayFloat_t z ) {
         using T = int;
 
         resultClass<T>* pResult = new resultClass<T>();
