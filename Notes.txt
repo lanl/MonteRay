@@ -1,0 +1,9 @@
+Jan 9, 2019
+   * Planning to move ray casting and crossings distances to global memory, currently occuping
+     48Kb per thread, this is causing stack size issues
+   * There are two copies of the ray casting distances for performance reasons, extra 16KB
+   * Benchmark of nighlies before changes
+      - Criticality Accident - 256x256 = GPU time = 10.9575 secs
+      - PWR fuel assembly - 256x256  = GPU time = 6.71193 secs
+      
+      
