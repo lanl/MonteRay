@@ -14,33 +14,27 @@ using namespace MonteRay;
 template<typename T>
 using resultClass = MonteRay_SingleValueCopyMemory<T>;
 
-CUDA_CALLABLE_KERNEL
-void kernelGetNumSpatialBins(MonteRayTally* pTally, resultClass<unsigned>* pResult ){
+CUDA_CALLABLE_KERNEL  kernelGetNumSpatialBins(MonteRayTally* pTally, resultClass<unsigned>* pResult ){
     pResult->v = pTally->getNumSpatialBins();
 }
 
-CUDA_CALLABLE_KERNEL
-void kernelGetNumTimeBins(MonteRayTally* pTally, resultClass<unsigned>* pResult ){
+CUDA_CALLABLE_KERNEL  kernelGetNumTimeBins(MonteRayTally* pTally, resultClass<unsigned>* pResult ){
     pResult->v = pTally->getNumTimeBins();
 }
 
-CUDA_CALLABLE_KERNEL
-void kernelScoreByIndex(MonteRayTally* pTally, gpuTallyType_t value, unsigned spatial_index, unsigned time_index=0 ) {
+CUDA_CALLABLE_KERNEL  kernelScoreByIndex(MonteRayTally* pTally, gpuTallyType_t value, unsigned spatial_index, unsigned time_index=0 ) {
    pTally->scoreByIndex(value, spatial_index, time_index);
 }
 
-CUDA_CALLABLE_KERNEL
-void kernelScore(MonteRayTally* pTally, gpuTallyType_t value, unsigned spatial_index, gpuFloatType_t time = 0.0 ) {
+CUDA_CALLABLE_KERNEL  kernelScore(MonteRayTally* pTally, gpuTallyType_t value, unsigned spatial_index, gpuFloatType_t time = 0.0 ) {
    pTally->score(value, spatial_index, time);
 }
 
-CUDA_CALLABLE_KERNEL
-void kernelGetTally(MonteRayTally* pTally, resultClass<gpuTallyType_t>* pResult, unsigned spatial_index, unsigned time_index=0 ) {
+CUDA_CALLABLE_KERNEL  kernelGetTally(MonteRayTally* pTally, resultClass<gpuTallyType_t>* pResult, unsigned spatial_index, unsigned time_index=0 ) {
     pResult->v = pTally->getTally( spatial_index, time_index);
 }
 
-CUDA_CALLABLE_KERNEL
-void kernelGetTallySize(MonteRayTally* pTally, resultClass<unsigned>* pResult ) {
+CUDA_CALLABLE_KERNEL  kernelGetTallySize(MonteRayTally* pTally, resultClass<unsigned>* pResult ) {
     pResult->v = pTally->getTallySize();
 }
 

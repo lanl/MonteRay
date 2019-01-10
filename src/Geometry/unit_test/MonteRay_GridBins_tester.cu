@@ -96,7 +96,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     };
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void kernelGetNumBins(MonteRay_GridBins* pGridBins, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetNumBins(MonteRay_GridBins* pGridBins, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getNumBins();
         printf( "kernelGetNumBins -- value = %u\n",  pResult->v );
         return;
@@ -263,7 +263,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void kernelGetLinearIndex(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t r) {
+    CUDA_CALLABLE_KERNEL  kernelGetLinearIndex(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t r) {
         pResult->v = pGridBins->getLinearIndex(r);
         //printf( "kernelGetLinearIndex -- value = %d\n",  pResult->v );
         return;
@@ -324,7 +324,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void isIndexOutside(MonteRay_GridBins* pGridBins, resultClass<bool>* pResult, int i) {
+    CUDA_CALLABLE_KERNEL  isIndexOutside(MonteRay_GridBins* pGridBins, resultClass<bool>* pResult, int i) {
         pResult->v = pGridBins->isIndexOutside(i);
         return;
     }
@@ -363,7 +363,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromR(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t r) {
+    CUDA_CALLABLE_KERNEL  kernelGetRadialIndexFromR(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t r) {
         pResult->v = pGridBins->getRadialIndexFromR(r);
         return;
     }
@@ -405,7 +405,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromRSq(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t rSq) {
+    CUDA_CALLABLE_KERNEL  kernelGetRadialIndexFromRSq(MonteRay_GridBins* pGridBins, resultClass<int>* pResult, gpuRayFloat_t rSq) {
         pResult->v = pGridBins->getRadialIndexFromRSq(rSq);
         return;
     }

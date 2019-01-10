@@ -118,7 +118,7 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
 #ifdef __CUDACC__
         //cudaReset();
         //gpuCheck();
-        cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
+        cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
 #endif
     }
 

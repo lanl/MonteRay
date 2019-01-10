@@ -106,7 +106,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
     };
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void kernelCartesianGridGetNumBins(Grid_t** pCart, resultClass<unsigned>* pResult, unsigned d) {
+    CUDA_CALLABLE_KERNEL  kernelCartesianGridGetNumBins(Grid_t** pCart, resultClass<unsigned>* pResult, unsigned d) {
         pResult->v = (*pCart)->getNumBins(d);
     }
 
@@ -163,7 +163,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
     }
 
     //	// kernal call
-    CUDA_CALLABLE_KERNEL void kernelCartesianGridGetIndex(Grid_t** pCart, resultClass<unsigned>* pResult, Position_t pos) {
+    CUDA_CALLABLE_KERNEL  kernelCartesianGridGetIndex(Grid_t** pCart, resultClass<unsigned>* pResult, Position_t pos) {
         //printf("Debug: kernelCartesianGridGetIndex -- calling pCart->getIndex(pos)\n");
         unsigned index = (*pCart)->getIndex(pos);
         pResult->v = index;
@@ -222,19 +222,19 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
         delete pResult;
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetDimIndex(Grid_t** pPtrCart, resultClass<int>* pResult, unsigned d, gpuRayFloat_t pos) {
+    CUDA_CALLABLE_KERNEL  kernelGetDimIndex(Grid_t** pPtrCart, resultClass<int>* pResult, unsigned d, gpuRayFloat_t pos) {
         pResult->v = (*pPtrCart)->getDimIndex(d,pos);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetDimIndexDirect(Grid_t* pCart, resultClass<int>* pResult, unsigned d, gpuRayFloat_t pos) {
+    CUDA_CALLABLE_KERNEL  kernelGetDimIndexDirect(Grid_t* pCart, resultClass<int>* pResult, unsigned d, gpuRayFloat_t pos) {
         pResult->v = pCart->getDimIndex(d,pos);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelCartesianGridIsIndexOutside(Grid_t** pCart, resultClass<bool>* pResult, unsigned d, int index) {
+    CUDA_CALLABLE_KERNEL  kernelCartesianGridIsIndexOutside(Grid_t** pCart, resultClass<bool>* pResult, unsigned d, int index) {
         pResult->v = (*pCart)->isIndexOutside(d,index);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelCartesianGridIsOutside(Grid_t** pCart, resultClass<bool>* pResult, int i, int j, int k ) {
+    CUDA_CALLABLE_KERNEL  kernelCartesianGridIsOutside(Grid_t** pCart, resultClass<bool>* pResult, int i, int j, int k ) {
         int indices[] = {i,j,k};
         pResult->v = (*pCart)->isOutside(indices);
     }
@@ -445,7 +445,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
     }
 
 
-    CUDA_CALLABLE_KERNEL void kernelCartesianGridGetVolume(Grid_t** pCart, resultClass<gpuRayFloat_t>* pResult, unsigned i ) {
+    CUDA_CALLABLE_KERNEL  kernelCartesianGridGetVolume(Grid_t** pCart, resultClass<gpuRayFloat_t>* pResult, unsigned i ) {
         pResult->v = (*pCart)->getVolume(i);
     }
 

@@ -63,15 +63,18 @@ struct int3{
 typedef float1 float1_t;
 typedef float3 float3_t;
 
+#define MONTERAY_MAX_THREADS 100000U // 3125 x 32 - should be a multiple of 32
+#define MONTERAY_MAX_THREADS_PER_BLOCK 512U
+
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER __host__ __device__
 #define CUDAHOST_CALLABLE_MEMBER __host__
 #define CUDADEVICE_CALLABLE_MEMBER __device__
-#define CUDA_CALLABLE_KERNEL __global__
+#define CUDA_CALLABLE_KERNEL __global__ void __launch_bounds__ ( MONTERAY_MAX_THREADS_PER_BLOCK )
 #else
 #define CUDA_CALLABLE_MEMBER
 #define CUDAHOST_CALLABLE_MEMBER
-#define CUDA_CALLABLE_KERNEL
+#define CUDA_CALLABLE_KERNEL void
 #define CUDADEVICE_CALLABLE_MEMBER
 #endif
 

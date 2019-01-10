@@ -16,6 +16,9 @@ class MonteRay_GridBins;
 class rayTraceList_t;
 class singleDimRayTraceMap_t;
 
+template< unsigned N>
+class RayWorkInfo;
+
 class MonteRay_SpatialGrid : public CopyMemoryBase<MonteRay_SpatialGrid> {
 public:
     using Base = MonteRay::CopyMemoryBase<MonteRay_SpatialGrid> ;
@@ -156,13 +159,18 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
+    rayTrace(rayTraceList_t& rayTraceList, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
 
     /// Call to support call with integer c array of indices
     /// and float c array of distances - may be slow
     CUDA_CALLABLE_MEMBER
     unsigned
-    rayTrace(int* global_indices, gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
+    rayTrace(int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
+
+    template<unsigned N>
+    CUDA_CALLABLE_MEMBER
+    unsigned
+    rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances=false) const;
 
     CUDA_CALLABLE_MEMBER
     void

@@ -15,15 +15,21 @@ class HashLookup;
 class gpuTallyHost;
 class tripleTime;
 
+template< unsigned N>
+class RayWorkInfo;
+
 template<typename GRIDTYPE, unsigned N>
 CUDA_CALLABLE_MEMBER void
-tallyCollision(const GRIDTYPE* pGrid,
+tallyCollision(
+        unsigned particeID,
+        const GRIDTYPE* pGrid,
         const MonteRayMaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const HashLookup* pHash,
         const Ray_t<N>* p,
-        gpuTallyType_t* pTally,
-        unsigned tid = 0);
+        RayWorkInfo<N>* pRayInfo,
+        gpuTallyType_t* pTally
+);
 
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
@@ -59,13 +65,13 @@ attenuateRayTraceOnly(const MonteRayMaterialList* pMatList,
         ParticleType_t particleType );
 
 template<typename GRIDTYPE, unsigned N>
-CUDA_CALLABLE_KERNEL
-void
+CUDA_CALLABLE_KERNEL 
 rayTraceTally(const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const HashLookup* pHash,
+        RayWorkInfo<N>* pRayInfo,
         gpuTallyType_t* tally);
 
 template<typename GRIDTYPE, unsigned N>

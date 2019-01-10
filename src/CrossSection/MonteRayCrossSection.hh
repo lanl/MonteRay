@@ -76,9 +76,9 @@ int getID(const struct MonteRayCrossSection* pXS);
 CUDA_CALLABLE_MEMBER
 void setID(struct MonteRayCrossSection* pXS, unsigned i);
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* result);
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* result);
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t E, gpuFloatType_t* result);
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t E, gpuFloatType_t* result);
 
 //class ContinuousNeutron;
 

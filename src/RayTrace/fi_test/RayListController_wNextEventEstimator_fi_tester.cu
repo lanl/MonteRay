@@ -111,7 +111,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
                 numPointDets );
 
         CHECK_EQUAL( true, controller.isUsingNextEventEstimator() );
-        CHECK_EQUAL(1000000, controller.capacity());
+        CHECK_EQUAL(100000, controller.capacity());
         CHECK_EQUAL(0, controller.size());
     }
 #endif
@@ -393,7 +393,9 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
         GPUSync sync1; sync1.sync();
 
-        estimator.launch_ScoreRayList(1U,1U, &raylist);
+        RayWorkInfo<3> rayInfo( raylist.size() );
+        rayInfo.copyToGPU();
+        estimator.launch_ScoreRayList(1U,1U, &raylist, &rayInfo);
 
         GPUSync sync2; sync2.sync();
 

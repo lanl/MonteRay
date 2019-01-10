@@ -16,15 +16,13 @@ namespace MonteRay {
 
 using ptrCartesianGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CartesianGrid*>;
 
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
+CUDA_CALLABLE_KERNEL  createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
     *pPtrInstance = new MonteRay_CartesianGrid( 3, pGridX, pGridY, pGridZ );
     pResult->v = *pPtrInstance;
     //if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
 }
 
-CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_CartesianGrid** pPtrInstance) {
+CUDA_CALLABLE_KERNEL  deleteDeviceInstance(MonteRay_CartesianGrid** pPtrInstance) {
     delete *pPtrInstance;
 }
 

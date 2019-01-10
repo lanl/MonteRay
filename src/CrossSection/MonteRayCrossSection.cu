@@ -227,13 +227,13 @@ gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, const struct H
     return getTotalXSByIndex( pXS, i, E);
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, pHash, HashBin, E);
     return;
 }
 
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(const struct MonteRayCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, E);
     return;
 }

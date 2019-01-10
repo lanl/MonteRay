@@ -9,7 +9,7 @@
 namespace MonteRay {
 
 template< unsigned N>
-CUDA_CALLABLE_KERNEL void testGetCapacity(const RayList_t<N>* pRayList, MonteRay::RayListSize_t* results){
+CUDA_CALLABLE_KERNEL  testGetCapacity(const RayList_t<N>* pRayList, MonteRay::RayListSize_t* results){
 	results[0] = pRayList->capacity();
 	return;
 }
@@ -46,7 +46,7 @@ RayListInterfaceTester<N>::launchGetCapacity( unsigned nBlocks, unsigned nThread
 }
 
 template< unsigned N>
-CUDA_CALLABLE_KERNEL void testSumEnergy(const MonteRay::RayList_t<N>* ParticleRayList, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  testSumEnergy(const MonteRay::RayList_t<N>* ParticleRayList, gpuFloatType_t* results){
 	gpuFloatType_t total = 0.0f;
 	for(unsigned i=0; i< ParticleRayList->size(); ++i ) {
 		total += ParticleRayList->getEnergy(i);

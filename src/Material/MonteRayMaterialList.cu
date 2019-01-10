@@ -252,7 +252,7 @@ unsigned materialIDtoIndex(MonteRayMaterialList* ptr, unsigned id ) {
     return 0;
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(struct MonteRayMaterialList* pMatList, unsigned matIndex, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(struct MonteRayMaterialList* pMatList, unsigned matIndex, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density, gpuFloatType_t* results){
 //    printf("Debug: kernelGetTotalXS \n");
 //    printf("Debug: pMatList=%p\n", pMatList);
 //    printf("Debug: pHash=%p\n", pHash);

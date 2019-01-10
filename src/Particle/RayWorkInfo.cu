@@ -5,14 +5,20 @@ namespace MonteRay {
 
 template<unsigned N>
 CUDAHOST_CALLABLE_MEMBER
-RayWorkInfo<N>::RayWorkInfo(unsigned num) {
+RayWorkInfo<N>::RayWorkInfo(unsigned num, bool cpuAllocate) {
     if( num == 0 ) { num = 1; }
+    if( num > MONTERAY_MAX_THREADS ) {
+        std::cout << "WARNING: Limiting MonteRay RayWorkInfo size, requested size="
+                  << num << ", limit=" << MONTERAY_MAX_THREADS << "\n";
+        num = MONTERAY_MAX_THREADS;
+    }
 
 #ifdef DEBUG
     if( Base::debug ) {
         std::cout << "RayWorkInfo::RayWorkInfo(n), n=" << num << " \n";
     }
 #endif
+    allocateOnCPU = cpuAllocate;
 
     reallocate( num );
 }
@@ -30,13 +36,17 @@ RayWorkInfo<N>::reallocate(unsigned n) {
     if( crossingDistance != NULL ) { MonteRayHostFree( crossingDistance, Base::isManagedMemory ); }
 
     init();
-    indices = (int*) MONTERAYHOSTALLOC( n*3*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::indices" );
-    rayCastSize = (int*) MONTERAYHOSTALLOC( n*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::rayCastSize" );
-    rayCastCell = (int*) MONTERAYHOSTALLOC( n*MAXNUMRAYCELLS*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::rayCastCell" );
-    rayCastDistance = (gpuRayFloat_t*) MONTERAYHOSTALLOC( n*MAXNUMRAYCELLS*sizeof( gpuRayFloat_t ), Base::isManagedMemory, "host RayWorkInfo::rayCastDistance" );
-    crossingSize = (int*) MONTERAYHOSTALLOC( n*3*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::crossingSize" );
-    crossingCell = (int*) MONTERAYHOSTALLOC( n*MAXNUMVERTICES*3*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::crossingCell" );
-    crossingDistance = (gpuRayFloat_t*) MONTERAYHOSTALLOC( n*MAXNUMVERTICES*3*sizeof( gpuRayFloat_t ), Base::isManagedMemory, "host RayWorkInfo::crossingDistance" );
+
+    if( allocateOnCPU ) {
+        // only allocate if not using CUDA -- very big
+        indices = (int*) MONTERAYHOSTALLOC( n*3*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::indices" );
+        rayCastSize = (int*) MONTERAYHOSTALLOC( n*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::rayCastSize" );
+        rayCastCell = (int*) MONTERAYHOSTALLOC( n*MAXNUMRAYCELLS*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::rayCastCell" );
+        rayCastDistance = (gpuRayFloat_t*) MONTERAYHOSTALLOC( n*MAXNUMRAYCELLS*sizeof( gpuRayFloat_t ), Base::isManagedMemory, "host RayWorkInfo::rayCastDistance" );
+        crossingSize = (int*) MONTERAYHOSTALLOC( n*3*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::crossingSize" );
+        crossingCell = (int*) MONTERAYHOSTALLOC( n*MAXNUMVERTICES*3*sizeof( int ), Base::isManagedMemory, "host RayWorkInfo::crossingCell" );
+        crossingDistance = (gpuRayFloat_t*) MONTERAYHOSTALLOC( n*MAXNUMVERTICES*3*sizeof( gpuRayFloat_t ), Base::isManagedMemory, "host RayWorkInfo::crossingDistance" );
+    }
 
     nAllocated = n;
     clear();
@@ -97,6 +107,7 @@ RayWorkInfo<N>::copy(const RayWorkInfo<N>* rhs) {
         if( rayCastSize == NULL ) {
             rayCastSize = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int), "device - RayWorkInfo::rayCastSize" );
         }
+        //cudaMemset(rayCastSize, 0, rhs->nAllocated*sizeof(int));
 
         if( rayCastCell == NULL ) {
             rayCastCell = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int)*MAXNUMRAYCELLS, "device - RayWorkInfo::rayCastCell" );
@@ -109,6 +120,7 @@ RayWorkInfo<N>::copy(const RayWorkInfo<N>* rhs) {
         if( crossingSize == NULL ) {
             crossingSize = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int)*3, "device - RayWorkInfo::crossingSize" );
         }
+        //cudaMemset(crossingSize, 0, rhs->nAllocated*3*sizeof(int));
 
         if( crossingCell == NULL ) {
             crossingCell = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int)*MAXNUMVERTICES*3, "device - RayWorkInfo::crossingCell" );
@@ -119,8 +131,8 @@ RayWorkInfo<N>::copy(const RayWorkInfo<N>* rhs) {
         }
 
         // initialize the crossing info
-        MonteRayMemcpy(rayCastSize, rhs->rayCastSize, rhs->nAllocated*sizeof(int), cudaMemcpyHostToDevice);
-        MonteRayMemcpy(crossingSize, rhs->crossingSize, rhs->nAllocated*sizeof(int)*3, cudaMemcpyHostToDevice);
+//        MonteRayMemcpy(rayCastSize, rhs->rayCastSize, rhs->nAllocated*sizeof(int), cudaMemcpyHostToDevice);
+//        MonteRayMemcpy(crossingSize, rhs->crossingSize, rhs->nAllocated*sizeof(int)*3, cudaMemcpyHostToDevice);
     }
 
     nAllocated = rhs->nAllocated;

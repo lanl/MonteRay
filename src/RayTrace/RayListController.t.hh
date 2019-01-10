@@ -14,6 +14,7 @@
 #include "GPUSync.hh"
 #include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRay_timer.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 
@@ -38,16 +39,37 @@ PA( MonteRayParallelAssistant::getInstance() )
     initialize();
     kernel = [&] ( void ) {
         if( PA.getWorkGroupRank() != 0 ) { return; }
+
+#ifdef DEBUG
+        size_t freeMemory = 0;
+        size_t totalMemory = 0;
+#ifdef __CUDACC__
+        cudaError_t memError = cudaMemGetInfo( &freeMemory, &totalMemory);
+        freeMemory = freeMemory/1000000;
+        totalMemory = totalMemory/1000000;
+#endif
+        std::cout << "Debug: RayListController -- launching kernel on " <<
+                     PA.info() << " with " << nBlocks << " blocks, " << nThreads <<
+                     " threads, to process " << currentBank->getPtrPoints()->size() << " rays," <<
+                     " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
+#endif
+
 #ifdef __CUDACC__
         rayTraceTally<<<nBlocks,nThreads,0, *stream1>>>(
                 pGrid->getDevicePtr(),
-                currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device,
-                pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+                currentBank->getPtrPoints()->devicePtr,
+                pMatList->ptr_device,
+                pMatProps->ptrData_device,
+                pMatList->getHashPtr()->getPtrDevice(),
+                rayInfo->devicePtr,
                 pTally->temp->tally );
 #else
         rayTraceTally( pGrid->getPtr(),
-                       currentBank->getPtrPoints(), pMatList->getPtr(),
-                       pMatProps->getPtr(), pMatList->getHashPtr()->getPtr(),
+                       currentBank->getPtrPoints(),
+                       pMatList->getPtr(),
+                       pMatProps->getPtr(),
+                       pMatList->getHashPtr()->getPtr(),
+                       rayInfo.get(),
                        pTally->getPtr()->tally );
 #endif
     };
@@ -86,7 +108,7 @@ PA( MonteRayParallelAssistant::getInstance() )
 #ifdef DEBUG
             if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
 #endif
-            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), stream1.get() );
+            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
         }
     };
 }
@@ -110,7 +132,7 @@ void
 RayListController<GRID_T, N>::initialize(){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
-    setCapacity( 1000000 ); // default buffer capacity to 1 million.
+    setCapacity( 100000 ); // default buffer capacity to 0.1 million.
 
     pTimer.reset( new cpuTimer );
 
@@ -159,10 +181,22 @@ RayListController<GRID_T,N>::size(void) const {
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::setCapacity(unsigned n) {
+//    if( n > 100000 ) {
+//        std::cout << "Debug: WARNING: MonteRay -- RayListController::setCapacity, limiting capacity to 100000\n";
+//        n = 100000;
+//    }
+
     if( PA.getWorkGroupRank() != 0 ) { return; }
     bank1.reset( new RayListInterface<N>(n) );
     bank2.reset( new RayListInterface<N>(n) );
     currentBank = bank1.get();
+
+    auto launchBounds = setLaunchBounds( nThreads, nBlocks, n );
+    nBlocks = launchBounds.first;
+    nThreads = launchBounds.second;
+
+    // size rayInfo to total number of threads
+    rayInfo.reset( new RayWorkInfo<N>( nBlocks*nThreads) );
 }
 
 
@@ -234,7 +268,9 @@ RayListController<GRID_T,N>::flush(bool final){
     ++nFlushs;
 
 #ifdef __CUDACC__
+    gpuErrchk( cudaPeekAtLastError() );
     currentBank->copyToGPU();
+    rayInfo->copyToGPU();
     gpuErrchk( cudaEventRecord(*currentCopySync, 0) );
     gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 #endif
@@ -243,7 +279,9 @@ RayListController<GRID_T,N>::flush(bool final){
     kernel();
 
     // only uncomment for testing, forces the cpu and gpu to sync
-    //gpuErrchk( cudaPeekAtLastError() );
+#ifdef DEBUG
+    gpuErrchk( cudaPeekAtLastError() );
+#endif
 
 #ifdef __CUDACC__
     gpuErrchk( cudaEventRecord( *stopGPU, *stream1) );

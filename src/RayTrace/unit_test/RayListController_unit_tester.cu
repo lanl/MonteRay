@@ -17,6 +17,7 @@
 #include "RayListController.hh"
 #include "MonteRayCrossSection.hh"
 #include "HashLookup.hh"
+#include "GPUErrorCheck.hh"
 
 namespace RayListController_unit_tester{
 
@@ -28,8 +29,10 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     public:
         UnitControllerSetup(){
 
-            //cudaReset();
-            //gpuCheck();
+//            cudaReset();
+//            gpuCheck();
+//            cudaDeviceSetLimit( cudaLimitStackSize, 120000 );
+
             pGrid = new GridBins;
             pGrid->setVertices(0, -5.0, 5.0, 10);
             pGrid->setVertices(1, -5.0, 5.0, 10);
@@ -50,6 +53,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
         }
 
         void setup(){
+            gpuErrchk( cudaPeekAtLastError() );
 
             pGrid->copyToGPU();
 
@@ -73,6 +77,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
             pMatList->add( 0, *metal, 0 );
             pMatList->copyToGPU();
             xs->copyToGPU();
+            gpuErrchk( cudaPeekAtLastError() );
         }
 
         ~UnitControllerSetup(){
@@ -95,39 +100,41 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     };
 
     TEST( setup ) {
-        //gpuCheck();
+        cudaReset();
+        gpuCheck();
+        cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
     }
 
     TEST_FIXTURE(UnitControllerSetup, ctor ){
         std::cout << "Debug: CollisionPointController_unit_tester -- ctor\n";
-        CollisionPointController<GridBins> controller( 1024,
+        CollisionPointController<GridBins> controller( 1,
                 1024,
                 pGrid,
                 pMatList,
                 pMatProps,
                 pTally );
 
-        CHECK_EQUAL(1000000, controller.capacity());
+        CHECK_EQUAL(100000, controller.capacity());
         CHECK_EQUAL(0, controller.size());
     }
 
     TEST_FIXTURE(UnitControllerSetup, setCapacity ){
         std::cout << "Debug: CollisionPointController_unit_tester -- setCapacity\n";
-        CollisionPointController<GridBins> controller( 1024,
+        CollisionPointController<GridBins> controller( 1,
                 1024,
                 pGrid,
                 pMatList,
                 pMatProps,
                 pTally );
 
-        CHECK_EQUAL(1000000, controller.capacity());
+        CHECK_EQUAL(100000, controller.capacity());
         controller.setCapacity(10);
         CHECK_EQUAL(10, controller.capacity());
     }
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle\n";
-        CollisionPointController<GridBins> controller( 1024,
+        CollisionPointController<GridBins> controller( 1,
                 1024,
                 pGrid,
                 pMatList,
@@ -158,8 +165,8 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr1\n";
-        CollisionPointController<GridBins> controller( 1024,
-                1024,
+        CollisionPointController<GridBins> controller( 1,
+                32,
                 pGrid,
                 pMatList,
                 pMatProps,
@@ -186,7 +193,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_two_particles_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr2\n";
-        CollisionPointController<GridBins> controller( 1024,
+        CollisionPointController<GridBins> controller( 1,
                 1024,
                 pGrid,
                 pMatList,
@@ -226,7 +233,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_ten_particles_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr3\n";
-        CollisionPointController<GridBins> controller( 1024,
+        CollisionPointController<GridBins> controller( 1,
                 1024,
                 pGrid,
                 pMatList,

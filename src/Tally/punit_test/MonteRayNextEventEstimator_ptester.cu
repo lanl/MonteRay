@@ -114,7 +114,9 @@ SUITE( NextEventEstimator_pTester ) {
         ray.detectorIndex = 0;
         ray.particleType = photon;
 
-        pEstimator->calcScore<1>(ray );
+        unsigned particleID = 0;
+        RayWorkInfo<> rayInfo(1,true);
+        pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         pEstimator->gatherWorkGroup(); // used for testing only
         pEstimator->gather();
@@ -165,7 +167,10 @@ SUITE( NextEventEstimator_pTester ) {
         ray.detectorIndex = 0;
         ray.particleType = photon;
 
-        pEstimator->calcScore<1>(ray );
+        unsigned particleID = 0;
+        RayWorkInfo<> rayInfo(1,true);
+        pEstimator->calcScore<1>(particleID, ray, rayInfo );
+
         pEstimator->gatherWorkGroup(); // used for testing only
         pEstimator->gather();
 
@@ -186,7 +191,10 @@ SUITE( NextEventEstimator_pTester ) {
         }
 
         ray.detectorIndex = 1;
-        pEstimator->calcScore<1>(ray );
+
+        rayInfo.clear();
+        pEstimator->calcScore<1>(particleID, ray, rayInfo );
+
         pEstimator->gatherWorkGroup(); // used for testing only
         pEstimator->gather();
 
@@ -288,6 +296,9 @@ SUITE( NextEventEstimator_pTester ) {
             pBank->copyToGPU();
             pEstimator->copyToGPU();
 
+            RayWorkInfo<N> rayInfo(pBank->size());
+            rayInfo.copyToGPU();
+
             GPUSync();
 
             cudaStream_t* stream = NULL;
@@ -300,7 +311,7 @@ SUITE( NextEventEstimator_pTester ) {
             cudaEventCreate(&stop);
 
             cudaStreamSynchronize(*stream);
-            pEstimator->launch_ScoreRayList(1, 1, pBank.get(), stream );
+            pEstimator->launch_ScoreRayList(1, 1, pBank.get(), &rayInfo, stream );
 
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
@@ -396,6 +407,9 @@ SUITE( NextEventEstimator_pTester ) {
              pBank->copyToGPU();
              pEstimator->copyToGPU();
 
+             RayWorkInfo<N> rayInfo(pBank->size());
+             rayInfo.copyToGPU();
+
              cudaStream_t* stream = NULL;
              stream = new cudaStream_t;
              stream[0] = 0;  // use the default stream
@@ -406,7 +420,7 @@ SUITE( NextEventEstimator_pTester ) {
              cudaEventCreate(&stop);
 
              cudaStreamSynchronize(*stream);
-             pEstimator->launch_ScoreRayList(1, 1, pBank.get(), stream );
+             pEstimator->launch_ScoreRayList(1, 1, pBank.get(), &rayInfo, stream );
 
              cudaEventRecord(stop, 0);
              cudaEventSynchronize(stop);

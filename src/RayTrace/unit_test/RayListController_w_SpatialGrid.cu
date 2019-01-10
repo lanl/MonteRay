@@ -78,6 +78,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
             pMatList->add( 0, *metal, 0 );
             pMatList->copyToGPU();
             xs->copyToGPU();
+            gpuErrchk( cudaPeekAtLastError() );
         }
 
         ~UnitControllerSetup(){
@@ -101,16 +102,16 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 
     TEST( Reset ) {
 #ifdef __CUDACC__
-        //cudaReset();
-        //gpuCheck();
-        cudaDeviceSetLimit( cudaLimitStackSize, 100000 );
+        cudaReset();
+        gpuCheck();
+        cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
 #endif
     }
 
     template<typename T>
     using resultClass = MonteRay_SingleValueCopyMemory<T>;
 
-    CUDA_CALLABLE_KERNEL void kernelGetVertex(const Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index) {
+    CUDA_CALLABLE_KERNEL  kernelGetVertex(const Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index) {
         pResult->v = pSpatialGrid->getVertex(d,index);
     }
 
@@ -135,6 +136,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         setup();
 #ifdef __CUDACC__
         cudaDeviceSynchronize();
+        gpuErrchk( cudaPeekAtLastError() );
 #endif
         CHECK_CLOSE(-5.0, getVertex(pGrid, MonteRay_SpatialGrid::CART_X,0), 1e-11 );
     }
@@ -154,7 +156,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     };
 
     template<typename particle>
-    CUDA_CALLABLE_KERNEL void kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
+    CUDA_CALLABLE_KERNEL  kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
         pResult->v = pSpatialGrid->getIndex(p);
     }
 
@@ -200,7 +202,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         CHECK_EQUAL( 111, getIndex( pGrid, p ) );
     }
 
-    CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+    CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
             gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z, gpuRayFloat_t u, gpuRayFloat_t v, gpuRayFloat_t w,
             gpuRayFloat_t distance, bool outside) {
         Position_t pos = Position_t( x,y,z);

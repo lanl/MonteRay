@@ -16,6 +16,7 @@
 #include "MonteRayCopyMemory.t.hh"
 #include "GPUErrorCheck.hh"
 #include "HashBins.hh"
+#include "RayWorkInfo.hh"
 
 #ifdef MCATK_INLINED
 #include "ReadLnk3dnt.hh"
@@ -426,6 +427,56 @@ unsigned GridBins::rayTrace( int* global_indices, gpuRayFloat_t* distances, cons
     return orderCrossings(global_indices, distances, MAXNUMVERTICES, cells[0], crossingDistances[0], numCrossings, current_indices, distance, outsideDistances);
 }
 
+template<unsigned N>
+CUDA_CALLABLE_MEMBER
+unsigned
+GridBins::rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const {
+    const bool debug = false;
+
+    int current_indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
+
+    if( debug ){
+        printf( "GridBins::rayTrace --------------------------------\n");
+    }
+
+    int cells[3][MAXNUMVERTICES];
+    gpuRayFloat_t crossingDistances[3][MAXNUMVERTICES];
+    unsigned numCrossings[3];
+
+    for( unsigned i=0; i<3; ++i){
+        current_indices[i] = getDimIndex(i, pos[i] );
+
+        numCrossings[i] = calcCrossings( vertices + offset[i], num[i]+1, cells[i], crossingDistances[i], pos[i], dir[i], distance, current_indices[i]);
+
+        if( debug ){
+            printf( "GridBins::rayTrace -- current_indices[i]=%d\n", current_indices[i] );
+            printf( "GridBins::rayTrace -- numCrossings[i]=%d\n", numCrossings[i] );
+        }
+
+        // if outside and ray doesn't move inside then ray never enters the grid
+        if( isIndexOutside(i,current_indices[i]) && numCrossings[i] == 0  ) {
+            return 0U;
+        }
+    }
+
+    if( debug ){
+        printf( "GridBins::rayTrace -- numCrossings[0]=%d\n", numCrossings[0] );
+        printf( "GridBins::rayTrace -- numCrossings[1]=%d\n", numCrossings[1] );
+        printf( "GridBins::rayTrace -- numCrossings[2]=%d\n", numCrossings[2] );
+    }
+
+    return orderCrossings( particleID, rayInfo, MAXNUMVERTICES, cells[0], crossingDistances[0], numCrossings, current_indices, distance, outsideDistances);
+}
+
+template
+CUDA_CALLABLE_MEMBER
+unsigned
+GridBins::rayTrace<1U>( unsigned particleID, RayWorkInfo<1U>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
+
+template
+CUDA_CALLABLE_MEMBER
+unsigned
+GridBins::rayTrace<3U>( unsigned particleID, RayWorkInfo<3U>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
 
 CUDA_CALLABLE_MEMBER
 unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* cells, gpuRayFloat_t* distances, float_t pos, float_t dir, float_t distance, int index ){
@@ -642,8 +693,118 @@ unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances,
     return numRayCrossings;
 }
 
-CUDA_CALLABLE_KERNEL
-void
+template<unsigned N>
+CUDA_CALLABLE_MEMBER
+unsigned GridBins::orderCrossings(unsigned particleID, RayWorkInfo<N>& rayInfo, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const {
+    // Order the distance crossings to provide a rayTrace
+
+    const bool debug = false;
+
+    unsigned end[3] = {0, 0, 0}; //    last location in the distance[i] vector
+
+    unsigned maxNumCrossings = 0;
+    for( unsigned i=0; i<3; ++i){
+        end[i] = numCrossings[i];
+        maxNumCrossings += end[i];
+    }
+
+    if( debug ) {
+        for( unsigned i=0; i<3; ++i){
+            printf( "Debug: i=%d  numCrossings=%d\n", i, numCrossings[i]);
+            for( unsigned j=0; j< numCrossings[i]; ++j ) {
+                printf( "Debug: j=%d  index=%d  distance=%f", j, *((cells+i*num) + j),  *((crossingDistances+i*num)+j) );
+            }
+        }
+    }
+
+    float_t minDistances[3];
+
+    bool outside;
+    float_t priorDistance = 0.0;
+    unsigned start[3] = {0, 0, 0}; // current location in the distance[i] vector
+
+    unsigned numRayCrossings = 0;
+    for( unsigned i=0; i<maxNumCrossings; ++i){
+
+        unsigned minDim;
+        float_t minimumDistance = MonteRay::inf;
+        for( unsigned j = 0; j<3; ++j) {
+            if( start[j] < end[j] ) {
+                minDistances[j] = *((crossingDistances+j*num)+start[j]);
+                if( minDistances[j] < minimumDistance ) {
+                    minimumDistance = minDistances[j];
+                    minDim = j;
+                }
+            } else {
+                minDistances[j] = MonteRay::inf;
+            }
+        }
+
+        indices[minDim] =  *((cells+minDim*num) + start[minDim]);
+        if( debug ) {
+            printf( "Debug: minDim=%d  index=%d   minimumDistance=%f\n", minDim, indices[minDim], minimumDistance);
+        }
+
+        // test for outside of the grid
+        outside = isOutside( indices );
+
+        if( debug ) {
+            if( outside ) {
+                printf( "Debug: ray is outside \n" );
+            } else {
+                printf( "Debug: ray is inside \n" );
+            }
+        }
+
+        float_t currentDistance = minimumDistance;
+
+        if( !outside || outsideDistances ) {
+            float_t deltaDistance = currentDistance - priorDistance;
+
+            if( deltaDistance > 0.0  ) {
+                unsigned global_index;
+                if( !outside ) {
+                    global_index = calcIndex(indices );
+                } else {
+                    global_index = UINT_MAX;
+                }
+                rayInfo.addRayCastCell(particleID, global_index, deltaDistance);
+//                global_indices[numRayCrossings] = global_index;
+//                distances[numRayCrossings] = deltaDistance;
+//                ++numRayCrossings;
+
+                if( debug ) {
+                    printf( "Debug: ******************\n" );
+                    printf( "Debug:  Entry Num    = %d\n", numRayCrossings );
+                    printf( "Debug:     index[0]  = %d\n", indices[0] );
+                    printf( "Debug:     index[1]  = %d\n", indices[1] );
+                    printf( "Debug:     index[2]  = %d\n", indices[2] );
+                    printf( "Debug:     distance  = %f\n", deltaDistance );
+                }
+            }
+        }
+
+        if( currentDistance >= distance ) {
+            break;
+        }
+
+        indices[minDim] = *((cells+minDim*num) + start[minDim]+1);
+
+        if( ! outside ) {
+            if( isIndexOutside(minDim, indices[minDim] ) ) {
+                // ray has moved outside of grid
+                break;
+            }
+        }
+
+        ++start[minDim];
+        priorDistance = currentDistance;
+    }
+
+    return numRayCrossings;
+}
+
+CUDA_CALLABLE_KERNEL 
 kernelRayTrace(void* ptrNumCrossings,
         GridBins* ptrGrid,
         int* ptrCells,

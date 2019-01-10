@@ -78,7 +78,7 @@ SUITE( CopyMemory_tester ) {
         delete test;
     }
 
-    CUDA_CALLABLE_KERNEL void kernelSumAandB(testCopyClass* A, testCopyClass* B, testCopyClass* C) {
+    CUDA_CALLABLE_KERNEL  kernelSumAandB(testCopyClass* A, testCopyClass* B, testCopyClass* C) {
         C->A += A->A + B->A;
         C->B += A->B + B->B;
         return;
@@ -178,7 +178,7 @@ SUITE( CopyMemory_tester ) {
         }
     };
 
-    CUDA_CALLABLE_KERNEL void kernelSumVectors2(testClassWithArray* A, testClassWithArray* B, testClassWithArray* C) {
+    CUDA_CALLABLE_KERNEL  kernelSumVectors2(testClassWithArray* A, testClassWithArray* B, testClassWithArray* C) {
         for( unsigned i=0; i<A->N; ++i) {
             gpuFloatType_t elementA = A->elements[i] * A->multiple;
             gpuFloatType_t elementB = B->elements[i] * B->multiple;

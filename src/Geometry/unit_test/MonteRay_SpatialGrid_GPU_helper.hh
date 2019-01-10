@@ -27,49 +27,49 @@ using Position_t = MonteRay_SpatialGrid::Position_t;
 template<typename T>
 using resultClass = MonteRay_SingleValueCopyMemory<T>;
 
-CUDA_CALLABLE_KERNEL void kernelGetNumCells(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult) ;
+CUDA_CALLABLE_KERNEL  kernelGetNumCells(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult) ;
 
-CUDA_CALLABLE_KERNEL void kernelGetCoordinateSystem(Grid_t* pSpatialGrid, resultClass<TransportMeshTypeEnum::TransportMeshTypeEnum_t>* pResult);
+CUDA_CALLABLE_KERNEL  kernelGetCoordinateSystem(Grid_t* pSpatialGrid, resultClass<TransportMeshTypeEnum::TransportMeshTypeEnum_t>* pResult);
 
-CUDA_CALLABLE_KERNEL void kernelGetDimension(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult);
+CUDA_CALLABLE_KERNEL  kernelGetDimension(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult);
 
-CUDA_CALLABLE_KERNEL void kernelIsInitialized(Grid_t* pSpatialGrid, resultClass<bool>* pResult);
+CUDA_CALLABLE_KERNEL  kernelIsInitialized(Grid_t* pSpatialGrid, resultClass<bool>* pResult);
 
-CUDA_CALLABLE_KERNEL void kernelGetNumGridBins(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL  kernelGetNumGridBins(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, unsigned index);
 
-CUDA_CALLABLE_KERNEL void kernelGetMinVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL  kernelGetMinVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-CUDA_CALLABLE_KERNEL void kernelGetMaxVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL  kernelGetMaxVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-CUDA_CALLABLE_KERNEL void kernelGetDelta(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL  kernelGetDelta(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-CUDA_CALLABLE_KERNEL void kernelGetVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index);
+CUDA_CALLABLE_KERNEL  kernelGetVertex(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index);
 
-CUDA_CALLABLE_KERNEL void kernelGetVolume(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
+CUDA_CALLABLE_KERNEL  kernelGetVolume(Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned index);
 
-CUDA_CALLABLE_KERNEL void kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos);
+CUDA_CALLABLE_KERNEL  kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos);
 
 template<typename particle>
-CUDA_CALLABLE_KERNEL void kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
+CUDA_CALLABLE_KERNEL  kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
     pResult->v = pSpatialGrid->getIndex(p);
 }
 
-//CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuRayFloat_t distance);
-CUDA_CALLABLE_KERNEL void kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+//CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, Position_t pos, Position_t dir, gpuRayFloat_t distance);
+CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
         gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z, gpuRayFloat_t u, gpuRayFloat_t v, gpuRayFloat_t w,
         gpuRayFloat_t distance, bool outside = false);
 
-CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+CUDA_CALLABLE_KERNEL  kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
         unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance );
 
-CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+CUDA_CALLABLE_KERNEL  kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
         Position_t pos, Position_t dir, gpuRayFloat_t distance );
 
-CUDA_CALLABLE_KERNEL void kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+CUDA_CALLABLE_KERNEL  kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
         unsigned d, Position_t pos, Position_t dir, gpuRayFloat_t distance );
 
 template<class Particle>
-CUDA_CALLABLE_KERNEL void kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+CUDA_CALLABLE_KERNEL  kernelRayTraceParticle(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
         Particle p,
         gpuRayFloat_t distance, bool outside = false) {
     pSpatialGrid->rayTrace( pResult->v, p, distance, outside);

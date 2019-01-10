@@ -19,6 +19,9 @@ namespace MonteRay{
 
 class HashBins;
 
+template< unsigned N>
+class RayWorkInfo;
+
 typedef gpuFloatType_t float_t;
 typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
 typedef MonteRay::Vector3D<gpuRayFloat_t> Direction_t;
@@ -128,8 +131,16 @@ public:
     CUDA_CALLABLE_MEMBER
     unsigned rayTrace(int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
 
+    template<unsigned N>
+    CUDA_CALLABLE_MEMBER
+    unsigned rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
+
     CUDA_CALLABLE_MEMBER
     unsigned orderCrossings(int* global_indices, gpuRayFloat_t* distances, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const;
+
+    template<unsigned N>
+    CUDA_CALLABLE_MEMBER
+    unsigned orderCrossings(unsigned particleID, RayWorkInfo<N>& rayInfo, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const;
 
     CUDA_CALLABLE_MEMBER
     const HashBins* getHashPtr( unsigned dim ) { return hash[dim]; }
@@ -157,8 +168,7 @@ float_t getDistance( Position_t& pos1, Position_t& pos2);
 CUDA_CALLABLE_MEMBER
 unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* cells, gpuRayFloat_t* distances, float_t pos, float_t dir, float_t distance, int index );
 
-CUDA_CALLABLE_KERNEL
-void
+CUDA_CALLABLE_KERNEL 
 kernelRayTrace(
         void* ptrNumCrossings,
         GridBins* ptrGrid,

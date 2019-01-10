@@ -10,15 +10,13 @@ namespace MonteRay {
 
 using ptrCylindricalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
 
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ ) {
+CUDA_CALLABLE_KERNEL  createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ ) {
     *pPtrInstance = new MonteRay_CylindricalGrid( 2, pGridR, pGridZ );
     pResult->v = *pPtrInstance;
     //if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
 }
 
-CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance) {
+CUDA_CALLABLE_KERNEL  deleteDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance) {
     delete *pPtrInstance;
 }
 

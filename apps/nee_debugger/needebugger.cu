@@ -95,10 +95,13 @@ nee_debugger::launch(const std::string& optBaseName){
         singleSizeRaylist.add( ray );
         singleSizeRaylist.copyToGPU();
 
+        RayWorkInfo<3> rayInfo( singleSizeRaylist.size() );
+        rayInfo.copyToGPU();
+
         GPUSync sync1; sync1.sync();
 
         std::cout << "Launching ray # " << i << std::endl;
-        estimator.launch_ScoreRayList(-1,-1, &singleSizeRaylist, 0, false);
+        estimator.launch_ScoreRayList(-1,-1, &singleSizeRaylist, &rayInfo, 0, false);
 
         GPUSync sync2; sync2.sync();
     }

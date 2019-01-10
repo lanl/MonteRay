@@ -165,4 +165,41 @@ void setCudaStackSize( size_t size, const bool verbose) {
 #endif
 }
 
+std::pair<unsigned, unsigned> setLaunchBounds( int nThreadsArg, int nRaysPerThreadArg, const unsigned numRays ) {
+    // negative nThreadsArg forces number of threads per block to this value
+    // negative nRaysPerThreadArg forces number of blocks to this value
+    // returns pair(nBlocks,nThreads)
+
+    unsigned nRaysPerThread = std::abs(nRaysPerThreadArg);
+    unsigned nThreads;
+    unsigned nBlocks;
+
+    if( nThreadsArg > 0 ) {
+        nThreads = nThreadsArg;
+
+        if( nThreads > MONTERAY_MAX_THREADS_PER_BLOCK ) {
+            nThreads = MONTERAY_MAX_THREADS_PER_BLOCK;
+        }
+        if( nThreads > numRays ) {
+            nThreads = numRays;
+        }
+        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
+    } else {
+        nThreads = std::abs(nThreadsArg);
+    }
+
+    if( nRaysPerThreadArg > 0 ) {
+        // limit the number of blocks so there are only MONTERAY_MAX_THREADS total threads
+        unsigned maxNumBlocks = MONTERAY_MAX_THREADS/nThreads;
+        maxNumBlocks = std::min( maxNumBlocks, 65535U);
+
+        nBlocks = std::min(( numRays + nRaysPerThread*nThreads -1 ) / (nRaysPerThread*nThreads), maxNumBlocks);
+    } else {
+        nBlocks = std::abs( nRaysPerThreadArg );
+    }
+
+    MONTERAY_ASSERT_MSG( nBlocks*nThreads <= MONTERAY_MAX_THREADS, "nBlocks*nThreads > MONTERAY_MAX_THREADS " );
+    return std::make_pair( nBlocks, nThreads);
+}
+
 } /* namespace MonteRay */

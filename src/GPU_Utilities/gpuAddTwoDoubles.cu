@@ -9,7 +9,7 @@
 
 namespace MonteRay {
 
-CUDA_CALLABLE_KERNEL void add_single(unsigned N, float *a, float *b, float *c ) {
+CUDA_CALLABLE_KERNEL  add_single(unsigned N, float *a, float *b, float *c ) {
 
 #ifdef __CUDA_ARCH__
     int bid = blockIdx.x;
@@ -34,7 +34,7 @@ CUDA_CALLABLE_KERNEL void add_single(unsigned N, float *a, float *b, float *c ) 
 #endif
 }
 
-CUDA_CALLABLE_KERNEL void add_double(unsigned N, double *a, double *b, double *c ) {
+CUDA_CALLABLE_KERNEL  add_double(unsigned N, double *a, double *b, double *c ) {
     //	printf("Debug: GPU_Utilities/unit_test/gpuAddTwoDoubles.cc::add_double **************\n");
 #ifdef __CUDA_ARCH__
     int bid = blockIdx.x;

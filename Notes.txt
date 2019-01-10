@@ -7,3 +7,11 @@ Jan 9, 2019
       - PWR fuel assembly - 256x256  = GPU time = 6.71193 secs
       
       
+Jan 10, 2019
+   * Converted to use basic ray casting distances from global memory, extra copies may still exist,
+     crossings distances not yet converted.
+   * Nightlies
+      - Criticality Accident - 390x256 = GPU time = 21.80 secs
+      - PWR fuel assembly    - 390x256 = GPU time = 15.19 secs
+          
+      

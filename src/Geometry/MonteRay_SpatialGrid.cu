@@ -12,6 +12,7 @@
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "RayWorkInfo.hh"
 
 #ifndef __CUDA_ARCH__
 #include <stdexcept>
@@ -513,7 +514,7 @@ MonteRay_SpatialGrid::getNumVerticesSq(unsigned i) const{
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_SpatialGrid::rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances) const {
+MonteRay_SpatialGrid::rayTrace(rayTraceList_t& rayTraceList, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances) const {
 
 #ifdef DEBUG
     const bool debug = false;
@@ -539,7 +540,7 @@ MonteRay_SpatialGrid::rayTrace(rayTraceList_t& rayTraceList, Position_t pos, Dir
 
 CUDA_CALLABLE_MEMBER
 unsigned
-MonteRay_SpatialGrid::rayTrace(int* global_indices, gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat_t distance, bool OutsideDistances) const {
+MonteRay_SpatialGrid::rayTrace(int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances) const {
 
 #ifdef DEBUG
     const bool debug = false;
@@ -565,6 +566,44 @@ MonteRay_SpatialGrid::rayTrace(int* global_indices, gpuRayFloat_t* distances, Po
     }
     return rayTraceList.size();
 }
+
+template<unsigned N>
+CUDA_CALLABLE_MEMBER
+unsigned
+MonteRay_SpatialGrid::rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const {
+#ifdef DEBUG
+    const bool debug = false;
+    if( debug ) printf("MonteRay_SpatialGrid::rayTrace(int* global_indices, int* gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
+#endif
+
+    MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
+
+    //        if( transform ) {
+    //            pos = (*transform).counterTransformPos( pos );
+    //            dir = (*transform).counterTransformDir( dir );
+    //        }
+    rayTraceList_t rayTraceList;
+    rayTrace(rayTraceList, pos, dir, distance, outsideDistances );
+
+#ifdef DEBUG
+    if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayTraceList.size());
+#endif
+
+    for( unsigned i=0; i< rayTraceList.size(); ++i ) {
+        rayInfo.addRayCastCell( particleID, rayTraceList.id(i), rayTraceList.dist(i));
+    }
+    return rayInfo.getRayCastSize(particleID);
+}
+
+template
+CUDA_CALLABLE_MEMBER
+unsigned
+MonteRay_SpatialGrid::rayTrace<1>( unsigned particleID, RayWorkInfo<1>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
+
+template
+CUDA_CALLABLE_MEMBER
+unsigned
+MonteRay_SpatialGrid::rayTrace<3>( unsigned particleID, RayWorkInfo<3>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
 
 CUDA_CALLABLE_MEMBER
 void

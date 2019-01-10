@@ -1,4 +1,4 @@
-#include "ExpectedPathLength.hh"
+#include "ExpectedPathLength.t.hh"
 
 #include <math.h>
 

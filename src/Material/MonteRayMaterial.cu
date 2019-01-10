@@ -176,17 +176,17 @@ void copy(struct MonteRayMaterial* pCopy, struct MonteRayMaterial* pOrig) {
 CUDA_CALLABLE_MEMBER
 unsigned getNumIsotopes(struct MonteRayMaterial* ptr ) { return ptr->numIsotopes; }
 
-CUDA_CALLABLE_KERNEL void kernelGetNumIsotopes(MonteRayMaterial* pMat, unsigned* results){
+CUDA_CALLABLE_KERNEL  kernelGetNumIsotopes(MonteRayMaterial* pMat, unsigned* results){
     results[0] = getNumIsotopes(pMat);
     return;
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(MonteRayMaterial* pMat, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(MonteRayMaterial* pMat, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
     results[0] = getTotalXS(pMat, E, density);
     return;
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(MonteRayMaterial* pMat, const HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(MonteRayMaterial* pMat, const HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density,  gpuFloatType_t* results){
     unsigned HashBin = getHashBin(pHash,E);
     results[0] = getTotalXS(pMat, pHash, HashBin, E, density);
     return;

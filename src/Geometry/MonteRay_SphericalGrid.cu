@@ -18,15 +18,13 @@ namespace MonteRay {
 
 using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_SphericalGrid*>;
 
-CUDA_CALLABLE_KERNEL
-void createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR ) {
+CUDA_CALLABLE_KERNEL  createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR ) {
     *pPtrInstance = new MonteRay_SphericalGrid( 1, pGridR );
     pResult->v = *pPtrInstance;
     //if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
 }
 
-CUDA_CALLABLE_KERNEL
-void deleteDeviceInstance(MonteRay_SphericalGrid** pPtrInstance) {
+CUDA_CALLABLE_KERNEL  deleteDeviceInstance(MonteRay_SphericalGrid** pPtrInstance) {
     delete *pPtrInstance;
 }
 

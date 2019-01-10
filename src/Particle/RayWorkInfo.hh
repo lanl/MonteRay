@@ -15,7 +15,7 @@ public:
 
     /// Primary RayWorkInfo constructor.
     /// Takes the size of the list as an argument.
-    CUDAHOST_CALLABLE_MEMBER RayWorkInfo(unsigned num );
+    CUDAHOST_CALLABLE_MEMBER RayWorkInfo(unsigned num, bool cpuAllocate = false );
 
     CUDAHOST_CALLABLE_MEMBER ~RayWorkInfo();
 
@@ -35,11 +35,13 @@ public:
     }
 
     CUDA_CALLABLE_MEMBER void clear(void) {
-        for( unsigned i = 0; i< nAllocated; ++i ) {
-            rayCastSize[i] = 0;
-        }
-        for( unsigned i = 0; i< nAllocated*3; ++i ) {
-            crossingSize[i] = 0;
+        if( allocateOnCPU ) {
+            for( unsigned i = 0; i< nAllocated; ++i ) {
+                rayCastSize[i] = 0;
+            }
+            for( unsigned i = 0; i< nAllocated*3; ++i ) {
+                crossingSize[i] = 0;
+            }
         }
     }
 
@@ -55,6 +57,13 @@ public:
 
     CUDA_CALLABLE_MEMBER void setIndex(unsigned dim, unsigned i, int index) {
         indices[i+nAllocated*dim] = index;
+    }
+
+    CUDA_CALLABLE_MEMBER void clear( unsigned i) {
+        getRayCastSize(i) = 0;
+        getCrossingSize(0, i) = 0;
+        getCrossingSize(1, i) = 0;
+        getCrossingSize(2, i) = 0;
     }
 
     CUDA_CALLABLE_MEMBER int& getRayCastSize( unsigned i) const {
@@ -86,6 +95,7 @@ public:
     }
 
 // Data
+    bool allocateOnCPU = false;
     unsigned nAllocated = 0;
 
     int* indices = NULL;

@@ -7,7 +7,7 @@
 #include "ManagedMemory_test_helper.hh"
 
 
-CUDA_CALLABLE_KERNEL void kernelSumVectors(testClass* A, testClass* B, testClass* C) {
+CUDA_CALLABLE_KERNEL  kernelSumVectors(testClass* A, testClass* B, testClass* C) {
     for( unsigned i=0; i<A->N; ++i) {
     	gpuFloatType_t elementA = A->elements[i] * A->multiple;
     	gpuFloatType_t elementB = B->elements[i] * B->multiple;

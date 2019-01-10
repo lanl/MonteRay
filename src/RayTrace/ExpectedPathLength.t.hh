@@ -9,19 +9,22 @@
 #include "HashLookup.hh"
 #include "gpuTally.hh"
 #include "GridBins.hh"
-
+#include "RayWorkInfo.hh"
+#include "GPUUtilityFunctions.hh"
 
 namespace MonteRay{
 
 template<typename GRIDTYPE, unsigned N>
 CUDA_CALLABLE_MEMBER void
-tallyCollision(const GRIDTYPE* pGrid,
+tallyCollision(
+        unsigned particleID,
+        const GRIDTYPE* pGrid,
         const MonteRayMaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const HashLookup* pHash,
         const Ray_t<N>* p,
-        gpuTallyType_t* pTally,
-        unsigned tid )
+        RayWorkInfo<N>* pRayInfo,
+        gpuTallyType_t* pTally )
 {
 #ifdef DEBUG
     const bool debug = false;
@@ -29,7 +32,7 @@ tallyCollision(const GRIDTYPE* pGrid,
     if( debug ) {
         printf("--------------------------------------------------------------------------------------------------------\n");
         printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, w=%f, energy=%f, weight=%f, index=%d \n",
-                tid+1,
+                particleID+1,
                 p->pos[0],
                 p->pos[1],
                 p->pos[2],
@@ -58,17 +61,16 @@ tallyCollision(const GRIDTYPE* pGrid,
         return;
     }
 
-    int cells[2*MAXNUMVERTICES];
-    gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
-
-    unsigned numberOfCells;
+//    int cells[2*MAXNUMVERTICES];
+//    gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
+//    unsigned numberOfCells;
 
     //	gpuRayFloat_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
     //	gpuRayFloat_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
     Position_t pos( p->pos[0], p->pos[1], p->pos[2] );
     Direction_t dir( p->dir[0], p->dir[1], p->dir[2] );
 
-    numberOfCells = pGrid->rayTrace( cells, crossingDistances, pos, dir, 1.0e6f, false);
+    pGrid->template rayTrace<N>(particleID, *pRayInfo, pos, dir, 1.0e6f, false);
 
     gpuFloatType_t materialXS[MAXNUMMATERIALS];
     for( unsigned i=0; i < pMatList->numMaterials; ++i ){
@@ -79,9 +81,9 @@ tallyCollision(const GRIDTYPE* pGrid,
         }
     }
 
-    for( unsigned i=0; i < numberOfCells; ++i ){
-        int cell = cells[i];
-        gpuRayFloat_t distance = crossingDistances[i];
+    for( unsigned i=0; i < pRayInfo->getRayCastSize(particleID); ++i ){
+        int cell = pRayInfo->getRayCastCell(particleID,i);
+        gpuRayFloat_t distance = pRayInfo->getRayCastDist(particleID,i);
         if( cell == UINT_MAX ) continue;
 
         opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally,
@@ -119,6 +121,7 @@ tallyAttenuation(GRIDTYPE* pGrid,
     gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
 
     unsigned numberOfCells;
+    RayWorkInfo<1U>* pRayInfo;
 
     //	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
     //	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
@@ -143,12 +146,13 @@ tallyAttenuation(GRIDTYPE* pGrid,
 }
 
 template<typename GRIDTYPE, unsigned N>
-CUDA_CALLABLE_KERNEL void rayTraceTally(
+CUDA_CALLABLE_KERNEL  rayTraceTally(
         const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const HashLookup* pHash,
+        RayWorkInfo<N>* pRayInfo,
         gpuTallyType_t* tally){
 
 #ifdef DEBUG
@@ -156,24 +160,26 @@ CUDA_CALLABLE_KERNEL void rayTraceTally(
 #endif
 
 #ifdef __CUDACC__
-    unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
+    unsigned threadID = threadIdx.x + blockIdx.x*blockDim.x;
 #else
-    unsigned tid = 0;
+    unsigned threadID = 0;
 #endif
+    unsigned particleID = threadID;
 
     unsigned num = pCP->size();
 
 #ifdef DEBUG
-    if( debug ) printf("GPU::rayTraceTally:: starting tid=%d  N=%d\n", tid, N );
+    if( debug ) printf("GPU::rayTraceTally:: starting threadID=%d  N=%d\n", threadID, N );
 #endif
 
-    while( tid < num ) {
-        Ray_t<N> p = pCP->getParticle(tid);
+    while( particleID < num ) {
+        Ray_t<N> p = pCP->getParticle(particleID);
+        pRayInfo->clear( threadID );
 
 #ifdef DEBUG
         if( debug ) {
             printf("--------------------------------------------------------------------------------------------------------\n");
-            printf("GPU::rayTraceTally:: tid=%d\n", tid );
+            printf("GPU::rayTraceTally:: threadID=%d\n", threadID );
             printf("GPU::rayTraceTally:: x=%f\n", p.pos[0] );
             printf("GPU::rayTraceTally:: y=%f\n", p.pos[1] );
             printf("GPU::rayTraceTally:: z=%f\n", p.pos[2] );
@@ -186,16 +192,17 @@ CUDA_CALLABLE_KERNEL void rayTraceTally(
         }
 #endif
 
-        tallyCollision(pGrid, pMatList, pMatProps, pHash, &p, tally);
+       MonteRay::tallyCollision<GRIDTYPE,N>(threadID, pGrid, pMatList, pMatProps, pHash, &p, pRayInfo, tally);
 
 #ifdef __CUDACC__
-        tid += blockDim.x*gridDim.x;
+       particleID += blockDim.x*gridDim.x;
 #else
-        ++tid;
+        ++particleID;
 #endif
     }
     return;
 }
+
 
 template<typename GRIDTYPE, unsigned N>
 MonteRay::tripleTime launchRayTraceTally(
@@ -211,6 +218,13 @@ MonteRay::tripleTime launchRayTraceTally(
 {
     MonteRay::tripleTime time;
 
+    auto launchParams = setLaunchBounds( nThreads, nBlocks, pCP->getPtrPoints()->size() );
+    nBlocks = launchParams.first;
+    nThreads = launchParams.second;
+
+    RayWorkInfo<N> rayInfo(nBlocks*nThreads);
+    rayInfo.copyToGPU();
+
 #ifdef __CUDACC__
     cudaEvent_t startGPU, stopGPU, start, stop;
 
@@ -225,8 +239,13 @@ MonteRay::tripleTime launchRayTraceTally(
     cudaEventRecord(start,0);
     cudaEventRecord(startGPU,stream);
 
-    rayTraceTally<<<nBlocks,nThreads,0,stream>>>(pGrid->getDevicePtr(), pCP->getPtrPoints()->devicePtr,
-            pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+    rayTraceTally<<<nBlocks,nThreads,0,stream>>>(
+            pGrid->getDevicePtr(),
+            pCP->getPtrPoints()->devicePtr,
+            pMatList->ptr_device,
+            pMatProps->ptrData_device,
+            pMatList->getHashPtr()->getPtrDevice(),
+            rayInfo.devicePtr,
             pTally->temp->tally );
 
     cudaEventRecord(stopGPU,stream);

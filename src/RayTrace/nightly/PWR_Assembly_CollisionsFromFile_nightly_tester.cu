@@ -215,38 +215,18 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         // 256
         //  64
         // 192
-        unsigned nBlocks = 256;
+        unsigned nThreadsPerBlock = 1;
         unsigned nThreads = 256;
         unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
         capacity = 16698849;
 
-#ifdef TITANX_MAXWELL_GPU
-        unsigned N = 4;
-        nThreads = 416;
-        nBlocks = std::min(( capacity + N*nThreads -1 ) / (N*nThreads), 65535U);
+        auto launchBounds = setLaunchBounds( nThreads, nThreadsPerBlock, capacity);
 
-#endif
-
-#ifdef TESLA_K40_GPU
-        //        nBlocks = 16384;
-        //        nThreads  = (capacity-1) / ( nBlocks -1 );
-        //        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
-        //        nThreads = std::min( 1024U, nThreads );
-
-        unsigned N = 4;
-        nThreads = 416;
-        nBlocks = std::min(( capacity + N*nThreads -1 ) / (N*nThreads), 65535U);
-#endif
-#ifdef K420_GPU
-        nBlocks = 128;
-        nThreads = 128;
-        capacity = 1000000;
-#endif
-        std::cout << "Running PWR_Assembly from collision file with nBlocks=" << nBlocks <<
-                " nThreads=" << nThreads << " collision buffer capacity=" << capacity << "\n";
+        std::cout << "Running PWR_Assembly from collision file with nBlocks=" << launchBounds.first <<
+                " nThreads=" << launchBounds.second << " collision buffer capacity=" << capacity << "\n";
 
         CollisionPointController<GridBins> controller(
-                nBlocks,
+                nThreadsPerBlock,
                 nThreads,
                 pGrid,
                 pMatList,
