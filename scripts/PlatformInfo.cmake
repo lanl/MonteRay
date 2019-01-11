@@ -560,7 +560,7 @@ function( CollateAndPostResults )
         message( FATAL_ERROR "This routine should only be called AFTER configureCTest." )
     endif()
 
-    set( CTEST_PROJECT_SUBPROJECTS ToolkitLib FlatAPI QtAPI )
+    set( CTEST_PROJECT_SUBPROJECTS ToolkitLib)
     
     find_program( PYTHON python 
                   PATHS /usr/lanl/bin )
@@ -569,7 +569,7 @@ function( CollateAndPostResults )
                PATHS ${CMAKE_CURRENT_LIST_DIR}
              )
     
-    set( subprojects ToolkitLib Flat Qt4 )
+    set( subprojects ToolkitLib )
     
     foreach( subproject ${subprojects} )
     

@@ -17,6 +17,7 @@ function( BuildAndTest SubProjectName )
     #######################################################################
     # START
     #--------------------------------
+    message( STATUS "ctestrun.cmake::ctest_start() Model = [${Model}]" )
     ctest_start( ${Model} )
 
     file  ( READ "${CTEST_BINARY_DIRECTORY}/Testing/TAG" tag_file )
@@ -214,7 +215,7 @@ unset( CTEST_CHECKOUT_COMMAND )
 ##############################################
 # Trolltech Qt-4.0 API
 #--------------------------------
-BuildAndTest( QtAPI "API/Qt4" )
+#BuildAndTest( QtAPI "API/Qt4" )
 
 if( HostDomain STREQUAL xdiv OR BatchSystem STREQUAL slurm )
     CollateAndPostResults()

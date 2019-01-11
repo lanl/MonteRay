@@ -21,7 +21,7 @@ function( initializeRepository )
         unset( BranchRequest )
     endif()
 
-    set( StashRepo "ssh://git@xcp-stash.lanl.gov:7999/mr/monteray" )
+    set( StashRepo "ssh://git@xcp-stash.lanl.gov:7999/MR/monteray" )
 
     execute_process( COMMAND ${GIT_EXECUTABLE} ls-remote ${StashRepo} 
                      TIMEOUT 5 
@@ -30,7 +30,7 @@ function( initializeRepository )
     if( useMirror )
         find_path( LocalCloneDir FETCH_HEAD
                    PATHS ${MCATKDir} ${MCATKDir}/../mcatk_autobuild
-                   PATH_SUFFIXES mirror/mcatk.git )
+                   PATH_SUFFIXES mirror/monteray.git )
         if( NOT LocalCloneDir )
             message( FATAL_ERROR "-- GIT: Unable to locate a *locally* mirrored repository. Looked under : [${MCATKDir}]" )
         endif()
@@ -69,6 +69,7 @@ function( initializeRepository )
       set( CTEST_CHECKOUT_COMMAND  "bash ${gitMCATKBashScript} ${GIT_EXECUTABLE} ${BranchName} ${repo} ${CTEST_SOURCE_DIRECTORY}"  PARENT_SCOPE)
     else()
       set( CTEST_CHECKOUT_COMMAND "${GIT_EXECUTABLE} clone ${BranchRequest} ${repo} ${CTEST_SOURCE_DIRECTORY}" PARENT_SCOPE )   
+      message( STATUS "NOT Using HandCI" )
     endif()
 
     
@@ -88,7 +89,7 @@ function( initializePush Repo )
     find_package( Git REQUIRED )
     find_program( TAR tar )
     
-    set( repo "ssh://git@xcp-stash.lanl.gov:7999/MCATK/${Repo}" )
+    set( repo "ssh://git@xcp-stash.lanl.gov:7999/MR/${Repo}" )
 
     execute_process( COMMAND ${GIT_EXECUTABLE} ls-remote ${repo} 
                      TIMEOUT 5 
