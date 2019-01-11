@@ -424,26 +424,40 @@ function( ParseBuildArgs )
     set( build ${Build} )    
     validateOption( build Release Debug RelWithDebInfo )
     set( Build ${build} PARENT_SCOPE )
-    
-    set( ConfigMsg "Model[ ${model} ], Tool[ ${tool}-${CompilerVersion} ], Build[ ${build} ]" )
-    
+
+    set( ConfigMsg "Model[${model}], Tool[${tool}-${CompilerVersion}], Build[${build}]" )
+
+    validateOption( citype OPTIONAL HandCI AutoCI)
+    if(citype)
+      set( ConfigMsg "${ConfigMsg}, CIType[${citype}]" )
+    endif()
+    set( CIType ${citype} PARENT_SCOPE )
+              
+    validateOption( UnityType OPTIONAL UnityOn UnityOff)
+    if(UnityType)
+      set( ConfigMsg "${ConfigMsg}, UnityType[${UnityType}]" )
+      if(UnityType STREQUAL UnityOn)
+        option(UnityBuild "Toggles Unity Build" ON)
+      endif()  
+    endif()
+
     if( NOT BranchName )
         set( BranchRegex "[Bb]ranch=[^;]+" )
         string( REGEX MATCH ${BranchRegex} branchName "${ARGN}" ) 
         if( branchName ) 
             string( REGEX REPLACE "[Bb]ranch=" "" branchName ${branchName} )
             set( BranchName ${branchName} PARENT_SCOPE )
-            set( ConfigMsg "${ConfigMsg} : **Branch[ ${branchName} ]**" )
+            set( ConfigMsg "${ConfigMsg} : **Branch[${branchName}]**" )
         endif()
     else()
-        set( ConfigMsg "${ConfigMsg} : **Branch[ ${BranchName} ]**" )        
+        set( ConfigMsg "${ConfigMsg} : **Branch[${BranchName}]**" )        
     endif()
 
     # toggle using git (over svn)
     #string( REGEX MATCH "git" repoStyle "${ARGN}" ) 
     #if( repoStyle ) 
         set( useGIT ON PARENT_SCOPE )
-    #    set( ConfigMsg "${ConfigMsg} : **Repo[ ${repoStyle} ]**" )
+    #    set( ConfigMsg "${ConfigMsg} : **Repo[${repoStyle}]**" )
     #endif()
 
     if( ARGN AND NOT VerbosityFlags )
@@ -457,7 +471,7 @@ function( ParseBuildArgs )
             set( ConfigMsg "${ConfigMsg} ${Verbosity}" )
         endif()
     endif()
-
+    
     #######################################################################
     # Memory Checking: VALGRIND
     #--------------------------------

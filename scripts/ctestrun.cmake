@@ -30,19 +30,28 @@ function( BuildAndTest SubProjectName )
     #--------------------------------
     # only want 1 update file for now since everything points to same repository
     if( mainProject )
-        ctest_update( RETURN_VALUE update_result )
+        ctest_update( RETURN_VALUE update_result)
         if( update_result EQUAL -1 )
-            message( FATAL_ERROR "Repository update error: Server not responding" )
+           if( CIType STREQUAL HandCI )
+              message( WARNING "ctestrun.cmake::ctest_update() - Repository update saw some possible issues. Look at (git pull) message output right before this message, or Server not responding" )
+           else()
+              message( FATAL_ERROR "Repository update error: Server not responding" )
+           endif()
         endif()
     endif()
-    
-    set( config_options 
-             -DBatchMode:BOOL=ON
-             -DCMAKE_BUILD_TYPE:STRING=${CTEST_BUILD_CONFIGURATION}
-        )
 
-    ctest_configure( OPTIONS "${config_options}"
-                    )
+    # option setting of UnityBuild in PlatformInfo.cmake
+    if(UnityBuild)
+       set(UnityBuildString "-DUnityBuild:BOOL=ON" )
+    endif()
+
+    set( config_options 
+          -DBatchMode:BOOL=ON
+          ${UnityBuildString}
+          -DCMAKE_BUILD_TYPE:STRING=${CTEST_BUILD_CONFIGURATION}
+    )    
+    message(STATUS "ctestrun.cmake:BuildAndTest has config_options = [${config_options}]")
+    ctest_configure( OPTIONS "${config_options}" )
 
     if( CoverageToggle )
         startBullsEye()
@@ -67,26 +76,11 @@ function( BuildAndTest SubProjectName )
     # ---------------------------------------------------------------
     # Long running nightlies
     if( Model STREQUAL "Nightly" OR Model STREQUAL "ContinuousNightly" OR TestAll )
-        message( "NIGHTLY : Begin serial tests.  Current Elapsed:  ${CTEST_ELAPSED_TIME}" )
+        message( "NIGHTLY : Begin nightly tests.  Current Elapsed:  ${CTEST_ELAPSED_TIME}" )
 
-        ctest_test( INCLUDE_LABEL "SerialNightly" PARALLEL_LEVEL ${nHostProcs} SCHEDULE_RANDOM on )
+        ctest_test( INCLUDE_LABEL "Nightly" PARALLEL_LEVEL ${nHostProcs} SCHEDULE_RANDOM on )
         configure_file( ${TEST_OUTPUT_DIR}/Test.xml ${TEST_TEMP_DIR}/TestSerialNightly.xml COPYONLY )
         
-        if( ${CTEST_ELAPSED_TIME} GREATER ${MaxSafeTestTime} )
-            set( CTEST_TEST_TIMEOUT "60" )
-        endif()
-            
-        set( nParallelTaskOptions 9 8 4 3 2 1 )
-        foreach( nParallelTasks ${nParallelTaskOptions} )
-            
-            ctest_test( INCLUDE_LABEL "Nt${nParallelTasks}" PARALLEL_LEVEL ${nHostProcs} SCHEDULE_RANDOM on )
-            configure_file( ${TEST_OUTPUT_DIR}/Test.xml ${TEST_TEMP_DIR}/TestNt${nParallelTasks}.xml COPYONLY )
-
-            if( ${CTEST_ELAPSED_TIME} GREATER ${MaxSafeTestTime} )
-                set( CTEST_TEST_TIMEOUT "60" )
-            endif()
-
-        endforeach()
     endif()
 
     # ---------------------------------------------------------------
@@ -145,9 +139,17 @@ set( TenMinutes 600 )
 math( EXPR MaxSafeTestTime "${TenHours} - ${TenMinutes}" )
 
 #######################################################################
-# Repository: Subversion
+# Repository
 #--------------------------------
-initializeSVN()
+include( UseGit )
+initializeRepository()
+
+if( CTEST_CHECKOUT_COMMAND AND CIType )
+   message( STATUS "ctestrun.cmake - CTEST_CHECKOUT_COMMAND  = [${CTEST_CHECKOUT_COMMAND}]" )
+endif()
+if( CTEST_GIT_UPDATE_CUSTOM AND CIType )
+   message( STATUS "ctestrun.cmake - CTEST_GIT_UPDATE_CUSTOM = [${CTEST_GIT_UPDATE_CUSTOM}]" )
+endif()
 
 #######################################################################
 # Memory Checking: valgrind
@@ -163,17 +165,38 @@ if( WITH_COVERAGE )
     setupCodeCoverage()
 endif()
 
+find_program( Builder gmake )
+find_program( Builder make )
+if( NOT Builder )
+    message( FATAL_ERROR "Unable to find a typical build tool (i.e. gmake, make, etc)" )
+endif()
+
 # Before doing a parallel build, determine how many processors we have
-if( BatchSystem STREQUAL slurm )
-    set( CTEST_BUILD_COMMAND "gmake -j 8 install" )
+if( BatchSystem STREQUAL slurm AND HostDomain STREQUAL llnl )
+    set( CTEST_BUILD_COMMAND "${Builder} -j 8 install" )
     set( nHostProcs 64 )
 else()
     determineProcessorCount()
     if( nHostProcs GREATER 16 )
-        set( nHostProcs 16 )
-        message( WARNING "Limiting procs to [ ${nHostProcs} ]" )
+        #For ADX and HPC machines.....
+        math( EXPR nBuildProcs "${nHostProcs}/2" )
+        message( WARNING "Limiting build procs to [ ${nBuildProcs} ]" )
+    elseif( nHostProcs GREATER 4 )
+        # MCATK ADX machines .......
+        math( EXPR nBuildProcs "${nHostProcs}-2" )
+        message( WARNING "Limiting build procs to [ ${nBuildProcs} ]" )
+    else()
+        set( nBuildProcs ${nHostProcs} )
     endif()
-    set( CTEST_BUILD_COMMAND "gmake -j ${nHostProcs} install" )
+    
+    # if the environment variable is GNUMAKE_J is set use that value
+    if( DEFINED ENV{GNUMAKE_J} )
+        set( GNUMAKE_J $ENV{GNUMAKE_J} )
+    else()
+        set( GNUMAKE_J ${nBuildProcs} )
+    endif()
+    set( CTEST_BUILD_COMMAND "${Builder} -j ${GNUMAKE_J} install" )
+
 endif()
 
 set( CTEST_TEST_TIMEOUT "7200" )
@@ -185,10 +208,8 @@ set( CTEST_PROJECT_SUBPROJECTS ToolkitLib FlatAPI QtAPI )
 #--------------------------------
 BuildAndTest( ToolkitLib )
 
-##############################################
-# FORTRAN/C API
-#--------------------------------
-BuildAndTest( FlatAPI "API/Flat" )
+#disable further checkouts
+unset( CTEST_CHECKOUT_COMMAND )
 
 ##############################################
 # Trolltech Qt-4.0 API
