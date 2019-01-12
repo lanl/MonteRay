@@ -21,6 +21,7 @@
 #include "MonteRayTally.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 
@@ -277,7 +278,7 @@ template<typename GRID_T>
 template<unsigned N>
 CUDA_CALLABLE_MEMBER
 typename MonteRayNextEventEstimator<GRID_T>::tally_t
-MonteRayNextEventEstimator<GRID_T>::calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo<N>& rayInfo ) {
+MonteRayNextEventEstimator<GRID_T>::calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo& rayInfo ) {
 
 #ifdef DEBUG
     const bool debug = false;
@@ -288,10 +289,6 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( unsigned threadID, Ray_t<N>& ray,
     }
     MONTERAY_ASSERT( ray.detectorIndex < nUsed);
     tally_t score = 0.0;
-
-//    int cells[2*MAXNUMVERTICES];
-//    gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
-    //unsigned numberOfCrossedCells;
 
     MonteRay::Vector3D<gpuRayFloat_t> pos( ray.pos[0], ray.pos[1], ray.pos[2]);
     MonteRay::Vector3D<gpuRayFloat_t> dir( ray.dir[0], ray.dir[1], ray.dir[2]);
@@ -393,7 +390,7 @@ template<typename GRID_T>
 template<unsigned N>
 CUDA_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::score( const RayList_t<N>* pRayList, RayWorkInfo<N>* pRayInfo, unsigned tid, unsigned pid ) {
+MonteRayNextEventEstimator<GRID_T>::score( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, unsigned tid, unsigned pid ) {
 #ifdef DEBUG
     const bool debug = false;
 
@@ -496,7 +493,7 @@ MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsi
 }
 
 template<typename GRID_T, unsigned N>
-CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList, RayWorkInfo<N>* pRayInfo ) {
+CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
 #ifdef DEBUG
     const bool debug = false;
 
@@ -535,7 +532,7 @@ CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* pt
 
 template<typename GRID_T>
 template<unsigned N>
-void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, RayWorkInfo<N>* pRayInfo, cudaStream_t* stream, bool dumpOnFailure )
+void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, cudaStream_t* stream, bool dumpOnFailure )
 {
     // negative nBlocks and nThreads forces to specified value,
     // otherwise reasonable values are used based on the specified ones
@@ -759,6 +756,16 @@ MonteRayNextEventEstimator<GRID_T>::read(IOTYPE& in) {
 
     initialize();
 
+}
+
+template<typename GRID_T>
+template<unsigned N>
+void
+MonteRayNextEventEstimator<GRID_T>::cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
+    for( auto i=0; i<pRayList->size(); ++i ) {
+        pRayInfo->clear(0);
+        score(pRayList, pRayInfo, 0, i);
+    }
 }
 
 } // end namespace

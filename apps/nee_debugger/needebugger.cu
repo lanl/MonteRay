@@ -95,7 +95,7 @@ nee_debugger::launch(const std::string& optBaseName){
         singleSizeRaylist.add( ray );
         singleSizeRaylist.copyToGPU();
 
-        RayWorkInfo<3> rayInfo( singleSizeRaylist.size() );
+        RayWorkInfo rayInfo( singleSizeRaylist.size() );
         rayInfo.copyToGPU();
 
         GPUSync sync1; sync1.sync();

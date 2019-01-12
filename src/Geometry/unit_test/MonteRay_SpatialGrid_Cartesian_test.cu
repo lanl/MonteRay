@@ -4,6 +4,7 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "RayWorkInfo.hh"
 
 #include <stdexcept>
 #include <fstream>
@@ -286,8 +287,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_tests ) {
         direction.normalize();
         gpuRayFloat_t distance = 2.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -320,8 +322,9 @@ SUITE( MonteRay_SpatialGrid_Cartesian_tests ) {
         p.pos = position;
         p.dir = direction;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, p, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );

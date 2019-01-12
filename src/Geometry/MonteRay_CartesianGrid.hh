@@ -15,12 +15,13 @@ namespace MonteRay {
 
 class MonteRay_CartesianGrid;
 
+class RayWorkInfo;
+
 class MonteRay_CartesianGrid : public MonteRay_GridSystemInterface {
 public:
     enum coord {X,Y,Z,DimMax};
 
     using GridBins_t = MonteRay_GridBins;
-    //typedef singleDimRayTraceMap_t;
     using pGridInfo_t = GridBins_t*;
     using pArrayOfpGridInfo_t = pGridInfo_t[3];
 
@@ -51,20 +52,43 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace( rayTraceList_t&, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuRayFloat_t distance,  bool outsideDistances=false) const;
+    rayTrace( const unsigned threadID,
+              RayWorkInfo& rayInfo,
+              const GridBins_t::Position_t& particle_pos,
+              const GridBins_t::Position_t& particle_dir,
+              const gpuRayFloat_t distance,
+              const bool outsideDistances=false ) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t&, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance ) const;
+    crossingDistance(  const unsigned dim,
+                       const unsigned threadID,
+                       RayWorkInfo& rayInfo,
+                       const GridBins_t::Position_t& pos,
+                       const GridBins_t::Direction_t& dir,
+                       const gpuRayFloat_t distance ) const;
 
+
+    CUDA_CALLABLE_MEMBER
+    void
+    crossingDistance(  const unsigned dim,
+                       const unsigned threadID,
+                       RayWorkInfo& rayInfo,
+                       const gpuRayFloat_t pos,
+                       const gpuRayFloat_t dir,
+                       const gpuRayFloat_t distance ) const;
 private:
-    CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(singleDimRayTraceMap_t&, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t&, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing=false) const;
+    crossingDistance( const unsigned dim,
+                      const unsigned threadID,
+                      RayWorkInfo& rayInfo,
+                      const GridBins_t& Bins,
+                      const gpuRayFloat_t pos,
+                      const gpuRayFloat_t dir,
+                      const gpuRayFloat_t distance,
+                      const bool equal_spacing=false) const;
 
 public:
     MonteRay_CartesianGrid** ptrDevicePtr = nullptr;

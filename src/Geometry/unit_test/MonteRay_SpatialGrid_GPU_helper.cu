@@ -54,22 +54,22 @@ CUDA_CALLABLE_KERNEL  kernelGetIndex(Grid_t* pSpatialGrid, resultClass<unsigned>
     pResult->v = pSpatialGrid->getIndex(pos);
 }
 
-CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, RayWorkInfo* pRayInfo,
         gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z, gpuRayFloat_t u, gpuRayFloat_t v, gpuRayFloat_t w,
         gpuRayFloat_t distance, bool outside) {
     Position_t pos = Position_t( x,y,z);
     Position_t dir = Position_t( u,v,w);
-    pSpatialGrid->rayTrace( pResult->v, pos, dir, distance, outside);
+    pSpatialGrid->rayTrace( 0U, *pRayInfo, pos, dir, distance, outside);
 }
 
-CUDA_CALLABLE_KERNEL  kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+CUDA_CALLABLE_KERNEL  kernelCrossingDistance(Grid_t* pSpatialGrid, RayWorkInfo* pRayInfo,
         unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) {
-    pSpatialGrid->crossingDistance( pResult->v, d, pos, dir, distance);
+    pSpatialGrid->crossingDistance( d, 0, *pRayInfo, pos, dir, distance);
 }
 
-CUDA_CALLABLE_KERNEL  kernelCrossingDistance(Grid_t* pSpatialGrid, resultClass<singleDimRayTraceMap_t>* pResult,
+CUDA_CALLABLE_KERNEL  kernelCrossingDistance(Grid_t* pSpatialGrid, RayWorkInfo* pRayInfo,
         unsigned d, Position_t pos, Position_t dir, gpuRayFloat_t distance ) {
-    pSpatialGrid->crossingDistance( pResult->v, d, pos, dir, distance);
+    pSpatialGrid->crossingDistance( d, 0, *pRayInfo, pos, dir, distance);
 }
 
 }

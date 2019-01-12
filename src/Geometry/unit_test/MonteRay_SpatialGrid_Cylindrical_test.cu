@@ -6,6 +6,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRayCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "RayWorkInfo.hh"
 
 #include <stdexcept>
 #include <fstream>
@@ -380,8 +381,9 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         Position_t direction(   0,   0,    1 );
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
          CHECK_EQUAL(   5,  distances.size() );
          CHECK_EQUAL(   0,  distances.id(0) );
@@ -413,8 +415,9 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         Position_t direction(   0,   0,    1 );
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   5,  distances.size() );
         CHECK_EQUAL(   1,  distances.id(0) );
@@ -446,8 +449,9 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         Position_t direction(   1,   0,    0 );
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   7,  distances.size() );
         CHECK_EQUAL(   3,  distances.id(0) );
@@ -486,8 +490,9 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         direction.normalize();
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  11,  distances.size() );
 
@@ -527,8 +532,9 @@ SUITE( MonteRay_SpatialGrid_Cylindrical_tests ) {
         direction.normalize();
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   3,            distances.size() );
         CHECK_EQUAL(   6,            distances.id(0)  );

@@ -1,11 +1,12 @@
 #include <UnitTest++.h>
 
-#include "MonteRay_CartesianGrid.hh"
+#include "MonteRay_CartesianGrid.t.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay_CartesianGrid_rayTrace_tests{
 
@@ -57,8 +58,10 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 1.0;
 
-        rayTraceList_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -76,8 +79,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 1.0;
 
-        rayTrace_t distances;
-        cart.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 1, distances.id(0) );
@@ -94,8 +98,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  0,  distances.size() );
     }
@@ -108,8 +113,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  0, distances.size() );
     }
@@ -122,8 +128,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  2, distances.size() );
 
@@ -142,8 +149,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  2, distances.size() );
         CHECK_CLOSE( 19,   distances.id(0), 1e-6 );
@@ -160,8 +168,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 21.0;
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  20, distances.size() );
         CHECK_CLOSE(  0,  distances.id(0), 1e-6 );
@@ -183,8 +192,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  2, distances.size() );
         CHECK_CLOSE(   1, distances.id(0), 1e-6 );
@@ -200,8 +210,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(  2, distances.size() );
         CHECK_CLOSE(  18, distances.id(0), 1e-6 );
@@ -248,8 +259,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 0, distances.id(0), 1e-6 );
@@ -273,8 +285,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 3, distances.id(0), 1e-6 );
@@ -298,8 +311,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 0, distances.id(0), 1e-6 );
@@ -322,8 +336,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 3, distances.id(0), 1e-6 );
@@ -347,8 +362,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 0, distances.id(0), 1e-6 );
@@ -373,8 +389,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 3, distances.id(0), 1e-6 );
@@ -397,8 +414,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 0, distances.size() );
     }
@@ -415,8 +433,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 0, distances.size() );
     }
@@ -435,8 +454,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 0, distances.id(0), 1e-6 );
@@ -459,8 +479,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 3, distances.id(0), 1e-6 );
@@ -483,8 +504,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 1, distances.size() );
         CHECK_CLOSE( 1, distances.id(0), 1e-6 );
@@ -505,8 +527,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_CLOSE( 0, distances.id(1), 1e-6 );
@@ -527,8 +550,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_CLOSE( 0, distances.id(0), 1e-6 );
@@ -551,8 +575,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_CLOSE( 1, distances.id(0), 1e-6 );
@@ -574,8 +599,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_CLOSE( 4, distances.id(0), 1e-6 );
@@ -614,8 +640,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         std::vector<unsigned> expectedIndex{ 8, 7, 4, 3, 0 };
@@ -637,8 +664,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 4, distances.size() );
         checkDistances( {7,4,5,2}, {0,s2,0,s2}, distances );
@@ -657,8 +685,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 4, distances.size() );
         checkDistances( {5,4,3,6}, {0,s2,0,s2}, distances );
@@ -678,8 +707,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {0,1,4,5,8}, {s2,0,s2,0,s2}, distances );
@@ -698,8 +728,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {8,7,4,3,0}, {s2,0,s2,0,s2}, distances );
@@ -718,8 +749,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {2,1,4,3,6}, {s2,0,s2,0,s2}, distances );
@@ -738,8 +770,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {6,7,4,5,2}, {s2,0,s2,0,s2}, distances );
@@ -759,8 +792,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 7, distances.size() );
         checkDistances( {0,1,4,13,14,17,26}, {s3,0,0,s3,0,0,s3}, distances );
@@ -779,8 +813,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {0,1,4,5,8}, {s2,0,s2,0,s2}, distances );
@@ -800,8 +835,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {6,7,4,5,2}, {s2,0,s2,0,s2}, distances );
@@ -820,8 +856,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {2,1,4,3,6}, {s2,0,s2,0,s2}, distances );
@@ -841,8 +878,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5, distances.size() );
         checkDistances( {8,7,4,3,0}, {s2,0,s2,0,s2}, distances );
@@ -862,8 +900,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 7, distances.size() );
         checkDistances( {0,1,4,13,14,17,26}, {s3,0,0,s3,0,0,s3}, distances );
@@ -883,8 +922,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 7, distances.size() );
         checkDistances( {26,25,22,13,12,9,0}, {s3,0,0,s3,0,0,s3}, distances );
@@ -904,8 +944,9 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
         CartesianGrid cart(3,pGridInfo.data);
 
-        rayTrace_t distances;
-        cart.rayTrace(distances, position, direction, distance, true);
+        RayWorkInfo rayInfo(1,true);
+        cart.rayTrace(0, rayInfo, position, direction, distance, true);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 10, distances.size() );
         unsigned maxuint = 4294967295;

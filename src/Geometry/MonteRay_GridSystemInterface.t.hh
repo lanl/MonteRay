@@ -14,13 +14,24 @@
 #include "MonteRayTypes.hh"
 #include "GPUErrorCheck.hh"
 #include "MonteRay_QuadraticRootFinder.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 
 template<bool OUTWARD>
 CUDA_CALLABLE_MEMBER
 bool
-MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index ) const {
+MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
+            const unsigned dim,
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            const GridBins_t& Bins,
+            const gpuRayFloat_t particle_R2,
+            const gpuRayFloat_t A,
+            const gpuRayFloat_t B,
+            const gpuRayFloat_t distance,
+            int index) const {
+
 #ifndef __CUDA_ARCH__
     const gpuRayFloat_t Epsilon = 100.0 * std::numeric_limits<gpuRayFloat_t>::epsilon();
 #else
@@ -55,8 +66,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
 
     // If outside and moving out then return
     if( outward && index >= Bins.getNumBins() ) {
-        //distances.push_back( std::make_pair( Bins.getNumBins(), distance)  );
-        distances.add(Bins.getNumBins(), distance);
+        rayInfo.addCrossingCell(dim, threadID, Bins.getNumBins(), distance);
         return true;
     }
 
@@ -65,7 +75,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
         return false;
     }
 
-    singleDimRayTraceMap_t max_distances;
+    unsigned MAX_DISTANCE_DIM = 2; // place max_distance in third dimension of RayWorkInfo
 
     int start_index = index;
 
@@ -121,22 +131,19 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
         }
 
         if( minDistance >= distance ) {
-            //distances.push_back( std::make_pair( cell_index, distance)  );
-            distances.add( current_index, distance );
+            rayInfo.addCrossingCell(dim, threadID, current_index, distance);
             rayTerminated = true;
             break;
         }
 
         if( minDistance > 0.0 ) {
-            //distances.push_back( std::make_pair( cell_index, minDistance)  );
-            distances.add( current_index, minDistance );
+            rayInfo.addCrossingCell(dim, threadID, current_index, minDistance);
         }
 
         if( ! outward ) {
             // rays directed inward can have two crossings
             if( maxDistance > 0.0 && maxDistance < inf) {
-                //max_distances.push_back( std::make_pair( cell_index-1, maxDistance)  );
-                max_distances.add( current_index-1, maxDistance );
+                rayInfo.addCrossingCell(MAX_DISTANCE_DIM, threadID, current_index-1, maxDistance);
             }
         }
 
@@ -144,28 +151,27 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection( singleDimRa
     }
 
     if( ! outward && ! rayTerminated ) {
-        for( int i=max_distances.size()-1; i>=0; --i ){
-            auto id_max = max_distances.id(i);
-            auto dist_max = max_distances.dist(i);
+        for( int i= rayInfo.getCrossingSize(MAX_DISTANCE_DIM,threadID)-1; i>=0; --i ){
+
+            auto id_max = rayInfo.getCrossingCell(MAX_DISTANCE_DIM,threadID,i);
+            auto dist_max = rayInfo.getCrossingDist(MAX_DISTANCE_DIM,threadID,i);
             if( dist_max > distance ) {
-                distances.add( id_max, distance );
+                rayInfo.addCrossingCell(dim, threadID, id_max, distance);
                 rayTerminated = true;
                 break;
             }
-            distances.add( id_max, dist_max );
+            rayInfo.addCrossingCell(dim, threadID, id_max, dist_max);
         }
 
     }
     if( outward && !rayTerminated ) {
         // finish with distance into area outside of largest radius
-        //        distances.push_back( std::make_pair( Bins.getNumBins(), distance)  );
-        distances.add( Bins.getNumBins(), distance);
+        rayInfo.addCrossingCell(dim, threadID, Bins.getNumBins(), distance);
         rayTerminated = true;
     }
     return rayTerminated;
-
 }
 
-}
+} // end namespace
 
 #endif /* MONTERAY_GRIDSYSTEMINTERFACE_T_HH_ */

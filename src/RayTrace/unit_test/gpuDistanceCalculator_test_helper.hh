@@ -1,6 +1,8 @@
 #ifndef GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 #define GPUDISTANCECALCULATOR_TEST_HELPER_HH_
 
+#include <memory>
+
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
 #include "GridBins.hh"
@@ -8,40 +10,44 @@
 
 namespace MonteRay{
 
+class RayWorkInfo;
+
 class gpuDistanceCalculatorTestHelper
 {
 public:
 
-	gpuDistanceCalculatorTestHelper();
+    gpuDistanceCalculatorTestHelper();
 
-	~gpuDistanceCalculatorTestHelper();
+    ~gpuDistanceCalculatorTestHelper();
 
-	void gpuCheck();
+    void gpuCheck();
 
-	void setupTimers();
+    void setupTimers();
 
-	void stopTimers();
+    void stopTimers();
 
-//	void launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos);
-	void launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool);
+    //	void launchGetDistancesToAllCenters( unsigned nBlocks, unsigned nThreads, const Position_t& pos);
+    void launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool);
 
-	void copyGridtoGPU( GridBins* );
-	void copyDistancesFromGPU( gpuRayFloat_t* );
-	void copyCellsFromCPU( int* );
-	unsigned getNumCrossingsFromGPU(void);
+    void copyGridtoGPU( GridBins* );
 
+
+
+    void copyDistancesFromGPU( gpuRayFloat_t* distance );
+    void copyCellsFromCPU( int* cells );
+    unsigned getNumCrossingsFromGPU(void);
+
+    std::unique_ptr< RayWorkInfo > pRayInfo;
 private:
-	GridBins* grid_device;
-	gpuRayFloat_t* distances_device;
-	int* cells_device;
-	int* numCrossings_device;
+    GridBins* grid_device;
 
-	unsigned nCells;
+
+    unsigned nCells;
 
 #ifdef __CUDACC__
-	cudaEvent_t start, stop;
+    cudaEvent_t start, stop;
 #else
-	cpuTimer timer;
+    cpuTimer timer;
 #endif
 
 };

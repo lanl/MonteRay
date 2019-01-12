@@ -6,6 +6,7 @@
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay_SphericalGrid_crossingDistance_tests{
 
@@ -39,18 +40,24 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
             MonteRay_SphericalGrid(d,pBins) {}
 
         template<bool OUTWARD>
-        void radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap,
+        void radialCrossingDistancesSingleDirection(
+                const unsigned dim,
+                const unsigned threadID,
+                RayWorkInfo& rayInfo,
                 const Position_t& pos,
                 const Direction_t& dir,
                 gpuRayFloat_t distance) const {
-            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<OUTWARD>( rayTraceMap, pos, dir, distance);
+            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<OUTWARD>( dim, threadID, rayInfo, pos, dir, distance);
         }
 
-        void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,
+        void radialCrossingDistances(
+                const unsigned dim,
+                const unsigned threadID,
+                RayWorkInfo& rayInfo,
                 const Position_t& pos,
                 const Direction_t& dir,
                 gpuRayFloat_t distance ) const {
-            MonteRay_SphericalGrid::radialCrossingDistances( rayTraceMap, pos, dir, distance );
+            MonteRay_SphericalGrid::radialCrossingDistances(  dim, threadID, rayInfo, pos, dir, distance );
         }
 
     };
@@ -68,10 +75,12 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
-        CHECK_EQUAL( 8, distances.size() );
         CHECK_EQUAL( 4, distances.id(0) );
         CHECK_CLOSE( 1.5, distances.dist(0), 1e-11 );
         CHECK_EQUAL( 3, distances.id(1) );
@@ -97,8 +106,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(     1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 6, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -122,8 +134,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 6.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 4, distances.id(0) );
@@ -145,8 +160,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 7, distances.size() );
         CHECK_EQUAL( 4, distances.id(0) );
@@ -173,8 +191,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>(distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -193,8 +214,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(  1, 0,   0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0,dim  );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -213,8 +237,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -231,8 +258,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -254,8 +284,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -278,8 +311,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 4.5;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -301,8 +337,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(   -1,   0,    0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -320,8 +359,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(   -1,   0,    0 );
         gpuRayFloat_t distance = 7.5;
 
-        distances_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance );
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 1, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -336,8 +378,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        distances_t distances;
-        grid.radialCrossingDistances( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistances( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0,dim );
 
         CHECK_EQUAL( 8, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -366,8 +411,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        distances_t distances;
-        grid.radialCrossingDistances( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistances( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -385,8 +433,11 @@ SUITE( SphericalGrid_crossinDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 9.0;
 
-        distances_t distances;
-        grid.radialCrossingDistances( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistances( dim, threadID, rayInfo, position, direction, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );

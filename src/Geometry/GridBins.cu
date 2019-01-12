@@ -354,7 +354,7 @@ unsigned
 GridBins::getIndex(const Position_t& particle_pos) {
 
     int indices[3]= {0, 0, 0};
-    for( unsigned d = 0; d < 3; ++d ) {
+    for( int d = 0; d < 3; ++d ) {
         indices[d] = getDimIndex(d, particle_pos[d] );
 
         // outside the grid
@@ -366,7 +366,7 @@ GridBins::getIndex(const Position_t& particle_pos) {
 
 Position_t GridBins::getCenterPointByIndices( const unsigned* const indices ) const{
     Position_t pos;
-    for( unsigned i=0; i<3; ++i) {
+    for( int i=0; i<3; ++i) {
         const unsigned vertexIndex = indices[i];
         pos[i] = (getVertex(i, vertexIndex) + getVertex(i, vertexIndex+1)) / 2.0f ;
     }
@@ -389,7 +389,8 @@ float_t getDistance( Position_t& pos1, Position_t& pos2) {
 }
 
 CUDA_CALLABLE_MEMBER
-unsigned GridBins::rayTrace( int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const {
+unsigned
+GridBins::rayTrace( unsigned threadID, RayWorkInfo& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const {
     const bool debug = false;
 
     int current_indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
@@ -398,88 +399,42 @@ unsigned GridBins::rayTrace( int* global_indices, gpuRayFloat_t* distances, cons
         printf( "GridBins::rayTrace --------------------------------\n");
     }
 
-    int cells[3][MAXNUMVERTICES];
-    gpuRayFloat_t crossingDistances[3][MAXNUMVERTICES];
-    unsigned numCrossings[3];
-
-    for( unsigned i=0; i<3; ++i){
+    for( int i=0; i<3; ++i){
         current_indices[i] = getDimIndex(i, pos[i] );
 
-        numCrossings[i] = calcCrossings( vertices + offset[i], num[i]+1, cells[i], crossingDistances[i], pos[i], dir[i], distance, current_indices[i]);
+        unsigned numCrossings = calcCrossings( i, threadID, rayInfo, vertices + offset[i], num[i]+1, pos[i], dir[i], distance, current_indices[i]);
 
         if( debug ){
             printf( "GridBins::rayTrace -- current_indices[i]=%d\n", current_indices[i] );
-            printf( "GridBins::rayTrace -- numCrossings[i]=%d\n", numCrossings[i] );
+            printf( "GridBins::rayTrace -- numCrossings[i]=%d\n", rayInfo.getCrossingSize(i, threadID ) );
         }
 
         // if outside and ray doesn't move inside then ray never enters the grid
-        if( isIndexOutside(i,current_indices[i]) && numCrossings[i] == 0  ) {
+        if( isIndexOutside(i,current_indices[i]) && numCrossings == 0  ) {
             return 0U;
         }
     }
 
     if( debug ){
-        printf( "GridBins::rayTrace -- numCrossings[0]=%d\n", numCrossings[0] );
-        printf( "GridBins::rayTrace -- numCrossings[1]=%d\n", numCrossings[1] );
-        printf( "GridBins::rayTrace -- numCrossings[2]=%d\n", numCrossings[2] );
+        printf( "GridBins::rayTrace -- numCrossings[0]=%d\n", rayInfo.getCrossingSize(0, threadID ) );
+        printf( "GridBins::rayTrace -- numCrossings[1]=%d\n", rayInfo.getCrossingSize(1, threadID ) );
+        printf( "GridBins::rayTrace -- numCrossings[2]=%d\n", rayInfo.getCrossingSize(2, threadID ) );
     }
 
-    return orderCrossings(global_indices, distances, MAXNUMVERTICES, cells[0], crossingDistances[0], numCrossings, current_indices, distance, outsideDistances);
+    orderCrossings( threadID, rayInfo, current_indices, distance, outsideDistances);
+    return rayInfo.getRayCastSize( threadID );
 }
 
-template<unsigned N>
 CUDA_CALLABLE_MEMBER
-unsigned
-GridBins::rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const {
-    const bool debug = false;
-
-    int current_indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
-
-    if( debug ){
-        printf( "GridBins::rayTrace --------------------------------\n");
-    }
-
-    int cells[3][MAXNUMVERTICES];
-    gpuRayFloat_t crossingDistances[3][MAXNUMVERTICES];
-    unsigned numCrossings[3];
-
-    for( unsigned i=0; i<3; ++i){
-        current_indices[i] = getDimIndex(i, pos[i] );
-
-        numCrossings[i] = calcCrossings( vertices + offset[i], num[i]+1, cells[i], crossingDistances[i], pos[i], dir[i], distance, current_indices[i]);
-
-        if( debug ){
-            printf( "GridBins::rayTrace -- current_indices[i]=%d\n", current_indices[i] );
-            printf( "GridBins::rayTrace -- numCrossings[i]=%d\n", numCrossings[i] );
-        }
-
-        // if outside and ray doesn't move inside then ray never enters the grid
-        if( isIndexOutside(i,current_indices[i]) && numCrossings[i] == 0  ) {
-            return 0U;
-        }
-    }
-
-    if( debug ){
-        printf( "GridBins::rayTrace -- numCrossings[0]=%d\n", numCrossings[0] );
-        printf( "GridBins::rayTrace -- numCrossings[1]=%d\n", numCrossings[1] );
-        printf( "GridBins::rayTrace -- numCrossings[2]=%d\n", numCrossings[2] );
-    }
-
-    return orderCrossings( particleID, rayInfo, MAXNUMVERTICES, cells[0], crossingDistances[0], numCrossings, current_indices, distance, outsideDistances);
-}
-
-template
-CUDA_CALLABLE_MEMBER
-unsigned
-GridBins::rayTrace<1U>( unsigned particleID, RayWorkInfo<1U>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
-
-template
-CUDA_CALLABLE_MEMBER
-unsigned
-GridBins::rayTrace<3U>( unsigned particleID, RayWorkInfo<3U>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
-
-CUDA_CALLABLE_MEMBER
-unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* cells, gpuRayFloat_t* distances, float_t pos, float_t dir, float_t distance, int index ){
+unsigned calcCrossings( const unsigned dim,
+                        const unsigned threadID,
+                        RayWorkInfo& rayInfo,
+                        const float_t* const vertices,
+                        const unsigned nVertices,
+                        const float_t pos,
+                        const float_t dir,
+                        const float_t distance,
+                        const int index ){
     const bool debug = false;
 
     unsigned nDistances = 0;
@@ -551,15 +506,18 @@ unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* c
         //}
 
         if( minDistance >= distance ) {
-            cells[nDistances] = cell_index;
-            distances[nDistances] = distance;
+            rayInfo.addCrossingCell(dim, threadID, cell_index, distance );
+
             ++nDistances;
             rayTerminated = true;
             break;
         }
 
-        cells[nDistances] = cell_index;
-        distances[nDistances] = minDistance;
+        if( minDistance < 0.0 ) {
+            minDistance = 0.0;
+        }
+
+        rayInfo.addCrossingCell(dim, threadID, cell_index, minDistance );
         ++nDistances;
 
         current_index += dirIncrement;
@@ -568,15 +526,16 @@ unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* c
 
     if( !rayTerminated ) {
         // finish with distance into area outside
-        cells[nDistances] = cell_index;
-        distances[nDistances] = distance;
+        rayInfo.addCrossingCell(dim, threadID, cell_index, distance );
         ++nDistances;
         rayTerminated = true;
     }
 
     if( debug ) {
-        for( unsigned i=0; i<nDistances; ++i){
-            printf( " calcCrossings -- i=%d  cell index=%d  distance=%f\n", i, cells[i], distances[i] );
+        for( int i=0; i<nDistances; ++i){
+            printf( " calcCrossings -- i=%d  cell index=%d  distance=%f\n", i,
+                    rayInfo.getCrossingCell(dim, threadID, i),
+                    rayInfo.getCrossingDist(dim, threadID, i) );
         }
         printf( "-----------------------------------------------------------------------\n" );
     }
@@ -585,7 +544,14 @@ unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* c
 }
 
 CUDA_CALLABLE_MEMBER
-unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const {
+unsigned GridBins::orderCrossings(
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        int* indices,
+        const float_t distance,
+        const bool outsideDistances ) const {
+
+
     // Order the distance crossings to provide a rayTrace
 
     const bool debug = false;
@@ -593,16 +559,21 @@ unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances,
     unsigned end[3] = {0, 0, 0}; //    last location in the distance[i] vector
 
     unsigned maxNumCrossings = 0;
-    for( unsigned i=0; i<3; ++i){
-        end[i] = numCrossings[i];
+    for( int i=0; i<3; ++i){
+        end[i] = rayInfo.getCrossingSize(i, threadID );
         maxNumCrossings += end[i];
     }
 
     if( debug ) {
-        for( unsigned i=0; i<3; ++i){
-            printf( "Debug: i=%d  numCrossings=%d\n", i, numCrossings[i]);
-            for( unsigned j=0; j< numCrossings[i]; ++j ) {
-                printf( "Debug: j=%d  index=%d  distance=%f", j, *((cells+i*num) + j),  *((crossingDistances+i*num)+j) );
+        for( int i=0; i<3; ++i){
+            printf( "Debug: i=%d  numCrossings=%d\n",
+                    i,
+                    rayInfo.getCrossingSize(i, threadID ) );
+            for( int j=0; j< rayInfo.getCrossingSize(i, threadID ); ++j ) {
+                printf( "Debug: j=%d  index=%d  distance=%f",
+                        j,
+                        rayInfo.getCrossingCell(i, threadID, j),
+                        rayInfo.getCrossingDist(i, threadID, j) );
             }
         }
     }
@@ -618,9 +589,9 @@ unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances,
 
         unsigned minDim;
         float_t minimumDistance = MonteRay::inf;
-        for( unsigned j = 0; j<3; ++j) {
+        for( int j = 0; j<3; ++j) {
             if( start[j] < end[j] ) {
-                minDistances[j] = *((crossingDistances+j*num)+start[j]);
+                minDistances[j] = rayInfo.getCrossingDist(j, threadID, start[j] );
                 if( minDistances[j] < minimumDistance ) {
                     minimumDistance = minDistances[j];
                     minDim = j;
@@ -630,7 +601,7 @@ unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances,
             }
         }
 
-        indices[minDim] =  *((cells+minDim*num) + start[minDim]);
+        indices[minDim]  = rayInfo.getCrossingCell(minDim, threadID, start[minDim] );
         if( debug ) {
             printf( "Debug: minDim=%d  index=%d   minimumDistance=%f\n", minDim, indices[minDim], minimumDistance);
         }
@@ -658,117 +629,7 @@ unsigned GridBins::orderCrossings(int* global_indices, gpuRayFloat_t* distances,
                 } else {
                     global_index = UINT_MAX;
                 }
-                global_indices[numRayCrossings] = global_index;
-                distances[numRayCrossings] = deltaDistance;
-                ++numRayCrossings;
-
-                if( debug ) {
-                    printf( "Debug: ******************\n" );
-                    printf( "Debug:  Entry Num    = %d\n", numRayCrossings );
-                    printf( "Debug:     index[0]  = %d\n", indices[0] );
-                    printf( "Debug:     index[1]  = %d\n", indices[1] );
-                    printf( "Debug:     index[2]  = %d\n", indices[2] );
-                    printf( "Debug:     distance  = %f\n", deltaDistance );
-                }
-            }
-        }
-
-        if( currentDistance >= distance ) {
-            break;
-        }
-
-        indices[minDim] = *((cells+minDim*num) + start[minDim]+1);
-
-        if( ! outside ) {
-            if( isIndexOutside(minDim, indices[minDim] ) ) {
-                // ray has moved outside of grid
-                break;
-            }
-        }
-
-        ++start[minDim];
-        priorDistance = currentDistance;
-    }
-
-    return numRayCrossings;
-}
-
-template<unsigned N>
-CUDA_CALLABLE_MEMBER
-unsigned GridBins::orderCrossings(unsigned particleID, RayWorkInfo<N>& rayInfo, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const {
-    // Order the distance crossings to provide a rayTrace
-
-    const bool debug = false;
-
-    unsigned end[3] = {0, 0, 0}; //    last location in the distance[i] vector
-
-    unsigned maxNumCrossings = 0;
-    for( unsigned i=0; i<3; ++i){
-        end[i] = numCrossings[i];
-        maxNumCrossings += end[i];
-    }
-
-    if( debug ) {
-        for( unsigned i=0; i<3; ++i){
-            printf( "Debug: i=%d  numCrossings=%d\n", i, numCrossings[i]);
-            for( unsigned j=0; j< numCrossings[i]; ++j ) {
-                printf( "Debug: j=%d  index=%d  distance=%f", j, *((cells+i*num) + j),  *((crossingDistances+i*num)+j) );
-            }
-        }
-    }
-
-    float_t minDistances[3];
-
-    bool outside;
-    float_t priorDistance = 0.0;
-    unsigned start[3] = {0, 0, 0}; // current location in the distance[i] vector
-
-    unsigned numRayCrossings = 0;
-    for( unsigned i=0; i<maxNumCrossings; ++i){
-
-        unsigned minDim;
-        float_t minimumDistance = MonteRay::inf;
-        for( unsigned j = 0; j<3; ++j) {
-            if( start[j] < end[j] ) {
-                minDistances[j] = *((crossingDistances+j*num)+start[j]);
-                if( minDistances[j] < minimumDistance ) {
-                    minimumDistance = minDistances[j];
-                    minDim = j;
-                }
-            } else {
-                minDistances[j] = MonteRay::inf;
-            }
-        }
-
-        indices[minDim] =  *((cells+minDim*num) + start[minDim]);
-        if( debug ) {
-            printf( "Debug: minDim=%d  index=%d   minimumDistance=%f\n", minDim, indices[minDim], minimumDistance);
-        }
-
-        // test for outside of the grid
-        outside = isOutside( indices );
-
-        if( debug ) {
-            if( outside ) {
-                printf( "Debug: ray is outside \n" );
-            } else {
-                printf( "Debug: ray is inside \n" );
-            }
-        }
-
-        float_t currentDistance = minimumDistance;
-
-        if( !outside || outsideDistances ) {
-            float_t deltaDistance = currentDistance - priorDistance;
-
-            if( deltaDistance > 0.0  ) {
-                unsigned global_index;
-                if( !outside ) {
-                    global_index = calcIndex(indices );
-                } else {
-                    global_index = UINT_MAX;
-                }
-                rayInfo.addRayCastCell(particleID, global_index, deltaDistance);
+                rayInfo.addRayCastCell(threadID, global_index, deltaDistance);
 //                global_indices[numRayCrossings] = global_index;
 //                distances[numRayCrossings] = deltaDistance;
 //                ++numRayCrossings;
@@ -788,7 +649,7 @@ unsigned GridBins::orderCrossings(unsigned particleID, RayWorkInfo<N>& rayInfo, 
             break;
         }
 
-        indices[minDim] = *((cells+minDim*num) + start[minDim]+1);
+        indices[minDim] = rayInfo.getCrossingCell(minDim, threadID, start[minDim]+1 );
 
         if( ! outside ) {
             if( isIndexOutside(minDim, indices[minDim] ) ) {
@@ -805,10 +666,9 @@ unsigned GridBins::orderCrossings(unsigned particleID, RayWorkInfo<N>& rayInfo, 
 }
 
 CUDA_CALLABLE_KERNEL 
-kernelRayTrace(void* ptrNumCrossings,
+kernelRayTrace(
+        RayWorkInfo* pRayInfo,
         GridBins* ptrGrid,
-        int* ptrCells,
-        gpuRayFloat_t* ptrDistances,
         gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
         gpuFloatType_t distance,
@@ -820,15 +680,13 @@ kernelRayTrace(void* ptrNumCrossings,
         printf("kernelRayTrace(GridBins*):: Starting kernelRayTrace ******************\n");
     }
 
-    unsigned* numCrossings = (unsigned*) ptrNumCrossings;
-
     Position_t pos( x, y, z );
     Direction_t dir( u, v, w );
 
-    numCrossings[0] = ptrGrid->rayTrace( ptrCells, ptrDistances, pos, dir, distance, outsideDistances);
+    ptrGrid->rayTrace(0U, *pRayInfo, pos, dir, distance, outsideDistances);
 
     if( debug ) {
-        printf("kernelRayTrace(GridBins*):: numCrossings=%d\n",numCrossings[0]);
+        printf("kernelRayTrace(GridBins*):: numCrossings=%d\n", pRayInfo->getRayCastSize(0));
     }
 }
 

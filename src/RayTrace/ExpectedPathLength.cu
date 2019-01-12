@@ -13,43 +13,6 @@ namespace MonteRay{
 
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
-attenuateRayTraceOnly(const MonteRayMaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
-        const HashLookup* pHash,
-        unsigned HashBin,
-        unsigned cell,
-        gpuFloatType_t distance,
-        gpuFloatType_t energy,
-        gpuTallyType_t enteringFraction,
-        ParticleType_t particleType)
-{
-    gpuTallyType_t totalXS = 0.0;
-    unsigned numMaterials = getNumMats( pMatProps, cell);
-    for( unsigned i=0; i<numMaterials; ++i ) {
-
-        unsigned matID = getMatID(pMatProps, cell, i);
-        gpuFloatType_t density = getDensity(pMatProps, cell, i );
-        if( density > 1e-5 ) {
-            //unsigned materialIndex = materialIDtoIndex(pMatList, matID);
-            if( particleType == neutron ) {
-                totalXS +=  getTotalXS( pMatList, matID, pHash, HashBin, energy, density);
-            } else {
-                totalXS +=  getTotalXS( pMatList, matID, energy, density);
-            }
-        }
-    }
-
-    gpuTallyType_t attenuation = 1.0;
-
-    if( totalXS > 1e-5 ) {
-        attenuation = exp( - totalXS*distance );
-    }
-    return enteringFraction * attenuation;
-
-}
-
-CUDA_CALLABLE_MEMBER
-gpuTallyType_t
 tallyCellSegment( const MonteRayMaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const gpuFloatType_t* materialXS,

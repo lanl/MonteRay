@@ -13,10 +13,6 @@ namespace MonteRay {
 
 class MonteRay_GridSystemInterface;
 class MonteRay_GridBins;
-class rayTraceList_t;
-class singleDimRayTraceMap_t;
-
-template< unsigned N>
 class RayWorkInfo;
 
 class MonteRay_SpatialGrid : public CopyMemoryBase<MonteRay_SpatialGrid> {
@@ -34,7 +30,6 @@ public:
 
     typedef Vector3D<gpuRayFloat_t> Position_t;
     typedef Vector3D<gpuRayFloat_t> Direction_t;
-    // rayTraceList_t -- defined in GridSystemInterface
 
     //TRA/JES Move to GridBins -- ?
     static const unsigned OUTSIDE_MESH;
@@ -149,40 +144,45 @@ public:
     template<class Particle>
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace(rayTraceList_t& rayTraceList, const Particle& p, gpuRayFloat_t distance, bool OutsideDistances=false) const {
+    rayTrace(  const unsigned threadID,
+               RayWorkInfo& rayInfo,
+               const Particle& p,
+               const gpuRayFloat_t distance,
+               const bool OutsideDistances=false ) const {
+
         const bool debug = false;
 
-        if( debug ) printf("MonteRay_SptialGrid::rayTrace(irayTraceList_t&, const Particle& p, gpuRayFloat distance, bool OutsideDistances\n");
+        if( debug ) printf("MonteRay_SptialGrid::rayTrace(threadID, RayWorkInfo&, Particle& , float_t distance, bool OutsideDistances\n");
 
-        return rayTrace( rayTraceList, p.getPosition(), p.getDirection(), distance, OutsideDistances );
+        rayTrace( threadID, rayInfo, p.getPosition(), p.getDirection(), distance, OutsideDistances );
     }
 
     CUDA_CALLABLE_MEMBER
-    void
-    rayTrace(rayTraceList_t& rayTraceList, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
-
-    /// Call to support call with integer c array of indices
-    /// and float c array of distances - may be slow
-    CUDA_CALLABLE_MEMBER
     unsigned
-    rayTrace(int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances=false) const;
-
-    template<unsigned N>
-    CUDA_CALLABLE_MEMBER
-    unsigned
-    rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances=false) const;
-
-    CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance) const;
+    rayTrace( const unsigned threadID,
+              RayWorkInfo& rayInfo,
+              const Position_t& pos,
+              const Position_t& dir,
+              const gpuRayFloat_t distance,
+              const bool outsideDistances=false) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const;
+    crossingDistance( const unsigned dim,
+                      const unsigned threadID,
+                      RayWorkInfo& rayInfo,
+                      const gpuRayFloat_t pos,
+                      const gpuRayFloat_t dir,
+                      const gpuRayFloat_t distance) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const;
+    crossingDistance( const unsigned dim,
+                      const unsigned threadID,
+                      RayWorkInfo& rayInfo,
+                      const Position_t& pos,
+                      const Direction_t& dir,
+                      const gpuRayFloat_t distance) const;
 
     //void setTransformation( const mcatk::Transformation& T);
     //const mcatk::Transformation* getTransformation( void ) const;

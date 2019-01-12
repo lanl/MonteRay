@@ -6,9 +6,9 @@
  */
 
 #include "MonteRay_SpatialGrid.hh"
-#include "MonteRay_CartesianGrid.hh"
-#include "MonteRay_CylindricalGrid.hh"
-#include "MonteRay_SphericalGrid.hh"
+#include "MonteRay_CartesianGrid.t.hh"
+#include "MonteRay_CylindricalGrid.t.hh"
+#include "MonteRay_SphericalGrid.t.hh"
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
@@ -513,34 +513,14 @@ MonteRay_SpatialGrid::getNumVerticesSq(unsigned i) const{
 }
 
 CUDA_CALLABLE_MEMBER
-void
-MonteRay_SpatialGrid::rayTrace(rayTraceList_t& rayTraceList, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances) const {
-
-#ifdef DEBUG
-    const bool debug = false;
-
-    if( debug ) printf("MonteRay_SpatialGrid::rayTrace(rayTraceList_t&, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
-#endif
-
-    MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-    //        if( transform ) {
-    //            pos = (*transform).counterTransformPos( pos );
-    //            dir = (*transform).counterTransformDir( dir );
-    //        }
-
-
-#ifdef DEBUG
-    if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- calling grid system rayTrace \n");
-#endif
-
-    pGridSystem->rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
-    return;
-}
-
-CUDA_CALLABLE_MEMBER
 unsigned
-MonteRay_SpatialGrid::rayTrace(int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool OutsideDistances) const {
+MonteRay_SpatialGrid::rayTrace(
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        const Position_t& pos,
+        const Position_t& dir,
+        const gpuRayFloat_t distance,
+        bool outsideDistances) const {
 
 #ifdef DEBUG
     const bool debug = false;
@@ -553,83 +533,55 @@ MonteRay_SpatialGrid::rayTrace(int* global_indices, gpuRayFloat_t* distances, co
     //            pos = (*transform).counterTransformPos( pos );
     //            dir = (*transform).counterTransformDir( dir );
     //        }
-    rayTraceList_t rayTraceList;
-    rayTrace(rayTraceList, pos, dir, distance, OutsideDistances );
+
+    pGridSystem->rayTrace(threadID, rayInfo, pos, dir, distance, outsideDistances );
 
 #ifdef DEBUG
-    if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayTraceList.size());
+    if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayInfo.getRayCastSize(threadID) );
 #endif
 
-    for( unsigned i=0; i< rayTraceList.size(); ++i ) {
-        global_indices[i] = rayTraceList.id(i);
-        distances[i] = rayTraceList.dist(i);
-    }
-    return rayTraceList.size();
+    return rayInfo.getRayCastSize(threadID);
 }
-
-template<unsigned N>
-CUDA_CALLABLE_MEMBER
-unsigned
-MonteRay_SpatialGrid::rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const {
-#ifdef DEBUG
-    const bool debug = false;
-    if( debug ) printf("MonteRay_SpatialGrid::rayTrace(int* global_indices, int* gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
-#endif
-
-    MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
-
-    //        if( transform ) {
-    //            pos = (*transform).counterTransformPos( pos );
-    //            dir = (*transform).counterTransformDir( dir );
-    //        }
-    rayTraceList_t rayTraceList;
-    rayTrace(rayTraceList, pos, dir, distance, outsideDistances );
-
-#ifdef DEBUG
-    if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayTraceList.size());
-#endif
-
-    for( unsigned i=0; i< rayTraceList.size(); ++i ) {
-        rayInfo.addRayCastCell( particleID, rayTraceList.id(i), rayTraceList.dist(i));
-    }
-    return rayInfo.getRayCastSize(particleID);
-}
-
-template
-CUDA_CALLABLE_MEMBER
-unsigned
-MonteRay_SpatialGrid::rayTrace<1>( unsigned particleID, RayWorkInfo<1>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
-
-template
-CUDA_CALLABLE_MEMBER
-unsigned
-MonteRay_SpatialGrid::rayTrace<3>( unsigned particleID, RayWorkInfo<3>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_SpatialGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance) const {
+MonteRay_SpatialGrid::crossingDistance(
+        const unsigned dim,
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        const gpuRayFloat_t pos,
+        const gpuRayFloat_t dir,
+        const gpuRayFloat_t distance) const {
+
     MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
     //        if( transform ) {
     //            pos = (*transform).counterTransformPos( pos );
     //            dir = (*transform).counterTransformDir( dir );
     //        }
-    Position_t position; position[d] = pos;
-    Direction_t direction; direction[d] = dir;
-    pGridSystem->crossingDistance(rayTraceMap, d, position, direction, distance );
+    Position_t position; position[dim] = pos;
+    Direction_t direction; direction[dim] = dir;
+    pGridSystem->crossingDistance(dim, threadID, rayInfo, position, direction, distance );
     return;
 }
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_SpatialGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, Position_t& pos, Direction_t& dir, gpuRayFloat_t distance) const {
+MonteRay_SpatialGrid::crossingDistance(
+        const unsigned dim,
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        const Position_t& pos,
+        const Direction_t& dir,
+        const gpuRayFloat_t distance) const {
+
     MONTERAY_ASSERT_MSG( initialized, "SpatialGrid MUST be initialized before tying to get an index." );
 
     //        if( transform ) {
     //            pos = (*transform).counterTransformPos( pos );
     //            dir = (*transform).counterTransformDir( dir );
     //        }
-    pGridSystem->crossingDistance(rayTraceMap, d, pos, dir, distance );
+    pGridSystem->crossingDistance(dim, threadID, rayInfo, pos, dir, distance );
     return;
 }
 

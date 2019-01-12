@@ -393,7 +393,7 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
         GPUSync sync1; sync1.sync();
 
-        RayWorkInfo<3> rayInfo( raylist.size() );
+        RayWorkInfo rayInfo( raylist.size() );
         rayInfo.copyToGPU();
         estimator.launch_ScoreRayList(1U,1U, &raylist, &rayInfo);
 

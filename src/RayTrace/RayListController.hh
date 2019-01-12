@@ -26,7 +26,6 @@ class RayListInterface;
 template< unsigned N >
 class Ray_t;
 
-template< unsigned N>
 class RayWorkInfo;
 
 template<typename GRID_T, unsigned N = 1>
@@ -145,7 +144,7 @@ private:
     std::unique_ptr<RayListInterface<N>> bank1;
     std::unique_ptr<RayListInterface<N>> bank2;
 
-    std::unique_ptr<RayWorkInfo<N>> rayInfo;
+    std::unique_ptr<RayWorkInfo> rayInfo;
 
     unsigned nFlushs = 0;
 

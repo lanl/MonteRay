@@ -196,7 +196,7 @@ RayListController<GRID_T,N>::setCapacity(unsigned n) {
     nThreads = launchBounds.second;
 
     // size rayInfo to total number of threads
-    rayInfo.reset( new RayWorkInfo<N>( nBlocks*nThreads) );
+    rayInfo.reset( new RayWorkInfo( nBlocks*nThreads) );
 }
 
 
@@ -280,7 +280,9 @@ RayListController<GRID_T,N>::flush(bool final){
 
     // only uncomment for testing, forces the cpu and gpu to sync
 #ifdef DEBUG
+#ifdef __CUDACC__
     gpuErrchk( cudaPeekAtLastError() );
+#endif
 #endif
 
 #ifdef __CUDACC__

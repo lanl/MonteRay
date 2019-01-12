@@ -18,8 +18,6 @@
 namespace MonteRay{
 
 class HashBins;
-
-template< unsigned N>
 class RayWorkInfo;
 
 typedef gpuFloatType_t float_t;
@@ -129,18 +127,21 @@ public:
     void calcIJK(unsigned index, unsigned* indices ) const;
 
     CUDA_CALLABLE_MEMBER
-    unsigned rayTrace(int* global_indices, gpuRayFloat_t* distances, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
+    unsigned rayTrace(
+            const unsigned particleID,
+            RayWorkInfo& rayInfo,
+            const Position_t& pos,
+            const Position_t& dir,
+            const float_t distance,
+            const bool outsideDistances) const;
 
-    template<unsigned N>
     CUDA_CALLABLE_MEMBER
-    unsigned rayTrace( unsigned particleID, RayWorkInfo<N>& rayInfo, const Position_t& pos, const Position_t& dir, float_t distance,  bool outsideDistances) const;
-
-    CUDA_CALLABLE_MEMBER
-    unsigned orderCrossings(int* global_indices, gpuRayFloat_t* distances, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const;
-
-    template<unsigned N>
-    CUDA_CALLABLE_MEMBER
-    unsigned orderCrossings(unsigned particleID, RayWorkInfo<N>& rayInfo, unsigned num, const int* const cells, const gpuRayFloat_t* const crossingDistances, unsigned* numCrossings, int* indices, float_t distance, bool outsideDistances ) const;
+    unsigned orderCrossings(
+            const unsigned particleID,
+            RayWorkInfo& rayInfo,
+            int* indices,
+            const float_t distance,
+            const bool outsideDistances ) const;
 
     CUDA_CALLABLE_MEMBER
     const HashBins* getHashPtr( unsigned dim ) { return hash[dim]; }
@@ -166,14 +167,20 @@ public:
 float_t getDistance( Position_t& pos1, Position_t& pos2);
 
 CUDA_CALLABLE_MEMBER
-unsigned calcCrossings(const float_t* const vertices, unsigned nVertices, int* cells, gpuRayFloat_t* distances, float_t pos, float_t dir, float_t distance, int index );
+unsigned calcCrossings( const unsigned dim,
+                        const unsigned threadID,
+                        RayWorkInfo& rayInfo,
+                        const float_t* const vertices,
+                        const unsigned nVertices,
+                        const float_t pos,
+                        const float_t dir,
+                        const float_t distance,
+                        const int index );
 
 CUDA_CALLABLE_KERNEL 
 kernelRayTrace(
-        void* ptrNumCrossings,
+        RayWorkInfo* pRayInfo,
         GridBins* ptrGrid,
-        int* ptrCells,
-        gpuRayFloat_t* ptrDistances,
         gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z,
         gpuFloatType_t u, gpuFloatType_t v, gpuFloatType_t w,
         gpuFloatType_t distance,

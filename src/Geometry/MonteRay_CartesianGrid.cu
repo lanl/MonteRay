@@ -9,6 +9,7 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "RayWorkInfo.hh"
 
 #include <float.h>
 
@@ -188,56 +189,84 @@ MonteRay_CartesianGrid::isOutside( const int i[] ) const {
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CartesianGrid::rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_direction, gpuRayFloat_t distance,  bool outsideDistances) const{
+MonteRay_CartesianGrid::rayTrace(
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        const GridBins_t::Position_t& particle_pos,
+        const GridBins_t::Position_t& particle_dir,
+        const gpuRayFloat_t distance,
+        const bool outsideDistances ) const{
+
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
-    rayTraceList.reset();
+
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
-    multiDimRayTraceMap_t<3> distances;
     for( unsigned d=0; d<DIM; ++d){
-        distances[d].reset();
 
         indices[d] = getDimIndex(d, particle_pos[d] );
 
         if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, index=%d\n", d, indices[d]);
 
-        planarCrossingDistance( distances[d],*(pGridBins[d]),particle_pos[d],particle_direction[d],distance,indices[d]);
+        planarCrossingDistance( d, threadID, rayInfo, *(pGridBins[d]), particle_pos[d], particle_dir[d], distance,indices[d]);
 
-        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, number of planar crossings = %d\n", d, distances[d].size() );
+        if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, number of planar crossings = %d\n", d, rayInfo.getCrossingSize(d,threadID) );
 
         // if outside and ray doesn't move inside then ray never enters the grid
-        if( isIndexOutside(d,indices[d]) && distances[d].size() == 0  ) {
+        if( isIndexOutside(d,indices[d]) && rayInfo.getCrossingSize(d,threadID) == 0  ) {
             return;
         }
     }
 
-    orderCrossings( rayTraceList, distances, indices, distance, outsideDistances );
+    orderCrossings<3>( threadID, rayInfo, indices, distance, outsideDistances );
 
-    if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- number of total crossings = %d\n", rayTraceList.size() );
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- number of total crossings = %d\n", rayInfo.getRayCastSize(threadID) );
     return;
 }
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CartesianGrid::crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance ) const {
-    crossingDistance( rayTraceMap, d, pos[d], dir[d], distance);
+MonteRay_CartesianGrid::crossingDistance(
+        const unsigned dim,
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        const GridBins_t::Position_t& pos,
+        const GridBins_t::Direction_t& dir,
+        const gpuRayFloat_t distance ) const {
+
+    crossingDistance( dim, threadID, rayInfo, pos[dim], dir[dim], distance);
 }
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const {
-    if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance ) const \n");
-    crossingDistance(rayTraceMap, *(pGridBins[d]), pos, dir, distance, false);
+MonteRay_CartesianGrid::crossingDistance(
+        const unsigned dim,
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        const gpuRayFloat_t pos,
+        const gpuRayFloat_t dir,
+        const gpuRayFloat_t distance ) const {
+
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( dim, threadID, rayInfo, float_t pos, float_t dir, float_t distance ) const \n");
+    crossingDistance(dim, threadID, rayInfo, *(pGridBins[dim]), pos, dir, distance, false);
     return;
 }
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const {
-    if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( singleDimRayTraceMap_t& rayTraceMap, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, bool equal_spacing) const \n");
+MonteRay_CartesianGrid::crossingDistance(
+        const unsigned dim,
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        const GridBins_t& Bins,
+        const gpuRayFloat_t pos,
+        const gpuRayFloat_t dir,
+        const gpuRayFloat_t distance,
+        const bool equal_spacing) const {
+
+    if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( dim, threadID, rayInfo, GridBins_t& Bins, float_t pos, float_t dir, float_t distance, bool equal_spacing) const \n");
     int index = Bins.getLinearIndex(pos);
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance -- calling MonteRay_GridSystemInterface::planarCrossingDistance.\n");
-    planarCrossingDistance( rayTraceMap, Bins, pos, dir, distance, index);
+    planarCrossingDistance( dim, threadID, rayInfo, Bins, pos, dir, distance, index);
     return;
 }
 

@@ -6,6 +6,7 @@
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay_CylindricalGrid_rayTrace_tests{
 
@@ -92,8 +93,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         Position_t direction(   0,   0,    1 );
         gpuFloatType_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 5,  distances.size() );
         checkDistances( std::vector<unsigned>({0,4,8,12,16}), std::vector<gpuFloatType_t>({3.,2.,2.,2.,3.}), distances );
@@ -108,8 +110,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         Position_t direction(   0,   0,    1 );
         gpuFloatType_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   5,  distances.size() );
         checkDistances( std::vector<unsigned>({1,5,9,13,17}), std::vector<gpuFloatType_t>({3.0,2.0,2.0,2.0,3.0}), distances );
@@ -125,8 +128,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         Position_t direction(   1,   0,    0 );
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   7,  distances.size() );
         checkDistances( std::vector<unsigned>({3,2,1,0,1,2,3}), std::vector<gpuFloatType_t>({2.0,1.0,1.0,2.0,1.0,1.0,2.0}), distances );
@@ -142,8 +146,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         Position_t direction(   1,   0,    0 );
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   7,  distances.size() );
         checkDistances( std::vector<unsigned>({7,6,5,4,5,6,7}), std::vector<gpuFloatType_t>({2.0,1.0,1.0,2.0,1.0,1.0,2.0}), distances );
@@ -162,8 +167,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         direction.normalize();
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   11,  distances.size() );
 
@@ -188,8 +194,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         direction.normalize();
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   3,  distances.size() );
         checkDistances( std::vector<unsigned>({6,2,3}), std::vector<gpuFloatType_t>({0,s2,2*s2}), distances );
@@ -205,8 +212,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         Position_t direction(   0,   0,    -1 );
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   0,  distances.size() );
     }
@@ -221,8 +229,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         Position_t direction(   -1,   0,    0 );
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   0,  distances.size() );
     }
@@ -240,8 +249,9 @@ SUITE( MonteRay_CylindricalGrid_rayTrace_Tests) {
         direction.normalize();
         double distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance, true);       //distances_t distances = grid.radialCrossingDistances( position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance, true);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL( 13,  distances.size() );
 

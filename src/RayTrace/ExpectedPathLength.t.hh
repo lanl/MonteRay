@@ -23,7 +23,7 @@ tallyCollision(
         const MonteRay_MaterialProperties_Data* pMatProps,
         const HashLookup* pHash,
         const Ray_t<N>* p,
-        RayWorkInfo<N>* pRayInfo,
+        RayWorkInfo* pRayInfo,
         gpuTallyType_t* pTally )
 {
 #ifdef DEBUG
@@ -61,16 +61,13 @@ tallyCollision(
         return;
     }
 
-//    int cells[2*MAXNUMVERTICES];
-//    gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
-//    unsigned numberOfCells;
 
     //	gpuRayFloat_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
     //	gpuRayFloat_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
     Position_t pos( p->pos[0], p->pos[1], p->pos[2] );
     Direction_t dir( p->dir[0], p->dir[1], p->dir[2] );
 
-    pGrid->template rayTrace<N>(particleID, *pRayInfo, pos, dir, 1.0e6f, false);
+    pGrid->rayTrace(particleID, *pRayInfo, pos, dir, 1.0e6f, false);
 
     gpuFloatType_t materialXS[MAXNUMMATERIALS];
     for( unsigned i=0; i < pMatList->numMaterials; ++i ){
@@ -97,62 +94,13 @@ tallyCollision(
 }
 
 template<typename GRIDTYPE, unsigned N>
-CUDA_CALLABLE_MEMBER
-gpuTallyType_t
-tallyAttenuation(GRIDTYPE* pGrid,
-        MonteRayMaterialList* pMatList,
-        MonteRay_MaterialProperties_Data* pMatProps,
-        const HashLookup* pHash,
-        Ray_t<N>* p){
-
-    gpuTallyType_t enteringFraction = p->weight[0];
-    gpuFloatType_t energy = p->energy[0];
-
-    unsigned HashBin;
-    if( p->particleType == neutron ) {
-        HashBin = getHashBin(pHash, energy);
-    }
-
-    if( energy < 1e-20 ) {
-        return 0.0;
-    }
-
-    int cells[2*MAXNUMVERTICES];
-    gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
-
-    unsigned numberOfCells;
-    RayWorkInfo<1U>* pRayInfo;
-
-    //	float3_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
-    //	float3_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
-    MonteRay::Vector3D<gpuRayFloat_t> pos(p->pos[0], p->pos[1], p->pos[2]);
-    MonteRay::Vector3D<gpuRayFloat_t> dir(p->dir[0], p->dir[1], p->dir[2]);
-
-    numberOfCells = pGrid->rayTrace( cells, crossingDistances, pos, dir, 1.0e6, false);
-
-    for( unsigned i=0; i < numberOfCells; ++i ){
-        int cell = cells[i];
-        gpuRayFloat_t distance = crossingDistances[i];
-        if( cell == UINT_MAX ) continue;
-
-        enteringFraction = attenuateRayTraceOnly(pMatList, pMatProps, pHash, HashBin, cell, distance, energy, enteringFraction, p->particleType );
-
-        if( enteringFraction < 1e-11 ) {
-            // cut off at 25 mean free paths
-            return 0.0;
-        }
-    }
-    return enteringFraction;
-}
-
-template<typename GRIDTYPE, unsigned N>
 CUDA_CALLABLE_KERNEL  rayTraceTally(
         const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const HashLookup* pHash,
-        RayWorkInfo<N>* pRayInfo,
+        RayWorkInfo* pRayInfo,
         gpuTallyType_t* tally){
 
 #ifdef DEBUG
@@ -222,7 +170,7 @@ MonteRay::tripleTime launchRayTraceTally(
     nBlocks = launchParams.first;
     nThreads = launchParams.second;
 
-    RayWorkInfo<N> rayInfo(nBlocks*nThreads);
+    RayWorkInfo rayInfo(nBlocks*nThreads);
     rayInfo.copyToGPU();
 
 #ifdef __CUDACC__

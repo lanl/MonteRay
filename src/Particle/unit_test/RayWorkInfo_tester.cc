@@ -16,7 +16,7 @@ SUITE( RayWorkInfo_tests ) {
     using namespace MonteRay;
 
     TEST( RayWorkInfo_ctor_0 ) {
-        RayWorkInfo<3> info(0,allocateOnCPU);
+        RayWorkInfo info(0,allocateOnCPU);
         CHECK_EQUAL( 1, info.capacity() );
         CHECK_EQUAL( 0, info.getRayCastSize(0) );
         CHECK_EQUAL( 0, info.getCrossingSize(0,0) );
@@ -26,12 +26,12 @@ SUITE( RayWorkInfo_tests ) {
     }
 
     TEST( RayWorkInfo_ctor_w_num ) {
-        RayWorkInfo<3> info(10,allocateOnCPU);
+        RayWorkInfo info(10,allocateOnCPU);
         CHECK_EQUAL( 10, info.capacity() );
     }
 
     TEST( get_set_indices ) {
-        RayWorkInfo<3> info(3,allocateOnCPU);
+        RayWorkInfo info(3,allocateOnCPU);
 
         info.setIndex(0,0,11);
         info.setIndex(1,0,12);
@@ -55,7 +55,7 @@ SUITE( RayWorkInfo_tests ) {
     }
 
     TEST( addRayCastCell ) {
-         RayWorkInfo<3> info(3,allocateOnCPU);
+         RayWorkInfo info(3,allocateOnCPU);
          CHECK_EQUAL( 0, info.getRayCastSize(0) );
 
          info.addRayCastCell( 0, 11, 21.0 );
@@ -71,7 +71,7 @@ SUITE( RayWorkInfo_tests ) {
      }
 
     TEST( addCrossingCell ) {
-         RayWorkInfo<3> info(3,allocateOnCPU);
+         RayWorkInfo info(3,allocateOnCPU);
          CHECK_EQUAL( 0, info.getCrossingSize(0,0) );
          CHECK_EQUAL( 0, info.getCrossingSize(1,0) );
          CHECK_EQUAL( 0, info.getCrossingSize(2,0) );
@@ -91,7 +91,7 @@ SUITE( RayWorkInfo_tests ) {
      }
 
     TEST( clear ) {
-         RayWorkInfo<3> info(3,allocateOnCPU);
+         RayWorkInfo info(3,allocateOnCPU);
 
          unsigned dim = 0;
          unsigned pid = 0; // particle id

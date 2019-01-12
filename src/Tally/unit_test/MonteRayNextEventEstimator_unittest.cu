@@ -270,7 +270,7 @@ SUITE( NextEventEstimator_Tester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo<> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-0.0);
@@ -310,7 +310,7 @@ SUITE( NextEventEstimator_Tester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo<> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-1.0);
@@ -347,7 +347,7 @@ SUITE( NextEventEstimator_Tester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo<> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
@@ -384,7 +384,7 @@ SUITE( NextEventEstimator_Tester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo<> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t score = pEstimator->getTally(0,0);
@@ -430,7 +430,7 @@ SUITE( NextEventEstimator_Tester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo<> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected1 = ( 1/ (4.0f * MonteRay::pi * distance1*distance1 ) ) * exp(-1.0);
@@ -515,7 +515,7 @@ SUITE( NextEventEstimator_Tester ) {
 
         //std:: cout << "Debug: *************************\n";
         unsigned particleID = 0;
-        RayWorkInfo<N> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         gpuFloatType_t score = pEstimator->calcScore<N>(particleID, ray, rayInfo );
         //std:: cout << "Debug: *************************\n";
 
@@ -571,7 +571,7 @@ SUITE( NextEventEstimator_Tester ) {
         pBank->add( ray );
         pBank->add( ray );
 
-        RayWorkInfo<N> rayInfo(pBank->size(),true);
+        RayWorkInfo rayInfo(pBank->size(),true);
 
         //std:: cout << "Debug: **********calcScore_with_RayList***************\n";
         CHECK_CLOSE( 0.0, pEstimator->getTally(0), 1e-7);
@@ -640,7 +640,8 @@ SUITE( NextEventEstimator_Tester ) {
         pBank->copyToGPU();
         pEstimator->copyToGPU();
 
-        RayWorkInfo<N> rayInfo(1);
+        auto launchBounds = setLaunchBounds( 1, 1, pBank->size() );
+        RayWorkInfo rayInfo( launchBounds.first*launchBounds.second );
         rayInfo.copyToGPU();
 
         cudaStream_t* stream = NULL;
@@ -736,7 +737,8 @@ SUITE( NextEventEstimator_Tester ) {
          pBank->copyToGPU();
          pEstimator->copyToGPU();
 
-         RayWorkInfo<N> rayInfo(1);
+         auto launchBounds = setLaunchBounds( 1, 1, pBank->size() );
+         RayWorkInfo rayInfo( launchBounds.first*launchBounds.second );
          rayInfo.copyToGPU();
 
          cudaStream_t* stream = NULL;

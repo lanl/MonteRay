@@ -25,7 +25,6 @@ class RayList_t;
 template< unsigned N>
 class Ray_t;
 
-template< unsigned N>
 class RayWorkInfo;
 
 template<typename GRID_T>
@@ -73,21 +72,16 @@ public:
             unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos, MonteRay::Vector3D<gpuRayFloat_t>& dir ) const;
 
     template<unsigned N>
-    CUDA_CALLABLE_MEMBER tally_t calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo<N>& rayInfo );
+    CUDA_CALLABLE_MEMBER tally_t calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo& rayInfo );
 
     template<unsigned N>
-    CUDA_CALLABLE_MEMBER void score( const RayList_t<N>* pRayList, RayWorkInfo<N>* pRayInfo, unsigned tid, unsigned pid );
+    CUDA_CALLABLE_MEMBER void score( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, unsigned tid, unsigned pid );
 
     template<unsigned N>
-    void cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo<N>* pRayInfo ) {
-        for( auto i=0; i<pRayList->size(); ++i ) {
-            pRayInfo->clear(0);
-            score(pRayList, pRayInfo, 0, i);
-        }
-    }
+    void cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo );
 
     template<unsigned N>
-    void launch_ScoreRayList( int nBlocks, int nThreads, const RayList_t<N>* pRayList, RayWorkInfo<N>* pRayInfo, cudaStream_t* stream = nullptr, bool dumpOnFailure = true );
+    void launch_ScoreRayList( int nBlocks, int nThreads, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, cudaStream_t* stream = nullptr, bool dumpOnFailure = true );
 
     template<unsigned N>
     void dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName  = std::string("") );

@@ -115,7 +115,7 @@ SUITE( NextEventEstimator_pTester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo<> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         pEstimator->gatherWorkGroup(); // used for testing only
@@ -168,7 +168,7 @@ SUITE( NextEventEstimator_pTester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo<> rayInfo(1,true);
+        RayWorkInfo rayInfo(1,true);
         pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         pEstimator->gatherWorkGroup(); // used for testing only
@@ -296,7 +296,7 @@ SUITE( NextEventEstimator_pTester ) {
             pBank->copyToGPU();
             pEstimator->copyToGPU();
 
-            RayWorkInfo<N> rayInfo(pBank->size());
+            RayWorkInfo rayInfo(pBank->size());
             rayInfo.copyToGPU();
 
             GPUSync();
@@ -407,7 +407,7 @@ SUITE( NextEventEstimator_pTester ) {
              pBank->copyToGPU();
              pEstimator->copyToGPU();
 
-             RayWorkInfo<N> rayInfo(pBank->size());
+             RayWorkInfo rayInfo(pBank->size());
              rayInfo.copyToGPU();
 
              cudaStream_t* stream = NULL;

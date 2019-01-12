@@ -538,7 +538,6 @@
 			<target name="Initiate Build wCUDA BatchMode=OFF" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
 				<buildArguments>-DBatchMode=OFF -Denable_cuda:BOOL=ON -P cmake_files/Builder.cmake</buildArguments>
-				<buildTarget/>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>

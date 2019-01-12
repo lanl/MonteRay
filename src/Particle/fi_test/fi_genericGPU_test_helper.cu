@@ -465,7 +465,7 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
                  nBlocks << " blocks, " << nThreads << " threads, nBlocks*nThreads= " <<
                  nBlocks*nThreads << "\n";
 
-    RayWorkInfo<N> rayInfo( nThreads*nBlocks );
+    RayWorkInfo rayInfo( nThreads*nBlocks );
     rayInfo.copyToGPU();
 
     gpuErrchk( cudaPeekAtLastError() );

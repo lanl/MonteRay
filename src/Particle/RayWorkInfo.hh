@@ -8,10 +8,9 @@
 
 namespace MonteRay{
 
-template<unsigned N = 1>
-class RayWorkInfo : public CopyMemoryBase<RayWorkInfo<N>>{
+class RayWorkInfo : public CopyMemoryBase<RayWorkInfo>{
 public:
-    using Base = CopyMemoryBase<RayWorkInfo<N>>;
+    using Base = CopyMemoryBase<RayWorkInfo>;
 
     /// Primary RayWorkInfo constructor.
     /// Takes the size of the list as an argument.
@@ -45,7 +44,7 @@ public:
         }
     }
 
-    CUDAHOST_CALLABLE_MEMBER void copy(const RayWorkInfo<N>* rhs);
+    CUDAHOST_CALLABLE_MEMBER void copy(const RayWorkInfo* rhs);
 
     CUDA_CALLABLE_MEMBER unsigned capacity(void) const {
         return nAllocated;

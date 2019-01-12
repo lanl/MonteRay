@@ -19,6 +19,7 @@
 #include "MonteRayCrossSection.hh"
 #include "HashLookup.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "RayWorkInfo.hh"
 
 namespace RayListController_w_SpatialGrid_unit_tester{
 
@@ -202,36 +203,40 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         CHECK_EQUAL( 111, getIndex( pGrid, p ) );
     }
 
-    CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, resultClass<rayTraceList_t>* pResult,
+    CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, RayWorkInfo* pRayInfo,
             gpuRayFloat_t x, gpuRayFloat_t y, gpuRayFloat_t z, gpuRayFloat_t u, gpuRayFloat_t v, gpuRayFloat_t w,
             gpuRayFloat_t distance, bool outside) {
         Position_t pos = Position_t( x,y,z);
         Position_t dir = Position_t( u,v,w);
-        pSpatialGrid->rayTrace( pResult->v, pos, dir, distance, outside);
+        pSpatialGrid->rayTrace( 0, *pRayInfo, pos, dir, distance, outside);
     }
 
     template<typename GRID_T>
     rayTraceList_t rayTrace( GRID_T* pGridInfo, Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
-        using result_t = resultClass<rayTraceList_t>;
-        std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
+
+        RayWorkInfo rayInfo(1,true);
+
 #ifdef __CUDACC__
-        pResult->copyToGPU();
+        rayInfo.copyToGPU();
 
         cudaDeviceSynchronize();
         //std::cout << "Calling kernelRayTrace\n";
-        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr,
+        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, rayInfo.devicePtr,
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
         cudaDeviceSynchronize();
 
         gpuErrchk( cudaPeekAtLastError() );
 
-        pResult->copyToCPU();
+        rayInfo.copyToCPU();
 #else
-        kernelRayTrace( pGridInfo, pResult.get(),
+        kernelRayTrace( pGridInfo, &rayInfo,
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
 #endif
-
-        return pResult->v;
+        rayTraceList_t rayTraceList;
+        for( unsigned i = 0; i < rayInfo.getRayCastSize(0); ++i ) {
+            rayTraceList.add( rayInfo.getRayCastCell(0,i), rayInfo.getRayCastDist(0,i) );
+        }
+        return rayTraceList;
     }
 
     TEST_FIXTURE(UnitControllerSetup, rayTrace_outside_to_inside_posX ){
