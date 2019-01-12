@@ -102,7 +102,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     TEST( setup ) {
         cudaReset();
         gpuCheck();
-        cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
+        //cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
     }
 
     TEST_FIXTURE(UnitControllerSetup, ctor ){

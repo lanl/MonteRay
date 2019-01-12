@@ -105,7 +105,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 #ifdef __CUDACC__
         cudaReset();
         gpuCheck();
-        cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
+//        cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
 #endif
     }
 

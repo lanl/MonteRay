@@ -77,7 +77,7 @@ class SpatialGridGPUTester {
 public:
     SpatialGridGPUTester(){
 #ifdef __CUDACC__
-        setCudaStackSize( 100000 );
+        //setCudaStackSize( 100000 );
 #endif
         pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
     }

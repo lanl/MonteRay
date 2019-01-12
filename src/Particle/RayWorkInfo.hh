@@ -71,26 +71,36 @@ public:
 
     CUDA_CALLABLE_MEMBER void addRayCastCell(unsigned i, int cellID, gpuRayFloat_t dist);
 
+    CUDA_CALLABLE_MEMBER unsigned getRayCastIndex(unsigned i, unsigned cell) const {
+        //return i*MAXNUMRAYCELLS + cell;
+        return cell*nAllocated + i;
+    }
+
     CUDA_CALLABLE_MEMBER int& getRayCastCell(unsigned i, unsigned cell) const {
-        return rayCastCell[i*MAXNUMRAYCELLS + cell];
+        return rayCastCell[ getRayCastIndex(i,cell) ];
     }
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t& getRayCastDist(unsigned i, unsigned cell) const {
-        return rayCastDistance[i*MAXNUMRAYCELLS + cell];
+        return rayCastDistance[ getRayCastIndex(i,cell) ];
     }
 
     CUDA_CALLABLE_MEMBER int& getCrossingSize(unsigned dim, unsigned i) const {
         return crossingSize[dim*nAllocated + i];
     }
 
+    CUDA_CALLABLE_MEMBER unsigned getCrossingIndex(unsigned dim, unsigned i, unsigned cell) const {
+        //return dim*nAllocated*MAXNUMVERTICES + i*MAXNUMVERTICES + cell;
+        return dim*nAllocated*MAXNUMVERTICES + cell*nAllocated + i;
+    }
+
     CUDA_CALLABLE_MEMBER void addCrossingCell(unsigned dim, unsigned i, int cellID, gpuRayFloat_t dist);
 
     CUDA_CALLABLE_MEMBER int& getCrossingCell(unsigned dim, unsigned i, unsigned cell) const {
-        return crossingCell[dim*nAllocated*MAXNUMVERTICES + i*MAXNUMVERTICES + cell];
+        return crossingCell[ getCrossingIndex(dim,i,cell) ];
     }
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t& getCrossingDist(unsigned dim, unsigned i, unsigned cell) const {
-        return crossingDistance[dim*nAllocated*MAXNUMVERTICES + i*MAXNUMVERTICES + cell];
+        return crossingDistance[ getCrossingIndex(dim,i,cell) ];
     }
 
 // Data

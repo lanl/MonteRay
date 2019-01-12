@@ -14,4 +14,17 @@ Jan 10, 2019
       - Criticality Accident - 390x256 = GPU time = 21.80 secs
       - PWR fuel assembly    - 390x256 = GPU time = 15.19 secs
           
+ 
+Jan 11, 2019
+   * Convertion of all crossing distances now completed
+   * Nightlies
+      - Criticality Accident - 390x256 = GPU time = 36.39 secs
+      - PWR fuel assembly    - 390x256 = GPU time = 22.86 secs
       
+   * Reorder memory layout of the rayCast cells and distances to be indexed first by thread
+      - Criticality Accident - 390x256 = GPU time = 26.32 secs
+      - PWR fuel assembly    - 390x256 = GPU time = 14.34 secs
+      
+  * Reorder memory layout of the crossing cells and distances to be indexed first by thread   
+      - Criticality Accident - 390x256 = GPU time = 14.93 secs
+      - PWR fuel assembly    - 390x256 = GPU time =  8.59 secs 
