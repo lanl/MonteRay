@@ -4,6 +4,7 @@
 #include "ExpectedPathLength.t.hh"
 #include "HashLookup.hh"
 #include "RayList.hh"
+#include "GPUUtilityFunctions.hh"
 
 #include "fi_genericGPU_test_helper.hh"
 
@@ -51,7 +52,7 @@ void FIGenericGPUTestHelper<N>::stopTimers(){
 }
 
 template<unsigned N>
-CUDA_CALLABLE_KERNEL void testTallyCrossSection(const RayList_t<N>* pCP, const MonteRayCrossSection* pXS, gpuTallyType_t* results){
+CUDA_CALLABLE_KERNEL  testTallyCrossSection(const RayList_t<N>* pCP, const MonteRayCrossSection* pXS, gpuTallyType_t* results){
 
 #ifdef __CUDACC__
     int tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -72,10 +73,10 @@ CUDA_CALLABLE_KERNEL void testTallyCrossSection(const RayList_t<N>* pCP, const M
     return;
 }
 
-template CUDA_CALLABLE_KERNEL void
+template CUDA_CALLABLE_KERNEL 
 testTallyCrossSection<1>(const RayList_t<1>* pCP, const MonteRayCrossSection* pXS, gpuTallyType_t* results);
 
-template CUDA_CALLABLE_KERNEL void
+template CUDA_CALLABLE_KERNEL 
 testTallyCrossSection<3>(const RayList_t<3>* pCP, const MonteRayCrossSection* pXS, gpuTallyType_t* results);
 
 template<unsigned N>
@@ -95,6 +96,10 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
     }
 
 #ifdef __CUDACC__
+    auto launchBounds = setLaunchBounds( nThreads, nBlocks, pCP->getPtrPoints()->size() );
+    nBlocks = launchBounds.first;
+    nThreads = launchBounds.second;
+
     gpuTallyType_t* tally_device;
     CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
     CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
@@ -117,7 +122,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
         }
 
 template< unsigned N>
-CUDA_CALLABLE_KERNEL void testTallyCrossSection(
+CUDA_CALLABLE_KERNEL  testTallyCrossSection(
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
         unsigned matIndex,
@@ -156,6 +161,10 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
     tally = (gpuTallyType_t*) malloc ( allocSize );
 
 #ifdef __CUDACC__
+    auto launchBounds = setLaunchBounds( nThreads, nBlocks, pCP->getPtrPoints()->size() );
+    nBlocks = launchBounds.first;
+    nThreads = launchBounds.second;
+
     gpuTallyType_t* tally_device;
     CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
     CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
@@ -262,7 +271,7 @@ FIGenericGPUTestHelper<N>::getTotalXSByMatProp(
         }
 
 template<unsigned N>
-CUDA_CALLABLE_KERNEL void
+CUDA_CALLABLE_KERNEL 
 testTallyCrossSectionAtCollision(
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
@@ -295,7 +304,7 @@ testTallyCrossSectionAtCollision(
 
 
 template<unsigned N>
-CUDA_CALLABLE_KERNEL void testSumCrossSectionAtCollisionLocation(
+CUDA_CALLABLE_KERNEL  testSumCrossSectionAtCollisionLocation(
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
@@ -339,6 +348,10 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(
     tally = (gpuTallyType_t*) malloc ( allocSize );
 
 #ifdef __CUDACC__
+    auto launchBounds = setLaunchBounds( nThreads, nBlocks, pCP->getPtrPoints()->size() );
+    nBlocks = launchBounds.first;
+    nThreads = launchBounds.second;
+
     gpuTallyType_t* tally_device;
     CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
     CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
@@ -386,6 +399,10 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
     }
 
 #ifdef __CUDACC__
+    auto launchBounds = setLaunchBounds( nThreads, nBlocks, pCP->getPtrPoints()->size() );
+    nBlocks = launchBounds.first;
+    nThreads = launchBounds.second;
+
     gpuTallyType_t* tally_device;
     CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
     CUDA_CHECK_RETURN( cudaMemset(tally_device, 0, allocSize));
@@ -424,6 +441,10 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
         const MonteRay_MaterialProperties* pMatProps )
         {
 
+#ifdef __CUDACC__
+    gpuErrchk( cudaPeekAtLastError() );
+#endif
+
     unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
     tally = (gpuTallyType_t*) malloc ( allocSize );
     for( unsigned i = 0; i < nCells; ++i ) {
@@ -435,12 +456,32 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
     CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
     CUDA_CHECK_RETURN(cudaMemcpy(tally_device, tally, allocSize, cudaMemcpyHostToDevice));
 
+    std::cout << "Debug: FIGenericGPUTestHelper::launchRayTraceTally, requesting kernel with " <<
+                    nBlocks << " blocks, " << nThreads << " threads, nBlocks*nThreads= " <<
+                    nBlocks*nThreads << ", to process " << pCP->getPtrPoints()->size() << "rays. \n";
+
+    auto launchBounds = setLaunchBounds( nThreads, nBlocks,  pCP->getPtrPoints()->size() );
+    nThreads = launchBounds.second;
+    nBlocks = launchBounds.first;
+
+    std::cout << "Debug: FIGenericGPUTestHelper::launchRayTraceTally, launching kernel with " <<
+                 nBlocks << " blocks, " << nThreads << " threads, nBlocks*nThreads= " <<
+                 nBlocks*nThreads << "\n";
+
+    RayWorkInfo rayInfo( nThreads*nBlocks );
+    rayInfo.copyToGPU();
+
     gpuErrchk( cudaPeekAtLastError() );
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    rayTraceTally<<<nBlocks,nThreads>>>(grid_device, pCP->getPtrPoints()->devicePtr,
-            pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+    rayTraceTally<<<nBlocks,nThreads>>>(
+            grid_device,
+            pCP->getPtrPoints()->devicePtr,
+            pMatList->ptr_device,
+            pMatProps->ptrData_device,
+            pMatList->getHashPtr()->getPtrDevice(),
+            rayInfo.devicePtr,
             tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -450,12 +491,15 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
     gpuErrchk( cudaPeekAtLastError() );
     cudaFree( tally_device );
 #else
+    RayWorkInfo rayInfo( 1, true );
+
     rayTraceTally(
             grid_device,
             pCP->getPtrPoints(),
             pMatList->getPtr(),
             pMatProps->getPtr(),
             pMatList->getHashPtr()->getPtr(),
+            &rayInfo,
             tally);
 #endif
     return;

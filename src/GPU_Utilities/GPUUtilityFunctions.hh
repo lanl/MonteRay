@@ -9,6 +9,7 @@
 #define GPUUTILITYFUNCTIONS_HH_
 
 #include <cstddef>
+#include <utility>
 
 namespace MonteRay {
 
@@ -23,6 +24,8 @@ void setCudaDevice(int deviceID, const bool verbose = false);
 int getCudaDevice( const bool verbose );
 void setCudaPrintBufferSize( size_t size, const bool verbose = false);
 void setCudaStackSize( size_t size, const bool verbose = false );
+
+std::pair<unsigned, unsigned> setLaunchBounds( int nThreads, int nRaysPerThread, const unsigned numRays );
 
 } /* namespace MonteRay */
 

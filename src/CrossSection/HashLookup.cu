@@ -8,6 +8,7 @@
 #include "MonteRayCrossSection.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRayMemory.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay{
 
@@ -96,6 +97,8 @@ HashLookupHost::~HashLookupHost() {
 
 void HashLookupHost::copyToGPU(void) {
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+
     cudaCopyMade = true;
     temp = new HashLookup;
     //    copy(temp, ptr);

@@ -23,6 +23,9 @@ SUITE( RayListInterface_fi_tester ) {
         //gpuCheck();
     }
 
+#if true
+    // these tests are commented out as now only 100000 rays per batch can be processed and they are
+    // duplicated in RayTrace fi tests
     TEST(get_total_xs_from_gpu ) {
         RayListInterface<1>* points = new RayListInterface<1>(2);
         points->readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
@@ -38,7 +41,7 @@ SUITE( RayListInterface_fi_tester ) {
         CHECK_CLOSE(  7.85419f, expected, 1e-5);
 
         helper.setupTimers();
-        helper.launchTallyCrossSection(1024, 1024, points, xs);
+        helper.launchTallyCrossSection(1, 1024, points, xs);
         helper.stopTimers();
 
         CHECK_CLOSE( expected, helper.getTally(0), 1e-7 );
@@ -93,7 +96,7 @@ SUITE( RayListInterface_fi_tester ) {
         CHECK_CLOSE(  0.36215, expected, 1e-5);
 
         helper.setupTimers();
-        helper.launchTallyCrossSection(1024, 1024, &points, &matList, 0, 18.0);
+        helper.launchTallyCrossSection(1, 1024, &points, &matList, 0, 18.0);
         helper.stopTimers();
 
         CHECK_CLOSE( expected, helper.getTally(0), 1e-7 );
@@ -160,7 +163,7 @@ SUITE( RayListInterface_fi_tester ) {
         CHECK_CLOSE( expected2, expected1, 1e-6);
 
         helper.setupTimers();
-        helper.launchTallyCrossSectionAtCollision(1024, 1024, &points, &matList, &mp );
+        helper.launchTallyCrossSectionAtCollision(1, 1024, &points, &matList, &mp );
         helper.stopTimers();
 
         CHECK_CLOSE( expected1, helper.getTally(0), 1e-7 );
@@ -236,7 +239,7 @@ SUITE( RayListInterface_fi_tester ) {
         CHECK_CLOSE( 16.6541, expected, 1e-3);
 
         helper.setupTimers();
-        helper.launchSumCrossSectionAtCollisionLocation(1024, 1024, &points, &matList, &mp );
+        helper.launchSumCrossSectionAtCollisionLocation(1, 1024, &points, &matList, &mp );
         helper.stopTimers();
 
         CHECK_CLOSE( expected, helper.getTally(cell), 1e-3 );
@@ -314,7 +317,7 @@ SUITE( RayListInterface_fi_tester ) {
         CHECK_CLOSE( 0.353442, expected, 1e-6);
 
         helper.setupTimers();
-        helper.launchRayTraceTally(256, 256, &points, &matList, &mp );
+        helper.launchRayTraceTally(1, 256, &points, &matList, &mp );
         helper.stopTimers();
 
         //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
@@ -329,6 +332,8 @@ SUITE( RayListInterface_fi_tester ) {
         //    	}
         delete grid_host;
     }
+#endif
+
 }
 
 SUITE( Collision_fi_looping_tester ) {
@@ -439,7 +444,7 @@ SUITE( Collision_fi_looping_tester ) {
             if( end ) { last = true; }
             MonteRay::tripleTime time = launchRayTraceTally(
                     cpuWork1,
-                    256,
+                    1,
                     256,
                     &grid,
                     &bank1,
@@ -460,7 +465,7 @@ SUITE( Collision_fi_looping_tester ) {
             if( end ) { last = true; }
             time = launchRayTraceTally(
                     cpuWork2,
-                    256,
+                    1,
                     256,
                     &grid,
                     &bank2,

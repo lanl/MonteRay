@@ -49,10 +49,7 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER void init();
 
-    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void) {
-        //    	std::cout << "Debug: MonteRay_GridBins::copyToGPU \n";
-        Base::copyToGPU();
-    }
+    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void);
 
     CUDAHOST_CALLABLE_MEMBER void copy(const MonteRay_GridBins* rhs);
 

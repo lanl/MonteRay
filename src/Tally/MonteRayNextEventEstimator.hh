@@ -25,6 +25,8 @@ class RayList_t;
 template< unsigned N>
 class Ray_t;
 
+class RayWorkInfo;
+
 template<typename GRID_T>
 class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator<GRID_T>> {
 public:
@@ -70,25 +72,22 @@ public:
             unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos, MonteRay::Vector3D<gpuRayFloat_t>& dir ) const;
 
     template<unsigned N>
-    CUDA_CALLABLE_MEMBER tally_t calcScore( Ray_t<N>& ray );
+    CUDA_CALLABLE_MEMBER tally_t calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo& rayInfo );
 
     template<unsigned N>
-    CUDA_CALLABLE_MEMBER void score( const RayList_t<N>* pRayList, unsigned tid );
+    CUDA_CALLABLE_MEMBER void score( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, unsigned tid, unsigned pid );
 
     template<unsigned N>
-    void cpuScoreRayList( const RayList_t<N>* pRayList ) {
-        for( auto i=0; i<pRayList->size(); ++i ) {
-            score(pRayList,i);
-        }
-    }
+    void cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo );
 
     template<unsigned N>
-    void launch_ScoreRayList( int nBlocks, int nThreads, const RayList_t<N>* pRayList, cudaStream_t* stream = nullptr, bool dumpOnFailure = true );
+    void launch_ScoreRayList( int nBlocks, int nThreads, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, cudaStream_t* stream = nullptr, bool dumpOnFailure = true );
 
     template<unsigned N>
     void dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName  = std::string("") );
 
     CUDAHOST_CALLABLE_MEMBER void setGeometry(const GRID_T* pGrid, const MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
 
     CUDAHOST_CALLABLE_MEMBER void setMaterialList(const MonteRayMaterialListHost* ptr);
 
@@ -159,7 +158,7 @@ private:
 };
 
 template<typename GRID_T, unsigned N>
-CUDA_CALLABLE_KERNEL void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList );
+CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList );
 
 } /* namespace MonteRay */
 

@@ -41,6 +41,8 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER void copy(const RayList_t<N>* rhs);
 
+    void copyToGPU(void);
+
     CUDA_CALLABLE_MEMBER RayListSize_t size(void) const {
         return nUsed;
     }

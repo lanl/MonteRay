@@ -9,7 +9,7 @@ GPUTallyTestHelper::GPUTallyTestHelper(){
 GPUTallyTestHelper::~GPUTallyTestHelper(){
 }
 
-CUDA_CALLABLE_KERNEL void kernelAddTally(struct MonteRay::gpuTally* pTally, unsigned i, float_t a, float_t b){
+CUDA_CALLABLE_KERNEL  kernelAddTally(struct MonteRay::gpuTally* pTally, unsigned i, float_t a, float_t b){
     pTally->tally[i] =  a + b;
     return;
 }

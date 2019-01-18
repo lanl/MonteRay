@@ -6,6 +6,7 @@
 
 #include "gpuDistanceCalculator_test_helper.hh"
 #include "GridBins.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay{
 
@@ -13,153 +14,103 @@ void
 gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outsideDistances) {
 
 #ifdef __CUDACC__
-	cudaEvent_t sync;
-	cudaEventCreate(&sync);
-	kernelRayTrace<<<1,1>>>(numCrossings_device,
-			                                 grid_device,
-			                                 cells_device,
-			                                 distances_device,
-			                                 pos[0], pos[1], pos[2],
-			                                 dir[0], dir[1], dir[2],
-			                                 distance,
-			                                 outsideDistances );
-	gpuErrchk( cudaPeekAtLastError() );
+    pRayInfo->copyToGPU();
+    cudaEvent_t sync;
+    cudaEventCreate(&sync);
+    kernelRayTrace<<<1,1>>>(
+            pRayInfo->devicePtr,
+            grid_device,
+            pos[0], pos[1], pos[2],
+            dir[0], dir[1], dir[2],
+            distance,
+            outsideDistances );
+    gpuErrchk( cudaPeekAtLastError() );
 
-	cudaEventRecord(sync, 0);
-	cudaEventSynchronize(sync);
+    cudaEventRecord(sync, 0);
+    cudaEventSynchronize(sync);
+    pRayInfo->copyToCPU();
 #else
-	kernelRayTrace(numCrossings_device,
-			                                 grid_device,
-			                                 cells_device,
-			                                 distances_device,
-			                                 pos[0], pos[1], pos[2],
-			                                 dir[0], dir[1], dir[2],
-			                                 distance,
-			                                 outsideDistances );
+    kernelRayTrace(
+            pRayInfo.get(),
+            grid_device,
+            pos[0], pos[1], pos[2],
+            dir[0], dir[1], dir[2],
+            distance,
+            outsideDistances );
 #endif
 
-	return;
+return;
 }
 
 gpuDistanceCalculatorTestHelper::gpuDistanceCalculatorTestHelper(){
-	grid_device = NULL;
-	distances_device = NULL;
-	cells_device = NULL;
-	numCrossings_device = NULL;
-
-	nCells = 0;
+    grid_device = NULL;
+    pRayInfo.reset( new RayWorkInfo( 1, true ) );
+    nCells = 0;
 }
 
 void gpuDistanceCalculatorTestHelper::gpuCheck() {
-	//MonteRay::gpuCheck();
+    //MonteRay::gpuCheck();
 }
 
 gpuDistanceCalculatorTestHelper::~gpuDistanceCalculatorTestHelper(){
 
-//	std::cout << "Debug: starting ~gpuDistanceCalculatorTestHelper()" << std::endl;
+    //	std::cout << "Debug: starting ~gpuDistanceCalculatorTestHelper()" << std::endl;
 
-#ifdef __CUDACC__
-	if( distances_device != NULL ) {
-		CUDA_CHECK_RETURN( cudaFree( distances_device ));
-	}
-	if( cells_device != NULL ) {
-		CUDA_CHECK_RETURN( cudaFree( cells_device ) );
-	}
-	if( numCrossings_device != NULL ) {
-		CUDA_CHECK_RETURN( cudaFree( numCrossings_device ) );
-	}
-#else
-	if( distances_device != NULL ) {
-		free( distances_device );
-	}
-	if( cells_device != NULL ) {
-		free( cells_device );
-	}
-	if( numCrossings_device != NULL ) {
-		free( numCrossings_device );
-	}
-#endif
-//	std::cout << "Debug: exitting ~gpuDistanceCalculatorTestHelper()" << std::endl;
 }
 
 void gpuDistanceCalculatorTestHelper::copyGridtoGPU( GridBins* grid){
 
-	nCells = grid->getNumCells();
+    nCells = grid->getNumCells();
 
 #ifdef __CUDACC__
-	// copy the grid
-	grid->copyToGPU();
-	grid_device = grid->devicePtr;
+    // copy the grid
+    grid->copyToGPU();
+    grid_device = grid->devicePtr;
 
-	// allocate the distances
-	CUDA_CHECK_RETURN(cudaMalloc((void**) &distances_device, sizeof(gpuRayFloat_t) * nCells ));
-
-	// allocate the cells
-	CUDA_CHECK_RETURN(cudaMalloc((void**) &cells_device, sizeof(int) * nCells ));
-
-	// allocate the num crossings
-	CUDA_CHECK_RETURN(cudaMalloc((void**) &numCrossings_device, sizeof(unsigned) ));
 #else
     grid_device = grid;
-
-	distances_device = (gpuRayFloat_t*) malloc( sizeof(float_t) * nCells );
-	cells_device = (int*) malloc( sizeof(int) * nCells );
-
-	numCrossings_device = (int*) malloc( sizeof(unsigned) );
 #endif
 }
 
-void gpuDistanceCalculatorTestHelper::copyDistancesFromGPU( gpuRayFloat_t* distances){
-	// copy distances back to the host
-#ifdef __CUDACC__
-	CUDA_CHECK_RETURN(cudaMemcpy(distances, distances_device, sizeof(gpuRayFloat_t) * nCells, cudaMemcpyDeviceToHost));
-#else
-	memcpy(distances, distances_device, sizeof(gpuRayFloat_t) * nCells);
-#endif
+void  gpuDistanceCalculatorTestHelper::copyDistancesFromGPU( gpuRayFloat_t* distance ) {
+    for( unsigned i = 0; i < pRayInfo->getRayCastSize(0); ++i ){
+        distance[i] = pRayInfo->getRayCastDist(0,i);
+    }
 }
 
-void gpuDistanceCalculatorTestHelper::copyCellsFromCPU( int* cells){
-	// copy cells back to the host
-#ifdef __CUDACC__
-	CUDA_CHECK_RETURN(cudaMemcpy(cells, cells_device, sizeof(int) * nCells, cudaMemcpyDeviceToHost));
-#else
-	memcpy(cells, cells_device, sizeof(int) * nCells );
-#endif
+void  gpuDistanceCalculatorTestHelper::copyCellsFromCPU( int* cells ) {
+    for( unsigned i = 0; i < pRayInfo->getRayCastSize(0); ++i ){
+        cells[i] = pRayInfo->getRayCastCell(0,i);
+    }
 }
 
-unsigned gpuDistanceCalculatorTestHelper::getNumCrossingsFromGPU( void ){
-	// copy num crossings
-	unsigned num;
-#ifdef __CUDACC__
-	CUDA_CHECK_RETURN(cudaMemcpy(&num, numCrossings_device, sizeof(unsigned) * 1, cudaMemcpyDeviceToHost));
-#else
-	memcpy( &num, numCrossings_device, sizeof(unsigned) * 1 );
-#endif
-	return num;
+unsigned gpuDistanceCalculatorTestHelper:: getNumCrossingsFromGPU(void) {
+    return pRayInfo->getRayCastSize(0);
 }
+
 
 void gpuDistanceCalculatorTestHelper::setupTimers(){
 #ifdef __CUDACC__
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-	cudaEventRecord(start, 0);
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
 #else
-	timer.start();
+    timer.start();
 #endif
 }
 
 void gpuDistanceCalculatorTestHelper::stopTimers(){
 #ifdef __CUDACC__
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
 
-	float elapsedTime;
+    float elapsedTime;
 
-	cudaEventElapsedTime(&elapsedTime, start, stop );
-	std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
+    cudaEventElapsedTime(&elapsedTime, start, stop );
+    std::cout << "Elapsed time in CUDA kernel=" << elapsedTime << " msec" << std::endl;
 #else
-	timer.stop();
-	std::cout << "Elapsed time in non-CUDA kernel=" << timer.getTime()*1000.0  << " msec" << std::endl;
+    timer.stop();
+    std::cout << "Elapsed time in non-CUDA kernel=" << timer.getTime()*1000.0  << " msec" << std::endl;
 #endif
 
 

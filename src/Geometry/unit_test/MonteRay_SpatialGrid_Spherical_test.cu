@@ -4,6 +4,7 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "RayWorkInfo.hh"
 
 #include <stdexcept>
 #include <fstream>
@@ -232,8 +233,9 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
         MonteRay_SpatialGrid::Position_t direction(   1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   7,  distances.size() );
         CHECK_EQUAL(   3,  distances.id(0) );
@@ -267,8 +269,9 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
         direction.normalize();
         gpuRayFloat_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   7,  distances.size() );
         CHECK_EQUAL(   3,  distances.id(0) );
@@ -302,8 +305,9 @@ SUITE( MonteRay_SpatialGrid_Spherical_tests ) {
         direction.normalize();
         gpuRayFloat_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace(distances, position, direction, distance);
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   2,  distances.size() );
         CHECK_EQUAL(   2,  distances.id(0) );

@@ -9,6 +9,8 @@
 
 namespace MonteRay {
 
+class RayWorkInfo;
+
 class singleDimRayTraceMap_t {
 private:
     unsigned N = 0;
@@ -19,6 +21,9 @@ public:
     CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t() {}
     CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(unsigned n) : N(n) {}
     CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
+
+    // for conversion of old tests
+    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(RayWorkInfo&, const unsigned threadID, int dim = -1);
 
     CUDA_CALLABLE_MEMBER
     void add( const int cell, const gpuRayFloat_t dist);
@@ -41,6 +46,9 @@ public:
     CUDA_CALLABLE_MEMBER rayTraceList_t() {}
     CUDA_CALLABLE_MEMBER rayTraceList_t(unsigned n) : N(n) {}
     CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
+
+    // for conversion of old tests
+    CUDA_CALLABLE_MEMBER rayTraceList_t(RayWorkInfo&, const unsigned threadID, int dim = -1);
 
     CUDA_CALLABLE_MEMBER
     void add( const unsigned cell, const gpuRayFloat_t dist);
@@ -71,9 +79,6 @@ class MonteRay_GridSystemInterface {
 
 #define OUTSIDE_INDEX UINT_MAX;
 public:
-    //    typedef std::vector<std::pair<int,gpuRayFloat_t>> singleDimRayTraceMap_t;
-    //    typedef std::vector<singleDimRayTraceMap_t> multiDimRayTraceMap_t;
-    //    typedef std::vector<std::pair<unsigned, gpuRayFloat_t>> rayTraceList_t;
     using GridBins_t = MonteRay_GridBins;
     typedef GridBins_t* pGridBins_t;
     //static const unsigned OUTSIDE = UINT_MAX;
@@ -85,11 +90,21 @@ public:
 
     CUDA_CALLABLE_MEMBER
     virtual void
-    rayTrace( rayTraceList_t&, const GridBins_t::Position_t& particle_pos, const GridBins_t::Position_t& particle_dir, gpuRayFloat_t distance, bool outsideDistances=false ) const = 0;
+    rayTrace( const unsigned threadID,
+              RayWorkInfo& rayInfo,
+              const GridBins_t::Position_t& particle_pos,
+              const GridBins_t::Position_t& particle_dir,
+              const gpuRayFloat_t distance,
+              const bool outsideDistances=false ) const = 0;
 
     CUDA_CALLABLE_MEMBER
     virtual void
-    crossingDistance( singleDimRayTraceMap_t&, unsigned dim, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const = 0;
+    crossingDistance( const unsigned dim,
+                      const unsigned threadID,
+                      RayWorkInfo& rayInfo,
+                      const GridBins_t::Position_t& pos,
+                      const GridBins_t::Direction_t& dir,
+                      const gpuRayFloat_t distance ) const = 0;
 
     CUDA_CALLABLE_MEMBER
     virtual gpuRayFloat_t getVolume( unsigned index ) const = 0;
@@ -113,16 +128,39 @@ public:
     virtual MonteRay_GridSystemInterface* getDeviceInstancePtr(void) = 0;
 
 protected:
-    template<unsigned NUMDIM = 3>
+
+    template<unsigned NUMDIM>
     CUDA_CALLABLE_MEMBER
-    void orderCrossings( rayTraceList_t&, const multiDimRayTraceMap_t<NUMDIM>& distances, int indices[], gpuRayFloat_t distance, bool outsideDistances=false ) const;
+    void orderCrossings(
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            int indices[],
+            const gpuRayFloat_t distance,
+            const bool outsideDistances=false ) const;
 
     CUDA_CALLABLE_MEMBER
-    void planarCrossingDistance( singleDimRayTraceMap_t&, const GridBins_t& Bins, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance, int index) const;
+    void planarCrossingDistance(
+            const unsigned dim,
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            const GridBins_t& Bins,
+            const gpuRayFloat_t pos,
+            const gpuRayFloat_t dir,
+            const gpuRayFloat_t distance,
+            const int index) const;
 
     template<bool OUTWARD>
     CUDA_CALLABLE_MEMBER
-    bool radialCrossingDistanceSingleDirection( singleDimRayTraceMap_t& distances, const GridBins_t& Bins, gpuRayFloat_t particle_R2, gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t distance, int index) const;
+    bool radialCrossingDistanceSingleDirection(
+            const unsigned dim,
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            const GridBins_t& Bins,
+            const gpuRayFloat_t particle_R2,
+            const gpuRayFloat_t A,
+            const gpuRayFloat_t B,
+            const gpuRayFloat_t distance,
+            int index) const;
 
 public:
     static constexpr unsigned OUTSIDE_GRID = UINT_MAX;

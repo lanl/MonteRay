@@ -13,40 +13,40 @@ SUITE( GridBins_gpu_Tester ) {
     template<typename T>
     using resultClass = MonteRay_SingleValueCopyMemory<T>;
 
-    CUDA_CALLABLE_KERNEL void kernelGetMaxNumVertices(GridBins* pGridBins, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetMaxNumVertices(GridBins* pGridBins, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getMaxNumVertices();
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetNumVertices(GridBins* pGridBins, unsigned dim, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetNumVertices(GridBins* pGridBins, unsigned dim, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getNumVertices(dim);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetNumBins(GridBins* pGridBins, unsigned dim, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetNumBins(GridBins* pGridBins, unsigned dim, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getNumBins(dim);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetVertex(GridBins* pGridBins, unsigned dim, unsigned index, resultClass<gpuFloatType_t>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetVertex(GridBins* pGridBins, unsigned dim, unsigned index, resultClass<gpuFloatType_t>* pResult) {
         pResult->v = pGridBins->getVertex(dim,index);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelIsRegular(GridBins* pGridBins, unsigned dim, resultClass<bool>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelIsRegular(GridBins* pGridBins, unsigned dim, resultClass<bool>* pResult) {
         pResult->v = pGridBins->isRegular(dim);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetOffset(GridBins* pGridBins, const unsigned dim, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetOffset(GridBins* pGridBins, const unsigned dim, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getOffset(dim);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetHashNEdges(GridBins* pGridBins, const unsigned dim, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetHashNEdges(GridBins* pGridBins, const unsigned dim, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getHashPtr(dim)->getNEdges();
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetDimIndex(GridBins* pGridBins, const unsigned dim, gpuFloatType_t pos, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetDimIndex(GridBins* pGridBins, const unsigned dim, gpuFloatType_t pos, resultClass<unsigned>* pResult) {
         pResult->v = pGridBins->getDimIndex(dim, pos);
     }
 
 
-    CUDA_CALLABLE_KERNEL void kernelGetHashLowerUpperBins(GridBins* pGridBins, const unsigned dim, gpuFloatType_t pos, resultClass<unsigned>* pResult1, resultClass<unsigned>* pResult2) {
+    CUDA_CALLABLE_KERNEL  kernelGetHashLowerUpperBins(GridBins* pGridBins, const unsigned dim, gpuFloatType_t pos, resultClass<unsigned>* pResult1, resultClass<unsigned>* pResult2) {
         pGridBins->getHashLowerUpperBins(dim, pos, pResult1->v, pResult2->v);
     }
 

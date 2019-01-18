@@ -23,7 +23,7 @@ MonteRayTally::~MonteRayTally(){
 void
 MonteRayTally::copy(const MonteRayTally* rhs) {
 #ifdef __CUDACC__
-    if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     if( isCudaIntermediate and !rhs->initialized ) {
         throw std::runtime_error( "MonteRayTally::copy -- tally not initialized!!");
@@ -86,6 +86,25 @@ MonteRayTally::copy(const MonteRayTally* rhs) {
 
 }
 
+
+void
+MonteRayTally::copyToGPU(void) {
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+    copiedToGPU = true;
+
+    //std::cout << "Debug: MonteRayTally::copyToGPU \n";
+    Base::copyToGPU();
+}
+
+void
+MonteRayTally::copyToCPU(void) {
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+    if( !copiedToGPU ) return;
+
+    //if( debug ) std::cout << "Debug: MonteRayTally::copyToCPU \n";
+    Base::copyToCPU();
+}
+
 CUDA_CALLABLE_MEMBER
 void
 MonteRayTally::scoreByIndex(gpuTallyType_t value, unsigned spatial_index, unsigned time_index ) {
@@ -107,7 +126,7 @@ MonteRayTally::setupForParallel() {}
 void
 MonteRayTally::gather() {
     copyToCPU();
-    if( ! MonteRayParallelAssistant::getInstance().isParallel() ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     gpuTallyType_t* pGlobalData;
 

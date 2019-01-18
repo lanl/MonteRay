@@ -3,6 +3,7 @@
 
 #include "MonteRayCopyMemory.hh"
 #include "GPUErrorCheck.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay {
 
@@ -85,6 +86,7 @@ CopyMemoryBase<Derived>::copyToGPU(void) {
 #endif
 
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
     Derived* ptr = ( Derived* ) this;
     intermediatePtr->Derived::copy( ptr );
     intermediatePtr->isCudaIntermediate = false;

@@ -11,6 +11,7 @@
 #include "GPUErrorCheck.hh"
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayMemory.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay{
 typedef MonteRay_MaterialProperties_Data::offset_t offset_t;
@@ -117,18 +118,17 @@ void MonteRay_MaterialProperties::cudaDtor(void) {
 
 void MonteRay_MaterialProperties::copyToGPU(void) {
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+    cudaDtor();
+
     cudaCopyMade = true;
 
-    if( !tempData ) {
-        tempData = new MonteRay_MaterialProperties_Data;
-        // allocate target dynamic memory
-        MonteRay::cudaCtor( tempData, size(), numMatSpecs() );
-    }
+    tempData = new MonteRay_MaterialProperties_Data;
+    // allocate target dynamic memory
+    MonteRay::cudaCtor( tempData, size(), numMatSpecs() );
 
-    if( !ptrData_device ) {
-        // allocate target struct
-        ptrData_device = (MonteRay_MaterialProperties_Data*) MONTERAYDEVICEALLOC( sizeof( MonteRay_MaterialProperties_Data), std::string("MonteRay_MaterialProperties::ptrData_device") );
-    }
+    // allocate target struct
+    ptrData_device = (MonteRay_MaterialProperties_Data*) MONTERAYDEVICEALLOC( sizeof( MonteRay_MaterialProperties_Data), std::string("MonteRay_MaterialProperties::ptrData_device") );
 
     // copy allocated data arrays
     unsigned long long allocSize = sizeof(offset_t)*(tempData->numCells+1);
@@ -169,36 +169,50 @@ size_t getNumCells(const struct MonteRay_MaterialProperties_Data* ptr ) {
 
 CUDA_CALLABLE_MEMBER
 offset_t getNumMats(const struct MonteRay_MaterialProperties_Data* ptr, unsigned i ){
+    MONTERAY_ASSERT_MSG( i < ptr->numCells, "MonteRay::getNumMats(MonteRay_MaterialProperties_Data*,i)  -- requested cell number exceeds number of allocated cells!" );
     return ptr->offset[i+1] - ptr->offset[i];
 }
 
 CUDA_CALLABLE_MEMBER
 Density_t getDensity(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum ){
-    return ptr->density[ ptr->offset[cellNum] + matNum];
+
+    MONTERAY_ASSERT_MSG( cellNum < ptr->numCells, "MonteRay::getDensity(MonteRay_MaterialProperties_Data*,cellNum,matNum)  -- requested cell number exceeds number of allocated cells!" );
+    MONTERAY_ASSERT_MSG( matNum < getNumMats(ptr,cellNum), "MonteRay::getDensity(MonteRay_MaterialProperties_Data*,cellNum,matNum)  -- requested material exceeds number of materials in the cell!" );
+
+    const size_t index = ptr->offset[cellNum] + matNum;
+    MONTERAY_ASSERT_MSG( index < ptr->numMaterialComponents, "MonteRay::getDensity(MonteRay_MaterialProperties_Data*,cellNum,matNum)  -- requested material index exceeds number of total number of materials.!" );
+
+    return ptr->density[ index ];
 }
 
 CUDA_CALLABLE_MEMBER
 MatID_t getMatID(const struct MonteRay_MaterialProperties_Data* ptr, unsigned cellNum, unsigned matNum ){
-    return ptr->ID[ ptr->offset[cellNum] + matNum];
+    MONTERAY_ASSERT_MSG( cellNum < ptr->numCells, "MonteRay::getMatID(MonteRay_MaterialProperties_Data*,cellNum,matNum)  -- requested cell number exceeds number of allocated cells!" );
+    MONTERAY_ASSERT_MSG( matNum < getNumMats(ptr,cellNum), "MonteRay::getMatID(MonteRay_MaterialProperties_Data*,cellNum,matNum)  -- requested material exceeds number of materials in the cell!" );
+
+    const size_t index = ptr->offset[cellNum] + matNum;
+    MONTERAY_ASSERT_MSG( index < ptr->numMaterialComponents, "MonteRay::getDensity(MonteRay_MaterialProperties_Data*,cellNum,matNum)  -- requested material index exceeds number of total number of materials.!" );
+
+    return ptr->ID[ index ];
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results ) {
+CUDA_CALLABLE_KERNEL  kernelGetNumCells(MonteRay_MaterialProperties_Data* mp, unsigned* results ) {
     results[0] = getNumCells(mp);
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results ) {
+CUDA_CALLABLE_KERNEL  kernelGetNumMaterials(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, MonteRay_MaterialProperties_Data::Material_Index_t* results ) {
     results[0] = getNumMats(mp, cellNum);
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results ) {
+CUDA_CALLABLE_KERNEL  kernelGetMaterialID(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::MatID_t* results ) {
     results[0] = getMatID(mp, cellNum, i);
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results ) {
+CUDA_CALLABLE_KERNEL  kernelGetMaterialDensity(MonteRay_MaterialProperties_Data* mp, unsigned cellNum, unsigned i, MonteRay_MaterialProperties_Data::Density_t* results ) {
     results[0] = getDensity(mp, cellNum, i);
 }
 
-CUDA_CALLABLE_KERNEL void kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteRay_MaterialProperties_Data::MatID_t matIndex, MonteRay_MaterialProperties_Data::Density_t* results ) {
+CUDA_CALLABLE_KERNEL  kernelSumMatDensity(MonteRay_MaterialProperties_Data* mp, MonteRay_MaterialProperties_Data::MatID_t matIndex, MonteRay_MaterialProperties_Data::Density_t* results ) {
     gpuFloatType_t sum = 0.0f;
     for( unsigned cell=0; cell < getNumCells(mp); ++cell) {
         for( unsigned matNum=0; matNum < getNumMats(mp, cell); ++matNum ) {

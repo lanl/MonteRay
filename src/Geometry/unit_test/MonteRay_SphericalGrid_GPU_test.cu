@@ -95,7 +95,7 @@ SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
     };
 
     // kernal call
-    CUDA_CALLABLE_KERNEL void kernelSphericalGridGetNumBins(Grid_t** pGrid, resultClass<unsigned>* pResult, unsigned d) {
+    CUDA_CALLABLE_KERNEL  kernelSphericalGridGetNumBins(Grid_t** pGrid, resultClass<unsigned>* pResult, unsigned d) {
         pResult->v = (*pGrid)->getNumBins(d);
     }
 
@@ -144,7 +144,7 @@ SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
     }
 
     //	// kernal call
-    CUDA_CALLABLE_KERNEL void kernelSphericalGridGetIndex(Grid_t** pGrid, resultClass<unsigned>* pResult, Position_t pos) {
+    CUDA_CALLABLE_KERNEL  kernelSphericalGridGetIndex(Grid_t** pGrid, resultClass<unsigned>* pResult, Position_t pos) {
         //printf("Debug: kernelSphericalGridGetIndex -- calling pGrid->getIndex(pos)\n");
         unsigned index = (*pGrid)->getIndex(pos);
         pResult->v = index;
@@ -225,19 +225,19 @@ SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
         delete pResult;
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromR(Grid_t** pPtrGrid, resultClass<int>* pResult, gpuRayFloat_t R ) {
+    CUDA_CALLABLE_KERNEL  kernelGetRadialIndexFromR(Grid_t** pPtrGrid, resultClass<int>* pResult, gpuRayFloat_t R ) {
         pResult->v = (*pPtrGrid)->getRadialIndexFromR(R);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelGetRadialIndexFromRSq(Grid_t** pPtrGrid, resultClass<int>* pResult, gpuRayFloat_t RSq ) {
+    CUDA_CALLABLE_KERNEL  kernelGetRadialIndexFromRSq(Grid_t** pPtrGrid, resultClass<int>* pResult, gpuRayFloat_t RSq ) {
         pResult->v = (*pPtrGrid)->getRadialIndexFromRSq(RSq);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelSphericalGridIsIndexOutside(Grid_t** pGrid, resultClass<bool>* pResult, unsigned d, int index) {
+    CUDA_CALLABLE_KERNEL  kernelSphericalGridIsIndexOutside(Grid_t** pGrid, resultClass<bool>* pResult, unsigned d, int index) {
         pResult->v = (*pGrid)->isIndexOutside(d,index);
     }
 
-    CUDA_CALLABLE_KERNEL void kernelSphericalGridIsOutside(Grid_t** pGrid, resultClass<bool>* pResult, int i, int j, int k ) {
+    CUDA_CALLABLE_KERNEL  kernelSphericalGridIsOutside(Grid_t** pGrid, resultClass<bool>* pResult, int i, int j, int k ) {
         int indices[] = {i,j,k};
         pResult->v = (*pGrid)->isOutside(indices);
     }
@@ -359,7 +359,7 @@ SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
         CHECK_EQUAL( false, isIndexOutside(0, 9) );
     }
 
-    CUDA_CALLABLE_KERNEL void kernelSphericalGridGetVolume(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i ) {
+    CUDA_CALLABLE_KERNEL  kernelSphericalGridGetVolume(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i ) {
         pResult->v = (*pGrid)->getVolume(i);
     }
 

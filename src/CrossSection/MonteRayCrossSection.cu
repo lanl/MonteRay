@@ -8,6 +8,7 @@
 #include "MonteRay_binaryIO.hh"
 #include "HashLookup.hh"
 #include "MonteRayMemory.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay{
 
@@ -227,13 +228,13 @@ gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, const struct H
     return getTotalXSByIndex( pXS, i, E);
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, pHash, HashBin, E);
     return;
 }
 
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(const struct MonteRayCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(const struct MonteRayCrossSection* pXS,  gpuFloatType_t E, gpuFloatType_t* results){
     results[0] = getTotalXS(pXS, E);
     return;
 }
@@ -305,6 +306,8 @@ unsigned MonteRayCrossSectionHost::getIndex( const HashLookupHost* pHost, unsign
 
 void MonteRayCrossSectionHost::copyToGPU(void) {
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+
     cudaCopyMade = true;
 
     if( temp ) {

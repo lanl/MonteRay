@@ -14,13 +14,14 @@
 #include "GPUSync.hh"
 #include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRay_timer.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 
 template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::RayListController(
-        unsigned blocks,
-        unsigned threads,
+        int blocks,
+        int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
         MonteRay_MaterialProperties* pMP,
@@ -36,18 +37,42 @@ PA( MonteRayParallelAssistant::getInstance() )
 {
     pNextEventEstimator.reset();
     initialize();
-    kernel = [&] ( void ) {
+    kernel = [&, blocks, threads ] ( void ) {
         if( PA.getWorkGroupRank() != 0 ) { return; }
+
+        auto launchBounds = setLaunchBounds( threads, blocks,  currentBank->getPtrPoints()->size() );
+
+#ifdef DEBUG
+        size_t freeMemory = 0;
+        size_t totalMemory = 0;
 #ifdef __CUDACC__
-        rayTraceTally<<<nBlocks,nThreads,0, *stream1>>>(
+        cudaError_t memError = cudaMemGetInfo( &freeMemory, &totalMemory);
+        freeMemory = freeMemory/1000000;
+        totalMemory = totalMemory/1000000;
+#endif
+        std::cout << "Debug: RayListController -- launching kernel on " <<
+                     PA.info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
+                     " threads, to process " << currentBank->getPtrPoints()->size() << " rays," <<
+                     " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
+#endif
+
+#ifdef __CUDACC__
+
+        rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
                 pGrid->getDevicePtr(),
-                currentBank->getPtrPoints()->devicePtr, pMatList->ptr_device,
-                pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+                currentBank->getPtrPoints()->devicePtr,
+                pMatList->ptr_device,
+                pMatProps->ptrData_device,
+                pMatList->getHashPtr()->getPtrDevice(),
+                rayInfo->devicePtr,
                 pTally->temp->tally );
 #else
         rayTraceTally( pGrid->getPtr(),
-                       currentBank->getPtrPoints(), pMatList->getPtr(),
-                       pMatProps->getPtr(), pMatList->getHashPtr()->getPtr(),
+                       currentBank->getPtrPoints(),
+                       pMatList->getPtr(),
+                       pMatProps->getPtr(),
+                       pMatList->getHashPtr()->getPtr(),
+                       rayInfo.get(),
                        pTally->getPtr()->tally );
 #endif
     };
@@ -56,8 +81,8 @@ PA( MonteRayParallelAssistant::getInstance() )
 
 template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::RayListController(
-        unsigned blocks,
-        unsigned threads,
+        int blocks,
+        int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
         MonteRay_MaterialProperties* pMP,
@@ -74,7 +99,7 @@ PA( MonteRayParallelAssistant::getInstance() )
     pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator<GRID_T>>( numPointDets );
     usingNextEventEstimator = true;
     initialize();
-    kernel = [&] ( void ) {
+    kernel = [&, blocks, threads] ( void ) {
 #ifdef DEBUG
         const bool debug = false;
 #endif
@@ -86,7 +111,7 @@ PA( MonteRayParallelAssistant::getInstance() )
 #ifdef DEBUG
             if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
 #endif
-            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), stream1.get() );
+            pNextEventEstimator->launch_ScoreRayList(blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
         }
     };
 }
@@ -110,7 +135,7 @@ void
 RayListController<GRID_T, N>::initialize(){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
-    setCapacity( 1000000 ); // default buffer capacity to 1 million.
+    setCapacity( 100000 ); // default buffer capacity to 0.1 million.
 
     pTimer.reset( new cpuTimer );
 
@@ -159,10 +184,26 @@ RayListController<GRID_T,N>::size(void) const {
 template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::setCapacity(unsigned n) {
+//    if( n > 100000 ) {
+//        std::cout << "Debug: WARNING: MonteRay -- RayListController::setCapacity, limiting capacity to 100000\n";
+//        n = 100000;
+//    }
+
     if( PA.getWorkGroupRank() != 0 ) { return; }
     bank1.reset( new RayListInterface<N>(n) );
     bank2.reset( new RayListInterface<N>(n) );
     currentBank = bank1.get();
+
+    auto launchBounds = setLaunchBounds( nThreads, nBlocks, n );
+    unsigned totalNumThreads  = launchBounds.first * launchBounds.second;
+
+    // size rayInfo to total number of threads
+#ifdef __CUDACC__
+    rayInfo.reset( new RayWorkInfo( totalNumThreads ) );
+#else
+    // allocate on the CPU
+    rayInfo.reset( new RayWorkInfo( 1, true ) );
+#endif
 }
 
 
@@ -234,7 +275,9 @@ RayListController<GRID_T,N>::flush(bool final){
     ++nFlushs;
 
 #ifdef __CUDACC__
+    gpuErrchk( cudaPeekAtLastError() );
     currentBank->copyToGPU();
+    rayInfo->copyToGPU();
     gpuErrchk( cudaEventRecord(*currentCopySync, 0) );
     gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 #endif
@@ -243,7 +286,11 @@ RayListController<GRID_T,N>::flush(bool final){
     kernel();
 
     // only uncomment for testing, forces the cpu and gpu to sync
-    //gpuErrchk( cudaPeekAtLastError() );
+#ifdef DEBUG
+#ifdef __CUDACC__
+    gpuErrchk( cudaPeekAtLastError() );
+#endif
+#endif
 
 #ifdef __CUDACC__
     gpuErrchk( cudaEventRecord( *stopGPU, *stream1) );
@@ -499,6 +546,16 @@ RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nS
         throw std::runtime_error( "RayListController::outputTimeBinnedTotal  -- only supports outputting Next-Event Estimator results." );
     }
     pNextEventEstimator->outputTimeBinnedTotal(out, nSamples, constantDimension );
+}
+
+template<typename GRID_T, unsigned N>
+void
+RayListController<GRID_T,N>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
+    if( PA.getWorkGroupRank() != 0 ) { return; }
+
+    if( usingNextEventEstimator ) {
+        pNextEventEstimator->updateMaterialProperties( pMPs );
+    }
 }
 
 template<typename GRID_T, unsigned N>

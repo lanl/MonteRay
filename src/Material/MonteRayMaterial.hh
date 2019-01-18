@@ -33,7 +33,7 @@ void cudaDtor(struct MonteRayMaterial*);
 CUDA_CALLABLE_MEMBER
 unsigned getNumIsotopes(struct MonteRayMaterial* ptr );
 
-CUDA_CALLABLE_KERNEL void kernelGetNumIsotopes(MonteRayMaterial* pMat, unsigned* results);
+CUDA_CALLABLE_KERNEL  kernelGetNumIsotopes(MonteRayMaterial* pMat, unsigned* results);
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getFraction(struct MonteRayMaterial* ptr, unsigned i);

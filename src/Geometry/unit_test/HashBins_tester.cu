@@ -189,12 +189,12 @@ SUITE( HashBins_Tester ) {
     template<typename T>
     using resultClass = MonteRay_SingleValueCopyMemory<T>;
 
-    CUDA_CALLABLE_KERNEL void kernelGetNEdges(HashBins* pHashBins, resultClass<unsigned>* pResult) {
+    CUDA_CALLABLE_KERNEL  kernelGetNEdges(HashBins* pHashBins, resultClass<unsigned>* pResult) {
         pResult->v = pHashBins->getNEdges();
     }
 
 
-    CUDA_CALLABLE_KERNEL void kernelGetLowerUpperBins(HashBins* pHashBins, gpuFloatType_t value, resultClass<unsigned>* pLower, resultClass<unsigned>* pUpper) {
+    CUDA_CALLABLE_KERNEL  kernelGetLowerUpperBins(HashBins* pHashBins, gpuFloatType_t value, resultClass<unsigned>* pLower, resultClass<unsigned>* pUpper) {
         pHashBins->getLowerUpperBins(value, pLower->v, pUpper->v);
     }
 

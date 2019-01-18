@@ -17,8 +17,11 @@
 #include "MonteRayMaterialList.hh"
 #include "ExpectedPathLength.hh"
 #include "RayList.hh"
+#include "RayWorkInfo.hh"
 #include "MonteRayTally.hh"
 #include "MonteRayParallelAssistant.hh"
+#include "GPUUtilityFunctions.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 
@@ -124,7 +127,7 @@ template<typename GRID_T>
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRayNextEventEstimator<GRID_T>::copy(const MonteRayNextEventEstimator* rhs) {
-    if(  MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     if( Base::isCudaIntermediate  and !rhs->initialized ) {
         throw std::runtime_error("MonteRayNextEventEstimator<GRID_T>::copy -- not initialized"  );
@@ -211,7 +214,7 @@ template<typename GRID_T>
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRayNextEventEstimator<GRID_T>::copyToGPU(){
-    if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     copiedToGPU = true;
     pTally->copyToGPU();
@@ -224,7 +227,7 @@ void
 MonteRayNextEventEstimator<GRID_T>::copyToCPU(){
     if( !copiedToGPU ) return;
 
-    if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     pTally->copyToCPU();
     Base::copyToCPU();
@@ -264,7 +267,7 @@ MonteRayNextEventEstimator<GRID_T>::getDistanceDirection(
     MonteRay::Vector3D<gpuRayFloat_t> pos2( getX(i), getY(i), getZ(i) );
     dir = pos2 - pos;
 
-    position_t dist = distance(i,pos);
+    position_t dist = dir.magnitude();
     position_t invDistance = 1/ dist;
     dir *= invDistance;
 
@@ -275,7 +278,7 @@ template<typename GRID_T>
 template<unsigned N>
 CUDA_CALLABLE_MEMBER
 typename MonteRayNextEventEstimator<GRID_T>::tally_t
-MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
+MonteRayNextEventEstimator<GRID_T>::calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo& rayInfo ) {
 
 #ifdef DEBUG
     const bool debug = false;
@@ -286,11 +289,6 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
     }
     MONTERAY_ASSERT( ray.detectorIndex < nUsed);
     tally_t score = 0.0;
-
-    int cells[2*MAXNUMVERTICES];
-    gpuRayFloat_t crossingDistances[2*MAXNUMVERTICES];
-
-    unsigned numberOfCells;
 
     MonteRay::Vector3D<gpuRayFloat_t> pos( ray.pos[0], ray.pos[1], ray.pos[2]);
     MonteRay::Vector3D<gpuRayFloat_t> dir( ray.dir[0], ray.dir[1], ray.dir[2]);
@@ -309,7 +307,7 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
     //      float3_t pos = make_float3( x, y, z);
     //      float3_t dir = make_float3( u, v, w);
 
-    numberOfCells = pGridBins->rayTrace( cells, crossingDistances, pos, dir, dist, false);
+   pGridBins->rayTrace( threadID, rayInfo, pos, dir, dist, false);
 
     for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
         gpuFloatType_t weight = ray.weight[energyIndex];
@@ -340,9 +338,9 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( Ray_t<N>& ray ) {
         }
 
         tally_t opticalThickness = 0.0;
-        for( unsigned i=0; i < numberOfCells; ++i ){
-            int cell = cells[i];
-            gpuRayFloat_t cellDistance = crossingDistances[i];
+        for( unsigned i=0; i < rayInfo.getRayCastSize( threadID ); ++i ){
+            int cell = rayInfo.getRayCastCell( threadID, i);
+            gpuRayFloat_t cellDistance = rayInfo.getRayCastDist( threadID, i);
             if( cell == UINT_MAX ) continue;
 
             gpuFloatType_t totalXS = 0.0;
@@ -392,20 +390,20 @@ template<typename GRID_T>
 template<unsigned N>
 CUDA_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::score( const RayList_t<N>* pRayList, unsigned tid ) {
+MonteRayNextEventEstimator<GRID_T>::score( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, unsigned tid, unsigned pid ) {
 #ifdef DEBUG
     const bool debug = false;
 
     if( debug ) {
-        printf("Debug: MonteRayNextEventEstimator::score -- tid=%d, particle=%d .\n",
-                tid,  pRayList->points[tid].particleType);
+        printf("Debug: MonteRayNextEventEstimator::score -- tid=%d, pid=%d, particle=%d .\n",
+                tid, pid, pRayList->points[pid].particleType);
     }
 #endif
 
     // Neutrons are not yet supported
-    if( pRayList->points[tid].particleType == neutron ) return;
+    if( pRayList->points[pid].particleType == neutron ) return;
 
-    tally_t value = calcScore<N>( pRayList->points[tid] );
+    tally_t value = calcScore<N>( tid, pRayList->points[pid], *pRayInfo );
 }
 
 template<typename GRID_T>
@@ -495,8 +493,7 @@ MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsi
 }
 
 template<typename GRID_T, unsigned N>
-CUDA_CALLABLE_KERNEL
-void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList ) {
+CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
 #ifdef DEBUG
     const bool debug = false;
 
@@ -506,33 +503,36 @@ void kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_
 #endif
 
 #ifdef __CUDACC__
-    unsigned tid = threadIdx.x + blockIdx.x*blockDim.x;
+    unsigned threadID = threadIdx.x + blockIdx.x*blockDim.x;
 #else
-    unsigned tid = 0;
+    unsigned threadID = 0;
 #endif
 
+    unsigned particleID = threadID;
+
     unsigned num = pRayList->size();
-    while( tid < num ) {
+    while( particleID < num ) {
+        pRayInfo->clear( threadID );
 
 #ifdef DEBUG
         if( debug ) {
-            printf("Debug: MonteRayNextEventEstimator::kernel_ScoreRayList -- tid=%d\n", tid);
+            printf("Debug: MonteRayNextEventEstimator::kernel_ScoreRayList -- particleID=%d\n", particleID);
         }
 #endif
 
-        ptr->score(pRayList,tid);
+        ptr->score(pRayList, pRayInfo, threadID, particleID);
 
 #ifdef __CUDACC__
-        tid += blockDim.x*gridDim.x;
+        particleID += blockDim.x*gridDim.x;
 #else
-        ++tid;
+        ++particleID;
 #endif
     }
 }
 
 template<typename GRID_T>
 template<unsigned N>
-void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, cudaStream_t* stream, bool dumpOnFailure )
+void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, cudaStream_t* stream, bool dumpOnFailure )
 {
     // negative nBlocks and nThreads forces to specified value,
     // otherwise reasonable values are used based on the specified ones
@@ -543,39 +543,35 @@ void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, in
 
     if( PA.getWorkGroupRank() != 0 ) return;
 
-    unsigned nThreads = std::abs(nThreadsArg);
-    unsigned nBlocks = std::abs(nBlocksArg);
-
-    const unsigned nRays = pRayList->size();
-    if( nThreadsArg > 0 ) {
-        if( nThreads > nRays ) {
-            nThreads = nRays;
-        }
-        nThreads = (( nThreads + 32 -1 ) / 32 ) *32;
-    }
-
-    if( nBlocksArg > 0 ) {
-        const unsigned numThreadOverload = nBlocks;
-        nBlocks = std::min(( nRays + numThreadOverload*nThreads -1 ) / (numThreadOverload*nThreads), 65535U);
-    }
+    auto launchBounds = setLaunchBounds( nThreadsArg, nBlocksArg, pRayList->size() );
+    unsigned nBlocks = launchBounds.first;
+    unsigned nThreads = launchBounds.second;
 
 #ifdef DEBUG
-        std::cout << "Debug: MonteRayNextEventEstimator::launch_ScoreRayList -- launching kernel_ScoreRayList on " <<
-                     PA.info() << " with " << nBlocks << " blocks, " << nThreads <<
-                     " threads, to process " << nRays << " rays\n";
+    size_t freeMemory = 0;
+    size_t totalMemory = 0;
+#ifdef __CUDACC__
+    cudaError_t memError = cudaMemGetInfo( &freeMemory, &totalMemory);
+    freeMemory = freeMemory/1000000;
+    totalMemory = totalMemory/1000000;
+#endif
+    std::cout << "Debug: MonteRayNextEventEstimator::launch_ScoreRayList -- launching kernel_ScoreRayList on " <<
+                 PA.info() << " with " << nBlocks << " blocks, " << nThreads <<
+                 " threads, to process " << pRayList->size() << " rays," <<
+                 " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
 
 #ifdef __CUDACC__
 #ifndef DEBUG
     // Release compile
     if( stream ) {
-        kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr );
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
     } else {
-        kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr );
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
     }
 #else
     // Debug compile
-    kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr );
+    kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
 
     bool failure = false;
     std::stringstream msg;
@@ -604,7 +600,7 @@ void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, in
 
 #endif
 #else
-    kernel_ScoreRayList( this, pRayList );
+    kernel_ScoreRayList( this, pRayList, pRayInfo );
 #endif
 }
 
@@ -677,6 +673,18 @@ MonteRayNextEventEstimator<GRID_T>::setGeometry(const GRID_T* pGrid, const Monte
      pGridBins = pGrid;
      pMatPropsHost = pMPs;
      pMatProps = pMPs->getPtr();
+}
+
+template<typename GRID_T>
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRayNextEventEstimator<GRID_T>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
+     pMatPropsHost = pMPs;
+     pMatProps = pMPs->getPtr();
+
+     if( copiedToGPU ) {
+         Base::copyToGPU();
+     }
 }
 
 template<typename GRID_T>
@@ -760,6 +768,16 @@ MonteRayNextEventEstimator<GRID_T>::read(IOTYPE& in) {
 
     initialize();
 
+}
+
+template<typename GRID_T>
+template<unsigned N>
+void
+MonteRayNextEventEstimator<GRID_T>::cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
+    for( auto i=0; i<pRayList->size(); ++i ) {
+        pRayInfo->clear(0);
+        score(pRayList, pRayInfo, 0, i);
+    }
 }
 
 } // end namespace

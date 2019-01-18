@@ -3,6 +3,7 @@
 #include "GridBins.hh"
 #include "HashBins.hh"
 #include "GPUUtilityFunctions.hh"
+#include "RayWorkInfo.hh"
 
 using namespace MonteRay;
 
@@ -423,14 +424,15 @@ SUITE( GridBins_Tester ) {
         Direction_t dir( 1, 0, 0);
         float_t distance = 1.0;
 
-        int cells[1000];
-        gpuRayFloat_t distances[1000];
+        RayWorkInfo info(1,true);
+        info.clear(0);
 
-        unsigned nDistances = grid.rayTrace(cells, distances, pos, dir, distance, false );
+        unsigned nDistances = grid.rayTrace(0, info, pos, dir, distance, false );
 
-        CHECK_EQUAL( 1, nDistances);
-        CHECK_EQUAL( 0U, cells[0]);
-        CHECK_CLOSE( 0.5f, distances[0], 1e-11 );
+        //CHECK_EQUAL( 1, nDistances);
+        CHECK_EQUAL( 1, info.getRayCastSize(0));
+        CHECK_EQUAL( 0U, info.getRayCastCell(0,0));
+        CHECK_CLOSE( 0.5f, info.getRayCastDist(0,0), 1e-11 );
     }
 
     TEST_FIXTURE(ClassGridBinsRayTraceTest, crossingInside_to_outside_posDir_two_crossings)
@@ -439,16 +441,18 @@ SUITE( GridBins_Tester ) {
         Direction_t dir( 1, 0, 0);
         float_t distance = 2.0;
 
-        int cells[1000];
-        gpuRayFloat_t distances[1000];
+        RayWorkInfo info(1,true);
 
-        unsigned nDistances = grid.rayTrace(cells, distances, pos, dir, distance, false );
+        unsigned nDistances = grid.rayTrace(0, info, pos, dir, distance, false );
 
         CHECK_EQUAL( 2, nDistances);
-        CHECK_EQUAL( 0U, cells[0]);
-        CHECK_CLOSE( 1.0f, distances[0], 1e-11 );
-        CHECK_EQUAL( 1U, cells[1]);
-        CHECK_CLOSE( 0.5f, distances[1], 1e-11 );
+        CHECK_EQUAL( 2, info.getRayCastSize(0));
+
+        CHECK_EQUAL( 0U, info.getRayCastCell(0,0));
+        CHECK_CLOSE( 1.0f, info.getRayCastDist(0,0), 1e-11 );
+
+        CHECK_EQUAL( 1U, info.getRayCastCell(0,1));
+        CHECK_CLOSE( 0.5f, info.getRayCastDist(0,1), 1e-11 );
     }
 
     class ClassGridBinsRayTraceTest2{
@@ -472,17 +476,19 @@ SUITE( GridBins_Tester ) {
         Direction_t dir( 1, 0, 0);
         float_t distance = 1.0;
 
-        int cells[1000];
-        gpuRayFloat_t distances[1000];
+        RayWorkInfo info(1,true);
 
-        unsigned nDistances = grid.rayTrace( cells, distances, pos, dir, distance, false );
+        unsigned nDistances = grid.rayTrace( 0, info, pos, dir, distance, false );
 
         unsigned i = grid.getIndex( pos );
         CHECK_EQUAL( 555, i);
 
         CHECK_EQUAL( 2, nDistances);
-        CHECK_EQUAL( 555U, cells[0]);
-        CHECK_CLOSE( 0.5f, distances[0], 1e-11 );
+        CHECK_EQUAL( 2, info.getRayCastSize(0));
+
+        CHECK_EQUAL( 555U, info.getRayCastCell(0,0));
+        CHECK_CLOSE( 0.5f, info.getRayCastDist(0,0), 1e-11 );
+
     }
 
     TEST( gridbins_pwr_vertices_isRegular ) {

@@ -7,6 +7,7 @@
 #include "MonteRay_binaryIO.hh"
 #include "HashLookup.hh"
 #include "MonteRayMemory.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay{
 
@@ -156,6 +157,7 @@ MonteRayMaterialListHost::~MonteRayMaterialListHost() {
 
 void MonteRayMaterialListHost::copyToGPU(void) {
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
     pHash->copyToGPU();
 
     for( auto itr = ownedMaterials.begin(); itr != ownedMaterials.end(); ++itr) {
@@ -252,7 +254,7 @@ unsigned materialIDtoIndex(MonteRayMaterialList* ptr, unsigned id ) {
     return 0;
 }
 
-CUDA_CALLABLE_KERNEL void kernelGetTotalXS(struct MonteRayMaterialList* pMatList, unsigned matIndex, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density, gpuFloatType_t* results){
+CUDA_CALLABLE_KERNEL  kernelGetTotalXS(struct MonteRayMaterialList* pMatList, unsigned matIndex, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t density, gpuFloatType_t* results){
 //    printf("Debug: kernelGetTotalXS \n");
 //    printf("Debug: pMatList=%p\n", pMatList);
 //    printf("Debug: pHash=%p\n", pHash);

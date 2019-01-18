@@ -8,6 +8,8 @@ namespace MonteRay {
 
 class MonteRay_SphericalGrid;
 
+class RayWorkInfo;
+
 class MonteRay_SphericalGrid : public MonteRay_GridSystemInterface {
 public:
     typedef MonteRay_GridBins::Position_t Position_t;
@@ -16,7 +18,6 @@ public:
     enum coord {R=0,DimMax=1};
 
     using GridBins_t = MonteRay_GridBins;
-    //typedef singleDimRayTraceMap_t;
     using pGridInfo_t = GridBins_t*;
     using pArrayOfpGridInfo_t = pGridInfo_t[3];
 
@@ -57,32 +58,56 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTrace( rayTraceList_t& rayTraceList, const GridBins_t::Position_t&, const GridBins_t::Position_t&, gpuRayFloat_t distance,  bool outsideDistances=false) const;
-
+    rayTrace( const unsigned threadID,
+              RayWorkInfo& rayInfo,
+              const GridBins_t::Position_t& pos,
+              const GridBins_t::Position_t& dir,
+              const gpuRayFloat_t distance,
+              const bool outsideDistances=false) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, unsigned d, const GridBins_t::Position_t& pos, const GridBins_t::Position_t& dir, gpuRayFloat_t distance ) const {
-        crossingDistance(rayTraceMap, pos, dir, distance );
-    }
+    crossingDistance(
+            const unsigned dim,
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            const GridBins_t::Position_t& pos,
+            const GridBins_t::Position_t& dir,
+            const gpuRayFloat_t distance ) const;
 
 protected:
-    CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(singleDimRayTraceMap_t& rayTraceMap, const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir, gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, unsigned rIndex, gpuRayFloat_t distance ) const;
+    radialCrossingDistances(
+            const unsigned dim,
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            const Position_t& pos,
+            const Direction_t& dir,
+            unsigned rIndex,
+            const gpuRayFloat_t distance ) const;
 
     CUDA_CALLABLE_MEMBER
     void
-    radialCrossingDistances( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance ) const;
+    radialCrossingDistances(
+            const unsigned dim,
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            const Position_t& pos,
+            const Direction_t& dir,
+            const gpuRayFloat_t distance ) const;
 
     template<bool OUTWARD>
     CUDA_CALLABLE_MEMBER
     void
-    radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap, const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance ) const;
+    radialCrossingDistancesSingleDirection(
+            const unsigned dim,
+            const unsigned threadID,
+            RayWorkInfo& rayInfo,
+            const Position_t& pos,
+            const Direction_t& dir,
+            const gpuRayFloat_t distance ) const;
 
 protected:
     CUDA_CALLABLE_MEMBER gpuRayFloat_t calcParticleRSq( const gpuRayFloat_t&  pos) const { return pos*pos; }

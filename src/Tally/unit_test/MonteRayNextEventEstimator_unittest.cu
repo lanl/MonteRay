@@ -269,7 +269,9 @@ SUITE( NextEventEstimator_Tester ) {
         ray.detectorIndex = 0;
         ray.particleType = photon;
 
-        gpuFloatType_t score = pEstimator->calcScore<1>( ray );
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-0.0);
         CHECK_CLOSE( expected, score, 1e-6);
@@ -307,7 +309,9 @@ SUITE( NextEventEstimator_Tester ) {
         ray.detectorIndex = 0;
         ray.particleType = photon;
 
-        gpuFloatType_t score = pEstimator->calcScore<1>(ray );
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-1.0);
         CHECK_CLOSE( expected, score, 1e-6);
@@ -342,9 +346,48 @@ SUITE( NextEventEstimator_Tester ) {
         ray.detectorIndex = 0;
         ray.particleType = photon;
 
-        gpuFloatType_t score = pEstimator->calcScore<1>(ray );
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
+        CHECK_CLOSE( expected, score, 1e-6);
+    }
+
+    TEST_FIXTURE(CalcScore_test, starting_from_outside_mesh ) {
+        unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
+
+        gpuFloatType_t x = -1.0;
+        gpuFloatType_t y = 0.0;
+        gpuFloatType_t z = 0.0;
+        gpuFloatType_t u = 1.0;
+        gpuFloatType_t v = 0.0;
+        gpuFloatType_t w = 0.0;
+
+        gpuFloatType_t energy[1];
+        energy[0]= 0.5;
+
+        gpuFloatType_t weight[1];
+        weight[0] = 0.5;  // isotropic
+
+        Ray_t<> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.weight[0] = weight[0];
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
+
+        gpuFloatType_t expected = ( 1/ (9.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
         CHECK_CLOSE( expected, score, 1e-6);
     }
 
@@ -377,7 +420,10 @@ SUITE( NextEventEstimator_Tester ) {
         ray.detectorIndex = 0;
         ray.particleType = photon;
 
-        pEstimator->calcScore<1>(ray );
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        pEstimator->calcScore<1>(particleID, ray, rayInfo );
+
         gpuFloatType_t score = pEstimator->getTally(0,0);
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
@@ -420,7 +466,9 @@ SUITE( NextEventEstimator_Tester ) {
         ray.detectorIndex = 0;
         ray.particleType = photon;
 
-        pEstimator->calcScore<1>(ray );
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected1 = ( 1/ (4.0f * MonteRay::pi * distance1*distance1 ) ) * exp(-1.0);
         CHECK_CLOSE( expected1, pEstimator->getTally(0,0), 1e-6);
@@ -437,7 +485,8 @@ SUITE( NextEventEstimator_Tester ) {
         CHECK_CLOSE( 0.0,      pEstimator->getTally(1,5), 1e-6);
 
         ray.detectorIndex = 1;
-        pEstimator->calcScore<1>(ray );
+        rayInfo.clear();
+        pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected2 = ( 1/ (4.0f * MonteRay::pi * distance2*distance2 ) ) * exp(-1.0);
 
@@ -502,7 +551,9 @@ SUITE( NextEventEstimator_Tester ) {
         ray.particleType = photon;
 
         //std:: cout << "Debug: *************************\n";
-        gpuFloatType_t score = pEstimator->calcScore<N>(ray );
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        gpuFloatType_t score = pEstimator->calcScore<N>(particleID, ray, rayInfo );
         //std:: cout << "Debug: *************************\n";
 
         gpuFloatType_t expected1 = ( 0.3f / (2.0f * MonteRay::pi * 4.0f ) ) * exp( -1.0*1.0 );
@@ -557,9 +608,11 @@ SUITE( NextEventEstimator_Tester ) {
         pBank->add( ray );
         pBank->add( ray );
 
+        RayWorkInfo rayInfo(pBank->size(),true);
+
         //std:: cout << "Debug: **********calcScore_with_RayList***************\n";
         CHECK_CLOSE( 0.0, pEstimator->getTally(0), 1e-7);
-        pEstimator->cpuScoreRayList(pBank.get());
+        pEstimator->cpuScoreRayList(pBank.get(), &rayInfo);
         gpuTallyType_t value = pEstimator->getTally(0);
         //std:: cout << "Debug: ************************************************\n";
 
@@ -624,6 +677,10 @@ SUITE( NextEventEstimator_Tester ) {
         pBank->copyToGPU();
         pEstimator->copyToGPU();
 
+        auto launchBounds = setLaunchBounds( 1, 1, pBank->size() );
+        RayWorkInfo rayInfo( launchBounds.first*launchBounds.second );
+        rayInfo.copyToGPU();
+
         cudaStream_t* stream = NULL;
         stream = new cudaStream_t;
         stream[0] = 0;  // use the default stream
@@ -634,7 +691,7 @@ SUITE( NextEventEstimator_Tester ) {
         cudaEventCreate(&stop);
 
         cudaStreamSynchronize(*stream);
-        pEstimator->launch_ScoreRayList(1, 1, pBank.get(), stream );
+        pEstimator->launch_ScoreRayList(1, 1, pBank.get(), &rayInfo, stream );
 
         cudaEventRecord(stop, 0);
         cudaEventSynchronize(stop);
@@ -643,7 +700,8 @@ SUITE( NextEventEstimator_Tester ) {
 
         delete stream;
 #else
-        pEstimator->launch_ScoreRayList(1,1,pBank.get());
+        RayWorkInfo rayInfo( 1, true );
+        pEstimator->launch_ScoreRayList(1,1,pBank.get(), &rayInfo);
 #endif
         gpuTallyType_t value = pEstimator->getTally(0);
 
@@ -717,6 +775,10 @@ SUITE( NextEventEstimator_Tester ) {
          pBank->copyToGPU();
          pEstimator->copyToGPU();
 
+         auto launchBounds = setLaunchBounds( 1, 1, pBank->size() );
+         RayWorkInfo rayInfo( launchBounds.first*launchBounds.second );
+         rayInfo.copyToGPU();
+
          cudaStream_t* stream = NULL;
          stream = new cudaStream_t;
          stream[0] = 0;  // use the default stream
@@ -727,7 +789,7 @@ SUITE( NextEventEstimator_Tester ) {
          cudaEventCreate(&stop);
 
          cudaStreamSynchronize(*stream);
-         pEstimator->launch_ScoreRayList(1, 1, pBank.get(), stream );
+         pEstimator->launch_ScoreRayList(1, 1, pBank.get(), &rayInfo, stream );
 
          cudaEventRecord(stop, 0);
          cudaEventSynchronize(stop);
@@ -736,7 +798,8 @@ SUITE( NextEventEstimator_Tester ) {
 
          delete stream;
  #else
-         pEstimator->launch_ScoreRayList(1,1,pBank.get());
+         RayWorkInfo rayInfo( 1, true );
+         pEstimator->launch_ScoreRayList(1,1,pBank.get(), &rayInfo);
  #endif
 
          gpuFloatType_t expected1  = ( 0.3f / (2.0f * MonteRay::pi * distance1*distance1 ) ) * exp( -1.0*1.0 ) +

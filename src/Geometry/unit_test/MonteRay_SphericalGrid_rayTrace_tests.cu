@@ -6,6 +6,7 @@
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay_SphericalGrid_rayTrace_tests{
 
@@ -45,26 +46,35 @@ SUITE( SphericalGrid_Tests) {
             MonteRay_SphericalGrid(d,pBins) {}
 
         template<bool OUTWARD>
-        void radialCrossingDistancesSingleDirection( singleDimRayTraceMap_t& rayTraceMap,
+        void radialCrossingDistancesSingleDirection(
+                const unsigned dim,
+                const unsigned threadID,
+                RayWorkInfo& rayInfo,
                 const Position_t& pos,
                 const Direction_t& dir,
                 gpuRayFloat_t distance ) const {
-            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<OUTWARD>( rayTraceMap, pos, dir, distance );
+            MonteRay_SphericalGrid::radialCrossingDistancesSingleDirection<OUTWARD>( dim, threadID, rayInfo, pos, dir, distance );
         }
 
-        void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,
+        void radialCrossingDistances(
+                const unsigned dim,
+                const unsigned threadID,
+                RayWorkInfo& rayInfo,
                 const Position_t& pos,
                 const Direction_t& dir,
                 gpuRayFloat_t distance ) const {
-            MonteRay_SphericalGrid::radialCrossingDistances( rayTraceMap, pos, dir, distance );
+            MonteRay_SphericalGrid::radialCrossingDistances( dim, threadID, rayInfo, pos, dir, distance );
         }
 
-        void radialCrossingDistances(singleDimRayTraceMap_t& rayTraceMap,
-                        const Position_t& pos,
-                        const Direction_t& dir,
-                        unsigned rIndex,
-                        gpuRayFloat_t distance ) const {
-            MonteRay_SphericalGrid::radialCrossingDistances( rayTraceMap, pos, dir, rIndex, distance );
+        void radialCrossingDistances(
+                const unsigned dim,
+                const unsigned threadID,
+                RayWorkInfo& rayInfo,
+                const Position_t& pos,
+                const Direction_t& dir,
+                unsigned rIndex,
+                gpuRayFloat_t distance ) const {
+            MonteRay_SphericalGrid::radialCrossingDistances( dim, threadID, rayInfo, pos, dir, rIndex, distance );
         }
 
 
@@ -85,8 +95,11 @@ SUITE( SphericalGrid_Tests) {
         Position_t direction(   1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        distances_t distances;
-        grid.radialCrossingDistances( distances, position, direction, 4, distance );
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistances( dim, threadID, rayInfo, position, direction, 4, distance);
+        distances_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL(   9,  distances.size() );
         CHECK_EQUAL(   4,  distances.id(0) );
@@ -119,8 +132,9 @@ SUITE( SphericalGrid_Tests) {
         Position_t direction(   1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance );
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
         //distances_t distances = grid.radialCrossingDistances( position, direction, distance);
 
         CHECK_EQUAL(   7,  distances.size() );
@@ -152,8 +166,9 @@ SUITE( SphericalGrid_Tests) {
         direction.normalize();
         gpuRayFloat_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance );
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   7,  distances.size() );
         CHECK_EQUAL(   3,  distances.id(0) );
@@ -183,8 +198,9 @@ SUITE( SphericalGrid_Tests) {
         direction.normalize();
         gpuRayFloat_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance );
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   2,  distances.size() );
         CHECK_EQUAL(   2,  distances.id(0) );
@@ -203,8 +219,9 @@ SUITE( SphericalGrid_Tests) {
         Position_t direction(   -1,   0,    0 );
         gpuRayFloat_t distance = 100.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance );
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   0,  distances.size() );
     }
@@ -219,8 +236,9 @@ SUITE( SphericalGrid_Tests) {
         Position_t direction(   1.0,   0,    0 );
         gpuRayFloat_t distance = 1.5;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance );
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   1,  distances.size() );
         CHECK_EQUAL(  3,  distances.id(0) );
@@ -237,8 +255,9 @@ SUITE( SphericalGrid_Tests) {
         Position_t direction(  -1.0,   0,    0 );
         gpuRayFloat_t distance = 10.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance );
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   0,  distances.size() );
     }
@@ -252,8 +271,9 @@ SUITE( SphericalGrid_Tests) {
         Position_t direction(  1.0,   0,    0 );
         gpuRayFloat_t distance = 10.0;
 
-        rayTraceList_t distances;
-        grid.rayTrace( distances, position, direction, distance );
+        RayWorkInfo rayInfo(1,true);
+        grid.rayTrace(0, rayInfo, position, direction, distance);
+        rayTraceList_t distances( rayInfo, 0 );
 
         CHECK_EQUAL(   0,  distances.size() );
     }

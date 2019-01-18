@@ -5,7 +5,7 @@
 
 #include "HashLookup_test_helper.hh"
 
-CUDA_CALLABLE_KERNEL void kernelGetLowerBoundbyIndex(const HashLookup* pHash, unsigned isotope, unsigned bin, unsigned* result){
+CUDA_CALLABLE_KERNEL  kernelGetLowerBoundbyIndex(const HashLookup* pHash, unsigned isotope, unsigned bin, unsigned* result){
     result[0] = getLowerBoundbyIndex( pHash, isotope, bin);
     return;
 }

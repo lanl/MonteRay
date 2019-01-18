@@ -26,21 +26,23 @@ class RayListInterface;
 template< unsigned N >
 class Ray_t;
 
+class RayWorkInfo;
+
 template<typename GRID_T, unsigned N = 1>
 class RayListController {
 public:
 
     /// Ctor for the volumetric ray casting solver
-    RayListController(unsigned nBlocks,
-            unsigned nThreads,
+    RayListController(int nBlocks,
+            int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
             MonteRay_MaterialProperties*,
             gpuTallyHost* );
 
     /// Ctor for the next event estimator solver
-    RayListController(unsigned nBlocks,
-            unsigned nThreads,
+    RayListController(int nBlocks,
+            int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
             MonteRay_MaterialProperties*,
@@ -69,6 +71,7 @@ public:
     void dumpPointDetForDebug(const std::string& baseFileName = std::string() );
     void printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
     void outputTimeBinnedTotal(std::ostream& out,unsigned nSamples=1, unsigned constantDimension=2);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
 
     void flush(bool final=false);
     void finalFlush(void);
@@ -141,6 +144,9 @@ private:
     RayListInterface<N>* currentBank = nullptr;
     std::unique_ptr<RayListInterface<N>> bank1;
     std::unique_ptr<RayListInterface<N>> bank2;
+
+    std::unique_ptr<RayWorkInfo> rayInfo;
+
     unsigned nFlushs = 0;
 
     std::unique_ptr<cpuTimer> pTimer;

@@ -8,14 +8,13 @@
 
 namespace MonteRay{
 
-template<unsigned N = 1>
-class RayWorkInfo : public CopyMemoryBase<RayWorkInfo<N>>{
+class RayWorkInfo : public CopyMemoryBase<RayWorkInfo>{
 public:
-    using Base = CopyMemoryBase<RayWorkInfo<N>>;
+    using Base = CopyMemoryBase<RayWorkInfo>;
 
     /// Primary RayWorkInfo constructor.
     /// Takes the size of the list as an argument.
-    CUDAHOST_CALLABLE_MEMBER RayWorkInfo(unsigned num );
+    CUDAHOST_CALLABLE_MEMBER RayWorkInfo(unsigned num, bool cpuAllocate = false );
 
     CUDAHOST_CALLABLE_MEMBER ~RayWorkInfo();
 
@@ -35,15 +34,19 @@ public:
     }
 
     CUDA_CALLABLE_MEMBER void clear(void) {
-        for( unsigned i = 0; i< nAllocated; ++i ) {
-            rayCastSize[i] = 0;
-        }
-        for( unsigned i = 0; i< nAllocated*3; ++i ) {
-            crossingSize[i] = 0;
+        if( allocateOnCPU ) {
+            for( unsigned i = 0; i< nAllocated; ++i ) {
+                rayCastSize[i] = 0;
+            }
+            for( unsigned i = 0; i< nAllocated*3; ++i ) {
+                crossingSize[i] = 0;
+            }
         }
     }
 
-    CUDAHOST_CALLABLE_MEMBER void copy(const RayWorkInfo<N>* rhs);
+    CUDAHOST_CALLABLE_MEMBER void copy(const RayWorkInfo* rhs);
+
+    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void);
 
     CUDA_CALLABLE_MEMBER unsigned capacity(void) const {
         return nAllocated;
@@ -57,35 +60,53 @@ public:
         indices[i+nAllocated*dim] = index;
     }
 
-    CUDA_CALLABLE_MEMBER int& getRayCastSize( unsigned i) const {
+    CUDA_CALLABLE_MEMBER void clear( unsigned i) {
+        getRayCastSize(i) = 0;
+        getCrossingSize(0, i) = 0;
+        getCrossingSize(1, i) = 0;
+        getCrossingSize(2, i) = 0;
+    }
+
+    CUDA_CALLABLE_MEMBER int& getRayCastSize( const unsigned i) const {
         return rayCastSize[i];
     }
 
     CUDA_CALLABLE_MEMBER void addRayCastCell(unsigned i, int cellID, gpuRayFloat_t dist);
 
+    CUDA_CALLABLE_MEMBER unsigned getRayCastIndex(unsigned i, unsigned cell) const {
+        //return i*MAXNUMRAYCELLS + cell;
+        return cell*nAllocated + i;
+    }
+
     CUDA_CALLABLE_MEMBER int& getRayCastCell(unsigned i, unsigned cell) const {
-        return rayCastCell[i*MAXNUMRAYCELLS + cell];
+        return rayCastCell[ getRayCastIndex(i,cell) ];
     }
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t& getRayCastDist(unsigned i, unsigned cell) const {
-        return rayCastDistance[i*MAXNUMRAYCELLS + cell];
+        return rayCastDistance[ getRayCastIndex(i,cell) ];
     }
 
     CUDA_CALLABLE_MEMBER int& getCrossingSize(unsigned dim, unsigned i) const {
         return crossingSize[dim*nAllocated + i];
     }
 
+    CUDA_CALLABLE_MEMBER unsigned getCrossingIndex(unsigned dim, unsigned i, unsigned cell) const {
+        //return dim*nAllocated*MAXNUMVERTICES + i*MAXNUMVERTICES + cell;
+        return dim*nAllocated*MAXNUMVERTICES + cell*nAllocated + i;
+    }
+
     CUDA_CALLABLE_MEMBER void addCrossingCell(unsigned dim, unsigned i, int cellID, gpuRayFloat_t dist);
 
     CUDA_CALLABLE_MEMBER int& getCrossingCell(unsigned dim, unsigned i, unsigned cell) const {
-        return crossingCell[dim*nAllocated*MAXNUMVERTICES + i*MAXNUMVERTICES + cell];
+        return crossingCell[ getCrossingIndex(dim,i,cell) ];
     }
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t& getCrossingDist(unsigned dim, unsigned i, unsigned cell) const {
-        return crossingDistance[dim*nAllocated*MAXNUMVERTICES + i*MAXNUMVERTICES + cell];
+        return crossingDistance[ getCrossingIndex(dim,i,cell) ];
     }
 
 // Data
+    bool allocateOnCPU = false;
     unsigned nAllocated = 0;
 
     int* indices = NULL;

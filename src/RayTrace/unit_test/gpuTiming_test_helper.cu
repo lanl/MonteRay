@@ -20,7 +20,7 @@ GPUTimingTestHelper::GPUTimingTestHelper(){
 GPUTimingTestHelper::~GPUTimingTestHelper(){
 }
 
-CUDA_CALLABLE_KERNEL void kernelGPUSleep(clock64_t nCycles, gpuTiming* timer) {
+CUDA_CALLABLE_KERNEL  kernelGPUSleep(clock64_t nCycles, gpuTiming* timer) {
 #ifdef __CUDACC__
 	timer->start = clock64();
 	clock64_t cycles = 0;
@@ -56,7 +56,7 @@ void GPUTimingTestHelper::launchGPUSleep( clock64_t nCycles, MonteRay::gpuTiming
 }
 
 
-CUDA_CALLABLE_KERNEL void kernelGPUSleep(clock64_t nCycles) {
+CUDA_CALLABLE_KERNEL  kernelGPUSleep(clock64_t nCycles) {
 #ifdef __CUDACC__
 	clock64_t cycles = 0;
 	clock64_t start = clock64();

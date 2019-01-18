@@ -101,7 +101,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetNumBins(Grid_t** pGrid, resultClass<unsigned>* pResult, unsigned d) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridGetNumBins(Grid_t** pGrid, resultClass<unsigned>* pResult, unsigned d) {
         pResult->v = (*pGrid)->getNumBins(d);
     }
 #else
@@ -162,7 +162,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRVertex(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridGetRVertex(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
         pResult->v = (*pGrid)->getRVertex(i);
     }
 #else
@@ -172,7 +172,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #endif
 
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetZVertex(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridGetZVertex(Grid_t** pGrid, resultClass<gpuRayFloat_t>* pResult, unsigned i) {
         pResult->v = (*pGrid)->getZVertex(i);
     }
 #else
@@ -271,7 +271,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridConvertFromCartesian(Grid_t** pGrid, resultClass<Vector3D<gpuRayFloat_t>>* pResult, Vector3D<gpuRayFloat_t> pos) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridConvertFromCartesian(Grid_t** pGrid, resultClass<Vector3D<gpuRayFloat_t>>* pResult, Vector3D<gpuRayFloat_t> pos) {
         pResult->v = (*pGrid)->convertFromCartesian(pos);
     }
 #else
@@ -346,7 +346,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRadialIndexFromR(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuRayFloat_t pos) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridGetRadialIndexFromR(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuRayFloat_t pos) {
         pResult->v = (*pGrid)->getRadialIndexFromR(pos);
     }
 #else
@@ -419,7 +419,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetRadialIndexFromRSq(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuRayFloat_t rSq) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridGetRadialIndexFromRSq(Grid_t** pGrid, resultClass<unsigned>* pResult, gpuRayFloat_t rSq) {
         pResult->v = (*pGrid)->getRadialIndexFromRSq(rSq);
     }
 #else
@@ -489,7 +489,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetAxialIndex(Grid_t** pGrid, resultClass<int>* pResult, gpuRayFloat_t z) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridGetAxialIndex(Grid_t** pGrid, resultClass<int>* pResult, gpuRayFloat_t z) {
         pResult->v = (*pGrid)->getAxialIndex(z);
     }
 #else
@@ -562,7 +562,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernal call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalIsIndexOutside(Grid_t** pGrid, resultClass<bool>* pResult, unsigned d, int i) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalIsIndexOutside(Grid_t** pGrid, resultClass<bool>* pResult, unsigned d, int i) {
         pResult->v = (*pGrid)->isIndexOutside(d,i);
     }
 #else
@@ -632,7 +632,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernel call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalGridGetIndex(Grid_t** pGrid, resultClass<unsigned>* pResult, Position_t pos) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalGridGetIndex(Grid_t** pGrid, resultClass<unsigned>* pResult, Position_t pos) {
         //printf("Debug: kernelCylindricalGridGetIndex -- calling pGrid->getIndex(pos)\n");
         unsigned index = (*pGrid)->getIndex(pos);
         pResult->v = index;
@@ -719,7 +719,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernel call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalIsOutside(Grid_t** pGrid, resultClass<bool>* pResult, const int i, const int j, const int k) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalIsOutside(Grid_t** pGrid, resultClass<bool>* pResult, const int i, const int j, const int k) {
         //printf("Debug: kernelCylindricalIsOutside -- calling pGrid->isOutside(pos)\n");
         int indices[] = {i,j,k};
         pResult->v = (*pGrid)->isOutside(indices);
@@ -794,7 +794,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
     // kernel call
 #ifdef __CUDACC__
-    CUDA_CALLABLE_KERNEL void kernelCylindricalCalcIJK(Grid_t** pGrid, resultClass<uint3>* pResult, unsigned index) {
+    CUDA_CALLABLE_KERNEL  kernelCylindricalCalcIJK(Grid_t** pGrid, resultClass<uint3>* pResult, unsigned index) {
         //printf("Debug: kernelCylindricalIsOutside -- calling pGrid->isOutside(pos)\n");
         pResult->v = (*pGrid)->calcIJK(index);
     }

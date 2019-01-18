@@ -8,6 +8,7 @@
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay_CylindricalGrid_crossingDistance_tests{
 
@@ -93,8 +94,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 100.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 8,  distances.size() );
         checkDistances( std::vector<unsigned>({4,3,2,1,0,1,2,3}),
@@ -111,8 +115,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 6.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 5,  distances.size() );
         checkDistances( std::vector<unsigned>({4,3,2,1,0}),
@@ -129,8 +136,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 7,  distances.size() );
         checkDistances( std::vector<unsigned>({4,3,2,1,0,1,2}),
@@ -148,8 +158,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2,  distances.size() );
         checkDistances( std::vector<unsigned>({3,2}),
@@ -168,8 +181,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(  1, 0,   0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -193,8 +209,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 2, distances.id(0) );
@@ -213,8 +232,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -231,8 +253,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<false>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<false>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -254,8 +279,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -278,8 +306,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 4.5;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -302,8 +333,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(   -1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -321,8 +355,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(   -1,   0,    0 );
         gpuFloatType_t distance = 7.5;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistancesSingleDirection<true>( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistancesSingleDirection<true>( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 1, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -337,8 +374,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 100.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistances( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistances( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 8, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -367,8 +407,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 100.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistances( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistances( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -386,8 +429,11 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_Tests) {
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 9.0;
 
-        singleDimRayTraceMap_t distances;
-        grid.radialCrossingDistances( distances, position, direction, distance);
+        const unsigned dim = 0;
+        const unsigned threadID = 0;
+        RayWorkInfo rayInfo(1,true);
+        grid.radialCrossingDistances( dim, threadID, rayInfo, position, direction, distance);
+        singleDimRayTraceMap_t distances( rayInfo, 0, dim );
 
         CHECK_EQUAL( 4, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
