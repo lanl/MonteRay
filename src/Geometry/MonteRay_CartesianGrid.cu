@@ -10,6 +10,7 @@
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
 #include "RayWorkInfo.hh"
+#include "MonteRayParallelAssistant.hh"
 
 #include <float.h>
 
@@ -76,6 +77,8 @@ void
 MonteRay_CartesianGrid::copyToGPU(void) {
     if( debug ) std::cout << "Debug: MonteRay_CartesianGrid::copyToGPU \n";
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+
     ptrDevicePtr = (MonteRay_CartesianGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CartesianGrid*), std::string("device - MonteRay_CartesianGrid::ptrDevicePtr") );
 
     pGridBins[0]->copyToGPU();

@@ -108,13 +108,13 @@ CUDA_CALLABLE_KERNEL  rayTraceTally(
 #endif
 
 #ifdef __CUDACC__
-    unsigned threadID = threadIdx.x + blockIdx.x*blockDim.x;
+    int threadID = threadIdx.x + blockIdx.x*blockDim.x;
 #else
-    unsigned threadID = 0;
+    int threadID = 0;
 #endif
-    unsigned particleID = threadID;
+    int particleID = threadID;
 
-    unsigned num = pCP->size();
+    int num = pCP->size();
 
 #ifdef DEBUG
     if( debug ) printf("GPU::rayTraceTally:: starting threadID=%d  N=%d\n", threadID, N );
@@ -155,8 +155,8 @@ CUDA_CALLABLE_KERNEL  rayTraceTally(
 template<typename GRIDTYPE, unsigned N>
 MonteRay::tripleTime launchRayTraceTally(
         std::function<void (void)> cpuWork,
-        unsigned nBlocks,
-        unsigned nThreads,
+        int nBlocks,
+        int nThreads,
         const GRIDTYPE* pGrid,
         const RayListInterface<N>* pCP,
         const MonteRayMaterialListHost* pMatList,
@@ -170,10 +170,10 @@ MonteRay::tripleTime launchRayTraceTally(
     nBlocks = launchParams.first;
     nThreads = launchParams.second;
 
+#ifdef __CUDACC__
     RayWorkInfo rayInfo(nBlocks*nThreads);
     rayInfo.copyToGPU();
 
-#ifdef __CUDACC__
     cudaEvent_t startGPU, stopGPU, start, stop;
 
     cudaEventCreate(&start);
@@ -220,6 +220,8 @@ MonteRay::tripleTime launchRayTraceTally(
     cudaEventElapsedTime(&totalTime, start, stop );
     time.totalTime = totalTime/1000.0;
 #else
+    RayWorkInfo rayInfo(1, true);
+
     MonteRay::cpuTimer timer1, timer2;
     timer1.start();
 
@@ -228,6 +230,7 @@ MonteRay::tripleTime launchRayTraceTally(
             pMatList->getPtr(),
             pMatProps->getPtr(),
             pMatList->getHashPtr()->getPtr(),
+            &rayInfo,
             pTally->getPtr()->tally
     );
     timer1.stop();

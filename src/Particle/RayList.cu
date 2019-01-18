@@ -1,5 +1,6 @@
 #include "RayList.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay {
 
@@ -90,6 +91,12 @@ RayList_t<N>::copy(const RayList_t<N>* rhs) {
 #endif
 }
 
+template<unsigned N>
+void
+RayList_t<N>::copyToGPU(void) {
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+    Base::copyToGPU();
+}
 
 template<unsigned N>
 void

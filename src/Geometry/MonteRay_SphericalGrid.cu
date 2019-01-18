@@ -11,6 +11,7 @@
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
 #include "GPUErrorCheck.hh"
+#include "MonteRayParallelAssistant.hh"
 
 #include <float.h>
 
@@ -74,6 +75,7 @@ void
 MonteRay_SphericalGrid::copyToGPU(void) {
     if( debug ) std::cout << "Debug: MonteRay_SphericalGrid::copyToGPU \n";
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
     ptrDevicePtr = (MonteRay_SphericalGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_SphericalGrid*), std::string("device - MonteRay_SphericalGrid::ptrDevicePtr") );
 
     pRVertices->copyToGPU();

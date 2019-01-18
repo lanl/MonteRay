@@ -13,6 +13,7 @@
 #include "MonteRayCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "RayWorkInfo.hh"
+#include "MonteRayParallelAssistant.hh"
 
 #ifndef __CUDA_ARCH__
 #include <stdexcept>
@@ -152,6 +153,8 @@ CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_SpatialGrid::copyToGPU(void) {
     //if( debug ) std::cout << "Debug: MonteRay_SpatialGrid::copyToGPU \n";
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+
     if( ! initialized ) {
         throw std::runtime_error("MonteRay_SpatialGrid::copy -- MonteRay_SpatialGrid object has not been initialized.");
     }

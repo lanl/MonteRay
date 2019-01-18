@@ -148,6 +148,14 @@ RayWorkInfo::copy(const RayWorkInfo* rhs) {
 #endif
 }
 
+void
+RayWorkInfo::copyToGPU(void) {
+#ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+    Base::copyToGPU();
+#endif
+}
+
 CUDAHOST_CALLABLE_MEMBER void
 RayWorkInfo::addRayCastCell(unsigned i, int cellID, gpuRayFloat_t dist) {
 #ifdef DEBUG

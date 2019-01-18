@@ -17,6 +17,7 @@
 #include "GPUErrorCheck.hh"
 #include "HashBins.hh"
 #include "RayWorkInfo.hh"
+#include "MonteRayParallelAssistant.hh"
 
 #ifdef MCATK_INLINED
 #include "ReadLnk3dnt.hh"
@@ -83,6 +84,8 @@ GridBins::initialize() {
 
 void
 GridBins::copyToGPU(void) {
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+
     //std::cout << "Debug: GridBins::copyToGPU \n";
     for( unsigned i=0; i<3; ++i ) {
         if( hash[i] ) {

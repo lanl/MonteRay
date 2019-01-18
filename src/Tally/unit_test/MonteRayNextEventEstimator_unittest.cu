@@ -354,6 +354,43 @@ SUITE( NextEventEstimator_Tester ) {
         CHECK_CLOSE( expected, score, 1e-6);
     }
 
+    TEST_FIXTURE(CalcScore_test, starting_from_outside_mesh ) {
+        unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
+        pEstimator->initialize();
+
+        gpuFloatType_t x = -1.0;
+        gpuFloatType_t y = 0.0;
+        gpuFloatType_t z = 0.0;
+        gpuFloatType_t u = 1.0;
+        gpuFloatType_t v = 0.0;
+        gpuFloatType_t w = 0.0;
+
+        gpuFloatType_t energy[1];
+        energy[0]= 0.5;
+
+        gpuFloatType_t weight[1];
+        weight[0] = 0.5;  // isotropic
+
+        Ray_t<> ray;
+        ray.pos[0] = x;
+        ray.pos[1] = y;
+        ray.pos[2] = z;
+        ray.dir[0] = u;
+        ray.dir[1] = v;
+        ray.dir[2] = w;
+        ray.energy[0] = energy[0];
+        ray.weight[0] = weight[0];
+        ray.detectorIndex = 0;
+        ray.particleType = photon;
+
+        unsigned particleID = 0;
+        RayWorkInfo rayInfo(1,true);
+        gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
+
+        gpuFloatType_t expected = ( 1/ (9.0f * MonteRay::pi * 2.0f*2.0f ) ) * exp(-1.0);
+        CHECK_CLOSE( expected, score, 1e-6);
+    }
+
     TEST_FIXTURE(CalcScore_test, getTally ) {
         unsigned id = pEstimator->add( 2.0, 0.0, 0.0);
         pEstimator->initialize();
@@ -663,7 +700,8 @@ SUITE( NextEventEstimator_Tester ) {
 
         delete stream;
 #else
-        pEstimator->launch_ScoreRayList(1,1,pBank.get());
+        RayWorkInfo rayInfo( 1, true );
+        pEstimator->launch_ScoreRayList(1,1,pBank.get(), &rayInfo);
 #endif
         gpuTallyType_t value = pEstimator->getTally(0);
 
@@ -760,7 +798,8 @@ SUITE( NextEventEstimator_Tester ) {
 
          delete stream;
  #else
-         pEstimator->launch_ScoreRayList(1,1,pBank.get());
+         RayWorkInfo rayInfo( 1, true );
+         pEstimator->launch_ScoreRayList(1,1,pBank.get(), &rayInfo);
  #endif
 
          gpuFloatType_t expected1  = ( 0.3f / (2.0f * MonteRay::pi * distance1*distance1 ) ) * exp( -1.0*1.0 ) +

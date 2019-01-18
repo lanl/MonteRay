@@ -485,7 +485,7 @@
 			</target>
 			<target name="install" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
-				<buildArguments>--build ${BINARY_DIR} -- -j40</buildArguments>
+				<buildArguments>--build ${BINARY_DIR} -- -j20</buildArguments>
 				<buildTarget>install</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
@@ -538,6 +538,14 @@
 			<target name="Initiate Build wCUDA BatchMode=OFF" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>cmake</buildCommand>
 				<buildArguments>-DBatchMode=OFF -Denable_cuda:BOOL=ON -P cmake_files/Builder.cmake</buildArguments>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="ctest all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>cd</buildCommand>
+				<buildArguments>${BINARY_DIR} ; ls; ctest</buildArguments>
+				<buildTarget/>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>

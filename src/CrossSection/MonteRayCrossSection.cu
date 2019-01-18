@@ -8,6 +8,7 @@
 #include "MonteRay_binaryIO.hh"
 #include "HashLookup.hh"
 #include "MonteRayMemory.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay{
 
@@ -305,6 +306,8 @@ unsigned MonteRayCrossSectionHost::getIndex( const HashLookupHost* pHost, unsign
 
 void MonteRayCrossSectionHost::copyToGPU(void) {
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+
     cudaCopyMade = true;
 
     if( temp ) {

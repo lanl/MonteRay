@@ -36,7 +36,7 @@ endif()
 if( output_value STREQUAL "GP100GL" )
   add_definitions(-DP100_GPU)
   set( ${RESULT} "P100" PARENT_SCOPE )
-  set( ${COMPUTECAPABILITY} "-arch=sm_60" PARENT_SCOPE )
+  set( ${COMPUTECAPABILITY} "--gpu-architecture=compute_60 --gpu_code=compute_60,sm_60" PARENT_SCOPE )
   return()
 endif()   
 

@@ -4,7 +4,7 @@ include( template_select )
 
 list( APPEND ${UnitName}_packages GPU_Utilities Utilities )
 
-set( ToolkitLibs Math_Functions)
+set( ToolkitLibs Math_Functions IPComm )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

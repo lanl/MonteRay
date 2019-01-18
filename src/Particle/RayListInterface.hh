@@ -24,8 +24,8 @@ public:
 
     ~RayListInterface();
 
-    void copyToGPU(void) { ptrPoints->copyToGPU(); }
-    void copyToCPU(void) { ptrPoints->copyToCPU(); }
+    void copyToGPU(void);
+    void copyToCPU(void);
 
     RayListSize_t capacity(void) const { return ptrPoints->capacity(); }
     RayListSize_t size(void) const { return ptrPoints->size(); }

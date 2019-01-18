@@ -55,8 +55,8 @@ rayTraceTally(const GRIDTYPE* pGrid,
 template<typename GRIDTYPE, unsigned N>
 MonteRay::tripleTime launchRayTraceTally(
         std::function<void (void)> cpuWork,
-        unsigned nBlocks,
-        unsigned nThreads,
+        int nBlocks,
+        int nThreads,
         const GRIDTYPE* grid,
         const RayListInterface<N>* pCP,
         const MonteRayMaterialListHost* pMatList,

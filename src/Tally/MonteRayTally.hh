@@ -93,21 +93,8 @@ public:
     // required for CopyMemoryBase
     void copy(const MonteRayTally* rhs);
 
-    void copyToGPU(void) {
-        if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
-        copiedToGPU = true;
-
-        //std::cout << "Debug: MonteRayTally::copyToGPU \n";
-        Base::copyToGPU();
-    }
-
-    void copyToCPU(void) {
-        if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
-        if( !copiedToGPU ) return;
-
-        //if( debug ) std::cout << "Debug: MonteRayTally::copyToCPU \n";
-        Base::copyToCPU();
-    }
+    void copyToGPU(void);
+    void copyToCPU(void);
 
     // required for CopyMemoryBase
     std::string className() { return std::string("MonteRayTally"); }

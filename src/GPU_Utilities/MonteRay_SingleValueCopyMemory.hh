@@ -27,10 +27,7 @@ public:
         v = T(0);
     }
 
-    void copyToGPU(void) {
-        //if( debug ) std::cout << "Debug: MonteRay_SingleValueCopyMemory::copyToGPU \n";
-        Base::copyToGPU();
-    }
+    void copyToGPU(void);
 
     void copyToCPU(void) {
         //if( debug ) std::cout << "Debug: MonteRay_SingleValueCopyMemory::copyToCPU \n";

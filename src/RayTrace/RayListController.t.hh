@@ -20,8 +20,8 @@ namespace MonteRay {
 
 template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::RayListController(
-        unsigned blocks,
-        unsigned threads,
+        int blocks,
+        int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
         MonteRay_MaterialProperties* pMP,
@@ -37,8 +37,10 @@ PA( MonteRayParallelAssistant::getInstance() )
 {
     pNextEventEstimator.reset();
     initialize();
-    kernel = [&] ( void ) {
+    kernel = [&, blocks, threads ] ( void ) {
         if( PA.getWorkGroupRank() != 0 ) { return; }
+
+        auto launchBounds = setLaunchBounds( threads, blocks,  currentBank->getPtrPoints()->size() );
 
 #ifdef DEBUG
         size_t freeMemory = 0;
@@ -49,13 +51,14 @@ PA( MonteRayParallelAssistant::getInstance() )
         totalMemory = totalMemory/1000000;
 #endif
         std::cout << "Debug: RayListController -- launching kernel on " <<
-                     PA.info() << " with " << nBlocks << " blocks, " << nThreads <<
+                     PA.info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
                      " threads, to process " << currentBank->getPtrPoints()->size() << " rays," <<
                      " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
 
 #ifdef __CUDACC__
-        rayTraceTally<<<nBlocks,nThreads,0, *stream1>>>(
+
+        rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
                 pGrid->getDevicePtr(),
                 currentBank->getPtrPoints()->devicePtr,
                 pMatList->ptr_device,
@@ -78,8 +81,8 @@ PA( MonteRayParallelAssistant::getInstance() )
 
 template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::RayListController(
-        unsigned blocks,
-        unsigned threads,
+        int blocks,
+        int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
         MonteRay_MaterialProperties* pMP,
@@ -96,7 +99,7 @@ PA( MonteRayParallelAssistant::getInstance() )
     pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator<GRID_T>>( numPointDets );
     usingNextEventEstimator = true;
     initialize();
-    kernel = [&] ( void ) {
+    kernel = [&, blocks, threads] ( void ) {
 #ifdef DEBUG
         const bool debug = false;
 #endif
@@ -108,7 +111,7 @@ PA( MonteRayParallelAssistant::getInstance() )
 #ifdef DEBUG
             if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
 #endif
-            pNextEventEstimator->launch_ScoreRayList(nBlocks,nThreads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
+            pNextEventEstimator->launch_ScoreRayList(blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
         }
     };
 }
@@ -192,11 +195,15 @@ RayListController<GRID_T,N>::setCapacity(unsigned n) {
     currentBank = bank1.get();
 
     auto launchBounds = setLaunchBounds( nThreads, nBlocks, n );
-    nBlocks = launchBounds.first;
-    nThreads = launchBounds.second;
+    unsigned totalNumThreads  = launchBounds.first * launchBounds.second;
 
     // size rayInfo to total number of threads
-    rayInfo.reset( new RayWorkInfo( nBlocks*nThreads) );
+#ifdef __CUDACC__
+    rayInfo.reset( new RayWorkInfo( totalNumThreads ) );
+#else
+    // allocate on the CPU
+    rayInfo.reset( new RayWorkInfo( 1, true ) );
+#endif
 }
 
 
@@ -539,6 +546,16 @@ RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nS
         throw std::runtime_error( "RayListController::outputTimeBinnedTotal  -- only supports outputting Next-Event Estimator results." );
     }
     pNextEventEstimator->outputTimeBinnedTotal(out, nSamples, constantDimension );
+}
+
+template<typename GRID_T, unsigned N>
+void
+RayListController<GRID_T,N>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
+    if( PA.getWorkGroupRank() != 0 ) { return; }
+
+    if( usingNextEventEstimator ) {
+        pNextEventEstimator->updateMaterialProperties( pMPs );
+    }
 }
 
 template<typename GRID_T, unsigned N>

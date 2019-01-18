@@ -3,6 +3,7 @@
 #include "MonteRayConstants.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "MonteRayParallelAssistant.hh"
 
 #include <float.h>
 
@@ -75,6 +76,7 @@ MonteRay_CylindricalGrid::copyToGPU(void) {
 #endif
 
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
     ptrDevicePtr = (MonteRay_CylindricalGrid**) MONTERAYDEVICEALLOC(sizeof(MonteRay_CylindricalGrid*), std::string("device - MonteRay_CylindricalGrid::ptrDevicePtr") );
 
     pRVertices->copyToGPU();

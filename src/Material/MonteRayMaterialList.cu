@@ -7,6 +7,7 @@
 #include "MonteRay_binaryIO.hh"
 #include "HashLookup.hh"
 #include "MonteRayMemory.hh"
+#include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay{
 
@@ -156,6 +157,7 @@ MonteRayMaterialListHost::~MonteRayMaterialListHost() {
 
 void MonteRayMaterialListHost::copyToGPU(void) {
 #ifdef __CUDACC__
+    if( ! MonteRay::isWorkGroupMaster() ) return;
     pHash->copyToGPU();
 
     for( auto itr = ownedMaterials.begin(); itr != ownedMaterials.end(); ++itr) {

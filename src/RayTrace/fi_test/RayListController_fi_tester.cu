@@ -233,7 +233,7 @@ TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
 TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
     std::cout << "Debug: ********************************************* \n";
     std::cout << "Debug: Starting rayTrace tester with single looping bank \n";
-    CollisionPointController<GridBins> controller( 256,
+    CollisionPointController<GridBins> controller( 1,
             256,
             pGrid,
             pMatList,

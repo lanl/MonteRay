@@ -288,7 +288,9 @@ SUITE( NextEventEstimator_pTester ) {
         }
 
         if( PA.getWorkGroupRank() == 0 ) {
+
 #ifdef __CUDACC__
+            RayWorkInfo rayInfo(pBank->size());
 
             cudaEvent_t start, stop;
             cudaEventCreate(&start);
@@ -296,7 +298,6 @@ SUITE( NextEventEstimator_pTester ) {
             pBank->copyToGPU();
             pEstimator->copyToGPU();
 
-            RayWorkInfo rayInfo(pBank->size());
             rayInfo.copyToGPU();
 
             GPUSync();
@@ -320,7 +321,8 @@ SUITE( NextEventEstimator_pTester ) {
 
             delete stream;
 #else
-            pEstimator->launch_ScoreRayList(1,1,pBank.get());
+            RayWorkInfo rayInfo(1,true);
+            pEstimator->launch_ScoreRayList(1,1,pBank.get(), &rayInfo );
 #endif
             pEstimator->copyToCPU();
         }
@@ -400,14 +402,16 @@ SUITE( NextEventEstimator_pTester ) {
          }
 
          if( PA.getWorkGroupRank() == 0 ) {
+
 #ifdef __CUDACC__
+             RayWorkInfo rayInfo(pBank->size());
+
              cudaEvent_t start, stop;
              cudaEventCreate(&start);
 
              pBank->copyToGPU();
              pEstimator->copyToGPU();
 
-             RayWorkInfo rayInfo(pBank->size());
              rayInfo.copyToGPU();
 
              cudaStream_t* stream = NULL;
@@ -429,7 +433,8 @@ SUITE( NextEventEstimator_pTester ) {
 
              delete stream;
 #else
-             pEstimator->launch_ScoreRayList(1,1,pBank.get());
+             RayWorkInfo rayInfo(1,true);
+             pEstimator->launch_ScoreRayList(1, 1, pBank.get(), &rayInfo);
 #endif
          }
          pEstimator->gather();

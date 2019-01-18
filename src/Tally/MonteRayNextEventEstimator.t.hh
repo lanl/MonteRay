@@ -127,7 +127,7 @@ template<typename GRID_T>
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRayNextEventEstimator<GRID_T>::copy(const MonteRayNextEventEstimator* rhs) {
-    if(  MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     if( Base::isCudaIntermediate  and !rhs->initialized ) {
         throw std::runtime_error("MonteRayNextEventEstimator<GRID_T>::copy -- not initialized"  );
@@ -214,7 +214,7 @@ template<typename GRID_T>
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRayNextEventEstimator<GRID_T>::copyToGPU(){
-    if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     copiedToGPU = true;
     pTally->copyToGPU();
@@ -227,7 +227,7 @@ void
 MonteRayNextEventEstimator<GRID_T>::copyToCPU(){
     if( !copiedToGPU ) return;
 
-    if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
+    if( ! MonteRay::isWorkGroupMaster() ) return;
 
     pTally->copyToCPU();
     Base::copyToCPU();
@@ -267,7 +267,7 @@ MonteRayNextEventEstimator<GRID_T>::getDistanceDirection(
     MonteRay::Vector3D<gpuRayFloat_t> pos2( getX(i), getY(i), getZ(i) );
     dir = pos2 - pos;
 
-    position_t dist = distance(i,pos);
+    position_t dist = dir.magnitude();
     position_t invDistance = 1/ dist;
     dir *= invDistance;
 
@@ -673,6 +673,18 @@ MonteRayNextEventEstimator<GRID_T>::setGeometry(const GRID_T* pGrid, const Monte
      pGridBins = pGrid;
      pMatPropsHost = pMPs;
      pMatProps = pMPs->getPtr();
+}
+
+template<typename GRID_T>
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRayNextEventEstimator<GRID_T>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
+     pMatPropsHost = pMPs;
+     pMatProps = pMPs->getPtr();
+
+     if( copiedToGPU ) {
+         Base::copyToGPU();
+     }
 }
 
 template<typename GRID_T>

@@ -46,6 +46,8 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER void copy(const RayWorkInfo* rhs);
 
+    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void);
+
     CUDA_CALLABLE_MEMBER unsigned capacity(void) const {
         return nAllocated;
     }
@@ -65,7 +67,7 @@ public:
         getCrossingSize(2, i) = 0;
     }
 
-    CUDA_CALLABLE_MEMBER int& getRayCastSize( unsigned i) const {
+    CUDA_CALLABLE_MEMBER int& getRayCastSize( const unsigned i) const {
         return rayCastSize[i];
     }
 

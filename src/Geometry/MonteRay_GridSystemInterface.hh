@@ -23,7 +23,7 @@ public:
     CUDA_CALLABLE_MEMBER ~singleDimRayTraceMap_t(){}
 
     // for conversion of old tests
-    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(const RayWorkInfo&, const unsigned threadID, int dim = -1);
+    CUDA_CALLABLE_MEMBER singleDimRayTraceMap_t(RayWorkInfo&, const unsigned threadID, int dim = -1);
 
     CUDA_CALLABLE_MEMBER
     void add( const int cell, const gpuRayFloat_t dist);
@@ -48,7 +48,7 @@ public:
     CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
 
     // for conversion of old tests
-    CUDA_CALLABLE_MEMBER rayTraceList_t(const RayWorkInfo&, const unsigned threadID, int dim = -1);
+    CUDA_CALLABLE_MEMBER rayTraceList_t(RayWorkInfo&, const unsigned threadID, int dim = -1);
 
     CUDA_CALLABLE_MEMBER
     void add( const unsigned cell, const gpuRayFloat_t dist);

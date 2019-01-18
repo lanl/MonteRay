@@ -31,7 +31,7 @@ gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Di
     pRayInfo->copyToCPU();
 #else
     kernelRayTrace(
-            pRayInfo,
+            pRayInfo.get(),
             grid_device,
             pos[0], pos[1], pos[2],
             dir[0], dir[1], dir[2],

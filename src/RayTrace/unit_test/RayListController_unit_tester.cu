@@ -31,7 +31,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
 //            cudaReset();
 //            gpuCheck();
-//            cudaDeviceSetLimit( cudaLimitStackSize, 120000 );
+            //cudaDeviceSetLimit( cudaLimitStackSize, 40000 );
 
             pGrid = new GridBins;
             pGrid->setVertices(0, -5.0, 5.0, 10);
@@ -53,10 +53,10 @@ SUITE( RayListController_unit_tester_basic_tests ) {
         }
 
         void setup(){
+#ifdef __CUDACC__
             gpuErrchk( cudaPeekAtLastError() );
-
+#endif
             pGrid->copyToGPU();
-
             pTally->copyToGPU();
             pTally->clear();
 
@@ -77,7 +77,9 @@ SUITE( RayListController_unit_tester_basic_tests ) {
             pMatList->add( 0, *metal, 0 );
             pMatList->copyToGPU();
             xs->copyToGPU();
+#ifdef __CUDACC__
             gpuErrchk( cudaPeekAtLastError() );
+#endif
         }
 
         ~UnitControllerSetup(){
@@ -100,9 +102,11 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     };
 
     TEST( setup ) {
+#ifdef __CUDACC__
         cudaReset();
         gpuCheck();
-        //cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
+        cudaDeviceSetLimit( cudaLimitStackSize, 48000 );
+#endif
     }
 
     TEST_FIXTURE(UnitControllerSetup, ctor ){
@@ -135,7 +139,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     TEST_FIXTURE(UnitControllerSetup, add_a_particle ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle\n";
         CollisionPointController<GridBins> controller( 1,
-                1024,
+                32,
                 pGrid,
                 pMatList,
                 pMatProps,
@@ -234,7 +238,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     TEST_FIXTURE(UnitControllerSetup, add_ten_particles_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr3\n";
         CollisionPointController<GridBins> controller( 1,
-                1024,
+                32,
                 pGrid,
                 pMatList,
                 pMatProps,

@@ -30,6 +30,19 @@ RayListInterface<N>::~RayListInterface() {
         }
     }
 }
+
+template< unsigned N>
+void
+RayListInterface<N>::copyToGPU(void) {
+    ptrPoints->copyToGPU();
+}
+
+template< unsigned N>
+void
+RayListInterface<N>::copyToCPU(void) {
+    ptrPoints->copyToCPU();
+}
+
 template< unsigned N>
 void
 RayListInterface<N>::add( const void* ptrRay, unsigned num ) {

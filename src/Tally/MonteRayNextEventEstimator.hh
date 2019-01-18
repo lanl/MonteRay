@@ -87,6 +87,7 @@ public:
     void dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName  = std::string("") );
 
     CUDAHOST_CALLABLE_MEMBER void setGeometry(const GRID_T* pGrid, const MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
 
     CUDAHOST_CALLABLE_MEMBER void setMaterialList(const MonteRayMaterialListHost* ptr);
 

@@ -23,10 +23,11 @@ singleDimRayTraceMap_t::add( const int cell, const gpuRayFloat_t dist) {
 
 // for conversion of old tests
 CUDA_CALLABLE_MEMBER
-singleDimRayTraceMap_t::singleDimRayTraceMap_t(const RayWorkInfo& rayInfo, const unsigned threadID, int dim){
+singleDimRayTraceMap_t::singleDimRayTraceMap_t(RayWorkInfo& rayInfo, const unsigned threadID, int dim){
 
     if( dim < 0 ) {
-        for( unsigned i=0; i<rayInfo.getRayCastSize(threadID); ++i ) {
+        unsigned raySize = rayInfo.getRayCastSize(threadID);
+        for( unsigned i=0; i<raySize; ++i ) {
             add( rayInfo.getRayCastCell(threadID,i),  rayInfo.getRayCastDist(threadID,i));
         }
         return;
@@ -48,7 +49,7 @@ rayTraceList_t::add( const unsigned cell, const gpuRayFloat_t dist) {
 
 // for conversion of old tests
 CUDA_CALLABLE_MEMBER
-rayTraceList_t::rayTraceList_t(const RayWorkInfo& rayInfo, const unsigned threadID, int dim){
+rayTraceList_t::rayTraceList_t(RayWorkInfo& rayInfo, const unsigned threadID, int dim){
 
     if( dim < 0 ) {
         for( unsigned i=0; i<rayInfo.getRayCastSize(threadID); ++i ) {

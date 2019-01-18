@@ -440,7 +440,10 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
         const MonteRayMaterialListHost* pMatList,
         const MonteRay_MaterialProperties* pMatProps )
         {
+
+#ifdef __CUDACC__
     gpuErrchk( cudaPeekAtLastError() );
+#endif
 
     unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
     tally = (gpuTallyType_t*) malloc ( allocSize );
@@ -488,12 +491,15 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
     gpuErrchk( cudaPeekAtLastError() );
     cudaFree( tally_device );
 #else
+    RayWorkInfo rayInfo( 1, true );
+
     rayTraceTally(
             grid_device,
             pCP->getPtrPoints(),
             pMatList->getPtr(),
             pMatProps->getPtr(),
             pMatList->getHashPtr()->getPtr(),
+            &rayInfo,
             tally);
 #endif
     return;

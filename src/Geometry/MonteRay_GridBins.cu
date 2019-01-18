@@ -10,6 +10,7 @@
 #include "MonteRayDefinitions.hh"
 #include "GPUErrorCheck.hh"
 #include "MonteRayCopyMemory.t.hh"
+#include "MonteRayParallelAssistant.hh"
 
 #ifndef __CUDA_ARCH__
 #include <stdexcept>
@@ -118,6 +119,14 @@ MonteRay_GridBins::copy(const MonteRay_GridBins* rhs) {
 #else
     throw std::runtime_error("MonteRay_GridBins::copy -- can NOT copy between host and device without CUDA.");
 #endif
+}
+
+CUDAHOST_CALLABLE_MEMBER
+void
+MonteRay_GridBins::copyToGPU(void) {
+    //      std::cout << "Debug: MonteRay_GridBins::copyToGPU \n";
+    if( ! MonteRay::isWorkGroupMaster() ) return;
+    Base::copyToGPU();
 }
 
 MonteRay_GridBins&

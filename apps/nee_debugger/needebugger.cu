@@ -40,6 +40,7 @@ nee_debugger::checkFileExists(const std::string& filename){
 
 void
 nee_debugger::launch(const std::string& optBaseName){
+    setCudaStackSize( 2000 );
 
     using Geom_t = MonteRay_SpatialGrid;
     //using Geom_t = GridBins;
@@ -86,6 +87,8 @@ nee_debugger::launch(const std::string& optBaseName){
     estimator.setMaterialList( &matlist );
     estimator.copyToGPU();
     //estimator.dumpState( &raylist, "nee_debug_dump_test2" );
+
+    const bool singleRay = true;
 
     for( unsigned i=0; i<raylist.size(); ++i ) {
         Ray_t<3> ray;

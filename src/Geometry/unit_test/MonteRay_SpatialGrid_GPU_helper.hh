@@ -437,7 +437,7 @@ public:
 
         rayInfo.copyToCPU();
 #else
-        kernelRayTraceParticle( pGridInfo.get(), pResult.get(),
+        kernelRayTraceParticle( pGridInfo.get(), &rayInfo,
                 p, distance, outside );
 #endif
         rayTraceList_t rayTraceList;
