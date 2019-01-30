@@ -113,6 +113,7 @@ MonteRayMaterialListHost::reallocate(unsigned num) {
     ctor( pMatList, num);
 
     if( temp ) {
+        cudaDtor( temp );
         delete temp;
     }
     temp = nullptr;
@@ -158,6 +159,8 @@ MonteRayMaterialListHost::~MonteRayMaterialListHost() {
 void MonteRayMaterialListHost::copyToGPU(void) {
 #ifdef __CUDACC__
     if( ! MonteRay::isWorkGroupMaster() ) return;
+    if(  cudaCopyMade ) { return; }
+
     pHash->copyToGPU();
 
     for( auto itr = ownedMaterials.begin(); itr != ownedMaterials.end(); ++itr) {
@@ -165,6 +168,7 @@ void MonteRayMaterialListHost::copyToGPU(void) {
     }
 
     cudaCopyMade = true;
+
     temp = new MonteRayMaterialList;
     unsigned num = pMatList->numMaterials;
 
