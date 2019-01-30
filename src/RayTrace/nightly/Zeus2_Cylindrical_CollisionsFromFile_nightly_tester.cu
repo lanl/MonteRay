@@ -235,11 +235,8 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
         std::cout << "Debug:        numGPUZeroNonMatching=" << numGPUZeroNonMatching << "\n";
         std::cout << "Debug:                num both zero=" << numZeroZero << "\n";
 
-        // timings on GTX TitanX Pascal GPU 390x256
-        // Debug: total gpuTime = 5.248
-
-
-
+        // timings on GTX 1080 Ti GP102 rev a1 Pascal GPU 390x256
+        // Debug: total gpuTime = 0.922235
 
 
     }
