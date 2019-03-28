@@ -25,7 +25,7 @@ public:
         maxValue( invHashFunction<T>(numIndices-1) )
     {
         //std::cout << "Debug: CrossSectionHash::ctor - numIndices = " << numIndices << "\n";
-        BinLo.reserve( numIndices );
+        BinLo_vec.reserve( numIndices );
 
         if( ! XValues.empty() ) {
             minTable = XValues.front();
@@ -41,14 +41,18 @@ public:
                 Index_t index = std::distance(XValues.begin(),std::upper_bound(XValues.begin(),XValues.end(),energy));
                 if ( index > 0 ) --index;
 
-                BinLo.push_back( index );
+                BinLo_vec.push_back( index );
             }
+            BinLo = BinLo_vec.data();
+            BinLo_size = BinLo_vec.size();
         }
     };
     ~CrossSectionHash() = default;
 
+    CUDA_CALLABLE_MEMBER
     Index_t size() const { return numIndices;}
 
+    CUDA_CALLABLE_MEMBER
     Index_t getHashIndex(const NuclearData_t value ) const {
         Index_t index = hashFunction<T>(value);
         if( index < minIndex ) {
@@ -68,13 +72,14 @@ public:
         return std::make_pair( lower, upper);
     }
 
+    CUDA_CALLABLE_MEMBER
     void getIndex( int& lowerBin, int& upperBin, const NuclearData_t value ) const {
         //std::cout << "Debug:  getIndex -- value=" << value << " minTable=" << minTable << "\n";
         if( value <= minTable ) { lowerBin = 0; upperBin=0; return; }
         if( value > maxTable ) { lowerBin =  tableSize-1; upperBin= tableSize-1; return; }
 
         Index_t index = getHashIndex(value);
-        MONTERAY_ASSERT( index < BinLo.size() );
+        MONTERAY_ASSERT( index < BinLo_size );
 
         lowerBin = getBinLo( index );
         if( lowerBin >= tableSize - 2 ) { upperBin= tableSize-1; return;  }
@@ -84,13 +89,14 @@ public:
         return;
     }
 
+    CUDA_CALLABLE_MEMBER
     Index_t getBinLo( const Index_t index ) const {
         if( index >= numIndices ) {
-            std::cout << "Debug: CrossSectionHash::getBinLo -- index >= numIndices,  index=" <<
-                    index << " numIndices= " << numIndices << "\n";
+            printf( "Debug: CrossSectionHash::getBinLo_vec -- index >= numIndices,  index=%u  numIndices=%u\n",
+                    index, numIndices);
         }
         MONTERAY_ASSERT( index < numIndices );
-        return BinLo[ index ];
+        return *(BinLo + index);
     }
 
 private:
@@ -100,6 +106,7 @@ private:
 public:
 
     template < typename TV = T, typename std::enable_if< 4 < sizeof(TV) >::type* = nullptr >
+    CUDA_CALLABLE_MEMBER
     static int hashFunction(const TV value) {
         // For double
         // shifts the bits and returns binary equivalent integer
@@ -110,6 +117,7 @@ public:
     }
 
     template < typename TV = T, typename std::enable_if< sizeof(TV) < 5 >::type* = nullptr >
+    CUDA_CALLABLE_MEMBER
     static int hashFunction(const TV value) {
         // For float
         // shifts the bits and returns binary equivalent integer
@@ -124,6 +132,7 @@ public:
     const Index_t numIndices = maxIndex-minIndex+1;
 
     template < typename TV = T, typename std::enable_if< 4 < sizeof(TV) >::type* = nullptr >
+    CUDA_CALLABLE_MEMBER
     TV invHashFunction( const Index_t index ) const {
         //std::cout << "Debug -- Calling invHashFunction(index)->double\n";
         Index_t value = (index + minIndex) << 45 ;
@@ -131,6 +140,7 @@ public:
     }
 
     template < typename TV = T, typename std::enable_if< sizeof(TV) < 5 >::type* = nullptr >
+    CUDA_CALLABLE_MEMBER
     TV invHashFunction( const Index_t index ) const {
         //std::cout << "Debug -- Calling invHashFunction(index)->float\n";
         Index_t value = (index + minIndex) << 16 ;
@@ -145,7 +155,9 @@ public:
     unsigned tableSize;
 
 private:
-    IndexVec_t BinLo;
+    IndexVec_t BinLo_vec;
+    Index_t* BinLo = nullptr;
+    int BinLo_size = 0;
 
 };
 

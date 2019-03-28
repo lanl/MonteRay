@@ -450,13 +450,13 @@ SUITE( CrossSection_speed_tester ) {
 #endif
 
 #ifdef __CUDACC__
-        auto policy = thrust::device;
+        auto device_policy = thrust::device;
 #else
-        auto policy = false;
+        auto device_policy = false;
 #endif
 
          //kernelAllTotalXS<<<1024,512>>>( xs, xsecs.data(), energies.data(), energies.size() );
-         transformEnergyToXS( policy, energies, xsecs, xs );
+         transformEnergyToXS( device_policy, energies, xsecs, xs );
 
          deviceSynchronize();
          timer.stop();
@@ -464,10 +464,12 @@ SUITE( CrossSection_speed_tester ) {
                  " seconds\n";
 
 #ifdef __CUDACC__
-        policy = thrust::host;
+        auto host_policy = thrust::host;
+#else
+        auto host_policy = false;
 #endif
 
-         transformEnergyToXS( policy, energies, ref_xsecs, xs );
+         transformEnergyToXS( host_policy, energies, ref_xsecs, xs );
 
          for( unsigned i = 0; i < energies.size(); ++i ){
              gpuFloatType_t percent_diff = (ref_xsecs[i] - xsecs[i] ) / ref_xsecs[i];

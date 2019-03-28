@@ -8,7 +8,7 @@
 
 // TODO: pull in as a git submodule unless modifications are made.
 
-#ifdef __CUDACC_
+#ifdef __CUDACC__
 #include <thrust/system_error.h>
 #include <thrust/system/cuda/error.h>
 
