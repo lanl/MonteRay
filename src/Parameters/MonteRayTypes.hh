@@ -1,6 +1,7 @@
 #ifndef MONTERAYTYPES_HH_
 #define MONTERAYTYPES_HH_
 
+
 #define TALLY_DOUBLEPRECISION 1 // turn on (1) and off (0) for double precision tally array and compute
 #define RAY_DOUBLEPRECISION 0 // turn on (1) and off (0) for double precision tally array and compute
 
@@ -82,6 +83,7 @@ typedef float3 float3_t;
 typedef int cudaStream_t;
 typedef int cudaEvent_t;
 #endif
+
 
 }
 

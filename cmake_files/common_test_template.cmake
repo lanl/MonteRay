@@ -204,7 +204,7 @@ else()
 endif()
 if( Platform STREQUAL "BlueGeneQ" )
     target_link_libraries( ${appName} PRIVATE pthread )
-    set( MPIEXEC_PREFLAGS ${MPI_EXECPREFLAGS} --partition=pdebug -t 1:30:00 )
+#    set( MPIEXEC_PREFLAGS ${MPI_EXECPREFLAGS} --partition=pdebug -t 1:30:00 )
 endif()
 
 # Need to explicitly link in thread library if this is known

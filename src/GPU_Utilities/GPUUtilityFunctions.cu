@@ -165,6 +165,12 @@ void setCudaStackSize( size_t size, const bool verbose) {
 #endif
 }
 
+void deviceSynchronize() {
+#ifdef __CUDACC__
+    cudaDeviceSynchronize();
+#endif
+}
+
 std::pair<unsigned, unsigned> setLaunchBounds( int nThreadsArg, int nRaysPerThreadArg, const unsigned numRays ) {
     // negative nThreadsArg forces number of threads per block to this value
     // negative nRaysPerThreadArg forces number of blocks to this value

@@ -25,6 +25,8 @@ int getCudaDevice( const bool verbose );
 void setCudaPrintBufferSize( size_t size, const bool verbose = false);
 void setCudaStackSize( size_t size, const bool verbose = false );
 
+void deviceSynchronize();
+
 std::pair<unsigned, unsigned> setLaunchBounds( int nThreads, int nRaysPerThread, const unsigned numRays );
 
 } /* namespace MonteRay */
