@@ -47,7 +47,7 @@ CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, const struct HashLookup* pHash, unsigned hashBin, gpuFloatType_t E );
 
 CUDA_CALLABLE_MEMBER
-gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E );
+gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E );
 
 CUDA_CALLABLE_MEMBER
 unsigned getIndex(const struct MonteRayCrossSection* pXS, gpuFloatType_t E );

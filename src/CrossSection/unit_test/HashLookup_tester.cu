@@ -190,7 +190,7 @@ SUITE( HashLookup_tester ) {
         CHECK_EQUAL( 2, getIndex(xs->getXSPtr(), energy  ));
         CHECK_EQUAL( 2, getIndexBinary(xs->getXSPtr(), 0, 9, energy  ));
         CHECK_EQUAL( 2, getIndexLinear(xs->getXSPtr(), 0, 9, energy  ));
-        CHECK_CLOSE( 4.0, getTotalXSByIndex(xs->getXSPtr(), 2, energy ), 1e-5);
+        CHECK_CLOSE( 4.0, getTotalXS(xs->getXSPtr(), 2, energy ), 1e-5);
         unsigned hashBin = hash->getHashBin( energy );
         CHECK_EQUAL( 3, hashBin );
         CHECK_EQUAL(1, hash->getLowerBoundbyIndex( xs->getID(), hashBin ) );

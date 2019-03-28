@@ -6,7 +6,7 @@
 namespace MonteRay {
 
 template<typename T, typename VALUE_T>
-CUDA_CALLABLE_MEMBER unsigned UpperBoundIndex(const T* const values, unsigned count, VALUE_T value ) {
+CUDA_CALLABLE_MEMBER unsigned UpperBoundIndex(const T* const values, unsigned count, const VALUE_T value ) {
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
     unsigned it, step;
     unsigned first = 0U;
@@ -26,7 +26,7 @@ CUDA_CALLABLE_MEMBER unsigned UpperBoundIndex(const T* const values, unsigned co
 }
 
 template<typename T, typename VALUE_T>
-CUDA_CALLABLE_MEMBER unsigned LowerBoundIndex(const T* const values, unsigned count, VALUE_T value ) {
+CUDA_CALLABLE_MEMBER unsigned LowerBoundIndex(const T* const values, unsigned count, const VALUE_T value ) {
     // modified from http://en.cppreference.com/w/cpp/algorithm/upper_bound
     unsigned first = UpperBoundIndex(values,count,value);
     if( first > 0U ) { --first; }

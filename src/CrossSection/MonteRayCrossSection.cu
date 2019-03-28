@@ -187,7 +187,7 @@ gpuFloatType_t getAWR(const struct MonteRayCrossSection* pXS) {
 }
 
 CUDA_CALLABLE_MEMBER
-gpuFloatType_t getTotalXSByIndex(const struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
+gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, unsigned i, gpuFloatType_t E ) {
     gpuFloatType_t lower =  pXS->totalXS[i];
     gpuFloatType_t upper =  pXS->totalXS[i+1];
     gpuFloatType_t deltaE = pXS->energies[i+1] - pXS->energies[i];
@@ -210,7 +210,7 @@ gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, gpuFloatType_t
     }
 
     unsigned i = getIndex(pXS, E);
-    return getTotalXSByIndex( pXS, i, E);
+    return getTotalXS( pXS, i, E);
 }
 
 CUDA_CALLABLE_MEMBER
@@ -225,7 +225,7 @@ gpuFloatType_t getTotalXS(const struct MonteRayCrossSection* pXS, const struct H
     }
 
     unsigned i = getIndex(pXS, pHash, hashBin, E);
-    return getTotalXSByIndex( pXS, i, E);
+    return getTotalXS( pXS, i, E);
 }
 
 CUDA_CALLABLE_KERNEL  kernelGetTotalXS(const struct MonteRayCrossSection* pXS, const HashLookup* pHash, unsigned HashBin, gpuFloatType_t E, gpuFloatType_t* results){

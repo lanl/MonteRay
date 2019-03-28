@@ -1,6 +1,6 @@
 include( template_select )
 
-list( APPEND ${UnitName}_packages Utilities )
+list( APPEND ${UnitName}_packages Utilities CUDA)
 
 set( ToolkitLibs )
 
