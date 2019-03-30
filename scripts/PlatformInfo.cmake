@@ -427,7 +427,7 @@ function( ParseBuildArgs )
 
     set( ConfigMsg "Model[${model}], Tool[${tool}-${CompilerVersion}], Build[${build}]" )
 
-    validateOption( citype OPTIONAL HandCI AutoCI)
+    validateOption( citype OPTIONAL HandCI AutoCI PullRequestCI)
     if(citype)
       set( ConfigMsg "${ConfigMsg}, CIType[${citype}]" )
     endif()
