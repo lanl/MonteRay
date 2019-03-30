@@ -115,6 +115,7 @@ list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fpic")
 #list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -std=c++11")
 list(APPEND CUDA_NVCC_FLAGS "--cudart shared")
 list(APPEND CUDA_NVCC_FLAGS "--relocatable-device-code=true" )
+list(APPEND CUDA_NVCC_FLAGS "--expt-extended-lambda" )
 list(APPEND CUDA_NVCC_FLAGS ${GPUCOMPUTECAPABILITY} )
 
 unset( CMAKE_CUDA_FLAGS )

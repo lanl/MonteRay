@@ -103,7 +103,7 @@ RayWorkInfo::copy(const RayWorkInfo* rhs) {
         if( rayCastSize == NULL ) {
             rayCastSize = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int), "device - RayWorkInfo::rayCastSize" );
         }
-        //cudaMemset(rayCastSize, 0, rhs->nAllocated*sizeof(int));
+        cudaMemset(rayCastSize, 0, rhs->nAllocated*sizeof(int));
 
         if( rayCastCell == NULL ) {
             rayCastCell = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int)*MAXNUMRAYCELLS, "device - RayWorkInfo::rayCastCell" );
@@ -116,7 +116,7 @@ RayWorkInfo::copy(const RayWorkInfo* rhs) {
         if( crossingSize == NULL ) {
             crossingSize = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int)*3, "device - RayWorkInfo::crossingSize" );
         }
-        //cudaMemset(crossingSize, 0, rhs->nAllocated*3*sizeof(int));
+        cudaMemset(crossingSize, 0, rhs->nAllocated*3*sizeof(int));
 
         if( crossingCell == NULL ) {
             crossingCell = (int*) MONTERAYDEVICEALLOC( rhs->nAllocated*sizeof(int)*MAXNUMVERTICES*3, "device - RayWorkInfo::crossingCell" );
