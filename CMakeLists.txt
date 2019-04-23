@@ -20,7 +20,7 @@ endif()
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # TRA - These need to be used and tested in other places besides Shark?
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # if( POLICY CMP0022 )
