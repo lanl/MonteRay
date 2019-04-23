@@ -39,7 +39,7 @@ if( GNU_MAJOR_VERSION EQUAL 4 )
     if( GNU_MINOR_VERSION LESS 7 )
         message( FATAL_ERROR "MCATK requires a more recent version of compiler. g++ 4.7 or greater required." )
     endif()
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wno-terminate" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-terminate" )
 endif()
 
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og" CACHE STRING "newly available feature from gcc 4.8.x for faster debug runs" FORCE )
