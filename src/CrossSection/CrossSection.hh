@@ -15,11 +15,13 @@
 
 namespace MonteRay {
 
-class CrossSectionBuilder;
+template<typename HASHFUNCTION = FasterHash >
+class CrossSectionBuilder_t;
 
-class CrossSection : public Managed {
+template< typename HASHFUNCTION = FasterHash >
+class CrossSection_t : public Managed {
 public:
-    CrossSection(const CrossSection& rhs){
+    CrossSection_t(const CrossSection_t& rhs){
         id = rhs.id;
         ZA = rhs.ZA;
         AWR = rhs.AWR;
@@ -29,18 +31,18 @@ public:
         build();
     };
 
-    CrossSection& operator=(const CrossSection& rhs){
+    CrossSection_t& operator=(const CrossSection_t& rhs){
         id = rhs.id;
         ZA = rhs.ZA;
         AWR = rhs.AWR;
         ParticleType = rhs.ParticleType;
 
-        unsigned N = rhs.energy_vec.size();
+        size_t N = rhs.energy_vec.size();
         energy_vec.clear();
         totalXS_vec.clear();
         energy_vec.resize( N );
         totalXS_vec.resize( N );
-        for( unsigned i = 0; i < rhs.energy_vec.size(); ++i ) {
+        for( size_t i = 0; i < rhs.energy_vec.size(); ++i ) {
             energy_vec[i] = rhs.energy_vec[i];
             totalXS_vec[i] = rhs.totalXS_vec[i];
         }
@@ -48,47 +50,47 @@ public:
         return *this;
     };
 
-    CrossSection(){
+    CrossSection_t(){
     };
 
-    ~CrossSection(){
+    ~CrossSection_t(){
         if( hash ) delete hash;
     };
 
 private:
-    friend CrossSectionBuilder;
+    friend CrossSectionBuilder_t<HASHFUNCTION>;
 
     void build(){
         numPoints = energy_vec.size();
         energies = energy_vec.data();
         totalXS = totalXS_vec.data();
-        hash = new CrossSectionHash<gpuFloatType_t>( energy_vec );
+        hash = new CrossSectionHash_t<gpuFloatType_t,HASHFUNCTION >( energy_vec );
     };
 
 public:
     void setID(int ID ){ id = ID; }
     CUDA_CALLABLE_MEMBER int getID() const { return id; }
     CUDA_CALLABLE_MEMBER int ZAID() const { return ZA; }
-    CUDA_CALLABLE_MEMBER int size() const { return numPoints; }
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getEnergy( int i ) const { return energies[i]; }
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getTotalXSByIndex( int i ) const { return totalXS[i]; }
+    CUDA_CALLABLE_MEMBER size_t size() const { return numPoints; }
+    CUDA_CALLABLE_MEMBER gpuFloatType_t getEnergy( size_t i ) const { return *(energies+i); }
+    CUDA_CALLABLE_MEMBER gpuFloatType_t getTotalXSByIndex( size_t i ) const { return *(totalXS+i); }
     CUDA_CALLABLE_MEMBER gpuFloatType_t getAWR() const { return AWR; }
     CUDA_CALLABLE_MEMBER ParticleType_t getParticleType() const { return ParticleType; }
 
 
-    CUDA_CALLABLE_MEMBER int getIndex( gpuFloatType_t E ) const {
+    CUDA_CALLABLE_MEMBER size_t getIndex( gpuFloatType_t E ) const {
 #ifndef __CUDA_ARCH__
         // Binary lookup on CPU
-        return LowerBoundIndex(energies, numPoints, E );
+        return LowerBoundIndex(energies, 0U, numPoints, E );
 #else
         // Linear lookup on GPU
-        return LowerBoundIndex(energies, numPoints, E );
+        return LowerBoundIndex(energies, 0U, numPoints, E );
         //return LowerBoundIndexLinear(energies, 0, numPoints-1, E );
 #endif
     }
 
     CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getTotalXS(unsigned i, gpuFloatType_t E ) const {
+    gpuFloatType_t getTotalXS(size_t i, gpuFloatType_t E ) const {
         gpuFloatType_t lowerXS =  getTotalXSByIndex(i);
         gpuFloatType_t lowerEnergy =  getEnergy(i);
 
@@ -118,12 +120,10 @@ public:
 
     CUDA_CALLABLE_MEMBER
     gpuFloatType_t getTotalXSviaHash(gpuFloatType_t E ) const {
-        int lower, upper;
-        hash->getIndex(lower, upper, E);
-        //unsigned index;
-        //index =  indices.first + LowerBoundIndex(energies+indices.first, indices.second-indices.first, E );
-        int index =  LowerBoundIndexLinear(energies, lower, upper, E );
 
+        size_t lower, upper;
+        hash->getIndex(lower, upper, E);
+        size_t index = LowerBoundIndex( energies, lower, upper, E);
         return getTotalXS( index, E);
     }
 
@@ -150,10 +150,10 @@ public:
         binaryIO::write(out, size() );
         binaryIO::write(out, getAWR() );
         binaryIO::write(out, ZAID() ); // version 1
-        for( unsigned i=0; i< size(); ++i ){
+        for( size_t i=0; i< size(); ++i ){
             binaryIO::write(out, getEnergy(i) );
         }
-        for( unsigned i=0; i< size(); ++i ){
+        for( size_t i=0; i< size(); ++i ){
             binaryIO::write(out, getTotalXSByIndex(i) );
         }
     }
@@ -165,7 +165,15 @@ private:
         binaryIO::read(in, version );
 
         binaryIO::read(in, ParticleType );
-        binaryIO::read(in, numPoints );
+
+        if( version > 0 ) {
+            binaryIO::read(in, numPoints );
+        } else {
+            // version 0 wrote an int
+            int N;
+            binaryIO::read(in, N );
+            numPoints = N;
+        }
         binaryIO::read(in, AWR );
 
         if( version > 0 ) {
@@ -174,10 +182,10 @@ private:
 
         energy_vec.resize( numPoints);
         totalXS_vec.resize( numPoints);
-        for( unsigned i=0; i< size(); ++i ){
+        for( size_t i=0; i< size(); ++i ){
             binaryIO::read(in, energy_vec[i] );
         }
-        for( unsigned i=0; i< size(); ++i ){
+        for( size_t i=0; i< size(); ++i ){
             binaryIO::read(in, totalXS_vec[i] );
         }
     }
@@ -188,22 +196,25 @@ private:
 
     int id = 0;
     int ZA = 0;
-    int numPoints = 0;
+    size_t numPoints = 0;
     ParticleType_t ParticleType = neutron;
     gpuFloatType_t AWR = 0.0;
     gpuFloatType_t* energies = nullptr;
     gpuFloatType_t* totalXS = nullptr;
 
-    CrossSectionHash<gpuFloatType_t>* hash = nullptr;
+    CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION>* hash = nullptr;
 };
 
-class CrossSectionBuilder {
+using CrossSection = CrossSection_t<>;
+
+template< typename HASHFUNCTION >
+class CrossSectionBuilder_t {
 public:
 
-    CrossSectionBuilder(){}
+    CrossSectionBuilder_t(){}
 
     template<typename T>
-    CrossSectionBuilder( int ZAID,
+    CrossSectionBuilder_t( int ZAID,
                          std::vector<T> energies,
                          std::vector<T> xsec,
                          ParticleType_t type = neutron,
@@ -218,7 +229,7 @@ public:
     }
 
     template<typename T>
-    CrossSectionBuilder( const T& HostXS, double error = maxError, unsigned nBinsToVerify = nBinsToCheck ) {
+    CrossSectionBuilder_t( const T& HostXS, double error = maxError, unsigned nBinsToVerify = nBinsToCheck ) {
         xsGrid_t xsGrid;
 
         auto xsFuncByIndex = [&] ( double E, size_t index ) {
@@ -263,9 +274,9 @@ public:
     void setAWR(gpuFloatType_t AWR) { XS.AWR = AWR; }
     void setParticleType( ParticleType_t ParticleType ) { XS.ParticleType = ParticleType; }
 
-    ~CrossSectionBuilder(){};
+    ~CrossSectionBuilder_t(){};
 
-    CrossSection construct(){
+    CrossSection_t<HASHFUNCTION> construct(){
         return XS;
     }
 
@@ -292,10 +303,12 @@ public:
     }
 
 private:
-    CrossSection XS;
+    CrossSection_t<HASHFUNCTION> XS;
     static constexpr double maxError = 0.1;
     static const unsigned nBinsToCheck = 1000;
 };
+
+using CrossSectionBuilder = CrossSectionBuilder_t<>;
 
 } /* namespace MonteRay */
 

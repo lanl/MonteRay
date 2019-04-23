@@ -5,14 +5,15 @@
 
 namespace MonteRay {
 
-class CrossSectionList : public Managed {
+template< typename HASHFUNCTION = FasterHash >
+class CrossSectionList_t : public Managed {
 public:
-    CrossSectionList(){};
+    CrossSectionList_t(){};
 
-    ~CrossSectionList(){};
+    ~CrossSectionList_t(){};
 
-    void add( CrossSection xs ) {
-        CrossSection* ptr = getXSByZAID( xs.ZAID() );
+    void add( CrossSection_t<HASHFUNCTION> xs ) {
+        CrossSection_t<HASHFUNCTION>* ptr = getXSByZAID( xs.ZAID() );
         if( ptr ) { return; }
 
         xs.setID( list_vec.size() );
@@ -22,8 +23,8 @@ public:
         list_size = list_vec.size();
     }
 
-    CUDA_CALLABLE_MEMBER CrossSection* getXSByZAID( int ZAID ) {
-        CrossSection* ptr = nullptr;
+    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>* getXSByZAID( int ZAID ) {
+        CrossSection_t<HASHFUNCTION>* ptr = nullptr;
         for( unsigned i = 0; i < size(); ++i ) {
             ptr = getXSPtr(i);
             if( ptr->ZAID() == ZAID ) {
@@ -36,17 +37,19 @@ public:
 
     CUDA_CALLABLE_MEMBER int size() const { return list_size; }
 
-    CUDA_CALLABLE_MEMBER CrossSection* getListPtr() { return list; }
-    CUDA_CALLABLE_MEMBER CrossSection& getXS(int i) { return list[i]; }
-    CUDA_CALLABLE_MEMBER CrossSection* getXSPtr(int i) { return &(list[i]); }
+    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>* getListPtr() { return list; }
+    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>& getXS(int i) { return list[i]; }
+    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>* getXSPtr(int i) { return &(list[i]); }
 
 private:
 
-    managed_vector<CrossSection> list_vec;
+    managed_vector<CrossSection_t<HASHFUNCTION>> list_vec;
 
     int list_size = 0;
-    CrossSection* list = nullptr;
+    CrossSection_t<HASHFUNCTION>* list = nullptr;
 };
+
+using CrossSectionList = CrossSectionList_t<>;
 
 } /* namespace MonteRay */
 

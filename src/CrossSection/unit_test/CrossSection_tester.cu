@@ -175,12 +175,28 @@ SUITE( CrossSection_tester ) {
         value[0] = totalXS;
     }
 
+    CUDA_CALLABLE_KERNEL kernelTotalXSByIndex( CrossSection* xs, gpuFloatType_t* value, size_t i) {
+        gpuFloatType_t totalXS = xs->getTotalXSByIndex(i);
+        value[0] = totalXS;
+    }
+
+    CUDA_CALLABLE_KERNEL kernelGetIndex( CrossSection* xs, size_t* value, gpuFloatType_t E) {
+        size_t index = xs->getIndex(E);
+        value[0] = index;
+    }
+
     TEST( Test_U235_on_GPU ) {
+        managed_vector<size_t> index_value;
+        index_value.push_back( 0 );
+
         managed_vector<int> size_value;
         size_value.push_back( 0 );
 
         managed_vector<gpuFloatType_t> xs_value;
         xs_value.push_back( 0.0 );
+
+        managed_vector<gpuFloatType_t> xsbyIndex_value;
+        xsbyIndex_value.push_back( 0.0 );
 
         CrossSection* XS = new CrossSection;
 
@@ -205,7 +221,39 @@ SUITE( CrossSection_tester ) {
 #else
         kernelTotalXS( XS, xs_value.data(), energy );
 #endif
+
+        CHECK_CLOSE( 7.14769f, XS->getTotalXS(energy), 1e-5);
         CHECK_CLOSE( 7.14769f, xs_value[0], 1e-5);
+
+#ifdef __CUDACC__
+        kernelGetIndex<<<1,1>>>( XS, index_value.data(), energy );
+        cudaDeviceSynchronize();
+#else
+        kernelGetIndex( XS, index_value.data(), energy );
+#endif
+
+        CHECK_EQUAL( 76420, index_value[0] );
+        CHECK_EQUAL( 76420, XS->getIndex(energy) );
+
+#ifdef __CUDACC__
+        kernelTotalXSByIndex<<<1,1>>>( XS, xsbyIndex_value.data(), index_value[0] );
+        cudaDeviceSynchronize();
+#else
+        kernelTotalXSByIndex( XS, xsbyIndex_value.data(),  XS->getIndex(energy) );
+#endif
+
+        CHECK_CLOSE( 7.14769f, XS->getTotalXSByIndex(XS->getIndex(energy)), 1e-5);
+        CHECK_CLOSE( 7.14769f, xsbyIndex_value[0], 1e-5);
+
+#ifdef __CUDACC__
+        kernelTotalXSByIndex<<<1,1>>>( XS, xsbyIndex_value.data(), index_value[0]+1 );
+        cudaDeviceSynchronize();
+#else
+        kernelTotalXSByIndex( XS, xsbyIndex_value.data(),  XS->getIndex(energy)+1 );
+#endif
+
+        CHECK_CLOSE( 7.28222f, XS->getTotalXSByIndex(XS->getIndex(energy)+1), 1e-5);
+        CHECK_CLOSE( 7.28222f, xsbyIndex_value[0], 1e-5);
 
         delete XS;
     }
@@ -304,11 +352,11 @@ SUITE( CrossSection_tester ) {
 
 SUITE( CrossSection_speed_tester ) {
 
-    template<typename EXECUTION_POLICY>
+    template<typename EXECUTION_POLICY, typename HASHFUNCTION = FasterHash>
     void transformEnergyToXS( EXECUTION_POLICY policy,
                               managed_vector<gpuFloatType_t>& energies,
                               managed_vector<gpuFloatType_t>& results,
-                              CrossSection* xs ) {
+                              CrossSection_t<HASHFUNCTION>* xs ) {
         auto calcXS = [=]  CUDA_CALLABLE_MEMBER (gpuFloatType_t E) { return xs->getTotalXS( E ); };
 
 #ifdef __CUDACC__
@@ -321,11 +369,11 @@ SUITE( CrossSection_speed_tester ) {
 
     }
 
-    template<typename EXECUTION_POLICY>
+    template<typename EXECUTION_POLICY, typename HASHFUNCTION = FasterHash>
     void transformEnergyToXSViaHash( EXECUTION_POLICY policy,
             managed_vector<gpuFloatType_t>& energies,
             managed_vector<gpuFloatType_t>& results,
-            CrossSection* xs ) {
+            CrossSection_t<HASHFUNCTION>* xs ) {
         auto calcXS = [=]  CUDA_CALLABLE_MEMBER (gpuFloatType_t E) { return xs->getTotalXSviaHash( E ); };
 
 #ifdef __CUDACC__
@@ -474,6 +522,11 @@ SUITE( CrossSection_speed_tester ) {
          for( unsigned i = 0; i < energies.size(); ++i ){
              gpuFloatType_t percent_diff = (ref_xsecs[i] - xsecs[i] ) / ref_xsecs[i];
              CHECK_CLOSE(0.0, percent_diff, 1e-5 );
+
+             // only report one error
+             if( std::abs( percent_diff) > 1e-5  ) {
+                 break;
+             }
          }
 
          delete xs;
@@ -547,10 +600,271 @@ SUITE( CrossSection_speed_tester ) {
          for( unsigned i = 0; i < energies.size(); ++i ){
              gpuFloatType_t percent_diff = (ref_xsecs[i] - xsecs[i] ) / ref_xsecs[i];
              CHECK_CLOSE(0.0, percent_diff, 1e-5 );
+
+             // only report one error
+             if( std::abs( percent_diff) > 1e-5  ) {
+                 break;
+             }
          }
 
          delete xs;
      }
+
+    class testLog2Hash {
+
+    public:
+
+        CUDA_CALLABLE_MEMBER
+        static size_t hashFunction(const double value) {
+            // For double
+            // shifts the bits and returns binary equivalent integer
+            //std::cout << "Debug -- Calling hashFunction(double)\n";
+
+            MONTERAY_ASSERT_MSG( value >= 0.0, "Negative values are not allowed.");
+
+            std::uint64_t i = (( std::log2(value)+40.0)*100.0);
+            return i;
+        }
+
+        CUDA_CALLABLE_MEMBER
+        static size_t hashFunction(const float value) {
+            // For float
+            // shifts the bits and returns binary equivalent integer
+            //std::cout << "Debug -- Calling hashFunction(float)\n";
+
+            MONTERAY_ASSERT_MSG( value >= 0.0f, "Negative values are not allowed.");
+
+            std::uint64_t i = (( std::log2(value)+40.0f)*100.0f);
+            return i;
+        }
+
+        template < typename TV, typename std::enable_if< sizeof(TV) == 8 >::type* = nullptr >
+        CUDA_CALLABLE_MEMBER
+        static
+        TV invHashFunction( const size_t index, const size_t minIndex = 0 ) {
+            //std::cout << "Debug -- Calling invHashFunction(index)->double\n";
+
+            TV value = std::exp2( ((index + minIndex) / 100.0 ) - 40.0 );
+            return value;
+        }
+
+        template < typename TV, typename std::enable_if< sizeof(TV) == 4 >::type* = nullptr >
+        CUDA_CALLABLE_MEMBER
+        static
+        TV invHashFunction( const size_t index, const size_t minIndex = 0 ) {
+            //std::cout << "Debug -- Calling invHashFunction(index)->float\n";
+
+            TV value = std::exp2( ((index + minIndex) / 100.0f ) - 40.0f );
+            return value;
+        }
+
+    };
+
+    TEST( hashlog2_lookup_vs_standard_lookup ) {
+          // 1e7 lookups =  0.4806 seconds (release) - Binary Lookup CPU
+          // 1e7 lookups =  0.02139 seconds (release) - Binary Lookup GPU
+
+          managed_vector<gpuFloatType_t> ref_xsecs;
+          managed_vector<gpuFloatType_t> xsecs;
+          managed_vector<gpuFloatType_t> energies;
+          unsigned nEnergies = 10000000;
+          energies.resize( nEnergies );
+          xsecs.resize( nEnergies );
+          ref_xsecs.resize( nEnergies );
+
+          typedef std::mersenne_twister_engine<std::uint_fast32_t, 32, 624, 397, 31,
+                                       0x9908b0df, 11,
+                                       0xffffffff, 7,
+                                       0x9d2c5680, 15,
+                                       0xefc60000, 18, 1812433253> mt19937;
+
+          mt19937::result_type seed = 1001;
+          auto real_rand = std::bind(std::uniform_real_distribution<gpuFloatType_t>(0,1),
+                  mt19937(seed));
+
+
+          for( unsigned i = 0; i < nEnergies; ++i ) {
+              energies[i] = real_rand();
+          }
+
+          CrossSectionBuilder_t<testLog2Hash> xsbuilder;
+          xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
+
+          CrossSection_t<testLog2Hash>* xs = new CrossSection_t<testLog2Hash>;
+          *xs = xsbuilder.construct();
+ //         cudaDeviceSynchronize();
+ //
+ //        // auto calcXS = [=]  __host__ __device__ (double E) { return xs->getTotalXS( E ); };
+ //
+ //         std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test on GPU\n";
+ //         cpuTimer timer;
+ //         timer.start();
+ //         thrust::sort( thrust::device, energies.data(), energies.data()+energies.size() );
+ //         //kernelAllTotalXS<<<1024,512>>>( xs, xsecs.data(), energies.data(), energies.size() );
+ //         transformEnergyToXS( thrust::device, energies, xsecs, xs );
+ //
+ //         cudaDeviceSynchronize();
+ //         timer.stop();
+ //         std::cout << "Debug: Time to lookup " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
+ //                 " seconds\n";
+
+ #ifdef __CUDACC__
+         auto policy = thrust::host;
+ #else
+         auto policy = false;
+ #endif
+
+          transformEnergyToXS( policy, energies, ref_xsecs, xs );
+
+          std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test on CPU via log2 hash lookup\n";
+          cpuTimer timer;
+          timer.start();
+          transformEnergyToXSViaHash( policy, energies, xsecs, xs );
+          timer.stop();
+          std::cout << "Debug: Time to perform hash log2 lookup of " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
+                       " seconds\n";
+          std::cout << "Debug: Complete\n";
+
+          for( unsigned i = 0; i < energies.size(); ++i ){
+              gpuFloatType_t percent_diff = (ref_xsecs[i] - xsecs[i] ) / ref_xsecs[i];
+              CHECK_CLOSE(0.0, percent_diff, 1e-5 );
+
+              // only report one error
+              if( std::abs( percent_diff) > 1e-5  ) {
+                  break;
+              }
+          }
+
+          delete xs;
+      }
+
+    class testLogHash {
+
+    public:
+
+        CUDA_CALLABLE_MEMBER
+        static size_t hashFunction(const double value) {
+            // For double
+            // shifts the bits and returns binary equivalent integer
+            //std::cout << "Debug -- Calling hashFunction(double)\n";
+
+            MONTERAY_ASSERT_MSG( value >= 0.0, "Negative values are not allowed.");
+
+            std::uint64_t i = (( std::log(value)+30.0)*200.0);
+            return i;
+        }
+
+        CUDA_CALLABLE_MEMBER
+        static size_t hashFunction(const float value) {
+            // For float
+            // shifts the bits and returns binary equivalent integer
+            //std::cout << "Debug -- Calling hashFunction(float)\n";
+
+            MONTERAY_ASSERT_MSG( value >= 0.0f, "Negative values are not allowed.");
+
+            std::uint64_t i = (( std::log(value)+30.0f)*200.0f);
+            return i;
+        }
+
+        template < typename TV, typename std::enable_if< sizeof(TV) == 8 >::type* = nullptr >
+        CUDA_CALLABLE_MEMBER
+        static
+        TV invHashFunction( const size_t index, const size_t minIndex = 0 ) {
+            //std::cout << "Debug -- Calling invHashFunction(index)->double\n";
+
+            TV value = std::exp( ((index + minIndex) / 200.0 ) - 30.0 );
+            return value;
+        }
+
+        template < typename TV, typename std::enable_if< sizeof(TV) == 4 >::type* = nullptr >
+        CUDA_CALLABLE_MEMBER
+        static
+        TV invHashFunction( const size_t index, const size_t minIndex = 0 ) {
+            //std::cout << "Debug -- Calling invHashFunction(index)->float\n";
+
+            TV value = std::exp( ((index + minIndex) / 200.0f ) - 30.0f );
+            return value;
+        }
+
+    };
+
+    TEST( hashlog_lookup_vs_standard_lookup ) {
+          // 1e7 lookups =  0.4806 seconds (release) - Binary Lookup CPU
+          // 1e7 lookups =  0.02139 seconds (release) - Binary Lookup GPU
+
+          managed_vector<gpuFloatType_t> ref_xsecs;
+          managed_vector<gpuFloatType_t> xsecs;
+          managed_vector<gpuFloatType_t> energies;
+          unsigned nEnergies = 10000000;
+          energies.resize( nEnergies );
+          xsecs.resize( nEnergies );
+          ref_xsecs.resize( nEnergies );
+
+          typedef std::mersenne_twister_engine<std::uint_fast32_t, 32, 624, 397, 31,
+                                       0x9908b0df, 11,
+                                       0xffffffff, 7,
+                                       0x9d2c5680, 15,
+                                       0xefc60000, 18, 1812433253> mt19937;
+
+          mt19937::result_type seed = 1001;
+          auto real_rand = std::bind(std::uniform_real_distribution<gpuFloatType_t>(0,1),
+                  mt19937(seed));
+
+
+          for( unsigned i = 0; i < nEnergies; ++i ) {
+              energies[i] = real_rand();
+          }
+
+          CrossSectionBuilder_t<testLogHash> xsbuilder;
+          xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
+
+          CrossSection_t<testLogHash>* xs = new CrossSection_t<testLogHash>;
+          *xs = xsbuilder.construct();
+ //         cudaDeviceSynchronize();
+ //
+ //        // auto calcXS = [=]  __host__ __device__ (double E) { return xs->getTotalXS( E ); };
+ //
+ //         std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test on GPU\n";
+ //         cpuTimer timer;
+ //         timer.start();
+ //         thrust::sort( thrust::device, energies.data(), energies.data()+energies.size() );
+ //         //kernelAllTotalXS<<<1024,512>>>( xs, xsecs.data(), energies.data(), energies.size() );
+ //         transformEnergyToXS( thrust::device, energies, xsecs, xs );
+ //
+ //         cudaDeviceSynchronize();
+ //         timer.stop();
+ //         std::cout << "Debug: Time to lookup " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
+ //                 " seconds\n";
+
+ #ifdef __CUDACC__
+         auto policy = thrust::host;
+ #else
+         auto policy = false;
+ #endif
+
+          transformEnergyToXS( policy, energies, ref_xsecs, xs );
+
+          std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test on CPU via log hash lookup\n";
+          cpuTimer timer;
+          timer.start();
+          transformEnergyToXSViaHash( policy, energies, xsecs, xs );
+          timer.stop();
+          std::cout << "Debug: Time to perform hash log lookup of " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
+                       " seconds\n";
+          std::cout << "Debug: Complete\n";
+
+          for( unsigned i = 0; i < energies.size(); ++i ){
+              gpuFloatType_t percent_diff = (ref_xsecs[i] - xsecs[i] ) / ref_xsecs[i];
+              CHECK_CLOSE(0.0, percent_diff, 1e-5 );
+
+              // only report one error
+              if( std::abs( percent_diff) > 1e-5  ) {
+                  break;
+              }
+          }
+
+          delete xs;
+      }
 
 }
 

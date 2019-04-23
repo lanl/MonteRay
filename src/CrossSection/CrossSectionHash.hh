@@ -2,59 +2,97 @@
 #define CROSSSECTIONHASH_HH_
 
 #include <bitset>
+#include <vector>
 #include <algorithm>
+#include <cmath>
+#include <stdexcept>
 #include <iostream>
+#include <numeric>
+#include <cstring>
 
 #include "MonteRayTypes.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRayAssert.hh"
 #include "ManagedAllocator.hh"
+#include "FasterHash.hh"
+#include "BinarySearch.hh"
+
+#ifdef __CUDACC__
+#include <thrust/device_vector.h>
+#include <thrust/binary_search.h>
+#endif
 
 namespace MonteRay {
 
-template<typename T = gpuFloatType_t>
-class CrossSectionHash : public Managed {
+///\brief Provides a fast hash lookup method for an energy grid.
+
+///\details Provides a fast hash lookup method for a positive energy grid over 1e-11 to 1e3.
+///         Intended for energy grids only.
+template<typename T = gpuFloatType_t, typename HASHTYPE = FasterHash, class Allocator = managed_allocator<size_t> >
+class CrossSectionHash_t : public Managed {
 public:
-    typedef size_t Index_t;
-    typedef T NuclearData_t;
-    typedef managed_vector<NuclearData_t> NuclearDataVec_t;
-    typedef managed_vector< Index_t > IndexVec_t;
+    using Index_t = size_t;
+    using NuclearData_t = T;
+    using IndexVec_t = std::vector< Index_t, Allocator >;
 
-    CrossSectionHash(NuclearDataVec_t& XValues ) :
-        minValue( invHashFunction<T>(0) ),
-        maxValue( invHashFunction<T>(numIndices-1) )
+    template<typename ENERGYBINCONTAINER_T>
+    CrossSectionHash_t(ENERGYBINCONTAINER_T& XValues ) :
+        minValue( invHashFunction(0) ),
+        maxValue( invHashFunction(numIndices-1) )
     {
-        //std::cout << "Debug: CrossSectionHash::ctor - numIndices = " << numIndices << "\n";
-        BinLo_vec.reserve( numIndices );
-
-        if( ! XValues.empty() ) {
-            minTable = XValues.front();
-            maxTable = XValues.back();
-            tableSize = XValues.size();
-
-            for( Index_t i=0; i<numIndices; ++i){
-                T energy = invHashFunction<T>(i);
-                if( ! std::isnormal(energy) ) {
-                    throw std::runtime_error("CrossSectionHash::Constructor -- energy in bin structure is not a normal value.");
-                }
-
-                Index_t index = std::distance(XValues.begin(),std::upper_bound(XValues.begin(),XValues.end(),energy));
-                if ( index > 0 ) --index;
-
-                BinLo_vec.push_back( index );
-            }
-            BinLo = BinLo_vec.data();
-            BinLo_size = BinLo_vec.size();
+        if( XValues.empty() ) {
+#ifndef __CUDA_ARCH__
+            throw std::runtime_error("CrossSectionHash_t::CrossSectionHash_t(XValues) -- XValues can not be empty");
+#endif
         }
-    };
-    ~CrossSectionHash() = default;
 
-    CUDA_CALLABLE_MEMBER
-    Index_t size() const { return numIndices;}
+        minTable = XValues.front();
+        maxTable = XValues.back();
+        tableSize = XValues.size();
+
+        checkValidEnergyBins(XValues);
+
+        BinLo_vec.resize( numIndices );
+        BinLo = BinLo_vec.data();
+        BinLo_size = BinLo_vec.size();
+
+        // using std::iota and std::transform to fill in the hash table
+        // using iota instead of a traditional for loop will incur some additional
+        // memory access overhead.   This is a tradeoff some that transform can easily
+        // be used through thrust.
+
+        const auto begin = XValues.data();
+        const auto end = begin + XValues.size();
+
+        // functor to convert integer bin numbers to energy then to XValue index
+         auto getXValuesIndices = [=] (Index_t i ) {
+
+             // convert bin i value to energy  (goes from 1e-11 to 1e3)
+             T energy = HASHTYPE::template invHashFunction<T>(i, minIndex );
+             MONTERAY_ASSERT_MSG(std::isnormal(energy), "Energy in hash bin structure is not a normal value." );
+
+             // perform lowerbound search for energy within XValues
+             Index_t index = MonteRay::distance(begin,MonteRay::upper_bound(begin,end,energy));
+             if ( index > 0 ) --index;
+
+             return index;
+         };
+
+        // fill BinLo_vec with the index of the bin with 0, 1, 2, ... NBins  (use sequence in thrust)
+        std::iota(BinLo, BinLo + BinLo_size, 0);
+
+        // lookup the lowerbound index for each bin  i
+        std::transform( BinLo, BinLo + BinLo_size, BinLo, getXValuesIndices );
+
+    }
+
+    ~CrossSectionHash_t() = default;
+
+    CUDA_CALLABLE_MEMBER Index_t size() const { return numIndices;}
 
     CUDA_CALLABLE_MEMBER
     Index_t getHashIndex(const NuclearData_t value ) const {
-        Index_t index = hashFunction<T>(value);
+        Index_t index = hashFunction(value);
         if( index < minIndex ) {
             return 0;
         }
@@ -65,101 +103,109 @@ public:
         return index;
     }
 
-    std::pair<int,int> getIndex( const NuclearData_t value ) const {
-        int lower;
-        int upper;
+    std::pair<Index_t,Index_t> getIndex( const NuclearData_t value ) const {
+        Index_t lower;
+        Index_t upper;
         getIndex(lower, upper, value);
         return std::make_pair( lower, upper);
     }
 
     CUDA_CALLABLE_MEMBER
-    void getIndex( int& lowerBin, int& upperBin, const NuclearData_t value ) const {
-        //std::cout << "Debug:  getIndex -- value=" << value << " minTable=" << minTable << "\n";
+    void getIndex( Index_t& lowerBin, Index_t& upperBin, const NuclearData_t value ) const {
         if( value <= minTable ) { lowerBin = 0; upperBin=0; return; }
-        if( value > maxTable ) { lowerBin =  tableSize-1; upperBin= tableSize-1; return; }
+        if( value > maxTable ) { lowerBin =  tableSize-1; upperBin= tableSize; return; }
 
         Index_t index = getHashIndex(value);
-        MONTERAY_ASSERT( index < BinLo_size );
 
+        // get lower cross-section bin
         lowerBin = getBinLo( index );
-        if( lowerBin >= tableSize - 2 ) { upperBin= tableSize-1; return;  }
 
+        // value is at the end of the hash grid
+        if( index == size() - 1 ) { upperBin = tableSize; return; }
+
+        // get upper cross-section bin
         upperBin = getBinLo( index + 1 ) + 1;
+        MONTERAY_ASSERT_MSG( upperBin <= tableSize, "cross-section table upper bound index is greater than the cross-section table size" );
 
         return;
     }
 
     CUDA_CALLABLE_MEMBER
     Index_t getBinLo( const Index_t index ) const {
-        if( index >= numIndices ) {
-            printf( "Debug: CrossSectionHash::getBinLo_vec -- index >= numIndices,  index=%u  numIndices=%u\n",
-                    index, numIndices);
-        }
-        MONTERAY_ASSERT( index < numIndices );
-        return *(BinLo + index);
+        MONTERAY_ASSERT_MSG( index < numIndices, "hash index is greater than the size of the hash table" );
+        return BinLo[ index ];
     }
 
-private:
+    CUDA_CALLABLE_MEMBER
+    static Index_t hashFunction(const double value) {
+        return HASHTYPE::hashFunction( value );
+    }
+
+    CUDA_CALLABLE_MEMBER
+    static Index_t hashFunction(const float value) {
+        return HASHTYPE::hashFunction( value );
+    }
+
+    size_t bytesize() const {
+        size_t total = 0;
+        total += sizeof( *this );
+        total += sizeof( Index_t ) * BinLo_size;
+        return total;
+    }
+
+    CUDA_CALLABLE_MEMBER Index_t getMinIndex() const { return minIndex; }
+    CUDA_CALLABLE_MEMBER Index_t getMaxIndex() const { return maxIndex; }
+    CUDA_CALLABLE_MEMBER Index_t getNumIndices() const { return numIndices; }
+    CUDA_CALLABLE_MEMBER NuclearData_t getMinValue() const { return minValue; }
+    CUDA_CALLABLE_MEMBER NuclearData_t getMaxValue() const { return maxValue; }
+    CUDA_CALLABLE_MEMBER NuclearData_t getTableSize() const { return tableSize; }
+
+//private:
     static constexpr NuclearData_t targetMinValue = 1.0e-11; // min. value of the table
     static constexpr NuclearData_t targetMaxValue = 1.0e+3;  // max. value of the table
 
-public:
-
-    template < typename TV = T, typename std::enable_if< 4 < sizeof(TV) >::type* = nullptr >
-    CUDA_CALLABLE_MEMBER
-    static int hashFunction(const TV value) {
-        // For double
-        // shifts the bits and returns binary equivalent integer
-        //std::cout << "Debug -- Calling hashFunction(double)\n";
-
-        int i = *((uint64_t*)(void*)&value) >> 45;
-        return i;
-    }
-
-    template < typename TV = T, typename std::enable_if< sizeof(TV) < 5 >::type* = nullptr >
-    CUDA_CALLABLE_MEMBER
-    static int hashFunction(const TV value) {
-        // For float
-        // shifts the bits and returns binary equivalent integer
-        //std::cout << "Debug -- Calling hashFunction(float)\n";
-
-        int i = *((uint32_t*)(void*)&value) >> 16;
-        return i;
-    }
-
-    const Index_t minIndex = hashFunction<T>( targetMinValue );
-    const Index_t maxIndex = hashFunction<T>( targetMaxValue );
+    const Index_t minIndex = hashFunction( targetMinValue );
+    const Index_t maxIndex = hashFunction( targetMaxValue );
     const Index_t numIndices = maxIndex-minIndex+1;
-
-    template < typename TV = T, typename std::enable_if< 4 < sizeof(TV) >::type* = nullptr >
-    CUDA_CALLABLE_MEMBER
-    TV invHashFunction( const Index_t index ) const {
-        //std::cout << "Debug -- Calling invHashFunction(index)->double\n";
-        Index_t value = (index + minIndex) << 45 ;
-        return *((TV*)(void*)(&value)) ;
-    }
-
-    template < typename TV = T, typename std::enable_if< sizeof(TV) < 5 >::type* = nullptr >
-    CUDA_CALLABLE_MEMBER
-    TV invHashFunction( const Index_t index ) const {
-        //std::cout << "Debug -- Calling invHashFunction(index)->float\n";
-        Index_t value = (index + minIndex) << 16 ;
-        return *((TV*)(void*)(&value)) ;
-    }
 
     const NuclearData_t minValue = targetMinValue;
     const NuclearData_t maxValue = targetMaxValue;
 
     NuclearData_t minTable;
     NuclearData_t maxTable;
-    unsigned tableSize;
+    Index_t tableSize;
 
-private:
     IndexVec_t BinLo_vec;
     Index_t* BinLo = nullptr;
     int BinLo_size = 0;
 
+public:
+
+    CUDA_CALLABLE_MEMBER
+    T invHashFunction( const Index_t index ) const {
+        T value = HASHTYPE::template invHashFunction<T>(index, minIndex );
+
+#ifndef __CUDA_ARCH__
+        MONTERAY_ASSERT_MSG(std::isnormal(value), "Value at hash bin is not a normal value." );
+#endif
+        return value;
+    }
+
+
+//private:
+
+    template<typename ENERGYBINCONTAINER_T>
+    void checkValidEnergyBins( const ENERGYBINCONTAINER_T& energyBins ) const {
+        T previous_value = 0.0;
+        for( auto itr = energyBins.begin(); itr != energyBins.end(); ++itr ){
+            MONTERAY_ASSERT_MSG( *itr >= previous_value, "Values are not ascending" );
+            previous_value = *itr;
+        }
+    }
+
 };
+
+using CrossSectionHash = CrossSectionHash_t<>;
 
 } /* namespace MonteRay */
 

@@ -84,6 +84,9 @@ bool operator!=(const managed_allocator<T1>& lhs, const managed_allocator<T2>& r
 namespace MonteRay {
 class Managed {};
 }
+
+template<class T>
+using managed_allocator = std::allocator<T>;
 #endif // end __CUDACC__
 
 #include <vector>
