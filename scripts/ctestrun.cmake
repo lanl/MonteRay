@@ -31,14 +31,16 @@ function( BuildAndTest SubProjectName )
     #--------------------------------
     # only want 1 update file for now since everything points to same repository
     if( mainProject )
-        ctest_update( RETURN_VALUE update_result)
-        if( update_result EQUAL -1 )
-           if( CIType STREQUAL HandCI )
-              message( WARNING "ctestrun.cmake::ctest_update() - Repository update saw some possible issues. Look at (git pull) message output right before this message, or Server not responding" )
-           else()
-              message( FATAL_ERROR "Repository update error: Server not responding" )
-           endif()
-        endif()
+       if( NOT (CIType STREQUAL PullRequestCI) )
+          ctest_update( RETURN_VALUE update_result)
+          if( update_result EQUAL -1 )
+             if( CIType STREQUAL HandCI )
+                message( WARNING "ctestrun.cmake::ctest_update() - Repository update saw some possible issues. Look at (git pull) message output right before this message, or Server not responding" )
+             else()
+                message( FATAL_ERROR "Repository update error: Server not responding" )
+             endif()
+          endif()
+       endif()
     endif()
 
     # option setting of UnityBuild in PlatformInfo.cmake
@@ -142,14 +144,16 @@ math( EXPR MaxSafeTestTime "${TenHours} - ${TenMinutes}" )
 #######################################################################
 # Repository
 #--------------------------------
-include( UseGit )
-initializeRepository()
+if( NOT (CIType STREQUAL PullRequestCI) ) 
+  include( UseGit )
+  initializeRepository()
 
-if( CTEST_CHECKOUT_COMMAND AND CIType )
-   message( STATUS "ctestrun.cmake - CTEST_CHECKOUT_COMMAND  = [${CTEST_CHECKOUT_COMMAND}]" )
-endif()
-if( CTEST_GIT_UPDATE_CUSTOM AND CIType )
-   message( STATUS "ctestrun.cmake - CTEST_GIT_UPDATE_CUSTOM = [${CTEST_GIT_UPDATE_CUSTOM}]" )
+  if( CTEST_CHECKOUT_COMMAND AND CIType )
+     message( STATUS "ctestrun.cmake - CTEST_CHECKOUT_COMMAND  = [${CTEST_CHECKOUT_COMMAND}]" )
+  endif()
+  if( CTEST_GIT_UPDATE_CUSTOM AND CIType )
+     message( STATUS "ctestrun.cmake - CTEST_GIT_UPDATE_CUSTOM = [${CTEST_GIT_UPDATE_CUSTOM}]" )
+  endif()
 endif()
 
 #######################################################################
