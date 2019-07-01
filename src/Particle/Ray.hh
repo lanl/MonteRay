@@ -20,7 +20,7 @@ using DetectorIndex_t = unsigned;
 template< unsigned N = 1 >
 class Ray_t{
 public:
-    CUDA_CALLABLE_MEMBER Ray_t(){}
+    constexpr Ray_t(){}
 
     template< typename PARTICLE_T,
               unsigned N_ = N,
@@ -87,45 +87,45 @@ public:
     DetectorIndex_t detectorIndex = 0;  // for next-event estimator
     ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
 
-    CUDA_CALLABLE_MEMBER constexpr static unsigned getN(void ) {
+    constexpr unsigned static getN(void ) {
         return N;
     }
 
-    CUDA_CALLABLE_MEMBER CollisionPosition_t getPosition() {
+    constexpr CollisionPosition_t getPosition() {
         return pos;
     }
 
-    CUDA_CALLABLE_MEMBER CollisionDirection_t getDirection() {
+    constexpr CollisionDirection_t getDirection() {
         return dir;
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getEnergy(unsigned index = 0) const {
+    constexpr gpuFloatType_t getEnergy(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return energy[index];
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getWeight(unsigned index = 0) const {
+    constexpr gpuFloatType_t getWeight(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return weight[index];
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getTime() {
+    constexpr gpuFloatType_t getTime() {
         return time;
     }
 
-    CUDA_CALLABLE_MEMBER unsigned getIndex() const {
+    constexpr unsigned getIndex() const {
         return index;
     }
 
-    CUDA_CALLABLE_MEMBER DetectorIndex_t getDetectorIndex() const {
+    constexpr DetectorIndex_t getDetectorIndex() const {
         return detectorIndex;
     }
 
-    CUDA_CALLABLE_MEMBER ParticleType_t getParticleType() const {
+    constexpr ParticleType_t getParticleType() const {
         return particleType;
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t speed(unsigned i=0) const {
+    constexpr gpuFloatType_t speed(unsigned i=0) const {
         if( particleType == photon ) {
             return speed_of_light;
         } else {
@@ -198,8 +198,8 @@ public:
     }
 };
 
-typedef Ray_t<3> PointDetRay_t;
-typedef Ray_t<1> ParticleRay_t;
+using PointDetRay_t = Ray_t<3>; 
+using ParticleRay_t = Ray_t<1>; 
 
 } // end namespace;
 
