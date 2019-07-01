@@ -63,8 +63,8 @@ SUITE( shared_next_event_ray_list_tester ){
                 std::cout << " u = " << particle.dir[0];
                 std::cout << " v = " << particle.dir[1];
                 std::cout << " w = " << particle.dir[2];
-                std::cout << " E = " << particle.energy;
-                std::cout << " W = " << particle.weight;
+                std::cout << " E = " << particle.energy[0];
+                std::cout << " W = " << particle.weight[0];
                 std::cout << " index = " << particle.index;
                 std::cout << "\n";
             }
@@ -81,8 +81,8 @@ SUITE( shared_next_event_ray_list_tester ){
                 std::cout << " u = " << particle.dir[0];
                 std::cout << " v = " << particle.dir[1];
                 std::cout << " w = " << particle.dir[2];
-                std::cout << " E = " << particle.energy;
-                std::cout << " W = " << particle.weight;
+                std::cout << " E = " << particle.energy[0];
+                std::cout << " W = " << particle.weight[0];
                 std::cout << " index = " << particle.index;
                 std::cout << "\n";
             }
