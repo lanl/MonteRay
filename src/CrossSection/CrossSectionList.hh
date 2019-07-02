@@ -8,45 +8,38 @@ namespace MonteRay {
 template< typename HASHFUNCTION = FasterHash >
 class CrossSectionList_t : public Managed {
 public:
-    CrossSectionList_t(){};
+    using CrossSection = CrossSection_t<HASHFUNCTION>;
 
-    ~CrossSectionList_t(){};
-
-    void add( CrossSection_t<HASHFUNCTION> xs ) {
-        CrossSection_t<HASHFUNCTION>* ptr = getXSByZAID( xs.ZAID() );
-        if( ptr ) { return; }
-
-        xs.setID( list_vec.size() );
-        list_vec.push_back(xs);
-
-        list = list_vec.data();
-        list_size = list_vec.size();
+    CrossSectionList_t() = default;
+    CrossSectionList_t(const CrossSectionList_t&) = delete;
+    CrossSectionList_t(CrossSectionList_t&& other){
+      this->list_vec = std::move(other.list_vec);
+      this->list = other.list;
+      this->list_size = other.list_size;
     }
 
-    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>* getXSByZAID( int ZAID ) {
-        CrossSection_t<HASHFUNCTION>* ptr = nullptr;
-        for( unsigned i = 0; i < size(); ++i ) {
-            ptr = getXSPtr(i);
-            if( ptr->ZAID() == ZAID ) {
-                break;
-            }
-            ptr = nullptr;
-        }
-        return ptr;
+    void add( CrossSection xs ) {
+      auto checkZaid = [&] (const CrossSection& list_xs) { return xs.ZAID() == list_xs.ZAID(); };
+      auto xsLoc = std::find_if(list_vec.begin(), list_vec.end(), checkZaid);
+      if (xsLoc != list_vec.end()){ return; }
+
+      xs.setID( list_vec.size() );
+      list_vec.push_back(xs);
+
+      list = list_vec.data();
+      list_size = list_vec.size();
     }
 
-    CUDA_CALLABLE_MEMBER int size() const { return list_size; }
-
-    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>* getListPtr() { return list; }
-    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>& getXS(int i) { return list[i]; }
-    CUDA_CALLABLE_MEMBER CrossSection_t<HASHFUNCTION>* getXSPtr(int i) { return &(list[i]); }
+    constexpr int size() const { return list_size; }
+    constexpr CrossSection* getListPrtr() { return list; }
+    constexpr CrossSection& getXS(int i) { return list[i]; }
+    constexpr CrossSection* getXSPtr(int i) { return &(list[i]); }
 
 private:
 
-    managed_vector<CrossSection_t<HASHFUNCTION>> list_vec;
-
+    managed_vector<CrossSection> list_vec;
     int list_size = 0;
-    CrossSection_t<HASHFUNCTION>* list = nullptr;
+    CrossSection* list = nullptr;
 };
 
 using CrossSectionList = CrossSectionList_t<>;

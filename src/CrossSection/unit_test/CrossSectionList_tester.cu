@@ -48,19 +48,6 @@ SUITE( CrossSectionList_tester ) {
         CHECK_EQUAL( 4, value[0] );
      }
 
-    TEST( CrossSectionList_CPU_getXSByZAID ) {
-         std::vector<double> energies = {0, 1, 2, 3};
-         std::vector<double> xsecs = {4, 3, 2, 1};
-         int ZAID = 1001;
-
-         CrossSectionList xsList;
-         xsList.add(  CrossSectionBuilder( ZAID, energies, xsecs ).construct() );
-
-         CrossSection* pXS;
-         pXS = xsList.getXSByZAID( 1001 );
-         CHECK_EQUAL( 4, pXS->size() );
-      }
-
     TEST( CrossSectionList_CPU_add_same_XS_twice ) {
         std::vector<double> energies = {0, 1, 2, 3};
         std::vector<double> xsecs = {4, 3, 2, 1};

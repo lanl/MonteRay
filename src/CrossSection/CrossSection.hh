@@ -11,7 +11,6 @@
 #include "CrossSectionHash.hh"
 
 #include "BinarySearch.hh"
-#include "LinearSearch.hh"
 
 namespace MonteRay {
 
@@ -50,8 +49,7 @@ public:
         return *this;
     };
 
-    CrossSection_t(){
-    };
+    CrossSection_t() = default;
 
     ~CrossSection_t(){
         if( hash ) delete hash;
@@ -69,28 +67,20 @@ private:
 
 public:
     void setID(int ID ){ id = ID; }
-    CUDA_CALLABLE_MEMBER int getID() const { return id; }
-    CUDA_CALLABLE_MEMBER int ZAID() const { return ZA; }
-    CUDA_CALLABLE_MEMBER size_t size() const { return numPoints; }
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getEnergy( size_t i ) const { return *(energies+i); }
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getTotalXSByIndex( size_t i ) const { return *(totalXS+i); }
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getAWR() const { return AWR; }
-    CUDA_CALLABLE_MEMBER ParticleType_t getParticleType() const { return ParticleType; }
+    constexpr int getID() const { return id; }
+    constexpr int ZAID() const { return ZA; }
+    constexpr size_t size() const { return numPoints; }
+    constexpr gpuFloatType_t getEnergy( size_t i ) const { return *(energies+i); }
+    constexpr gpuFloatType_t getTotalXSByIndex( size_t i ) const { return *(totalXS+i); }
+    constexpr gpuFloatType_t getAWR() const { return AWR; }
+    constexpr ParticleType_t getParticleType() const { return ParticleType; }
 
 
-    CUDA_CALLABLE_MEMBER size_t getIndex( gpuFloatType_t E ) const {
-#ifndef __CUDA_ARCH__
-        // Binary lookup on CPU
-        return LowerBoundIndex(energies, 0U, numPoints, E );
-#else
-        // Linear lookup on GPU
-        return LowerBoundIndex(energies, 0U, numPoints, E );
-        //return LowerBoundIndexLinear(energies, 0, numPoints-1, E );
-#endif
+    constexpr size_t getIndex( gpuFloatType_t E ) const {
+      return LowerBoundIndex(energies, 0U, numPoints, E );
     }
 
-    CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getTotalXS(size_t i, gpuFloatType_t E ) const {
+    constexpr gpuFloatType_t getTotalXS(size_t i, gpuFloatType_t E ) const {
         gpuFloatType_t lowerXS =  getTotalXSByIndex(i);
         gpuFloatType_t lowerEnergy =  getEnergy(i);
 
@@ -113,14 +103,11 @@ public:
         return value;
     }
 
-    CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getTotalXS(gpuFloatType_t E ) const {
+    constexpr gpuFloatType_t getTotalXS(gpuFloatType_t E ) const {
         return getTotalXS( getIndex(E), E);
     }
 
-    CUDA_CALLABLE_MEMBER
-    gpuFloatType_t getTotalXSviaHash(gpuFloatType_t E ) const {
-
+    constexpr gpuFloatType_t getTotalXSviaHash(gpuFloatType_t E ) const {
         size_t lower, upper;
         hash->getIndex(lower, upper, E);
         size_t index = LowerBoundIndex( energies, lower, upper, E);
