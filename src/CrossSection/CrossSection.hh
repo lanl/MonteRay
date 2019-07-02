@@ -50,8 +50,7 @@ public:
         return *this;
     };
 
-    CrossSection_t(){
-    };
+    CrossSection_t() = default;
 
     ~CrossSection_t(){
         if( hash ) delete hash;
@@ -79,14 +78,7 @@ public:
 
 
     CUDA_CALLABLE_MEMBER size_t getIndex( gpuFloatType_t E ) const {
-#ifndef __CUDA_ARCH__
-        // Binary lookup on CPU
-        return LowerBoundIndex(energies, 0U, numPoints, E );
-#else
-        // Linear lookup on GPU
-        return LowerBoundIndex(energies, 0U, numPoints, E );
-        //return LowerBoundIndexLinear(energies, 0, numPoints-1, E );
-#endif
+      return LowerBoundIndex(energies, 0U, numPoints, E );
     }
 
     CUDA_CALLABLE_MEMBER
@@ -120,7 +112,6 @@ public:
 
     CUDA_CALLABLE_MEMBER
     gpuFloatType_t getTotalXSviaHash(gpuFloatType_t E ) const {
-
         size_t lower, upper;
         hash->getIndex(lower, upper, E);
         size_t index = LowerBoundIndex( energies, lower, upper, E);
