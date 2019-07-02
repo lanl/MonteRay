@@ -5,6 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <utility>
+#include <tuple>
 
 #include "MonteRayTypes.hh"
 
@@ -249,5 +250,17 @@ std::ostream& operator << ( std::ostream& os, const Vector3D<T>& arg){
     os << "( " << arg[0] << ", "<< arg[1] << ", "<< arg[2]<<" )";
     return os;
 }
+
+CUDA_CALLABLE_MEMBER 
+inline auto getDistanceDirection(
+        const MonteRay::Vector3D<gpuRayFloat_t>& pos,
+        const MonteRay::Vector3D<gpuRayFloat_t>& pos2) {
+    auto dir = pos2 - pos;
+    auto dist = dir.magnitude();
+    auto invDistance = static_cast<decltype(dist)>(1.0)/dist;
+    dir *= invDistance;
+    return std::make_tuple(dist, dir);
 }
+
+} /* namespace MonteRay */
 #endif /*VECTOR3D_HH_*/

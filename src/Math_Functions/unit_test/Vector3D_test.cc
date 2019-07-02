@@ -154,5 +154,106 @@ SUITE(Vector3D_TestOfMultiStream) {
     }
 }
 
+SUITE(Test_Vector3D_Math_Operations){
+    TEST( getDistanceDirection_PosU ) {
+        float expectedDistance = std::sqrt( 3.0f*3.0f );
+
+        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+        MonteRay::Vector3D<gpuRayFloat_t> pos2(3.0, 0.0, 0.0);
+
+        auto distanceAndDirection = getDistanceDirection(pos, pos2);
+        auto& distance = std::get<0>(distanceAndDirection);
+        auto& dir = std::get<1>(distanceAndDirection);
+
+        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
+        CHECK_CLOSE( 1.0, dir[0], 1e-6 );
+    }
+
+    TEST( getDistanceDirection_NegU ) {
+        float expectedDistance = std::sqrt( 3.0f*3.0f );
+
+        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+        MonteRay::Vector3D<gpuRayFloat_t> pos2(-3.0, 0.0, 0.0);
+
+        auto distanceAndDirection = getDistanceDirection(pos, pos2);
+        auto& distance = std::get<0>(distanceAndDirection);
+        auto& dir = std::get<1>(distanceAndDirection);
+ 
+        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
+        CHECK_CLOSE( -1.0, dir[0], 1e-6 );
+    }
+
+    TEST( getDistanceDirection_PosV ) {
+        float expectedDistance = std::sqrt( 3.0f*3.0f );
+
+        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+        MonteRay::Vector3D<gpuRayFloat_t> pos2(0.0, 3.0, 0.0);
+
+        auto distanceAndDirection = getDistanceDirection(pos, pos2);
+        auto& distance = std::get<0>(distanceAndDirection);
+        auto& dir = std::get<1>(distanceAndDirection);
+
+        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
+        CHECK_CLOSE( 1.0, dir[1], 1e-6 );
+    }
+
+    TEST( getDistanceDirection_NegV ) {
+        float expectedDistance = std::sqrt( 3.0f*3.0f );
+
+        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+        MonteRay::Vector3D<gpuRayFloat_t> pos2(0.0, -3.0, 0.0);
+
+        auto distanceAndDirection = getDistanceDirection(pos, pos2);
+        auto& distance = std::get<0>(distanceAndDirection);
+        auto& dir = std::get<1>(distanceAndDirection);
+
+        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
+        CHECK_CLOSE( -1.0, dir[1], 1e-6 );
+    }
+
+    TEST( getDistanceDirection_PosW ) {
+        float expectedDistance = std::sqrt( 3.0f*3.0f );
+
+        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+        MonteRay::Vector3D<gpuRayFloat_t> pos2(0.0, 0.0, 3.0);
+
+        auto distanceAndDirection = getDistanceDirection(pos, pos2);
+        auto& distance = std::get<0>(distanceAndDirection);
+        auto& dir = std::get<1>(distanceAndDirection);
+
+        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
+        CHECK_CLOSE( 1.0, dir[2], 1e-6 );
+    }
+
+    TEST( getDistanceDirection_NegW ) {
+        float expectedDistance = std::sqrt( 3.0f*3.0f );
+
+        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+        MonteRay::Vector3D<gpuRayFloat_t> pos2(0.0, 0.0, -3.0);
+
+        auto distanceAndDirection = getDistanceDirection(pos, pos2);
+        auto& distance = std::get<0>(distanceAndDirection);
+        auto& dir = std::get<1>(distanceAndDirection);
+
+        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
+        CHECK_CLOSE( -1.0, dir[2], 1e-6 );
+    }
+
+    TEST( getDistanceDirection_PosUV ) {
+        float expectedDistance = std::sqrt( (3.0f*3.0f)*2 );
+
+        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
+        MonteRay::Vector3D<gpuRayFloat_t> pos2(3.0, 3.0, 0.0);
+
+        auto distanceAndDirection = getDistanceDirection(pos, pos2);
+        auto& distance = std::get<0>(distanceAndDirection);
+        auto& dir = std::get<1>(distanceAndDirection);
+
+        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
+        CHECK_CLOSE( 1.0/sqrt(2.0), dir[0], 1e-6 );
+        CHECK_CLOSE( 1.0/sqrt(2.0), dir[1], 1e-6 );
+    }
+}
+
 } // end namespace
 

@@ -38,9 +38,7 @@ SUITE( NextEventEstimator_Tester ) {
     TEST(  MonteRayNextEventEstimator_get_invalid_X ) {
         MonteRayNextEventEstimator<GridBins> estimator(1);
 #ifdef DEBUG
-        CHECK_THROW( estimator.getX(10), std::runtime_error );
-        CHECK_THROW( estimator.getY(10), std::runtime_error );
-        CHECK_THROW( estimator.getZ(10), std::runtime_error );
+        CHECK_THROW( estimator.getPoint(10), std::runtime_error );
 #endif
     }
 
@@ -48,9 +46,9 @@ SUITE( NextEventEstimator_Tester ) {
         MonteRayNextEventEstimator<GridBins> estimator(1);
         unsigned id = estimator.add( 1.0, 2.0, 3.0);
         CHECK_EQUAL( 0, id);
-        CHECK_CLOSE( 1.0, estimator.getX(0), 1e-6 );
-        CHECK_CLOSE( 2.0, estimator.getY(0), 1e-6 );
-        CHECK_CLOSE( 3.0, estimator.getZ(0), 1e-6 );
+        CHECK_CLOSE( 1.0, estimator.getPoint(0)[0], 1e-6 );
+        CHECK_CLOSE( 2.0, estimator.getPoint(0)[1], 1e-6 );
+        CHECK_CLOSE( 3.0, estimator.getPoint(0)[2], 1e-6 );
     }
 
     TEST( add_too_many ) {
@@ -65,116 +63,6 @@ SUITE( NextEventEstimator_Tester ) {
         CHECK_CLOSE( 1.9, estimator.getExclusionRadius(), 1e-6 );
     }
 
-    TEST( getDistance ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( 3.0, 3.0, 3.0);
-        gpuFloatType_t expectedDistance = std::sqrt( (3.0f*3.0f)*3 );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-
-        gpuFloatType_t distance = estimator.distance( 0, pos );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-    }
-
-    TEST( getDistanceDirection_PosU ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( 3.0, 0.0, 0.0);
-        gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-        MonteRay::Vector3D<gpuRayFloat_t> dir;
-
-        gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-        CHECK_CLOSE( 1.0, dir[0], 1e-6 );
-    }
-
-    TEST( getDistanceDirection_NegU ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( -3.0, 0.0, 0.0);
-        gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-        MonteRay::Vector3D<gpuRayFloat_t> dir;
-
-        gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-        CHECK_CLOSE( -1.0, dir[0], 1e-6 );
-    }
-
-    TEST( getDistanceDirection_PosV ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( 0.0, 3.0, 0.0);
-        gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-        MonteRay::Vector3D<gpuRayFloat_t> dir;
-
-        gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-        CHECK_CLOSE( 1.0, dir[1], 1e-6 );
-    }
-
-    TEST( getDistanceDirection_NegV ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( 0.0, -3.0, 0.0);
-        gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-        MonteRay::Vector3D<gpuRayFloat_t> dir;
-
-        gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-        CHECK_CLOSE( -1.0, dir[1], 1e-6 );
-    }
-
-    TEST( getDistanceDirection_PosW ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( 0.0, 0.0, 3.0);
-        gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-        MonteRay::Vector3D<gpuRayFloat_t> dir;
-
-        gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-        CHECK_CLOSE( 1.0, dir[2], 1e-6 );
-    }
-
-    TEST( getDistanceDirection_NegW ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( 0.0, 0.0, -3.0);
-        gpuFloatType_t expectedDistance = std::sqrt( 3.0f*3.0f );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-        MonteRay::Vector3D<gpuRayFloat_t> dir;
-
-        gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-        CHECK_CLOSE( -1.0, dir[2], 1e-6 );
-    }
-
-    TEST( getDistanceDirection_PosUV ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
-        unsigned id = estimator.add( 3.0, 3.0, 0.0);
-        gpuFloatType_t expectedDistance = std::sqrt( (3.0f*3.0f)*2 );
-
-        MonteRay::Vector3D<gpuRayFloat_t> pos(0.0, 0.0, 0.0);
-        MonteRay::Vector3D<gpuRayFloat_t> dir;
-
-        gpuFloatType_t distance = estimator.getDistanceDirection( 0, pos, dir );
-
-        CHECK_CLOSE( expectedDistance, distance, 1e-6 );
-        CHECK_CLOSE( 1.0/sqrt(2.0), dir[0], 1e-6 );
-        CHECK_CLOSE( 1.0/sqrt(2.0), dir[1], 1e-6 );
-    }
 #endif
 
     class CalcScore_test {
@@ -897,13 +785,13 @@ SUITE( NextEventEstimator_Tester ) {
              CHECK_EQUAL( 2, estimator.size() );
              CHECK_EQUAL( 10, estimator.capacity() );
 
-             CHECK_CLOSE( 2.0, estimator.getX(0), 1e-6 );
-             CHECK_CLOSE( 0.0, estimator.getY(0), 1e-6 );
-             CHECK_CLOSE( 0.0, estimator.getZ(0), 1e-6 );
+             CHECK_CLOSE( 2.0, estimator.getPoint(0)[0], 1e-6 );
+             CHECK_CLOSE( 0.0, estimator.getPoint(0)[1], 1e-6 );
+             CHECK_CLOSE( 0.0, estimator.getPoint(0)[2], 1e-6 );
 
-             CHECK_CLOSE( 400.0, estimator.getX(1), 1e-6 );
-             CHECK_CLOSE( 0.0, estimator.getY(1), 1e-6 );
-             CHECK_CLOSE( 0.0, estimator.getZ(1), 1e-6 );
+             CHECK_CLOSE( 400.0, estimator.getPoint(1)[0], 1e-6 );
+             CHECK_CLOSE( 0.0,   estimator.getPoint(1)[1], 1e-6 );
+             CHECK_CLOSE( 0.0,   estimator.getPoint(1)[2], 1e-6 );
 
              std::vector<gpuFloatType_t> timeBins = estimator.getTimeBinEdges();
              CHECK_EQUAL( 5, timeBins.size() );
