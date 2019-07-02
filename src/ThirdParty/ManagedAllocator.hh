@@ -98,16 +98,10 @@ namespace MonteRay {
 template<class T>
 using managed_vector = std::vector<T, managed_allocator<T>>;
 
-template<class T>
-using managed_ptr = std::unique_ptr<T, managed_allocator<T>>;
-
 #else
 
 template<class T>
 using managed_vector = std::vector<T>;
-
-template<class T>
-using managed_ptr = std::unique_ptr<T>;
 
 #endif
 
