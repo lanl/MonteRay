@@ -58,8 +58,7 @@ public:
         elems[ 1 ] = t1;
         elems[ 2 ] = t2;
     }
-
-    constexpr const T& operator[]( unsigned index ) const { MONTERAY_ASSERT(index < 3); return elems[ index ]; }
+constexpr const T& operator[]( unsigned index ) const { MONTERAY_ASSERT(index < 3); return elems[ index ]; }
     constexpr T& operator[]( unsigned index ) { MONTERAY_ASSERT(index < 3); return elems[ index ]; }
 
     constexpr const T* data( void ) const { return elems; }
@@ -191,9 +190,10 @@ constexpr std::ostream& operator << ( std::ostream& os, const Vector3D<T>& arg){
     return os;
 }
 
+template <typename T>
 constexpr auto getDistanceDirection(
-        const MonteRay::Vector3D<gpuRayFloat_t>& pos,
-        const MonteRay::Vector3D<gpuRayFloat_t>& pos2) {
+        const MonteRay::Vector3D<T>& pos,
+        const MonteRay::Vector3D<T>& pos2) {
     auto dir = pos2 - pos;
     auto dist = dir.magnitude();
     auto invDistance = static_cast<decltype(dist)>(1.0)/dist;
