@@ -100,19 +100,9 @@ PA( MonteRayParallelAssistant::getInstance() )
     usingNextEventEstimator = true;
     initialize();
     kernel = [&, blocks, threads] ( void ) {
-#ifdef DEBUG
-        const bool debug = false;
-#endif
-
-        //copyPointDetToGPU();
-
-        if( currentBank->size() > 0 ) {
-            //if( PA.getWorkGroupRank() != 0 ) { return; }
-#ifdef DEBUG
-            if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
-#endif
-            pNextEventEstimator->launch_ScoreRayList(blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
-        }
+      if( currentBank->size() > 0 ) {
+        pNextEventEstimator->launch_ScoreRayList(blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
+      }
     };
 }
 
@@ -622,8 +612,7 @@ RayListController<GRID_T,N>::copyPointDetToGPU(void) {
 }
 
 template<typename GRID_T, unsigned N>
-void
-RayListController<GRID_T,N>::dumpPointDetForDebug(const std::string& baseFileName ) {
+void RayListController<GRID_T,N>::dumpPointDetForDebug(const std::string& baseFileName ) {
     // ensures setup - the copy to the GPU is not used
     copyPointDetToGPU();
     pNextEventEstimator->dumpState(currentBank->getPtrPoints(), baseFileName);

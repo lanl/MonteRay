@@ -52,7 +52,7 @@ public:
     /// Can not launch a kernel
     RayListController( unsigned numPointDets, const std::string& filename );
 
-    virtual ~RayListController();
+    ~RayListController();
 
     void initialize();
     unsigned capacity(void) const;
