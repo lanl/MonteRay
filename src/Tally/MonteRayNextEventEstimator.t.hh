@@ -132,9 +132,9 @@ MonteRayNextEventEstimator<Geometry>::copy(const MonteRayNextEventEstimator* rhs
     if( Base::isCudaIntermediate ) {
         // target is the intermediate, origin is the host
         if( tallyPoints == NULL ) {
-            tallyPoints = (position_t*) MONTERAYDEVICEALLOC( num*sizeof( decltype(*tallyPoints) ), "tallyPoints" );
+            tallyPoints = tallyPoints = (decltype(tallyPoints)) MONTERAYDEVICEALLOC( num*sizeof( decltype(*tallyPoints) ), "tallyPoints" );
         }
-        MonteRayMemcpy(tallyPoints, rhs->tallyPoint, num*sizeof( decltype(*tallyPoints) ), cudaMemcpyHostToDevice);
+        MonteRayMemcpy(tallyPoints, rhs->tallyPoints, num*sizeof( decltype(*tallyPoints) ), cudaMemcpyHostToDevice);
 
         pMatPropsHost = NULL;
         pMatListHost = NULL;
