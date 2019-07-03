@@ -24,36 +24,36 @@ class Vector3D
 {
     T elems[ 3 ];
 public:
-    constexpr Vector3D( void ) {
+    CUDA_CALLABLE_MEMBER constexpr Vector3D( void ) {
         elems[ 0 ] = T();
         elems[ 1 ] = T();
         elems[ 2 ] = T();
     }
 
-    constexpr Vector3D( T* init_elems) {
+    CUDA_CALLABLE_MEMBER constexpr Vector3D( T* init_elems) {
         elems[ 0 ] = init_elems[ 0 ];
         elems[ 1 ] = init_elems[ 1 ];
         elems[ 2 ] = init_elems[ 2 ];
     }
 
-    constexpr Vector3D( const Vector3D& rhs ) {
+    CUDA_CALLABLE_MEMBER constexpr Vector3D( const Vector3D& rhs ) {
         elems[ 0 ] = rhs.elems[ 0 ];
         elems[ 1 ] = rhs.elems[ 1 ];
         elems[ 2 ] = rhs.elems[ 2 ];
     }
 
-    constexpr Vector3D& operator=( const Vector3D& rhs ) {
+    CUDA_CALLABLE_MEMBER constexpr Vector3D& operator=( const Vector3D& rhs ) {
         elems[ 0 ] = rhs.elems[ 0 ];
         elems[ 1 ] = rhs.elems[ 1 ];
         elems[ 2 ] = rhs.elems[ 2 ];
         return *this;
     }
 
-    constexpr Vector3D( T value ) {
+    CUDA_CALLABLE_MEMBER constexpr Vector3D( T value ) {
         elems[ 0 ] = elems[ 1 ] = elems[ 2 ] = value;
     }
 
-    constexpr Vector3D( T t0, T t1, T t2 ) {
+    CUDA_CALLABLE_MEMBER constexpr Vector3D( T t0, T t1, T t2 ) {
         elems[ 0 ] = t0;
         elems[ 1 ] = t1;
         elems[ 2 ] = t2;
