@@ -8,7 +8,7 @@
 #include "gpuTally.hh"
 
 #include "MonteRay_timer.hh"
-#include "RayListController.t.hh"
+#include "RayListController.hh"
 #include "GridBins.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterial.hh"
@@ -17,7 +17,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.t.hh"
+#include "MonteRayNextEventEstimator.hh"
 #include "MonteRayCrossSection.hh"
 
 namespace nee_debugger_app {

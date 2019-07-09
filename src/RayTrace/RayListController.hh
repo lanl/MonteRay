@@ -807,6 +807,6 @@ RayListController<GRID_T,N>::gather() {
     }
 }
 
-#include "RayListController.t.hh"
+} // end namespace MonteRay
 
 #endif /* RAYLISTCONTROLLER_HH_ */
