@@ -9,7 +9,6 @@ namespace MonteRay{
 class gpuTimingHost;
 class MonteRay_MaterialProperties;
 class MonteRay_MaterialProperties_Data;
-class MonteRayMaterialList;
 class MonteRayMaterialListHost;
 class HashLookup;
 class gpuTallyHost;
@@ -17,22 +16,10 @@ class tripleTime;
 
 class RayWorkInfo;
 
-template<typename GRIDTYPE, unsigned N>
-CUDA_CALLABLE_MEMBER void
-tallyCollision(
-        unsigned particeID,
-        const GRIDTYPE* pGrid,
-        const MonteRayMaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
-        const HashLookup* pHash,
-        const Ray_t<N>* p,
-        RayWorkInfo* pRayInfo,
-        gpuTallyType_t* pTally
-);
-
+template <typename MaterialList>
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
-tallyCellSegment(const MonteRayMaterialList* pMatList,
+tallyCellSegment(const MaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const gpuFloatType_t* materialXS,
         gpuTallyType_t* tally,
@@ -42,24 +29,37 @@ tallyCellSegment(const MonteRayMaterialList* pMatList,
         gpuFloatType_t weight,
         gpuTallyType_t opticalPathLength);
 
-template<typename GRIDTYPE, unsigned N>
+template<unsigned N, typename GRIDTYPE, typename MaterialList>
+CUDA_CALLABLE_MEMBER void
+tallyCollision(
+        unsigned particeID,
+        const GRIDTYPE* pGrid,
+        const MaterialList* pMatList,
+        const MonteRay_MaterialProperties_Data* pMatProps,
+        const HashLookup* pHash,
+        const Ray_t<N>* p,
+        RayWorkInfo* pRayInfo,
+        gpuTallyType_t* pTally
+);
+
+template<unsigned N, typename GRIDTYPE, typename MaterialList>
 CUDA_CALLABLE_KERNEL 
 rayTraceTally(const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
-        const MonteRayMaterialList* pMatList,
+        const MaterialList* pMatList,
         const MonteRay_MaterialProperties_Data* pMatProps,
         const HashLookup* pHash,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* tally);
 
-template<typename GRIDTYPE, unsigned N>
+template<unsigned N, typename GRIDTYPE, typename MaterialList>
 MonteRay::tripleTime launchRayTraceTally(
         std::function<void (void)> cpuWork,
         int nBlocks,
         int nThreads,
         const GRIDTYPE* grid,
         const RayListInterface<N>* pCP,
-        const MonteRayMaterialListHost* pMatList,
+        const MaterialList* pMatList,
         const MonteRay_MaterialProperties* pMatProps,
         gpuTallyHost* pTally
 );
