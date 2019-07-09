@@ -1,6 +1,8 @@
 #ifndef EXPECTEDPATHLENGTH_T_HH_
 #define EXPECTEDPATHLENGTH_T_HH_
 
+#include <limits>
+
 #include "ExpectedPathLength.hh"
 
 #include "MonteRay_MaterialProperties.hh"
@@ -8,7 +10,7 @@
 #include "MonteRayMaterialList.hh"
 #include "HashLookup.hh"
 #include "gpuTally.hh"
-#include "GridBins.hh"
+#include "Geometry.hh"
 #include "RayWorkInfo.hh"
 #include "GPUAtomicAdd.hh"
 #include "GPUUtilityFunctions.hh"
@@ -145,7 +147,7 @@ tallyCollision(
     for( unsigned i=0; i < pRayInfo->getRayCastSize(particleID); ++i ){
         int cell = pRayInfo->getRayCastCell(particleID,i);
         gpuRayFloat_t distance = pRayInfo->getRayCastDist(particleID,i);
-        if( cell == UINT_MAX ) continue;
+        if( cell == std::numeric_limits<unsigned>::max() ) continue;
 
         opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally,
                 cell, distance, energy, p->weight[0], opticalPathLength);
