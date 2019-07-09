@@ -9,7 +9,7 @@
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
-#include "ExpectedPathLength.t.hh"
+#include "ExpectedPathLength.hh"
 #include "GPUErrorCheck.hh"
 #include "GPUSync.hh"
 #include "MonteRayNextEventEstimator.t.hh"
