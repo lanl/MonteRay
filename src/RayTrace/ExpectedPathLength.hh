@@ -90,22 +90,12 @@ tallyCellSegment( const MaterialList* pMatList,
         gpuFloatType_t weight,
         gpuTallyType_t opticalPathLength ) {
 
-#ifdef DEBUG
-    const bool debug = false;
-#endif
-
     typedef gpuTallyType_t xs_t;
     typedef gpuTallyType_t attenuation_t;
     typedef gpuTallyType_t score_t;
 
     xs_t totalXS = 0.0;
     unsigned numMaterials = getNumMats( pMatProps, cell);
-
-#ifdef DEBUG
-    if( debug ) {
-        printf("GPU::tallyCellSegment:: cell=%d, numMaterials=%d\n", cell, numMaterials);
-    }
-#endif
 
     for( unsigned i=0; i<numMaterials; ++i ) {
 
@@ -114,9 +104,6 @@ tallyCellSegment( const MaterialList* pMatList,
         if( density > 1e-5 ) {
             totalXS +=   materialXS[matID]*density;
         }
-        //		if( debug ) {
-        //			printf("GPU::tallyCellSegment::       material=%d, density=%f, xs=%f, totalxs=%f\n", i, density, xs, totalXS);
-        //		}
     }
 
     attenuation_t attenuation = 1.0;
@@ -130,12 +117,6 @@ tallyCellSegment( const MaterialList* pMatList,
     score *= exp( -opticalPathLength ) * weight;
 
     gpu_atomicAdd( &tally[cell], score);
-
-#ifdef DEBUG
-    if( debug ) {
-        printf("GPU::tallyCellSegment:: total score=%f\n", tally[cell] );
-    }
-#endif
 
     return cellOpticalPathLength;
 }
@@ -152,26 +133,6 @@ tallyCollision(
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* pTally )
 {
-#ifdef DEBUG
-    const bool debug = false;
-
-    if( debug ) {
-        printf("--------------------------------------------------------------------------------------------------------\n");
-        printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, w=%f, energy=%f, weight=%f, index=%d \n",
-                particleID+1,
-                p->pos[0],
-                p->pos[1],
-                p->pos[2],
-                p->dir[0],
-                p->dir[1],
-                p->dir[2],
-                p->energy[0],
-                p->weight[0],
-                p->index
-        );
-    }
-#endif
-
     typedef gpuTallyType_t enteringFraction_t;
 
     gpuTallyType_t opticalPathLength = 0.0;
@@ -242,29 +203,10 @@ CUDA_CALLABLE_KERNEL  rayTraceTally(
 
     int num = pCP->size();
 
-#ifdef DEBUG
-    if( debug ) printf("GPU::rayTraceTally:: starting threadID=%d  N=%d\n", threadID, N );
-#endif
 
     while( particleID < num ) {
         Ray_t<N> p = pCP->getParticle(particleID);
         pRayInfo->clear( threadID );
-
-#ifdef DEBUG
-        if( debug ) {
-            printf("--------------------------------------------------------------------------------------------------------\n");
-            printf("GPU::rayTraceTally:: threadID=%d\n", threadID );
-            printf("GPU::rayTraceTally:: x=%f\n", p.pos[0] );
-            printf("GPU::rayTraceTally:: y=%f\n", p.pos[1] );
-            printf("GPU::rayTraceTally:: z=%f\n", p.pos[2] );
-            printf("GPU::rayTraceTally:: u=%f\n", p.dir[0] );
-            printf("GPU::rayTraceTally:: v=%f\n", p.dir[1] );
-            printf("GPU::rayTraceTally:: w=%f\n", p.dir[2] );
-            printf("GPU::rayTraceTally:: energy=%f\n", p.energy[0] );
-            printf("GPU::rayTraceTally:: weight=%f\n", p.weight[0] );
-            printf("GPU::rayTraceTally:: index=%d\n", p.index );
-        }
-#endif
 
        MonteRay::tallyCollision<N>(threadID, pGrid, pMatList, pMatProps, pHash, &p, pRayInfo, tally);
 
