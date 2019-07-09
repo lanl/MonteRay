@@ -36,19 +36,6 @@ public:
         elems[ 2 ] = init_elems[ 2 ];
     }
 
-    CUDA_CALLABLE_MEMBER constexpr Vector3D( const Vector3D& rhs ) {
-        elems[ 0 ] = rhs.elems[ 0 ];
-        elems[ 1 ] = rhs.elems[ 1 ];
-        elems[ 2 ] = rhs.elems[ 2 ];
-    }
-
-    CUDA_CALLABLE_MEMBER constexpr Vector3D& operator=( const Vector3D& rhs ) {
-        elems[ 0 ] = rhs.elems[ 0 ];
-        elems[ 1 ] = rhs.elems[ 1 ];
-        elems[ 2 ] = rhs.elems[ 2 ];
-        return *this;
-    }
-
     CUDA_CALLABLE_MEMBER constexpr Vector3D( T value ) {
         elems[ 0 ] = elems[ 1 ] = elems[ 2 ] = value;
     }
