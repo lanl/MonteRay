@@ -2,27 +2,28 @@
 #define SIMPLEVECTOR_H_
 
 #include <algorithm>
+#include "ManagedAllocator.hh"
 
 namespace MonteRay{
 
-// A cheap, partial implementation of std::vector.
-template <class T, class alloc>
+template <class T, class alloc=managed_allocator<T>>
 class SimpleVector 
 {
   private:
     using alloc_traits = std::allocator_traits<alloc>;
     T* begin_ = nullptr;
     size_t size_ = 0;
+    size_t reservedSize_ = 0;
   public:
 
-  explicit SimpleVector(size_t count): size_(count) {
+  explicit SimpleVector(size_t N): size_(N), reservedSize_(N) {
     auto alloc_ = alloc();
-    begin_ = alloc_traits::allocate(alloc_, count);
+    begin_ = alloc_traits::allocate(alloc_, N);
   }
 
   SimpleVector() = default;
 
-  SimpleVector(size_t count, T value): SimpleVector(count) {
+  SimpleVector(size_t N, T value): SimpleVector(N) {
     std::fill(begin_, begin_ + size_, value);
   }
 
@@ -35,7 +36,7 @@ class SimpleVector
   }
 
   SimpleVector& operator=(const SimpleVector& other) {
-    this->resize(other.size());
+    this->reserve(other.capacity());
     std::copy(other.begin(), other.end(), this->begin_);
     return *this;
   }
@@ -45,8 +46,10 @@ class SimpleVector
     begin_ = alloc_traits::allocate(alloc_, other.size());
     this->begin_ = other.begin_;
     this->size_ = other.size_;
+    this->reservedSize_ = other.reservedSize_;
     other.begin_ = nullptr;
     other.size_ = 0;
+    other.reservedSize_ = 0;
     return *this;
   }
 
@@ -58,7 +61,7 @@ class SimpleVector
 
   ~SimpleVector(){
     auto alloc_ = alloc();
-    if (begin_ != nullptr) alloc_traits::deallocate(alloc_, begin_, this->size());
+    if (begin_ != nullptr) alloc_traits::deallocate(alloc_, begin_, this->capacity());
   }
 
   constexpr T const * begin() const noexcept {
@@ -89,12 +92,51 @@ class SimpleVector
     return size_;
   }
 
-  void resize(size_t count) {
-    if (count == size_) return;
+  constexpr auto capacity() const noexcept { 
+    return reservedSize_;
+  }
+
+  void reserve(size_t N) {
+    if (N <= this->capacity()) return;
     auto alloc_ = alloc();
-    if (begin_ != nullptr) alloc_traits::deallocate(alloc_, begin_, this->size());
-    if (count > 0) begin_ = alloc_traits::allocate(alloc_, count);
-    size_ = count;
+    auto newBegin = alloc_traits::allocate(alloc_, N);
+    std::copy(begin(), end(), newBegin);
+    if (begin_ != nullptr){ alloc_traits::deallocate(alloc_, begin_, this->size()); }
+    this->begin_ = newBegin;
+    this->reservedSize_ = N;
+  }
+
+  void erase(T* start, T* finish){
+    std::for_each(start, finish, [](T& val){val.~T();});
+    if (finish != this->end()) {
+      std::move(finish, this->end(), start);
+    }
+    this->size_ -= std::distance(start, finish);
+  }
+
+  void resize(const size_t N) {
+    if (N == size()){
+      return;
+    } else if (N < size()){ 
+      this->erase(begin() + N, end()); 
+    } else {
+      this->reserve(N);
+      this->size_ = capacity();
+    }
+  }
+
+  template<typename... Args>
+  T& emplace_back(Args&&... args){
+    if (size() == capacity()){
+      capacity() == 0 ? reserve(1) : reserve(2*capacity());
+    }
+    T* pRetval = new ( end() ) T(std::forward<Args>(args)...);
+    size_++;
+    return *pRetval;
+  }
+
+  void push_back(const T& val){
+    this->emplace_back(val);
   }
 
   constexpr T& back() noexcept { 
@@ -110,13 +152,17 @@ class SimpleVector
   void swap(SimpleVector& other){
     auto tempBegin = other.begin_;
     auto tempSize = other.size_;
+    auto tempReservedSize = other.reservedSize_;
     other.begin_ = this->begin_;
     other.size_ = this->size_;
+    other.reservedSize_= this->reservedSize_;
     this->begin_ = tempBegin;
     this->size_ = tempSize;
+    this->reservedSize_ = tempReservedSize;
   }
 
 };
 
 } // end namespace MonteRay
+
 #endif

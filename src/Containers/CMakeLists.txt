@@ -1,3 +1,5 @@
+file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
+
 include( template_select )
 
 list( APPEND ${UnitName}_packages Containers )
