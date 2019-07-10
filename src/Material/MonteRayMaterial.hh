@@ -134,6 +134,9 @@ public:
 
 };
 
-}
+
+} // end namespace MonteRay
+
+#include "Material.hh"
 
 #endif /* MONTERAYMATERIAL_HH_ */
