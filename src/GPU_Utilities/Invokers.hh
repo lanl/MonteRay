@@ -1,8 +1,7 @@
 #include "MonteRayDefinitions.hh"
 namespace MonteRay{
-template <typename Func>
-CUDA_CALLABLE_KERNEL d_invoker(Func f, int i) { f(i); }
-
-template <typename Func>
-CUDA_CALLABLE_KERNEL d_invoker(Func f) { f(); }
+template <typename Func, typename... Args>
+CUDA_CALLABLE_KERNEL d_invoker(Func f, Args... args) {
+  f(args...); 
+}
 } // end namespace MonteRay
