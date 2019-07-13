@@ -1,8 +1,9 @@
 #ifndef NEWMONTERAYMATERIAL_HH_
 #define NEWMONTERAYMATERIAL_HH_
 
-#include <fstream>
 #include <numeric>
+#include <functional>
+#include <string>
 
 #include "SimpleVector.hh"
 #include "MonteRayTypes.hh"
@@ -13,12 +14,12 @@ namespace MonteRay{
 
 // inherit from tuple to get the constructor.  Make member functions to improve readability via hiding std::get<>();
 template <class CrossSection>
-struct CrossSectionAndFraction: public std::tuple<CrossSection, gpuFloatType_t>
+struct CrossSectionAndFraction: public std::tuple<const CrossSection*, gpuFloatType_t>
 {
-  using std::tuple<CrossSection, gpuFloatType_t>::tuple;
-  constexpr auto& xs() noexcept { return std::get<0>(*this); }
+  using std::tuple<const CrossSection*, gpuFloatType_t>::tuple;
+  constexpr auto& xs() noexcept { return *std::get<0>(*this); }
   constexpr auto& fraction() noexcept { return std::get<1>(*this); }
-  constexpr const auto& xs() const noexcept { return std::get<0>(*this); }
+  constexpr const auto& xs() const noexcept { return *std::get<0>(*this); }
   constexpr const auto& fraction() const noexcept { return std::get<1>(*this); }
 };
 
@@ -35,7 +36,7 @@ public:
   { }
 
   constexpr auto atomicWeight() const { return atomicWeight_; }
-  constexpr auto xs(unsigned i) const noexcept { return xsAndFracs_[i].xs(); }
+  constexpr const auto& xs(unsigned i) const noexcept { return xsAndFracs_[i].xs(); }
   constexpr auto fraction(unsigned i) const noexcept { return xsAndFracs_[i].fraction(); }
   constexpr auto numIsotopes() const noexcept { return xsAndFracs_.size(); }
 
@@ -51,10 +52,22 @@ public:
     return getMicroTotalXS(E) * density * AvogadroBarn / atomicWeight_;
   }
 
+  template <typename Stream>
+  void write(Stream&& outf) const{
+    binaryIO::write(outf, this->numIsotopes());
+    binaryIO::write(outf, this->atomicWeight() );
+    for (auto&& xsAndFrac : xsAndFracs_){
+      binaryIO::write(outf, xsAndFrac.xs()->ZAID());
+      binaryIO::write(outf, xsAndFrac.fraction());
+    }
+  }
+
+  template <typename CrossSectionList>
   class Builder
   {
     gpuFloatType_t b_atomicWeight_;
     SimpleVector<CrossSectionAndFraction<CrossSection>> b_xsAndFracs_;
+    std::reference_wrapper<const CrossSectionList> b_xsList_;
 
     auto calcAtomicWeight(){
       return gpu_neutron_molar_mass * std::accumulate(b_xsAndFracs_.begin(), b_xsAndFracs_.end(), 0.0, 
@@ -70,12 +83,30 @@ public:
 
     public:
 
-    void addIsotope(gpuFloatType_t frac, const CrossSection& xs){
-      b_xsAndFracs_.emplace_back(xs, frac);
+    Builder(const CrossSectionList& xsList): b_xsList_(std::ref(xsList)){ }
+
+    void addIsotope(gpuFloatType_t frac, int zaid){
+      const CrossSection* xsPtr = b_xsList_.get().getXSByZAID(zaid);
+      if (xsPtr == nullptr){
+        std::string message = "ZAID " + std::to_string(zaid) + " not present in CrossSectionList.";
+        throw std::runtime_error(message);
+      }
+      b_xsAndFracs_.emplace_back(xsPtr, frac);
     }
 
-    void addIsotope(gpuFloatType_t frac, CrossSection&& xs){
-      b_xsAndFracs_.emplace_back(std::move(xs), frac);
+    template <typename Stream>
+    void read(Stream&& infile) {
+      size_t nIsotopes;
+      binaryIO::read(infile, nIsotopes);
+      binaryIO::read(infile, atomicWeight_);
+      b_xsAndFracs_.reserve(nIsotopes);
+      for(int i = 0; i < nIsotopes; i++){
+        int zaid;
+        binaryIO::read(infile, zaid);
+        gpuFloatType_t frac;
+        binaryIO::read(infile, frac);
+        this->addIsotope(zaid, frac);
+      }
     }
 
     auto build(){
@@ -84,62 +115,10 @@ public:
     }
   };
 
-
-void write(std::ostream& outf) const{
-  binaryIO::write(outf, this->numIsotopes());
-  binaryIO::write(outf, this->atomicWeight() );
-  for (auto&& xsAndFrac : xsAndFracs_){
-    binaryIO::write(outf, xsAndFrac.fraction());
+  template <typename CrossSectionList>
+  static auto make_builder(const CrossSectionList& xsList){
+    return Material::Builder<CrossSectionList>(xsList);
   }
-  for (auto&& xsAndFrac : xsAndFracs_){
-    xsAndFrac.xs().write(outf);
-  }
-}
-
-void writeToFile( const std::string& filename ) const {
-  std::ofstream outfile;
-  outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
-  if( ! outfile.is_open() ) {
-    fprintf(stderr, "Material::writeToFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
-    throw std::runtime_error("Material::writeToFile -- Failure to open file" );
-  }
-  assert( outfile.good() );
-  outfile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
-  write( outfile );
-  outfile.close();
-}
-
-
-void read(std::istream& infile) {
-  size_t nIsotopes;
-  binaryIO::read(infile, nIsotopes);
-  binaryIO::read(infile, atomicWeight_);
-  std::vector<gpuFloatType_t> fractions(nIsotopes);
-  for( auto& frac : fractions ) binaryIO::read(infile, frac);
-  std::vector<CrossSection> crossSections(nIsotopes);
-  for( auto& frac : fractions){
-    CrossSection xs;
-    xs.read( infile );
-    xsAndFracs_.emplace_back(std::move(xs), frac);
-  }
-}
-
-void readFromFile( const std::string& filename) {
-  std::ifstream infile;
-  if( infile.is_open() ) {
-      infile.close();
-  }
-  infile.open( filename.c_str(), std::ios::binary | std::ios::in);
-
-  if( ! infile.is_open() ) {
-      fprintf(stderr, "Error:  Material::readFromFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
-      throw std::runtime_error("Material::readFromFile -- Failure to open file" );
-  }
-  assert( infile.good() );
-  infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
-  read(infile);
-  infile.close();
-}
 
 };
 
