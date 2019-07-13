@@ -7,7 +7,7 @@
 namespace MonteRay{
 
 template <class T, class alloc=managed_allocator<T>>
-class SimpleVector 
+class SimpleVector : public Managed
 {
   private:
     using alloc_traits = std::allocator_traits<alloc>;
@@ -97,7 +97,7 @@ class SimpleVector
   }
 
   void reserve(size_t N) {
-    if (N <= this->capacity()) return;
+    if (N <= this->capacity()){ return; }
     auto alloc_ = alloc();
     auto newBegin = alloc_traits::allocate(alloc_, N);
     std::copy(begin(), end(), newBegin);

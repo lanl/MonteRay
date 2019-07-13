@@ -4,7 +4,12 @@
 #include <tuple>
 
 #include "SimpleVector.hh"
+#include "GPUUtilityFunctions.hh"
 
+
+namespace SimpleVectorTest{
+
+using namespace MonteRay;
 template <typename T>
 using simple_vector = MonteRay::SimpleVector<T, std::allocator<T> >;
 
@@ -112,7 +117,28 @@ SUITE(SimpleVector_test) {
     CHECK(std::get<0>(vec[2]) == 4.0);
     CHECK(std::get<1>(vec[2]) == 6);;
   }
+
+
+#ifdef __CUDACC__
+  CUDA_CALLABLE_KERNEL vecKernel(SimpleVector<int>* vec){
+    for (auto& val : *vec){
+      val *= 2;
+    }
+  }
+
+  TEST(accessing_cuda_data_on_gpu){
+    auto vec = std::make_unique<SimpleVector<int>>(3);
+    *vec = SimpleVector<int>{1, 2, 3};
+
+    vecKernel<<<1, 1>>>(vec.get());
+    cudaDeviceSynchronize();
+    CHECK_EQUAL((*vec)[0], 2);
+    CHECK_EQUAL((*vec)[1], 4);
+    CHECK_EQUAL((*vec)[2], 6);
+  }
+#endif
 }
 
+} // end namespace SimpleVectorTest
 
 
