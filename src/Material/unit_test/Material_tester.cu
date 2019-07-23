@@ -5,6 +5,7 @@
 
 #include "Material.hh"
 #include "GPUUtilityFunctions.hh"
+#include "SimpleVector.hh"
 
 using namespace MonteRay;
 
@@ -16,7 +17,7 @@ struct CrossSection{
 };
 
 struct CrossSectionList{
-  std::vector<CrossSection> xs_vec;
+  SimpleVector<CrossSection> xs_vec;
 
   const CrossSection* getXSByZAID(int ZAID) const {
     auto loc = std::find_if(xs_vec.begin(), xs_vec.end(), 
@@ -54,7 +55,6 @@ SUITE( Material_tester ) {
     CHECK_CLOSE(mat.fraction(1), 0.3, close);
     CHECK_CLOSE(mat.fraction(2), 0.5, close);
 
-    gpuFloatType_t E = 1.0;
     CHECK_EQUAL(1001, mat.xs(0).ZAID());
     CHECK_EQUAL(2004, mat.xs(1).ZAID());
     CHECK_EQUAL(6012, mat.xs(2).ZAID());
@@ -65,49 +65,68 @@ SUITE( Material_tester ) {
 
   }
 
-  /* TEST_FIXTURE( MaterialFixture, TotalXS ) { */
-  /*   gpuFloatType_t E = 1.0; */
-  /*   gpuFloatType_t density = 2.0; */
-  /*   CHECK_CLOSE(mat.getMicroTotalXS(E), 1.0, close); */
-  /*   CHECK_CLOSE(mat.getTotalXS(E, density), mat.getMicroTotalXS(E) * density * AvogadroBarn / mat.atomicWeight(), close); */
+  TEST_FIXTURE( MaterialFixture, testing) {
 
-/* #ifdef __CUDACC__ */
-  /*   int* zaid; */
-  /*   gpuFloatType_t* micro; */
-  /*   cudaMallocManaged(&micro, sizeof(gpuFloatType_t)); */
-  /*   gpuFloatType_t* macro; */
-  /*   cudaMallocManaged(&macro, sizeof(gpuFloatType_t)); */
+    CHECK_CLOSE(mat.fraction(0), 0.2, close);
+    CHECK_CLOSE(mat.fraction(1), 0.3, close);
+    CHECK_CLOSE(mat.fraction(2), 0.5, close);
 
-  /*   auto func = [=, mat = mat] __device__ () { */
-  /*     zaid = mat.xs(1).ZAID(); */
-  /*     *micro = mat.getMicroTotalXS(E); */
-  /*     *macro = mat.getTotalXS(E, density); */
-  /*   }; */
+    CHECK_EQUAL(1001, mat.xs(0).ZAID());
+    CHECK_EQUAL(2004, mat.xs(1).ZAID());
+    CHECK_EQUAL(6012, mat.xs(2).ZAID());
 
-  /*   d_invoker<<<1, 1>>>(func); */
-  /*   cudaDeviceSynchronize(); */
-  /*   CHECK_EQUAL(*zaid, 2004); */
-  /*   CHECK_CLOSE(*micro,  1.0, close); */
-  /*   CHECK_CLOSE(*macro, mat.getMicroTotalXS(E) * density * AvogadroBarn / mat.atomicWeight(), close); */
-  /*   cudaFree(micro); */
-  /*   cudaFree(macro); */
-/* #endif */
+    CHECK_CLOSE(mat.atomicWeight(), neutron_molar_mass, close);
 
-  /* } */
+    CHECK_EQUAL(mat.numIsotopes(), 3);
 
-  /* TEST_FIXTURE ( MaterialFixture, write_and_read ){ */
-  /*   std::string filename("MaterialTester.bin"); */
-  /*   mat.writeToFile(filename); */
-  /*   Material newMat; */
-  /*   newMat.readFromFile(filename); */
-  /*   CHECK_EQUAL(newMat.atomicWeight(), mat.atomicWeight()); */
-  /*   CHECK_EQUAL(newMat.numIsotopes(), mat.numIsotopes()); */
-  /*   for (size_t i = 0; i < newMat.numIsotopes(); i++){ */
-  /*     CHECK_EQUAL(newMat.fraction(i), mat.fraction(i)); */
-  /*     CHECK_EQUAL(newMat.xs(i).xs_, mat.xs(i).xs_); */
-  /*     CHECK_EQUAL(newMat.xs(i).AWR(), mat.xs(i).AWR()); */
-  /*   } */
-  /*   std::remove(filename.c_str()); */
-  /* } */
+  }
+
+  TEST_FIXTURE( MaterialFixture, TotalXS ) {
+    gpuFloatType_t E = 1.0;
+    gpuFloatType_t density = 2.0;
+    CHECK_CLOSE(mat.getMicroTotalXS(E), 1.0, close);
+    CHECK_CLOSE(mat.getTotalXS(E, density), mat.getMicroTotalXS(E) * density * AvogadroBarn / mat.atomicWeight(), close);
+
+#ifdef __CUDACC__
+    int* zaid;
+    cudaMallocManaged(&zaid, sizeof(int));
+    gpuFloatType_t* micro;
+    cudaMallocManaged(&micro, sizeof(gpuFloatType_t));
+    gpuFloatType_t* macro;
+    cudaMallocManaged(&macro, sizeof(gpuFloatType_t));
+
+    auto matl = mat;
+    auto func = [=] __device__ () {
+      *zaid = matl.xs(1).ZAID();
+      *micro = matl.getMicroTotalXS(E);
+      *macro = matl.getTotalXS(E, density);
+    };
+
+    d_invoker<<<1, 1>>>(func);
+    cudaDeviceSynchronize();
+    CHECK_EQUAL(*zaid, 2004);
+    CHECK_CLOSE(*micro,  1.0, close);
+    CHECK_CLOSE(*macro, mat.getMicroTotalXS(E) * density * AvogadroBarn / mat.atomicWeight(), close);
+    cudaFree(zaid);
+    cudaFree(micro);
+    cudaFree(macro);
+#endif
+
+  }
+
+  TEST_FIXTURE ( MaterialFixture, write_and_read ){
+
+    std::stringstream stream;
+    mat.write(stream);
+    Material_t::Builder<CrossSectionList> mat_builder(xsList);
+    mat_builder.read(stream);
+    auto newMat = mat_builder.build();
+    CHECK_EQUAL(newMat.atomicWeight(), mat.atomicWeight());
+    CHECK_EQUAL(newMat.numIsotopes(), mat.numIsotopes());
+    for (size_t i = 0; i < newMat.numIsotopes(); i++){
+      CHECK_EQUAL(newMat.fraction(i), mat.fraction(i));
+      CHECK_EQUAL(newMat.xs(i).AWR(), mat.xs(i).AWR());
+    }
+  }
 
 }

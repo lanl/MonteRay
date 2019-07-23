@@ -57,7 +57,7 @@ public:
     binaryIO::write(outf, this->numIsotopes());
     binaryIO::write(outf, this->atomicWeight() );
     for (auto&& xsAndFrac : xsAndFracs_){
-      binaryIO::write(outf, xsAndFrac.xs()->ZAID());
+      binaryIO::write(outf, xsAndFrac.xs().ZAID());
       binaryIO::write(outf, xsAndFrac.fraction());
     }
   }
@@ -98,14 +98,14 @@ public:
     void read(Stream&& infile) {
       size_t nIsotopes;
       binaryIO::read(infile, nIsotopes);
-      binaryIO::read(infile, atomicWeight_);
+      binaryIO::read(infile, b_atomicWeight_);
       b_xsAndFracs_.reserve(nIsotopes);
       for(int i = 0; i < nIsotopes; i++){
         int zaid;
         binaryIO::read(infile, zaid);
         gpuFloatType_t frac;
         binaryIO::read(infile, frac);
-        this->addIsotope(zaid, frac);
+        this->addIsotope(frac, zaid);
       }
     }
 

@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <utility>
+#include "Invokers.hh"
 
 namespace MonteRay {
 
