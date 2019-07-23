@@ -63,6 +63,19 @@ constexpr const T& operator[]( unsigned index ) const { MONTERAY_ASSERT(index < 
       return temp;
     }
 
+    /* template <typename U = T, std::enable_if> */
+    /* constexpr Vector3D normal( void ) const { */
+/* #ifdef __CUDACC__ */
+    /*   auto squareSum = elems[0]*elems[0] + elems[1]*elems[1] + elems[ 2 ]*elems[ 2 ]; */
+    /*   Vector3D<T> temp = (*this) * __frsqrt_rn(squareSum); */
+/* #else */
+    /*   T mag = magnitude(); */
+    /*   MONTERAY_ASSERT(mag > 0.0); */
+    /*   Vector3D<T> temp = (*this) * (static_cast<T>(1.0)/mag); */
+    /*   return temp; */
+/* #endif */
+    /* } */
+
     constexpr T magnitude( void ) const {
         return std::sqrt( elems[ 0 ] * elems[ 0 ] + elems[ 1 ] * elems[ 1 ] + elems[ 2 ]*elems[ 2 ] );
     }

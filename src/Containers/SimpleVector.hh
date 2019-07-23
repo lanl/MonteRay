@@ -114,6 +114,14 @@ class SimpleVector : public Managed
     this->size_ -= std::distance(start, finish);
   }
 
+  void erase(T* position){
+    erase(position, position + 1);
+  }
+
+  void pop_back(){
+    erase(this->end() - 1);
+  }
+
   void resize(const size_t N) {
     if (N == size()){
       return;

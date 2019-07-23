@@ -120,7 +120,7 @@ SUITE(SimpleVector_test) {
 
 
 #ifdef __CUDACC__
-  CUDA_CALLABLE_KERNEL vecKernel(SimpleVector<int>* vec){
+  __global__ void vecKernel(SimpleVector<int>* vec){
     for (auto& val : *vec){
       val *= 2;
     }

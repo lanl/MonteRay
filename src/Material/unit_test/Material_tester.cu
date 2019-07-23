@@ -29,14 +29,14 @@ struct CrossSectionList{
 
 class MaterialFixture{
   public:
-  using Material = Material<CrossSection>;
+  using Material_t = Material<CrossSection>;
   CrossSectionList xsList;
-  Material mat;
+  Material_t mat;
 
   MaterialFixture(){
     using XS = CrossSection;
     xsList = CrossSectionList{{XS{1001}, XS{2004}, XS{6012}}};
-    auto mb = Material::make_builder(xsList);
+    auto mb = Material_t::make_builder(xsList);
     mb.addIsotope(2.0, 1001);
     mb.addIsotope(3.0, 2004);
     mb.addIsotope(5.0, 6012);
