@@ -88,13 +88,30 @@ SUITE(SimpleVector_test) {
   }
 
   TEST(erase){
-    std::vector<int> vec{0, 1, 2, 3, 4, 5};
+    simple_vector<int> vec{0, 1, 2, 3, 4, 5};
     vec.erase(vec.begin(), vec.begin() + 3);
     CHECK(vec.size() == 3);
     CHECK(vec.capacity() == 6);
     CHECK(vec[0] == 3);
     CHECK(vec[1] == 4);
     CHECK(vec[2] == 5);
+  }
+
+  TEST(assign){
+    simple_vector<int> vec;
+    std::vector<int> another_vec{0, 1, 2, 3};
+    vec.assign(another_vec.begin(), another_vec.end());
+    int i = 0;
+    for (auto& val : vec) {
+      CHECK_EQUAL(i, val);
+      i++;
+    }
+    CHECK(vec.capacity() == 4);
+    another_vec = {-1};
+    vec.assign(another_vec.begin(), another_vec.end());
+    CHECK_EQUAL(-1, vec[0]);
+    CHECK_EQUAL(1, vec.size());
+    CHECK(vec.capacity() == 4);
   }
 
 

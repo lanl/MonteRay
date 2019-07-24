@@ -169,6 +169,15 @@ class SimpleVector : public Managed
     this->reservedSize_ = tempReservedSize;
   }
 
+  template <class InputIterator>
+  void assign (InputIterator first, InputIterator last){
+    this->reserve( std::distance(first, last) );
+    this->size_ = 0;
+    for (auto&& it = first; first != last; first++){
+      this->emplace_back(*it);
+    }
+  }
+
 };
 
 } // end namespace MonteRay
