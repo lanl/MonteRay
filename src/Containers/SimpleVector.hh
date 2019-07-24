@@ -147,9 +147,10 @@ class SimpleVector : public Managed
     this->emplace_back(val);
   }
 
-  constexpr T& back() noexcept { 
-    return *(this->end() - 1);
-  }
+  constexpr T& front() noexcept { return *(this->begin()); }
+  constexpr const T& front() const noexcept { return *(this->begin()); }
+  constexpr T& back() noexcept { return *(this->end() - 1); }
+  constexpr const T& back() const noexcept { return *(this->end() - 1); }
 
   void clear(){
     auto alloc_ = alloc();
@@ -176,6 +177,16 @@ class SimpleVector : public Managed
     for (; first != last; first++){
       this->emplace_back(*first);
     }
+  }
+
+  constexpr T* data() {
+    return begin_;
+  }
+  constexpr const T* data() const {
+    return begin_;
+  }
+  constexpr bool empty() const {
+    return this->size() == 0;
   }
 
 };
