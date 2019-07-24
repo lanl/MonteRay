@@ -19,7 +19,7 @@ struct CrossSection{
 struct CrossSectionList{
   SimpleVector<CrossSection> xs_vec;
 
-  const CrossSection* getXSByZAID(int ZAID) const {
+  const CrossSection& getXSByZAID(int ZAID) const {
     auto loc = std::find_if(xs_vec.begin(), xs_vec.end(), 
         [ZAID](auto&& xs){ return xs.ZAID() == ZAID; } );
     const CrossSection* retval = (loc != xs_vec.end()) ?  &(*loc) : nullptr;

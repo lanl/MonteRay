@@ -26,7 +26,6 @@ private:
     SimpleVector<gpuFloatType_t> totalXS;
     int id = 0;
     int ZA = 0;
-    size_t numPoints = 0;
     ParticleType_t ParticleType = neutron;
     gpuFloatType_t AWR = 0.0;
 
@@ -128,7 +127,7 @@ public:
     }
 
     // TODO: replace with writeToFile
-    void write( const std::string& filename ) {
+    void write( const std::string& filename ) const {
         std::ofstream outfile;
 
         outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
@@ -142,7 +141,7 @@ public:
         outfile.close();
     }
 
-    void write( std::ostream& out) {
+    void write( std::ostream& out) const {
         unsigned CrossSectionFileVersion = 1;
         binaryIO::write(out, CrossSectionFileVersion );
 
@@ -159,7 +158,6 @@ public:
     }
 
 private:
-    // TODO: move read into a Builder
     template<typename S>
     void read( S& in ) {
         unsigned version;
@@ -167,7 +165,7 @@ private:
 
         binaryIO::read(in, ParticleType );
 
-        unsigned numPoints;
+        size_t numPoints;
         if( version > 0 ) {
             binaryIO::read(in, numPoints );
         } else {
@@ -269,6 +267,7 @@ public:
         return XS;
     }
 
+    // TODO: replace w/ readFromFile
     void read( const std::string& filename ) {
         std::ifstream infile;
         if( infile.is_open() ) {
@@ -290,6 +289,8 @@ public:
     void read(S& in) {
         XS.read(in);
     }
+
+    void setID(int newID){ XS.setID(newID); }
 
 private:
     CrossSection_t<HASHFUNCTION> XS;
