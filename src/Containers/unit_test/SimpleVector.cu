@@ -114,7 +114,6 @@ SUITE(SimpleVector_test) {
     CHECK(vec.capacity() == 4);
   }
 
-
   TEST(adding_to_vector){
     using T = std::tuple<double, int>;
     simple_vector<T> vec;

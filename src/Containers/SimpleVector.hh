@@ -171,10 +171,10 @@ class SimpleVector : public Managed
 
   template <class InputIterator>
   void assign (InputIterator first, InputIterator last){
-    this->reserve( std::distance(first, last) );
+    this->resize( std::distance(first, last) );
     this->size_ = 0;
-    for (auto&& it = first; first != last; first++){
-      this->emplace_back(*it);
+    for (; first != last; first++){
+      this->emplace_back(*first);
     }
   }
 
