@@ -11,9 +11,9 @@ using namespace MonteRay;
 
 struct CrossSection{
   int zaid;
-  auto ZAID() const {return zaid;}
-  gpuFloatType_t AWR() const {return 1.0;}
-  gpuFloatType_t getTotalXS(gpuFloatType_t) const {return 1.0;}
+  constexpr auto ZAID() const {return zaid;}
+  constexpr gpuFloatType_t AWR() const {return 1.0;}
+  constexpr gpuFloatType_t getTotalXS(gpuFloatType_t) const {return 1.0;}
 };
 
 struct CrossSectionList{
