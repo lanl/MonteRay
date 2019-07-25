@@ -21,10 +21,12 @@ SUITE( Test_Vector3D ) {
 		CHECK_CLOSE( temp[0], 0.0, epsilon );
 		CHECK( temp[ 0 ] == temp[ 1 ] && temp[ 0 ] == temp[ 2 ]);
 	}
+#ifndef NDEBUG
 	TEST( IndexingOutOfBounds ) {
 		Vector3D<double> t1( 15.0 );
 		CHECK_THROW( t1[ 5000 ], std::exception );
 	}
+#endif
 	TEST( SingleValueCtor ) {
 		Vector3D<int> temp( 1 );
 		CHECK( temp[ 0 ] == 1 && temp[ 1 ] == 1 && temp[ 2 ] == 1 );

@@ -22,8 +22,11 @@ struct CrossSectionList{
   const CrossSection& getXSByZAID(int ZAID) const {
     auto loc = std::find_if(xs_vec.begin(), xs_vec.end(), 
         [ZAID](auto&& xs){ return xs.ZAID() == ZAID; } );
-    const CrossSection* retval = (loc != xs_vec.end()) ?  &(*loc) : nullptr;
-    return retval;
+    if (loc == xs_vec.end()) {
+      throw std::runtime_error("Attempted to access CrossSection with ZAID " + std::to_string(ZAID) + 
+          " in CrossSectionList but it doesn't exist.");
+    }
+    return *loc;
   }
 };
 

@@ -86,12 +86,8 @@ public:
     Builder(const CrossSectionList& xsList): b_xsList_(std::ref(xsList)){ }
 
     void addIsotope(gpuFloatType_t frac, int zaid){
-      const CrossSection* xsPtr = &(b_xsList_.get().getXSByZAID(zaid));
-      if (xsPtr == nullptr){
-        std::string message = "ZAID " + std::to_string(zaid) + " not present in CrossSectionList.";
-        throw std::runtime_error(message);
-      }
-      b_xsAndFracs_.emplace_back(xsPtr, frac);
+      const CrossSection& xs = b_xsList_.get().getXSByZAID(zaid);
+      b_xsAndFracs_.emplace_back(&xs, frac);
     }
 
     template <typename Stream>
