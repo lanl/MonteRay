@@ -42,26 +42,27 @@ class SimpleVector : public Managed
   }
 
   SimpleVector& operator=(SimpleVector&& other) {
-    auto alloc_ = alloc();
-    begin_ = alloc_traits::allocate(alloc_, other.size());
-    this->begin_ = other.begin_;
-    this->size_ = other.size_;
-    this->reservedSize_ = other.reservedSize_;
-    other.begin_ = nullptr;
-    other.size_ = 0;
-    other.reservedSize_ = 0;
+    (*this).~SimpleVector();
+    new (this) SimpleVector{std::move(other)};
     return *this;
   }
 
   SimpleVector(const SimpleVector& other): SimpleVector(other.begin(), other.end()){ }
 
   SimpleVector(SimpleVector&& other){ 
-    *this = std::move(other); 
+    this->begin_ = other.begin_;
+    this->size_ = other.size_;
+    this->reservedSize_ = other.reservedSize_;
+    other.begin_ = nullptr;
+    other.size_ = 0;
+    other.reservedSize_ = 0;
   }
 
   ~SimpleVector(){
-    auto alloc_ = alloc();
-    if (begin_ != nullptr) alloc_traits::deallocate(alloc_, begin_, this->capacity());
+    if (begin_ != nullptr) {
+      auto alloc_ = alloc();
+      alloc_traits::deallocate(alloc_, begin_, this->capacity());
+    }
   }
 
   constexpr T const * begin() const noexcept {

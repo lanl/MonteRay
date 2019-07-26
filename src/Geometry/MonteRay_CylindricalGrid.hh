@@ -3,12 +3,9 @@
 
 #include "MonteRayTypes.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
-
-class MonteRay_CylindricalGrid;
-
-class RayWorkInfo;
 
 class MonteRay_CylindricalGrid : public MonteRay_GridSystemInterface {
 public:

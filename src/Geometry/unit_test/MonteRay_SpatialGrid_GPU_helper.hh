@@ -342,56 +342,52 @@ public:
     }
 
     rayTraceList_t rayTrace( Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
-        RayWorkInfo rayInfo(1,true);
+        auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
 #ifdef __CUDACC__
-        rayInfo.copyToGPU();
 
         cudaDeviceSynchronize();
-        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, rayInfo.devicePtr,
+        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pRayInfo.get(),
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
         cudaDeviceSynchronize();
 
         gpuErrchk( cudaPeekAtLastError() );
 
-        rayInfo.copyToCPU();
 #else
-        kernelRayTrace( pGridInfo.get(), &rayInfo,
+        kernelRayTrace( pGridInfo.get(), pRayInfo.get(),
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
 #endif
 
         rayTraceList_t rayTraceList;
-        for( unsigned i = 0; i < rayInfo.getRayCastSize(0); ++i ) {
-            rayTraceList.add( rayInfo.getRayCastCell(0,i), rayInfo.getRayCastDist(0,i) );
+        for( unsigned i = 0; i < pRayInfo->getRayCastSize(0); ++i ) {
+            rayTraceList.add( pRayInfo->getRayCastCell(0,i), pRayInfo->getRayCastDist(0,i) );
         }
         return rayTraceList;
     }
 
     singleDimRayTraceMap_t crossingDistance( unsigned d, gpuRayFloat_t pos, gpuRayFloat_t dir, gpuRayFloat_t distance  ) {
 
-        RayWorkInfo rayInfo(1,true);
+        auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
 #ifdef __CUDACC__
-        rayInfo.copyToGPU();
 
         cudaDeviceSynchronize();
         kernelCrossingDistance<<<1,1>>>(
                 pGridInfo->devicePtr,
-                rayInfo.devicePtr,
+                pRayInfo.get(),
                 d, pos, dir, distance );
         cudaDeviceSynchronize();
 
         gpuErrchk( cudaPeekAtLastError() );
 
-        rayInfo.copyToCPU();
 #else
         kernelCrossingDistance(
                 pGridInfo.get(),
-                &rayInfo,
+                pRayInfo.get(),
                 d, pos, dir, distance );
 #endif
 
-        return singleDimRayTraceMap_t( rayInfo, 0, d );
+        return singleDimRayTraceMap_t( *pRayInfo, 0, d );
     }
 
     singleDimRayTraceMap_t crossingDistance( unsigned d, Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
@@ -399,48 +395,46 @@ public:
         RayWorkInfo rayInfo(1,true);
 
 #ifdef __CUDACC__
-        rayInfo.copyToGPU();
+        auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
         cudaDeviceSynchronize();
         kernelCrossingDistance<<<1,1>>>(
                 pGridInfo->devicePtr,
-                rayInfo.devicePtr,
+                pRayInfo.get(),
                 d, pos, dir, distance );
         cudaDeviceSynchronize();
 
         gpuErrchk( cudaPeekAtLastError() );
 
-        rayInfo.copyToCPU();
 #else
         kernelCrossingDistance(
                 pGridInfo.get(),
-                &rayInfo,
+                pRayInfo.get(),
                 d, pos, dir, distance );
 #endif
-        return singleDimRayTraceMap_t( rayInfo, 0, d );
+        return singleDimRayTraceMap_t( *pRayInfo, 0, d );
     }
 
     template<typename particle>
     rayTraceList_t rayTrace( particle& p, gpuRayFloat_t distance, bool outside = false) {
 
-        RayWorkInfo rayInfo(1,true);
+        auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
 #ifdef __CUDACC__
-        rayInfo.copyToGPU();
 
         cudaDeviceSynchronize();
-        kernelRayTraceParticle<<<1,1>>>( pGridInfo->devicePtr, rayInfo.devicePtr,
+        kernelRayTraceParticle<<<1,1>>>( pGridInfo->devicePtr, pRayInfo.get(),
                 p, distance, outside );
         cudaDeviceSynchronize();
 
         gpuErrchk( cudaPeekAtLastError() );
 
-        rayInfo.copyToCPU();
 #else
-        kernelRayTraceParticle( pGridInfo.get(), &rayInfo,
+        kernelRayTraceParticle( pGridInfo.get(), pRayInfo.get()
                 p, distance, outside );
 #endif
         rayTraceList_t rayTraceList;
+        auto rayInfo = *pRayInfo;
         for( unsigned i = 0; i < rayInfo.getRayCastSize(0); ++i ) {
             rayTraceList.add( rayInfo.getRayCastCell(0,i), rayInfo.getRayCastDist(0,i) );
         }

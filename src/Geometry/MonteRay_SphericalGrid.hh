@@ -3,12 +3,9 @@
 
 #include "MonteRayTypes.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
-
-class MonteRay_SphericalGrid;
-
-class RayWorkInfo;
 
 class MonteRay_SphericalGrid : public MonteRay_GridSystemInterface {
 public:

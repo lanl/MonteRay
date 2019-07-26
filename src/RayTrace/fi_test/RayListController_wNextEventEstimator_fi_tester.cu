@@ -387,15 +387,12 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         estimator.copyToGPU();
         estimator.dumpState( &raylist, "nee_debug_dump_test2" );
 
-        Ray_t<3> ray;
-        ray = raylist.getParticle(0);
         raylist.copyToGPU();
 
         GPUSync sync1; sync1.sync();
 
-        RayWorkInfo rayInfo( raylist.size(), true );
-        rayInfo.copyToGPU();
-        estimator.launch_ScoreRayList(1U,1U, &raylist, &rayInfo);
+        auto pRayInfo = std::make_unique<RayWorkInfo>(raylist.size());
+        estimator.launch_ScoreRayList(1U,1U, &raylist, pRayInfo.get());
 
         GPUSync sync2; sync2.sync();
 

@@ -15,11 +15,11 @@
 #include "MonteRayTypes.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRayCopyMemory.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay{
 
 class HashBins;
-class RayWorkInfo;
 
 typedef gpuFloatType_t float_t;
 

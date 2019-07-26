@@ -7,10 +7,10 @@
 #include "MonteRayConstants.hh"
 #include "GridBins.hh"
 #include "MonteRay_timer.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay{
 
-class RayWorkInfo;
 
 class gpuDistanceCalculatorTestHelper
 {

@@ -4,6 +4,8 @@
 #include <limits>
 
 #include <functional>
+#include <memory>
+
 #include "RayListInterface.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_timer.hh"
@@ -24,8 +26,6 @@ class MonteRayMaterialListHost;
 class HashLookup;
 class gpuTallyHost;
 class tripleTime;
-
-class RayWorkInfo;
 
 template <typename MaterialList>
 CUDA_CALLABLE_MEMBER
@@ -70,6 +70,7 @@ tallyCellSegment(const MaterialList* pMatList,
 
     return cellOpticalPathLength;
 }
+
 
 template<unsigned N, typename GRIDTYPE, typename MaterialList>
 CUDA_CALLABLE_MEMBER void
@@ -178,8 +179,7 @@ MonteRay::tripleTime launchRayTraceTally(
     nThreads = launchParams.second;
 
 #ifdef __CUDACC__
-    RayWorkInfo rayInfo(nBlocks*nThreads);
-    rayInfo.copyToGPU();
+    auto pRayInfo = std::make_unique<RayWorkInfo>(nBlocks*nThreads);
 
     cudaEvent_t startGPU, stopGPU, start, stop;
 
@@ -200,7 +200,7 @@ MonteRay::tripleTime launchRayTraceTally(
             pMatList->ptr_device,
             pMatProps->ptrData_device,
             pMatList->getHashPtr()->getPtrDevice(),
-            rayInfo.devicePtr,
+            pRayInfo.get(),
             pTally->temp->tally );
 
     cudaEventRecord(stopGPU,stream);
@@ -227,7 +227,7 @@ MonteRay::tripleTime launchRayTraceTally(
     cudaEventElapsedTime(&totalTime, start, stop );
     time.totalTime = totalTime/1000.0;
 #else
-    RayWorkInfo rayInfo(1, true);
+    auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
     MonteRay::cpuTimer timer1, timer2;
     timer1.start();
@@ -237,7 +237,7 @@ MonteRay::tripleTime launchRayTraceTally(
             pMatList->getPtr(),
             pMatProps->getPtr(),
             pMatList->getHashPtr()->getPtr(),
-            &rayInfo,
+            pRayInfo.get(),
             pTally->getPtr()->tally
     );
     timer1.stop();

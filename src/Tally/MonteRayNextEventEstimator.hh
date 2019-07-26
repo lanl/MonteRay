@@ -18,7 +18,6 @@
 #include "MonteRayMaterialList.hh"
 #include "ExpectedPathLength.hh"
 #include "RayList.hh"
-#include "RayWorkInfo.hh"
 #include "MonteRayTally.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
@@ -40,8 +39,6 @@ class RayList_t;
 
 template< unsigned N>
 class Ray_t;
-
-class RayWorkInfo;
 
 template<typename Geometry>
 class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator<Geometry>> {
@@ -545,9 +542,9 @@ void MonteRayNextEventEstimator<Geometry>::launch_ScoreRayList( int nBlocksArg, 
 
 #ifdef __CUDACC__
     if( stream ) {
-        kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo );
     } else {
-        kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo );
     }
 #else
     kernel_ScoreRayList( this, pRayList, pRayInfo );
