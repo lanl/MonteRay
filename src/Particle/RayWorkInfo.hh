@@ -2,6 +2,7 @@
 #define RAYWORKINFO_HH_
 
 #include <string>
+#include <iostream>
 #include "SimpleVector.hh"
 #include "MonteRayAssert.hh"
 #include "ManagedAllocator.hh"
