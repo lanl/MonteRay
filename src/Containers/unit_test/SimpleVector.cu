@@ -153,6 +153,23 @@ SUITE(SimpleVector_test) {
     CHECK_EQUAL((*vec)[2], 6);
   }
 #endif
+
+  TEST(inserting_into_vector){
+    simple_vector<int> vecA{0, 1, 2};
+    std::vector<int> vecB{3, 4, 5};
+    vecA.insert(vecA.begin() + 1, vecB.begin(), vecB.end());
+
+    CHECK_EQUAL(vecA.size(), 6);
+    CHECK_EQUAL(vecA.capacity(), 6);
+    CHECK_EQUAL(0, vecA[0]);
+    CHECK_EQUAL(3, vecA[1]);
+    CHECK_EQUAL(4, vecA[2]);
+    CHECK_EQUAL(5, vecA[3]);
+    CHECK_EQUAL(1, vecA[4]);
+    CHECK_EQUAL(2, vecA[5]);
+  }
+
+
 }
 
 } // end namespace SimpleVectorTest

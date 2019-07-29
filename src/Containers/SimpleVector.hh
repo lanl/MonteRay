@@ -180,6 +180,22 @@ class SimpleVector : public Managed
     }
   }
 
+  template <typename InputIterator>
+  void insert(T* oldPosition, InputIterator&& begin, InputIterator&& end){
+    auto N = std::distance(begin, end);
+    auto position_dist = std::distance(this->begin(), oldPosition);
+    reserve(this->size() + N);
+    auto position = this->begin() + position_dist;
+    for (auto it = position; it != this->end(); it++){
+      *(it + N) = std::move(*it);
+    }
+    for (; begin != end; begin++){
+      *position = *begin;
+      position++;
+    }
+    this->size_ += N;
+  }
+
   constexpr T* data() {
     return begin_;
   }
