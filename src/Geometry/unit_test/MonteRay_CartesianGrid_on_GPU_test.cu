@@ -6,7 +6,6 @@
 
 #include "MonteRay_CartesianGrid.t.hh"
 #include "MonteRay_SpatialGrid.hh"
-#include "GPUSync.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRayCopyMemory.t.hh"
 
@@ -128,8 +127,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
         //    	data.pGridInfo[Z]->copyToGPU();
         //    	createDeviceInstance<<<1,1>>>( devicePtr, data.pGridInfo[X]->devicePtr, data.pGridInfo[Y]->devicePtr, data.pGridInfo[Z]->devicePtr );
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 

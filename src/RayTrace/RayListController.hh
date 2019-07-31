@@ -14,7 +14,6 @@
 #include "RayListInterface.hh"
 #include "ExpectedPathLength.hh"
 #include "GPUErrorCheck.hh"
-#include "GPUSync.hh"
 #include "MonteRayNextEventEstimator.hh"
 #include "MonteRay_timer.hh"
 #include "RayWorkInfo.hh"
@@ -649,8 +648,9 @@ void
 RayListController<GRID_T,N>::sync(void){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
-    GPUSync sync;
-    sync.sync();
+#ifdef __CUDACC__
+    cudaStreamSynchronize(0);
+#endif
 }
 
 template<typename GRID_T, unsigned N>
@@ -671,11 +671,12 @@ RayListController<GRID_T,N>::clearTally(void) {
     //	cudaEventRecord( stopGPU.get(), stream1.get());
     //	cudaStreamWaitEvent(stream1.get(), stopGPU.get(), 0);
 
-    GPUSync sync;
+#ifdef __CUDACC__
+    cudaStreamSynchronize(0);
+#endif
     if( pTally ) pTally->clear();
     if( bank1 ) bank1->clear();
     if( bank2) bank2->clear();
-    sync.sync();
 }
 
 template<typename GRID_T, unsigned N>

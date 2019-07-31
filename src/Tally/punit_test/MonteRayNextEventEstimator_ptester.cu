@@ -15,7 +15,6 @@
 #include "MonteRayMaterial.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRayParallelAssistant.hh"
-#include "GPUSync.hh"
 
 namespace NextEventEsimator_pTester_namespace{
 
@@ -300,7 +299,7 @@ SUITE( NextEventEstimator_pTester ) {
 
             rayInfo.copyToGPU();
 
-            GPUSync();
+            cudaStreamSynchronize(0);
 
             cudaStream_t* stream = NULL;
             stream = new cudaStream_t;
