@@ -70,7 +70,9 @@ SUITE( MonteRayCrossSection_tester ) {
         xs->copyToGPU();
 
         gpuFloatType_t totalXS = launchGetTotalXS( xs, energy);
+#ifdef __CUDACC__
         cudaStreamSynchronize(0);
+#endif
 
         CHECK_CLOSE( 7.14769f, totalXS, 1e-5 );
 

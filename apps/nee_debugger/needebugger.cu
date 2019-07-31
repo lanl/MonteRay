@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "GPUUtilityFunctions.hh"
-#include "GPUSync.hh"
 
 #include "gpuTally.hh"
 
@@ -101,12 +100,16 @@ nee_debugger::launch(const std::string& optBaseName){
         RayWorkInfo rayInfo( singleSizeRaylist.size() );
         rayInfo.copyToGPU();
 
-        GPUSync sync1; sync1.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
 
         std::cout << "Launching ray # " << i << std::endl;
         estimator.launch_ScoreRayList(-1,-1, &singleSizeRaylist, &rayInfo, 0, false);
 
-        GPUSync sync2; sync2.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
     }
 
     estimator.copyToCPU();

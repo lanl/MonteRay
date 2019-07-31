@@ -390,13 +390,17 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         ray = raylist.getParticle(0);
         raylist.copyToGPU();
 
+#ifdef __CUDACC__
         cudaStreamSynchronize(0);
+#endif
 
         RayWorkInfo rayInfo( raylist.size(), true );
         rayInfo.copyToGPU();
         estimator.launch_ScoreRayList(1U,1U, &raylist, &rayInfo);
 
+#ifdef __CUDACC__
         cudaStreamSynchronize(0);
+#endif
 
         estimator.copyToCPU();
         double monteRayValue = estimator.getTally(0);
