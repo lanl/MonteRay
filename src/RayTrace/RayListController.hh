@@ -9,7 +9,7 @@
 #include <algorithm>
 
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "ExpectedPathLength.hh"
@@ -24,7 +24,6 @@
 namespace MonteRay {
 
 class MonteRayMaterialListHost;
-class MonteRay_MaterialProperties;
 class gpuTallyHost;
 class cpuTimer;
 
@@ -46,7 +45,7 @@ public:
             int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
-            MonteRay_MaterialProperties*,
+            MaterialProperties*,
             gpuTallyHost* );
 
     /// Ctor for the next event estimator solver
@@ -54,7 +53,7 @@ public:
             int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
-            MonteRay_MaterialProperties*,
+            MaterialProperties*,
             unsigned numPointDets );
 
     /// Ctor for the writing next-event estimator collision and source points to file
@@ -80,7 +79,7 @@ public:
     void dumpPointDetForDebug(const std::string& baseFileName = std::string() );
     void printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
     void outputTimeBinnedTotal(std::ostream& out,unsigned nSamples=1, unsigned constantDimension=2);
-    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MaterialProperties* pMPs);
 
     void flush(bool final=false);
     void finalFlush(void);
@@ -143,7 +142,7 @@ private:
     unsigned nThreads = 0;
     GRID_T* pGrid = nullptr;
     MonteRayMaterialListHost* pMatList = nullptr;
-    MonteRay_MaterialProperties* pMatProps = nullptr;
+    MaterialProperties* pMatProps = nullptr;
     gpuTallyHost* pTally = nullptr;
     const MonteRayParallelAssistant& PA;
 
@@ -203,7 +202,7 @@ RayListController<GRID_T,N>::RayListController(
         int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
-        MonteRay_MaterialProperties* pMP,
+        MaterialProperties* pMP,
         gpuTallyHost* pT
 ) :
 nBlocks(blocks),
@@ -241,7 +240,7 @@ PA( MonteRayParallelAssistant::getInstance() )
                 pGrid->getDevicePtr(),
                 currentBank->getPtrPoints()->devicePtr,
                 pMatList->ptr_device,
-                pMatProps->ptrData_device,
+                pMatProps,
                 pMatList->getHashPtr()->getPtrDevice(),
                 rayInfo.get(),
                 pTally->temp->tally );
@@ -249,7 +248,7 @@ PA( MonteRayParallelAssistant::getInstance() )
         rayTraceTally( pGrid->getPtr(),
                        currentBank->getPtrPoints(),
                        pMatList->getPtr(),
-                       pMatProps->getPtr(),
+                       pMatProps,
                        pMatList->getHashPtr()->getPtr(),
                        rayInfo.get(),
                        pTally->getPtr()->tally );
@@ -264,7 +263,7 @@ RayListController<GRID_T,N>::RayListController(
         int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
-        MonteRay_MaterialProperties* pMP,
+        MaterialProperties* pMP,
         unsigned numPointDets
 ) :
 nBlocks(blocks),
@@ -719,7 +718,7 @@ RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nS
 
 template<typename GRID_T, unsigned N>
 void
-RayListController<GRID_T,N>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
+RayListController<GRID_T,N>::updateMaterialProperties( MaterialProperties* pMPs) {
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
     if( usingNextEventEstimator ) {

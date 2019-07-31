@@ -14,7 +14,7 @@
 #include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
@@ -41,20 +41,24 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
             pGrid->setVertices( 2, -10.0, 10.0, 1);
             pGrid->finalize();
 
-            pMatProps = new MonteRay_MaterialProperties;
+            pMatList = new MonteRayMaterialListHost(1,1,3);
 
-            MonteRay_CellProperties cell1, cell2;
+            auto matPropBuilder = MaterialProperties::Builder{};
+
+            MaterialProperties::Builder::Cell cell1, cell2;
             cell1.add( 0, 0.0); // vacuum
-            pMatProps->add( cell1 );
+            matPropBuilder.addCell(cell1);
 
             cell2.add( 0, 1.0); // density = 1.0
-            pMatProps->add( cell2 );
+            matPropBuilder.addCell(cell2);
+            
+            matPropBuilder.renumberMaterialIDs(*pMatList);
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             pXS = new MonteRayCrossSectionHost(4);
 
             pMat = new MonteRayMaterialHost(1);
 
-            pMatList = new MonteRayMaterialListHost(1,1,3);
 
         }
 
@@ -77,9 +81,6 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
             pMatList->add( 0, *pMat, 0 );
             pMatList->copyToGPU();
 
-            pMatProps->renumberMaterialIDs(*pMatList);
-            pMatProps->copyToGPU();
-
             pXS->copyToGPU();
 
         }
@@ -87,14 +88,13 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         ~ControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pXS;
             delete pMat;
         }
 
         GridBins* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         MonteRayCrossSectionHost* pXS;
         MonteRayMaterialHost* pMat;
 
@@ -123,7 +123,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
                 1,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 numPointDets );
 
         controller.setCapacity(10);
@@ -220,7 +220,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
 //            pGrid->setVertices( 2, zverts );
 //            pGrid->finalize();
 //
-//            pMatProps = new MonteRay_MaterialProperties;
+//            pMatProps = new MaterialProperties;
 //
 //            MonteRay_CellProperties cell1, cell2;
 //            cell1.add( 0, 0.0); // vacuum
@@ -267,7 +267,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
 //
 //        GridBins* pGrid;
 //        MonteRayMaterialListHost* pMatList;
-//        MonteRay_MaterialProperties* pMatProps;
+//        MaterialProperties* pMatProps;
 //        MonteRayCrossSectionHost* pXS;
 //        MonteRayMaterialHost* pMat;
 //    };

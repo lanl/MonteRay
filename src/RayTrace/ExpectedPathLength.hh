@@ -7,7 +7,7 @@
 #include <memory>
 
 #include "RayListInterface.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_timer.hh"
 #include "MonteRayMaterialList.hh"
 #include "HashLookup.hh"
@@ -20,8 +20,6 @@
 namespace MonteRay{
 
 class gpuTimingHost;
-class MonteRay_MaterialProperties;
-class MonteRay_MaterialProperties_Data;
 class MonteRayMaterialListHost;
 class HashLookup;
 class gpuTallyHost;
@@ -31,7 +29,7 @@ template <typename MaterialList>
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
 tallyCellSegment(const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const gpuFloatType_t* materialXS,
         gpuTallyType_t* tally,
         unsigned cell,
@@ -44,25 +42,24 @@ tallyCellSegment(const MaterialList* pMatList,
     using score_t = gpuTallyType_t;
 
     xs_t totalXS = 0.0;
-    unsigned numMaterials = getNumMats( pMatProps, cell);
-
+    unsigned numMaterials = pMatProps->numMaterials(cell);
     for( unsigned i=0; i<numMaterials; ++i ) {
-        unsigned matID = getMatID(pMatProps, cell, i);
-        gpuFloatType_t density = getDensity(pMatProps, cell, i );
-        if( density > 1e-5 ) {
-            totalXS +=   materialXS[matID]*density;
-        }
+      gpuFloatType_t density = pMatProps->getDensity(cell, i);
+      if( density > static_cast<xs_t>(1e-5) ) {
+        unsigned matID = pMatProps->getMatID(cell, i);
+        totalXS +=   materialXS[matID]*density;
+      }
     }
 
     // TPB TODO: cast 1.0 to gpuFloatType_t
     //
-    attenuation_t attenuation = 1.0;
+    attenuation_t attenuation = static_cast<attenuation_t>(1.0);
     score_t score = distance;
     gpuTallyType_t cellOpticalPathLength = totalXS*distance;
 
-    if( totalXS >  1e-5 ) {
+    if( totalXS >  static_cast<xs_t>(1e-5) ) {
         attenuation =  exp( - cellOpticalPathLength );
-        score = ( 1.0 / totalXS ) * ( 1.0 - attenuation );
+        score = ( static_cast<xs_t>(1.0) / totalXS ) * ( static_cast<attenuation_t>(1.0) - attenuation );
     }
     score *= exp( -opticalPathLength ) * weight;
 
@@ -71,14 +68,13 @@ tallyCellSegment(const MaterialList* pMatList,
     return cellOpticalPathLength;
 }
 
-
 template<unsigned N, typename GRIDTYPE, typename MaterialList>
 CUDA_CALLABLE_MEMBER void
 tallyCollision(
         unsigned particleID,
         const GRIDTYPE* pGrid,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         const Ray_t<N>* p,
         RayWorkInfo* pRayInfo,
@@ -131,7 +127,7 @@ CUDA_CALLABLE_KERNEL
 rayTraceTally(const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* tally) {
@@ -169,7 +165,7 @@ MonteRay::tripleTime launchRayTraceTally(
         const GRIDTYPE* pGrid,
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties* pMatProps,
+        const MaterialProperties* pMatProps,
         gpuTallyHost* pTally
 ) {
     MonteRay::tripleTime time;
@@ -198,7 +194,7 @@ MonteRay::tripleTime launchRayTraceTally(
             pGrid->getDevicePtr(),
             pCP->getPtrPoints()->devicePtr,
             pMatList->ptr_device,
-            pMatProps->ptrData_device,
+            pMatProps,
             pMatList->getHashPtr()->getPtrDevice(),
             pRayInfo.get(),
             pTally->temp->tally );
@@ -235,7 +231,7 @@ MonteRay::tripleTime launchRayTraceTally(
     rayTraceTally( pGrid->getPtr(),
             pCP->getPtrPoints(),
             pMatList->getPtr(),
-            pMatProps->getPtr(),
+            pMatProps,
             pMatList->getHashPtr()->getPtr(),
             pRayInfo.get(),
             pTally->getPtr()->tally
