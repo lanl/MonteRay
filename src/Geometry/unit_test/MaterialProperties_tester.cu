@@ -1,8 +1,6 @@
 #include <UnitTest++.h>
 
 #include "MaterialProperties.hh"
-#include "MonteRay_MaterialProperties.hh"
-#include "MonteRay_SetupMaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 
 namespace MaterialProperties_tester{
@@ -14,23 +12,14 @@ using namespace MonteRay;
 /* typedef MonteRay_MaterialSpec MaterialSpec; */
 /* typedef MonteRay_MaterialProperties MaterialProperties; */
 using Offset_t = size_t;
-using Material_Index_t = MonteRay_CellProperties::Material_Index_t;
-using Temperature_t = MonteRay_CellProperties::Temperature_t;
-using MatID_t = MonteRay_CellProperties::MatID_t;
-using Density_t = MonteRay_CellProperties::Density_t;
-
-struct Cell{
-  std::vector<MatID_t> ids;
-  std::vector<Density_t> densities;
-  auto getNumMaterials() const { return ids.size(); }
-  auto getMaterialID(int i) const { return ids[i]; }
-  auto getMaterialDensity(int i) const { return densities[i]; }
-};
+using MatID_t = MaterialProperties::MatID_t;
+using Density_t = MaterialProperties::Density_t;
+using Cell = MaterialProperties::Builder::Cell;
 
 SUITE( NewMaterialProperties_tests ) {
 
-  TEST(buildAndAccess_MaterialProperties_Data){
-    auto mpb = MaterialProperties_Data::Builder();
+  TEST(buildAndAccess_MaterialProperties){
+    auto mpb = MaterialProperties::Builder();
     Cell cell1{ {1, 2}, {1.1, 2.2} };
     Cell cell2{ {3}, {3.3} };
     mpb.addCell(cell1);
@@ -53,6 +42,105 @@ SUITE( NewMaterialProperties_tests ) {
     CHECK_EQUAL(3, matProps.getMatID(1, 0));
     CHECK_EQUAL(4, matProps.getMatID(1, 1));
   }
+
+
+  TEST(build_via_lnk3dnt){
+    using ReadLnk3dnt = MonteRay_ReadLnk3dnt;
+    ReadLnk3dnt readerObject( "lnk3dnt/3iso_3shell_godiva.lnk3dnt" );
+    readerObject.ReadMatData();
+    auto mpb = MaterialProperties::Builder(readerObject);
+    auto matProps = mpb.build();
+
+    CHECK_EQUAL(size_t(8000), matProps.numCells());
+
+    int cellNumber = 7010;
+    CHECK_EQUAL( size_t(2) , matProps.numMaterials(cellNumber) );
+    CHECK_EQUAL( 2         , matProps.getMaterialID(cellNumber,0) );
+    CHECK_EQUAL( 3         , matProps.getMaterialID(cellNumber,1) );
+    CHECK_CLOSE( 17.8772   , matProps.getMaterialDensity(cellNumber,0), 1e-04);
+    CHECK_CLOSE(  0.8228   , matProps.getMaterialDensity(cellNumber,1), 1e-04);
+
+    cellNumber = 7410;
+    CHECK_EQUAL( size_t(2) , matProps.numMaterials(cellNumber) );
+    CHECK_EQUAL( 3         , matProps.getMaterialID(cellNumber,0) );
+    CHECK_EQUAL( 4         , matProps.getMaterialID(cellNumber,1) );
+    CHECK_CLOSE( 8.6768    , matProps.getMaterialDensity(cellNumber,0), 1e-04);
+    CHECK_CLOSE( 4.4132    , matProps.getMaterialDensity(cellNumber,1), 1e-04);
+
+  }
+
+  TEST(renumber_mat_ids){
+    struct MaterialList{
+      MatID_t materialIDtoIndex(MatID_t id) const {
+        if (id == 12){ return 10; }
+        if (id == 27){ return 20; }
+        else { return 30; }
+      }
+    };
+
+    auto mpb = MaterialProperties::Builder();
+    Cell cell1{ {12, 27}, {1.1, 2.2} };
+    Cell cell2{ {39}, {3.3} };
+    mpb.addCell(cell1);
+    mpb.addCell(cell2);
+    mpb.renumberMaterialIDs(MaterialList{});
+    auto matProps = mpb.build();
+
+    CHECK_EQUAL(10, matProps.getMatID(0, 0));
+    CHECK_EQUAL(20, matProps.getMatID(0, 1));
+    CHECK_EQUAL(30, matProps.getMatID(1, 0));
+  }
+
+  TEST(read_and_write){
+    auto mpb = MaterialProperties::Builder();
+    Cell cell1{ {1, 2}, {1.1, 2.2} };
+    Cell cell2{ {3}, {3.3} };
+    mpb.addCell(cell1);
+    mpb.addCell(cell2);
+    auto matProps = mpb.build();
+
+    std::stringstream stream;
+    matProps.write(stream);
+    MaterialProperties::Builder another_mpb;
+    auto another_matProps = another_mpb.read(stream);
+
+    CHECK_EQUAL(2, matProps.numCells());
+    CHECK_EQUAL(2, matProps.numMats(0));
+    CHECK_EQUAL(1, matProps.numMats(1));
+    CHECK_EQUAL(3, matProps.numMaterialComponents());
+
+    CHECK_EQUAL(1.1f, matProps.getDensity(0, 0));
+    CHECK_EQUAL(2.2f, matProps.getDensity(0, 1));
+    CHECK_EQUAL(3.3f, matProps.getDensity(1, 0));
+
+    CHECK_EQUAL(1, matProps.getMatID(0, 0));
+    CHECK_EQUAL(2, matProps.getMatID(0, 1));
+    CHECK_EQUAL(3, matProps.getMatID(1, 0));
+  }
+
+  TEST(initialize_material_description_memReductionEnabled){
+    std::vector<MatID_t> ids{1, 2, 3};
+    std::vector<Density_t> densities{1.1, 2.2, 3.3};
+    int nCells = 3;
+    auto mpb = MaterialProperties::Builder{};
+
+    mpb.initializeMaterialDescription(ids, densities, nCells);
+    auto matProps = mpb.build();
+    CHECK_EQUAL(3, matProps.numCells());
+
+    CHECK_EQUAL(1, matProps.numMats(0));
+    CHECK_EQUAL(1, matProps.numMats(1));
+    CHECK_EQUAL(1, matProps.numMats(2));
+
+    CHECK_EQUAL(1, matProps.getMatID(0, 0));
+    CHECK_EQUAL(2, matProps.getMatID(1, 0));
+    CHECK_EQUAL(3, matProps.getMatID(2, 0));
+
+    CHECK_EQUAL(1.1f, matProps.getDensity(0, 0));
+    CHECK_EQUAL(2.2f, matProps.getDensity(1, 0));
+    CHECK_EQUAL(3.3f, matProps.getDensity(2, 0));
+  }
+
 
 }
 
