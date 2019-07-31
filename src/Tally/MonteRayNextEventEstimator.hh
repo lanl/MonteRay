@@ -14,7 +14,7 @@
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.t.hh"
 #include "HashLookup.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRayMaterialList.hh"
 #include "ExpectedPathLength.hh"
 #include "RayList.hh"
@@ -22,14 +22,13 @@
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
 #include "RayWorkInfo.hh"
+#include "ReadAndWriteFiles.hh"
 
 namespace MonteRay {
 
 class HashLookup;
 class HashLookupHost;
 class GridBins;
-class MonteRay_MaterialProperties;
-class MonteRay_MaterialProperties_Data;
 class MonteRayMaterialListHost;
 class MonteRayMaterialList;
 class MonteRayTally;
@@ -91,8 +90,8 @@ public:
     template<unsigned N>
     void dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName  = std::string("") );
 
-    CUDAHOST_CALLABLE_MEMBER void setGeometry(const Geometry* pGeometry, const MonteRay_MaterialProperties* pMPs);
-    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void setGeometry(const Geometry* pGeometry, const MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MaterialProperties* pMPs);
 
     CUDAHOST_CALLABLE_MEMBER void setMaterialList(const MonteRayMaterialListHost* ptr);
 
@@ -147,8 +146,7 @@ private:
     std::vector<gpuFloatType_t>* pTallyTimeBinEdges = NULL;
 
     const Geometry* pGeometry = NULL;
-    const MonteRay_MaterialProperties* pMatPropsHost = NULL;
-    const MonteRay_MaterialProperties_Data* pMatProps = NULL;
+    const MaterialProperties* pMatProps = NULL;
     const MonteRayMaterialListHost* pMatListHost = NULL;
     const MonteRayMaterialList* pMatList = NULL;
     const HashLookupHost* pHashHost = NULL;
@@ -213,7 +211,6 @@ MonteRayNextEventEstimator<Geometry>::init() {
      pTallyTimeBinEdges = NULL;
 
      pGeometry = NULL;
-     pMatPropsHost = NULL;
      pMatProps = NULL;
      pMatListHost = NULL;
      pMatList = NULL;
@@ -280,12 +277,11 @@ MonteRayNextEventEstimator<Geometry>::copy(const MonteRayNextEventEstimator* rhs
         }
         MonteRayMemcpy(tallyPoints, rhs->tallyPoints, num*sizeof( decltype(*tallyPoints) ), cudaMemcpyHostToDevice);
 
-        pMatPropsHost = NULL;
         pMatListHost = NULL;
         pHashHost = NULL;
 
         pGeometry = rhs->pGeometry->getDevicePtr();
-        pMatProps = rhs->pMatPropsHost->ptrData_device;
+        pMatProps = rhs->pMatProps;
         pMatList = rhs->pMatListHost->ptr_device;
         pHash = rhs->pMatListHost->getHashPtr()->getPtrDevice();
         pTally = rhs->pTally->devicePtr;
@@ -375,12 +371,12 @@ MonteRayNextEventEstimator<Geometry>::calcScore( unsigned threadID, Ray_t<N>& ra
             if( cell == std::numeric_limits<unsigned int>::max() ) continue;
 
             gpuFloatType_t totalXS = 0.0;
-            unsigned numMaterials = getNumMats( pMatProps, cell);
+            unsigned numMaterials = pMatProps->numMaterials(cell);
 
 
             for( unsigned matIndex=0; matIndex<numMaterials; ++matIndex ) {
-                unsigned matID = getMatID(pMatProps, cell, matIndex);
-                gpuFloatType_t density = getDensity(pMatProps, cell, matIndex );
+                unsigned matID = pMatProps->getMatID(cell, matIndex);
+                gpuFloatType_t density = pMatProps->getDensity(cell, matIndex );
                 gpuFloatType_t xs = materialXS[matID]*density;
                 totalXS += xs;
             }
@@ -605,7 +601,7 @@ MonteRayNextEventEstimator<Geometry>::dumpState( const RayList_t<N>* pRayList, c
 
     // write out material properties
     filename = std::string("matProps_") + baseName;
-    pMatPropsHost->writeToFile( filename );
+    MonteRay::writeToFile( filename, *pMatProps );
 
     // write out materials
     filename = std::string("materialList_") + baseName;
@@ -616,18 +612,16 @@ MonteRayNextEventEstimator<Geometry>::dumpState( const RayList_t<N>* pRayList, c
 template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<Geometry>::setGeometry(const Geometry* pGeometryIn, const MonteRay_MaterialProperties* pMPs) {
+MonteRayNextEventEstimator<Geometry>::setGeometry(const Geometry* pGeometryIn, const MaterialProperties* pMPs) {
      pGeometry = pGeometryIn;
-     pMatPropsHost = pMPs;
-     pMatProps = pMPs->getPtr();
+     pMatProps = pMPs;
 }
 
 template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<Geometry>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
-     pMatPropsHost = pMPs;
-     pMatProps = pMPs->getPtr();
+MonteRayNextEventEstimator<Geometry>::updateMaterialProperties( MaterialProperties* pMPs) {
+     pMatProps = pMPs;
 
      if( copiedToGPU ) {
          Base::copyToGPU();

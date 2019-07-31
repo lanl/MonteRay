@@ -12,7 +12,7 @@
 #include "MonteRayCrossSection.hh"
 
 #include "MonteRayMaterial.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 // #define MEMCHECK 1
 
 namespace nextEventEsimator_unittest{
@@ -75,13 +75,13 @@ SUITE( NextEventEstimator_Tester ) {
             grid.finalize();
             grid.copyToGPU();
 
+            MaterialProperties::Builder matPropsBuilder;
+            MaterialProperties::Builder::Cell cell1, cell2;
             cell1.add( 0, 0.0); // vacuum
-            matProps.add( cell1 );
+            matPropsBuilder.addCell( cell1 );
 
             cell2.add( 0, 1.0); // density = 1.0
-            matProps.add( cell2 );
-
-            matProps.setupPtrData();
+            matPropsBuilder.addCell( cell2 );
 
             // setup a material list
             pXS = std::unique_ptr<MonteRayCrossSectionHost> ( new MonteRayCrossSectionHost(4) );
@@ -101,24 +101,23 @@ SUITE( NextEventEstimator_Tester ) {
             pMatList->add(0, *pMat, 0);
             pMatList->copyToGPU();
 
-            matProps.renumberMaterialIDs(*pMatList);
-            matProps.copyToGPU();
+            matPropsBuilder.renumberMaterialIDs(*pMatList);
+            pMatProps = std::make_unique<MaterialProperties>(matPropsBuilder.build());
 
             pXS->copyToGPU();
 
-            pEstimator = std::unique_ptr<MonteRayNextEventEstimator<GridBins>>( new MonteRayNextEventEstimator<GridBins>(10) );
-            pEstimator->setGeometry( &grid, &matProps );
+            pEstimator = std::make_unique<MonteRayNextEventEstimator<GridBins>>( 10 );
+            pEstimator->setGeometry( &grid, pMatProps.get() );
             pEstimator->setMaterialList( pMatList.get() );
         }
-        ~CalcScore_test(){}
+        ~CalcScore_test(){ }
 
     public:
         GridBins grid;
-        MonteRay_CellProperties cell1, cell2;
         std::unique_ptr<MonteRayMaterialListHost> pMatList;
         std::unique_ptr<MonteRayMaterialHost> pMat;
         std::unique_ptr<MonteRayCrossSectionHost> pXS;
-        MonteRay_MaterialProperties matProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
 
         std::unique_ptr<MonteRayNextEventEstimator<GridBins>> pEstimator;
     };
@@ -157,7 +156,7 @@ SUITE( NextEventEstimator_Tester ) {
         ray.particleType = photon;
 
         unsigned particleID = 0;
-        RayWorkInfo rayInfo(1,true);
+        RayWorkInfo rayInfo(1);
         gpuFloatType_t score = pEstimator->calcScore<1>(particleID, ray, rayInfo );
 
         gpuFloatType_t expected = ( 1/ (4.0f * MonteRay::pi ) ) * exp(-0.0);
