@@ -49,14 +49,8 @@ public:
         ParticleType = rhs.ParticleType;
 
         size_t N = rhs.energies.size();
-        energies.clear();
-        totalXS.clear();
-        energies.resize( N );
-        totalXS.resize( N );
-        for( size_t i = 0; i < rhs.energies.size(); ++i ) {
-            energies[i] = rhs.energies[i];
-            totalXS[i] = rhs.totalXS[i];
-        }
+        energies.assign(rhs.energies.begin(), rhs.energies.end());
+        totalXS.assign(rhs.totalXS.begin(), rhs.totalXS.end());
         build();
         return *this;
     };
