@@ -7,7 +7,7 @@
 #include "gpuTally.hh"
 
 #include "MonteRay_timer.hh"
-#include "RayListController.hh"
+#include "RayListController.t.hh"
 #include "GridBins.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterial.hh"
@@ -120,3 +120,4 @@ nee_debugger::launch(const std::string& optBaseName){
 
 
 } // end namespace
+
