@@ -50,13 +50,13 @@ class SimpleView
 
 template <typename Iterator>
 auto make_simple_view(Iterator&& begin, Iterator&& end){
-  using T = std::decay_t<decltype(*begin)>;
+  using T = std::remove_reference<decltype(*begin)>;
   return SimpleView<T>{std::forward<Iterator>(begin), std::forward<Iterator>(end)};
 }
 
 template <typename Container>
 auto make_simple_view(Container&& container){
-  using T = std::decay_t<decltype(*container.begin())>;
+  using T = std::remove_reference<decltype(*container.begin())>;
   return SimpleView<T>{container};
 }
 

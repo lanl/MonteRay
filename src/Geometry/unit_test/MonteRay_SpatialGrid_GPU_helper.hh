@@ -9,7 +9,6 @@
 #define MONTERAY_SPATIALGRID_HELPER_HH_
 
 #include "MonteRay_SpatialGrid.hh"
-#include "GPUSync.hh"
 #include "GPUUtilityFunctions.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"

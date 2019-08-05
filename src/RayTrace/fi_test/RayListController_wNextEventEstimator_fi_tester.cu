@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "GPUUtilityFunctions.hh"
-#include "GPUSync.hh"
 
 #include "gpuTally.hh"
 
@@ -389,12 +388,16 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
         raylist.copyToGPU();
 
-        GPUSync sync1; sync1.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
 
         auto pRayInfo = std::make_unique<RayWorkInfo>(raylist.size());
         estimator.launch_ScoreRayList(1U,1U, &raylist, pRayInfo.get());
 
-        GPUSync sync2; sync2.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
 
         estimator.copyToCPU();
         double monteRayValue = estimator.getTally(0);

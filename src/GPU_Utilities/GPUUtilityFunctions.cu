@@ -165,6 +165,11 @@ void setCudaStackSize( size_t size, const bool verbose) {
 #endif
 }
 
+void defaultStreamSync(){
+#ifdef __CUDACC__
+    cudaStreamSynchronize(0);
+#endif
+}
 void deviceSynchronize() {
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
