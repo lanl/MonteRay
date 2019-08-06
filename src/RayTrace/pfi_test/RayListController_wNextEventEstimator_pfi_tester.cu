@@ -18,7 +18,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 #include "MonteRayParallelAssistant.hh"
 

@@ -17,7 +17,6 @@
 #include "GPUUtilityFunctions.hh"
 #include "MonteRayNextEventEstimator.hh"
 #include "MonteRay_timer.hh"
-#include "RayWorkInfo.hh"
 #include "MonteRayTypes.hh"
 #include "MonteRayParallelAssistant.hh"
 
@@ -36,6 +35,8 @@ class RayListInterface;
 
 template< unsigned N >
 class Ray_t;
+
+class RayWorkInfo;
 
 template<typename GRID_T, unsigned N = 1>
 class RayListController {
