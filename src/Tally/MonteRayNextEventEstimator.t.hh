@@ -19,6 +19,7 @@
 #include "MonteRayTally.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 

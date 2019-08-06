@@ -7,7 +7,7 @@
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
-#include "ExpectedPathLength.hh"
+#include "ExpectedPathLength.t.hh"
 #include "GPUErrorCheck.hh"
 #include "GPUUtilityFunctions.hh"
 #include "MonteRayNextEventEstimator.t.hh"
@@ -151,6 +151,7 @@ template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::~RayListController(){
 
 #ifdef __CUDACC__
+    cudaDeviceSynchronize();
     if( stream1 ) cudaStreamDestroy( *stream1 );
 #endif
 }
