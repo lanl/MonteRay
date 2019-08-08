@@ -1,5 +1,5 @@
-#ifndef EXPECTEDPATHLENGTH_HH_
-#define EXPECTEDPATHLENGTH_HH_
+#ifndef MR_EXPECTEDPATHLENGTH_HH_
+#define MR_EXPECTEDPATHLENGTH_HH_
 
 #include <limits>
 
@@ -69,4 +69,4 @@ MonteRay::tripleTime launchRayTraceTally(
 
 } /* end namespace */
 
-#endif /* EXPECTEDPATHLENGTH_HH_ */
+#endif /* MR_EXPECTEDPATHLENGTH_HH_ */
