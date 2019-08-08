@@ -6,7 +6,6 @@
 
 #include "MonteRay_CartesianGrid.t.hh"
 #include "MonteRay_SpatialGrid.hh"
-#include "GPUSync.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRayCopyMemory.t.hh"
 

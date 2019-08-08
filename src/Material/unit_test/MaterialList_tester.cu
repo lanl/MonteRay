@@ -1,6 +1,7 @@
 #include <UnitTest++.h>
 
 #include <sstream>
+#include <memory>
 
 #include "MaterialList.hh"
 #include "SimpleVector.hh"

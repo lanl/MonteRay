@@ -7,7 +7,7 @@
 
 #include "GPUUtilityFunctions.hh"
 #include "gpuTally.hh"
-#include "ExpectedPathLength.hh"
+#include "ExpectedPathLength.t.hh"
 #include "MonteRayMaterial.hh"
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"

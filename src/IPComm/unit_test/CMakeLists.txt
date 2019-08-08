@@ -1,6 +1,6 @@
 include( template_select )
 
-list( APPEND ${UnitName}_packages MPI )
+list( APPEND ${UnitName}_packages MPI ThirdParty )
 
 set( ToolkitLibs Utilities GPU_Utilities pthread )
 

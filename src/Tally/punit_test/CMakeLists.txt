@@ -2,7 +2,7 @@ include( template_select )
 
 list( APPEND ${UnitName}_packages MPI )
 
-set( ToolkitLibs Utilities OutputControls CrossSection Material Geometry Particle Math_Functions IPComm GPU_Utilities )
+set( ToolkitLibs ThirdParty Utilities OutputControls CrossSection Material Geometry Particle Math_Functions IPComm GPU_Utilities )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

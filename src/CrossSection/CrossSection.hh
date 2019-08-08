@@ -47,8 +47,6 @@ public:
         ZA = rhs.ZA;
         AWR = rhs.AWR;
         ParticleType = rhs.ParticleType;
-
-        size_t N = rhs.energies.size();
         energies.assign(rhs.energies.begin(), rhs.energies.end());
         totalXS.assign(rhs.totalXS.begin(), rhs.totalXS.end());
         build();
