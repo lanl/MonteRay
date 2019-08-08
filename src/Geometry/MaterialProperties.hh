@@ -39,6 +39,15 @@ class MaterialProperties_t: public Managed {
 
   public:
 
+  template <typename OtherMaterialProperties>
+  MaterialProperties_t(const OtherMaterialProperties& other){
+		auto nCells = other.size();
+    offset_.assign(other.getOffsetData(), other.getOffsetData() + nCells + 1);
+		auto nMaterialComponents = other.numMatSpecs();
+    IDs_.assign(other.getMaterialIDData(), other.getMaterialIDData() + nMaterialComponents);
+    densities_.assign(other.getMaterialDensityData(), other.getMaterialDensityData() + nMaterialComponents);
+  }
+
   constexpr auto numCells() const { return offset_.size() - 1; }
   constexpr auto getNumCells() const { return this->numCells(); }
   constexpr auto numMats( unsigned i ) const { return offset_[i + 1] - offset_[i]; }
