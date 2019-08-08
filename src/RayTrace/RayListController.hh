@@ -6,7 +6,18 @@
 #include <memory>
 #include <functional>
 #include <iostream>
+#include <algorithm>
 
+#include "MonteRayMaterialList.hh"
+#include "MonteRay_MaterialProperties.hh"
+#include "gpuTally.hh"
+#include "RayListInterface.hh"
+#include "ExpectedPathLength.hh"
+#include "GPUErrorCheck.hh"
+#include "GPUUtilityFunctions.hh"
+#include "MonteRayNextEventEstimator.hh"
+#include "MonteRay_timer.hh"
+#include "RayWorkInfo.hh"
 #include "MonteRayTypes.hh"
 #include "MonteRayParallelAssistant.hh"
 
@@ -183,5 +194,6 @@ template<class GRID_T>
 using NextEventEstimatorController = typename MonteRay::RayListController<GRID_T,3>;
 
 } /* namespace MonteRay */
+
 
 #endif /* RAYLISTCONTROLLER_HH_ */

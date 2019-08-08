@@ -8,7 +8,7 @@
 #include "GridBins.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "Ray.hh"
-#include "MonteRayNextEventEstimator.t.hh"
+#include "MonteRayNextEventEstimator.hh"
 #include "MonteRayCrossSection.hh"
 
 #include "MonteRayMaterial.hh"

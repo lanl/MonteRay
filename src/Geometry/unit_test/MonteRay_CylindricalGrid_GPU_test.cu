@@ -6,7 +6,6 @@
 
 #include "MonteRay_CylindricalGrid.hh"
 #include "MonteRay_SpatialGrid.hh"
-#include "GPUSync.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRayConstants.hh"
 #include "GPUUtilityFunctions.hh"
@@ -118,15 +117,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridGetNumBins<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, d);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -148,8 +145,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -188,15 +184,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridGetRVertex<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, i);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -217,15 +211,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridGetZVertex<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, i);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -254,8 +246,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -287,15 +278,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridConvertFromCartesian<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, pos);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -324,8 +313,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -363,15 +351,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridGetRadialIndexFromR<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, r);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -399,8 +385,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -435,15 +420,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridGetRadialIndexFromRSq<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, rSq);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -471,8 +454,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -505,15 +487,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridGetAxialIndex<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, z);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -541,8 +521,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -576,15 +555,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalIsIndexOutside<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, d, i);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -613,8 +590,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -650,15 +626,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalGridGetIndex<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, pos);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -687,8 +661,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -737,15 +710,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalIsOutside<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, i, j, k);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -774,8 +745,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -810,15 +780,13 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pResult->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 
         kernelCylindricalCalcIJK<<<1,1>>>( Grid.ptrDevicePtr, pResult->devicePtr, index);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
         pResult->copyToCPU();
@@ -847,8 +815,7 @@ SUITE( MonteRay_CylindricalGrid_GPU_basic_tests ) {
 #ifdef __CUDACC__
         pGrid->copyToGPU();
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         gpuErrchk( cudaPeekAtLastError() );
 #endif

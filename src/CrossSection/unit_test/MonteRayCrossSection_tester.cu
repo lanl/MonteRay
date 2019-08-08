@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-#include "GPUSync.hh"
 #include "GPUUtilityFunctions.hh"
 
 #include "MonteRayCrossSection.hh"
@@ -70,9 +69,10 @@ SUITE( MonteRayCrossSection_tester ) {
 
         xs->copyToGPU();
 
-        GPUSync sync;
         gpuFloatType_t totalXS = launchGetTotalXS( xs, energy);
-        sync.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
 
         CHECK_CLOSE( 7.14769f, totalXS, 1e-5 );
 

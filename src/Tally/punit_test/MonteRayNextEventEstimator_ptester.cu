@@ -9,13 +9,12 @@
 #include "GridBins.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "Ray.hh"
-#include "MonteRayNextEventEstimator.t.hh"
+#include "MonteRayNextEventEstimator.hh"
 #include "MonteRayCrossSection.hh"
 
 #include "MonteRayMaterial.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "MonteRayParallelAssistant.hh"
-#include "GPUSync.hh"
 
 namespace NextEventEsimator_pTester_namespace{
 
@@ -300,7 +299,7 @@ SUITE( NextEventEstimator_pTester ) {
 
             rayInfo.copyToGPU();
 
-            GPUSync();
+            cudaStreamSynchronize(0);
 
             cudaStream_t* stream = NULL;
             stream = new cudaStream_t;

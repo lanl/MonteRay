@@ -9,7 +9,6 @@
 
 #include "genericGPU_test_helper.hh"
 #include "gpuTally_test_helper.hh"
-#include "GPUSync.hh"
 
 SUITE( gpuTally_tester ) {
 #if false

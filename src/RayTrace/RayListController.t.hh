@@ -1,18 +1,16 @@
 #ifndef RAYLISTCONTROLLER_T_HH_
 #define RAYLISTCONTROLLER_T_HH_
 
-#include <algorithm>
-
 #include "RayListController.hh"
 
 #include "MonteRayMaterialList.hh"
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
-#include "ExpectedPathLength.t.hh"
+#include "ExpectedPathLength.hh"
 #include "GPUErrorCheck.hh"
-#include "GPUSync.hh"
-#include "MonteRayNextEventEstimator.t.hh"
+#include "GPUUtilityFunctions.hh"
+#include "MonteRayNextEventEstimator.hh"
 #include "MonteRay_timer.hh"
 #include "RayWorkInfo.hh"
 
@@ -467,9 +465,7 @@ template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::sync(void){
     if( PA.getWorkGroupRank() != 0 ) { return; }
-
-    GPUSync sync;
-    sync.sync();
+    defaultStreamSync();
 }
 
 template<typename GRID_T, unsigned N>
@@ -490,11 +486,11 @@ RayListController<GRID_T,N>::clearTally(void) {
     //	cudaEventRecord( stopGPU.get(), stream1.get());
     //	cudaStreamWaitEvent(stream1.get(), stopGPU.get(), 0);
 
-    GPUSync sync;
+    defaultStreamSync();
     if( pTally ) pTally->clear();
     if( bank1 ) bank1->clear();
     if( bank2) bank2->clear();
-    sync.sync();
+    defaultStreamSync();
 }
 
 template<typename GRID_T, unsigned N>
@@ -626,8 +622,6 @@ RayListController<GRID_T,N>::gather() {
     }
 }
 
+} // end namespace MonteRay
 
-} /* namespace MonteRay */
-
-
-#endif /* RAYLISTCONTROLLER_T_HH_ */
+#endif // RAYLISTCONTROLLER_T_HH

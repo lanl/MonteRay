@@ -13,6 +13,8 @@ endif()
 add_executable( ${appName} ${${appName}_srcs} )
   
 target_include_directories(${appName} PUBLIC ${CMAKE_SOURCE_DIR}/src/Constants )
+target_include_directories(${appName} PUBLIC ${CMAKE_SOURCE_DIR}/src/ThirdParty)
+target_include_directories(${appName} PUBLIC ${CMAKE_SOURCE_DIR}/src/Containers)
 target_include_directories(${appName} PUBLIC ${CMAKE_SOURCE_DIR}/src/CrossSection )
 target_include_directories(${appName} PUBLIC ${CMAKE_SOURCE_DIR}/src/Geometry )
 target_include_directories(${appName} PUBLIC ${CMAKE_SOURCE_DIR}/src/Geometry/lnk3dnt )
