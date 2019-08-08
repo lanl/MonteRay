@@ -11,18 +11,20 @@
 namespace MonteRay{
 
 // Constants
-const float_t epsilon = std::numeric_limits<double>::epsilon();
-const float_t inf = std::numeric_limits<double>::infinity();
-const float_t float_inf = std::numeric_limits<float_t>::infinity();
+constexpr float_t epsilon = std::numeric_limits<double>::epsilon();
+constexpr float_t inf = std::numeric_limits<double>::infinity();
+constexpr float_t float_inf = std::numeric_limits<float_t>::infinity();
 
-const gpuFloatType_t gpu_neutron_molar_mass = 1.00866491597f;
-const gpuFloatType_t gpu_AvogadroBarn = .602214179f;
+constexpr gpuFloatType_t gpu_neutron_molar_mass = 1.00866491597f;
+constexpr gpuFloatType_t neutron_molar_mass = 1.00866491597f;
+constexpr gpuFloatType_t gpu_AvogadroBarn = .602214179f;
+constexpr gpuFloatType_t AvogadroBarn = .602214179f;
 
 /// PI from CRC Standard Mathematical Tables, 28th Edition, Editor William H. Beyer, CRC Press, 1987
-const gpuFloatType_t pi = 3.14159265358979323846264338;
+constexpr gpuFloatType_t pi = 3.14159265358979323846264338;
 
-const ParticleType_t neutron = 0;
-const ParticleType_t photon  = 1;
+constexpr ParticleType_t neutron = 0;
+constexpr ParticleType_t photon  = 1;
 
 /// speed of light in a vaccume from ( http://physics.nist.gov/cgi-bin/cuu/Value?c ) Units [cm/shake]. Exact, according to NIST
 constexpr gpuFloatType_t speed_of_light = 299.7924580; // [cm/shake]

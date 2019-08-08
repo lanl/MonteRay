@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "GPUUtilityFunctions.hh"
-#include "GPUSync.hh"
 
 #include "gpuTally.hh"
 
@@ -13,7 +12,7 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.t.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
@@ -68,10 +67,10 @@ nee_debugger::launch(const std::string& optBaseName){
     grid.readFromFile( filename );
 
     // material properties
-    MonteRay_MaterialProperties matprops;
+    MaterialProperties::Builder matpropsBuilder;
     filename = std::string("matProps_") + baseName;
     checkFileExists(filename);
-    matprops.readFromFile( filename );
+    auto matprops = readFromFile(filename, matpropsBuilder);
 
     // materials
     MonteRayMaterialListHost matlist(1);
@@ -81,14 +80,11 @@ nee_debugger::launch(const std::string& optBaseName){
 
     grid.copyToGPU();
     matlist.copyToGPU();
-    matprops.copyToGPU();
 
     estimator.setGeometry( &grid, &matprops );
     estimator.setMaterialList( &matlist );
     estimator.copyToGPU();
     //estimator.dumpState( &raylist, "nee_debug_dump_test2" );
-
-    const bool singleRay = true;
 
     for( unsigned i=0; i<raylist.size(); ++i ) {
         Ray_t<3> ray;
@@ -98,15 +94,18 @@ nee_debugger::launch(const std::string& optBaseName){
         singleSizeRaylist.add( ray );
         singleSizeRaylist.copyToGPU();
 
-        RayWorkInfo rayInfo( singleSizeRaylist.size() );
-        rayInfo.copyToGPU();
+        auto pRayInfo = std::make_unique<RayWorkInfo>( singleSizeRaylist.size() );
 
-        GPUSync sync1; sync1.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
 
         std::cout << "Launching ray # " << i << std::endl;
-        estimator.launch_ScoreRayList(-1,-1, &singleSizeRaylist, &rayInfo, 0, false);
+        estimator.launch_ScoreRayList(-1,-1, &singleSizeRaylist, pRayInfo.get(), 0, false);
 
-        GPUSync sync2; sync2.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
     }
 
     estimator.copyToCPU();
@@ -117,3 +116,4 @@ nee_debugger::launch(const std::string& optBaseName){
 
 
 } // end namespace
+

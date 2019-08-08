@@ -11,7 +11,7 @@
 #include "RayListController.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayCrossSection.hh"
@@ -46,7 +46,6 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
             copper   = new MonteRayMaterialHost(2);
 
             pMatList = new MonteRayMaterialListHost(4,8);
-            pMatProps = new MonteRay_MaterialProperties;
         }
 
         void setup(){
@@ -54,8 +53,9 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
             MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/zeus2.lnk3dnt" );
             readerObject.ReadMatData();
 
-            pMatProps->disableMemoryReduction();
-            pMatProps->setMaterialDescription( readerObject );
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.setMaterialDescription( readerObject );
 
             pGrid = new Grid_t(readerObject);
             CHECK_EQUAL( 952, pGrid->getNumCells() );
@@ -105,8 +105,8 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
             pMatList->add( 3, *copper, COPPER_ID );
             pMatList->copyToGPU();
 
-            pMatProps->renumberMaterialIDs(*pMatList);
-            pMatProps->copyToGPU();
+            matPropBuilder.renumberMaterialIDs(*pMatList);
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             iso6000->copyToGPU();
             iso13027->copyToGPU();
@@ -121,7 +121,6 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
         ~ControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pTally;
 
             delete iso6000;
@@ -141,7 +140,7 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
 
         Grid_t* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
         MonteRayCrossSectionHost* iso6000;
@@ -183,7 +182,7 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
                 nThreads,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
 
         controller.setCapacity(capacity);

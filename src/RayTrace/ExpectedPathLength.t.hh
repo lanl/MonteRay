@@ -3,53 +3,31 @@
 
 #include "ExpectedPathLength.hh"
 
-#include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_timer.hh"
 #include "MonteRayMaterialList.hh"
 #include "HashLookup.hh"
 #include "gpuTally.hh"
 #include "GridBins.hh"
 #include "RayWorkInfo.hh"
+#include "GPUAtomicAdd.hh"
 #include "GPUUtilityFunctions.hh"
 
 namespace MonteRay{
 
-template<typename GRIDTYPE, unsigned N>
+template<unsigned N, typename GRIDTYPE, typename MaterialList>
 CUDA_CALLABLE_MEMBER void
 tallyCollision(
         unsigned particleID,
         const GRIDTYPE* pGrid,
-        const MonteRayMaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialList* pMatList,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         const Ray_t<N>* p,
         RayWorkInfo* pRayInfo,
-        gpuTallyType_t* pTally )
-{
-#ifdef DEBUG
-    const bool debug = false;
-
-    if( debug ) {
-        printf("--------------------------------------------------------------------------------------------------------\n");
-        printf("GPU::tallyCollision:: nCollisions=%d, x=%f, y=%f, z=%f, u=%f, v=%f, w=%f, energy=%f, weight=%f, index=%d \n",
-                particleID+1,
-                p->pos[0],
-                p->pos[1],
-                p->pos[2],
-                p->dir[0],
-                p->dir[1],
-                p->dir[2],
-                p->energy[0],
-                p->weight[0],
-                p->index
-        );
-    }
-#endif
-
-    typedef gpuTallyType_t enteringFraction_t;
-
+        gpuTallyType_t* pTally
+) {
+    using enteringFraction_t = gpuTallyType_t;
     gpuTallyType_t opticalPathLength = 0.0;
-
     gpuFloatType_t energy = p->energy[0];
 
     unsigned HashBin;
@@ -61,9 +39,6 @@ tallyCollision(
         return;
     }
 
-
-    //	gpuRayFloat_t pos = make_float3( p->pos[0], p->pos[1], p->pos[2]);
-    //	gpuRayFloat_t dir = make_float3( p->dir[0], p->dir[1], p->dir[2]);
     Position_t pos( p->pos[0], p->pos[1], p->pos[2] );
     Direction_t dir( p->dir[0], p->dir[1], p->dir[2] );
 
@@ -81,7 +56,7 @@ tallyCollision(
     for( unsigned i=0; i < pRayInfo->getRayCastSize(particleID); ++i ){
         int cell = pRayInfo->getRayCastCell(particleID,i);
         gpuRayFloat_t distance = pRayInfo->getRayCastDist(particleID,i);
-        if( cell == UINT_MAX ) continue;
+        if( cell == std::numeric_limits<unsigned>::max() ) continue;
 
         opticalPathLength += tallyCellSegment(pMatList, pMatProps, materialXS, pTally,
                 cell, distance, energy, p->weight[0], opticalPathLength);
@@ -93,20 +68,15 @@ tallyCollision(
     }
 }
 
-template<typename GRIDTYPE, unsigned N>
-CUDA_CALLABLE_KERNEL  rayTraceTally(
-        const GRIDTYPE* pGrid,
+template<unsigned N, typename GRIDTYPE, typename MaterialList>
+CUDA_CALLABLE_KERNEL 
+rayTraceTally(const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
-        const MonteRayMaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialList* pMatList,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         RayWorkInfo* pRayInfo,
-        gpuTallyType_t* tally){
-
-#ifdef DEBUG
-    const bool debug = false;
-#endif
-
+        gpuTallyType_t* tally) {
 #ifdef __CUDACC__
     int threadID = threadIdx.x + blockIdx.x*blockDim.x;
 #else
@@ -116,31 +86,12 @@ CUDA_CALLABLE_KERNEL  rayTraceTally(
 
     int num = pCP->size();
 
-#ifdef DEBUG
-    if( debug ) printf("GPU::rayTraceTally:: starting threadID=%d  N=%d\n", threadID, N );
-#endif
 
     while( particleID < num ) {
         Ray_t<N> p = pCP->getParticle(particleID);
         pRayInfo->clear( threadID );
 
-#ifdef DEBUG
-        if( debug ) {
-            printf("--------------------------------------------------------------------------------------------------------\n");
-            printf("GPU::rayTraceTally:: threadID=%d\n", threadID );
-            printf("GPU::rayTraceTally:: x=%f\n", p.pos[0] );
-            printf("GPU::rayTraceTally:: y=%f\n", p.pos[1] );
-            printf("GPU::rayTraceTally:: z=%f\n", p.pos[2] );
-            printf("GPU::rayTraceTally:: u=%f\n", p.dir[0] );
-            printf("GPU::rayTraceTally:: v=%f\n", p.dir[1] );
-            printf("GPU::rayTraceTally:: w=%f\n", p.dir[2] );
-            printf("GPU::rayTraceTally:: energy=%f\n", p.energy[0] );
-            printf("GPU::rayTraceTally:: weight=%f\n", p.weight[0] );
-            printf("GPU::rayTraceTally:: index=%d\n", p.index );
-        }
-#endif
-
-       MonteRay::tallyCollision<GRIDTYPE,N>(threadID, pGrid, pMatList, pMatProps, pHash, &p, pRayInfo, tally);
+       MonteRay::tallyCollision<N>(threadID, pGrid, pMatList, pMatProps, pHash, &p, pRayInfo, tally);
 
 #ifdef __CUDACC__
        particleID += blockDim.x*gridDim.x;
@@ -152,18 +103,17 @@ CUDA_CALLABLE_KERNEL  rayTraceTally(
 }
 
 
-template<typename GRIDTYPE, unsigned N>
+template<unsigned N, typename GRIDTYPE, typename MaterialList>
 MonteRay::tripleTime launchRayTraceTally(
         std::function<void (void)> cpuWork,
         int nBlocks,
         int nThreads,
         const GRIDTYPE* pGrid,
         const RayListInterface<N>* pCP,
-        const MonteRayMaterialListHost* pMatList,
-        const MonteRay_MaterialProperties* pMatProps,
+        const MaterialList* pMatList,
+        const MaterialProperties* pMatProps,
         gpuTallyHost* pTally
-)
-{
+) {
     MonteRay::tripleTime time;
 
     auto launchParams = setLaunchBounds( nThreads, nBlocks, pCP->getPtrPoints()->size() );
@@ -171,8 +121,7 @@ MonteRay::tripleTime launchRayTraceTally(
     nThreads = launchParams.second;
 
 #ifdef __CUDACC__
-    RayWorkInfo rayInfo(nBlocks*nThreads);
-    rayInfo.copyToGPU();
+    auto pRayInfo = std::make_unique<RayWorkInfo>(nBlocks*nThreads);
 
     cudaEvent_t startGPU, stopGPU, start, stop;
 
@@ -191,9 +140,9 @@ MonteRay::tripleTime launchRayTraceTally(
             pGrid->getDevicePtr(),
             pCP->getPtrPoints()->devicePtr,
             pMatList->ptr_device,
-            pMatProps->ptrData_device,
+            pMatProps,
             pMatList->getHashPtr()->getPtrDevice(),
-            rayInfo.devicePtr,
+            pRayInfo.get(),
             pTally->temp->tally );
 
     cudaEventRecord(stopGPU,stream);
@@ -220,7 +169,7 @@ MonteRay::tripleTime launchRayTraceTally(
     cudaEventElapsedTime(&totalTime, start, stop );
     time.totalTime = totalTime/1000.0;
 #else
-    RayWorkInfo rayInfo(1, true);
+    auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
     MonteRay::cpuTimer timer1, timer2;
     timer1.start();
@@ -228,9 +177,9 @@ MonteRay::tripleTime launchRayTraceTally(
     rayTraceTally( pGrid->getPtr(),
             pCP->getPtrPoints(),
             pMatList->getPtr(),
-            pMatProps->getPtr(),
+            pMatProps,
             pMatList->getHashPtr()->getPtr(),
-            &rayInfo,
+            pRayInfo.get(),
             pTally->getPtr()->tally
     );
     timer1.stop();
@@ -243,10 +192,71 @@ MonteRay::tripleTime launchRayTraceTally(
     time.totalTime = timer1.getTime() + timer2.getTime();
 #endif
 
-
     return time;
+}
+
+CUDA_CALLABLE_MEMBER
+gpuTallyType_t
+inline tallyCellSegment( const MonteRayMaterialList* pMatList,
+        const MaterialProperties* pMatProps,
+        const gpuFloatType_t* materialXS,
+        gpuTallyType_t* tally,
+        unsigned cell,
+        gpuRayFloat_t distance,
+        gpuFloatType_t energy,
+        gpuFloatType_t weight,
+        gpuTallyType_t opticalPathLength ) {
+
+#ifdef DEBUG
+    const bool debug = false;
+#endif
+
+    typedef gpuTallyType_t xs_t;
+    typedef gpuTallyType_t attenuation_t;
+    typedef gpuTallyType_t score_t;
+
+    xs_t totalXS = 0.0;
+    unsigned numMaterials = pMatProps->numMats(cell);
+
+#ifdef DEBUG
+    if( debug ) {
+        printf("GPU::tallyCellSegment:: cell=%d, numMaterials=%d\n", cell, numMaterials);
+    }
+#endif
+
+    for( unsigned i=0; i<numMaterials; ++i ) {
+
+        unsigned matID = pMatProps->getMaterialID(cell, i);
+        gpuFloatType_t density = pMatProps->getDensity(cell, i );
+        if( density > 1e-5 ) {
+            totalXS +=   materialXS[matID]*density;
+        }
+        //    if( debug ) {
+        //      printf("GPU::tallyCellSegment::       material=%d, density=%f, xs=%f, totalxs=%f\n", i, density, xs, totalXS);
+        //    }
+    }
+
+    attenuation_t attenuation = 1.0;
+    score_t score = distance;
+    gpuTallyType_t cellOpticalPathLength = totalXS*distance;
+
+    if( totalXS >  1e-5 ) {
+        attenuation =  exp( - cellOpticalPathLength );
+        score = ( 1.0 / totalXS ) * ( 1.0 - attenuation );
+    }
+    score *= exp( -opticalPathLength ) * weight;
+
+    gpu_atomicAdd( &tally[cell], score);
+
+#ifdef DEBUG
+    if( debug ) {
+        printf("GPU::tallyCellSegment:: total score=%f\n", tally[cell] );
+    }
+#endif
+
+    return cellOpticalPathLength;
 }
 
 } /* end namespace */
 
-#endif /* EXPECTEDPATHLENGTH_T_HH_ */
+#endif

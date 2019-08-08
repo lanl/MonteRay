@@ -14,11 +14,10 @@ void
 gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Direction_t& dir, gpuRayFloat_t distance, bool outsideDistances) {
 
 #ifdef __CUDACC__
-    pRayInfo->copyToGPU();
     cudaEvent_t sync;
     cudaEventCreate(&sync);
     kernelRayTrace<<<1,1>>>(
-            pRayInfo->devicePtr,
+            pRayInfo.get(),
             grid_device,
             pos[0], pos[1], pos[2],
             dir[0], dir[1], dir[2],
@@ -28,7 +27,6 @@ gpuDistanceCalculatorTestHelper::launchRayTrace( const Position_t& pos, const Di
 
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
-    pRayInfo->copyToCPU();
 #else
     kernelRayTrace(
             pRayInfo.get(),

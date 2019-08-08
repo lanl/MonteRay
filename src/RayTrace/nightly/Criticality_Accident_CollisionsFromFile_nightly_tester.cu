@@ -12,7 +12,7 @@
 #include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayCrossSection.hh"
@@ -49,7 +49,6 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
             concrete  = new MonteRayMaterialHost(8);
 
             pMatList = new MonteRayMaterialListHost(3,13);
-            pMatProps = new MonteRay_MaterialProperties;
         }
 
         void setup(){
@@ -57,8 +56,9 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
             MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/Room_cartesian_200x200x50.lnk3dnt" );
             readerObject.ReadMatData();
 
-            pMatProps->disableMemoryReduction();
-            pMatProps->setMaterialDescription( readerObject );
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.setMaterialDescription( readerObject );
 
             pGrid = new GridBins(readerObject);
             CHECK_EQUAL( 2000000, pGrid->getNumCells() );
@@ -123,8 +123,8 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
             pMatList->add( 2, *concrete, CONCRETE_ID );
             pMatList->copyToGPU();
 
-            pMatProps->renumberMaterialIDs(*pMatList);
-            pMatProps->copyToGPU();
+            matPropBuilder.renumberMaterialIDs(*pMatList);
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             iso1001->copyToGPU();
             iso6000->copyToGPU();
@@ -145,7 +145,6 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
         ~ControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pTally;
 
             delete iso1001;  //1
@@ -169,7 +168,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 
         GridBins* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
         MonteRayCrossSectionHost* iso1001;  //1
@@ -212,7 +211,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
                 nThreads,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
         controller.setCapacity(capacity);
 

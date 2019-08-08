@@ -2,19 +2,22 @@
 #define MONTERAYNEXTEVENTESTIMATOR_HH_
 
 #include <iostream>
+#include <sys/types.h>
+#include <unistd.h>
+#include <limits>
+#include <tuple>
 
 #include "MonteRayTypes.hh"
 #include "MonteRayAssert.hh"
 #include "MonteRayCopyMemory.hh"
 #include "MonteRayVector3D.hh"
+#include "MaterialProperties.hh"
 
 namespace MonteRay {
 
 class HashLookup;
 class HashLookupHost;
 class GridBins;
-class MonteRay_MaterialProperties;
-class MonteRay_MaterialProperties_Data;
 class MonteRayMaterialListHost;
 class MonteRayMaterialList;
 class MonteRayTally;
@@ -27,13 +30,13 @@ class Ray_t;
 
 class RayWorkInfo;
 
-template<typename GRID_T>
-class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator<GRID_T>> {
+template<typename Geometry>
+class MonteRayNextEventEstimator : public CopyMemoryBase<MonteRayNextEventEstimator<Geometry>> {
 public:
-    typedef gpuTallyType_t tally_t;
-    typedef gpuRayFloat_t position_t;
-    typedef unsigned DetectorIndex_t;
-    using Base = MonteRay::CopyMemoryBase<MonteRayNextEventEstimator<GRID_T>> ;
+    using tally_t = gpuTallyType_t;
+    using position_t = gpuRayFloat_t;
+    using DetectorIndex_t = unsigned;
+    using Base = MonteRay::CopyMemoryBase<MonteRayNextEventEstimator<Geometry>> ;
 
     CUDAHOST_CALLABLE_MEMBER std::string className(){ return std::string("MonteRayNextEventEstimator");}
 
@@ -60,16 +63,8 @@ public:
     CUDAHOST_CALLABLE_MEMBER void setExclusionRadius(position_t r) { radius = r; }
     CUDA_CALLABLE_MEMBER position_t getExclusionRadius(void) const { return radius; }
 
-    CUDA_CALLABLE_MEMBER position_t getX(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return x[i]; }
-    CUDA_CALLABLE_MEMBER position_t getY(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return y[i]; }
-    CUDA_CALLABLE_MEMBER position_t getZ(unsigned i) const { MONTERAY_ASSERT(i<nUsed); return z[i]; }
-
     CUDA_CALLABLE_MEMBER tally_t getTally(unsigned spatialIndex, unsigned timeIndex=0) const;
 
-    CUDA_CALLABLE_MEMBER position_t distance(unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos ) const;
-
-    CUDA_CALLABLE_MEMBER position_t getDistanceDirection(
-            unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos, MonteRay::Vector3D<gpuRayFloat_t>& dir ) const;
 
     template<unsigned N>
     CUDA_CALLABLE_MEMBER tally_t calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo& rayInfo );
@@ -86,15 +81,13 @@ public:
     template<unsigned N>
     void dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName  = std::string("") );
 
-    CUDAHOST_CALLABLE_MEMBER void setGeometry(const GRID_T* pGrid, const MonteRay_MaterialProperties* pMPs);
-    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void setGeometry(const Geometry* pGeometry, const MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MaterialProperties* pMPs);
 
     CUDAHOST_CALLABLE_MEMBER void setMaterialList(const MonteRayMaterialListHost* ptr);
 
     CUDAHOST_CALLABLE_MEMBER
-    MonteRay::Vector3D<gpuFloatType_t> getPoint(unsigned i) const {
-        return MonteRay::Vector3D<gpuFloatType_t>( x[i], y[i], z[i] );
-    }
+    const auto& getPoint(unsigned i) const { MONTERAY_ASSERT(i<nUsed);  return tallyPoints[i]; }
 
     CUDAHOST_CALLABLE_MEMBER
     void
@@ -130,7 +123,6 @@ public:
     void read(IOTYPE& in);
 
     // write out state of MonteRayNextEventEstimator class
-    void writeToFile( const std::string& fileName);
     void readFromFile( const std::string& fileName);
 
 private:
@@ -138,16 +130,13 @@ private:
     unsigned nAllocated;
     position_t radius;
 
-    position_t* x = NULL;
-    position_t* y = NULL;
-    position_t* z = NULL;
+    MonteRay::Vector3D<position_t>* tallyPoints = NULL;
 
     MonteRayTally* pTally = NULL;
     std::vector<gpuFloatType_t>* pTallyTimeBinEdges = NULL;
 
-    const GRID_T* pGridBins = NULL;
-    const MonteRay_MaterialProperties* pMatPropsHost = NULL;
-    const MonteRay_MaterialProperties_Data* pMatProps = NULL;
+    const Geometry* pGeometry = NULL;
+    const MaterialProperties* pMatProps = NULL;
     const MonteRayMaterialListHost* pMatListHost = NULL;
     const MonteRayMaterialList* pMatList = NULL;
     const HashLookupHost* pHashHost = NULL;
@@ -157,8 +146,8 @@ private:
     bool copiedToGPU = false;
 };
 
-template<typename GRID_T, unsigned N>
-CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList );
+template<typename Geometry, unsigned N>
+CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<Geometry>* ptr, const RayList_t<N>* pRayList );
 
 } /* namespace MonteRay */
 

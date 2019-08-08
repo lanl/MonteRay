@@ -1,93 +1,75 @@
 #ifndef MONTERAYNEXTEVENTESTIMATOR_T_HH_
 #define MONTERAYNEXTEVENTESTIMATOR_T_HH_
 
+#include "MonteRayNextEventEstimator.hh"
+
+#include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "MonteRayNextEventEstimator.hh"
+#include <limits>
+#include <tuple>
 
 #include "MonteRayDefinitions.hh"
 #include "MonteRayCopyMemory.t.hh"
-#include "MonteRay_SpatialGrid.hh"
 #include "HashLookup.hh"
-#include "GPUAtomicAdd.hh"
-#include "GPUErrorCheck.hh"
-#include "GridBins.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRayMaterialList.hh"
 #include "ExpectedPathLength.hh"
 #include "RayList.hh"
-#include "RayWorkInfo.hh"
 #include "MonteRayTally.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
 #include "RayWorkInfo.hh"
+#include "ReadAndWriteFiles.hh"
 
 namespace MonteRay {
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
-MonteRayNextEventEstimator<GRID_T>::MonteRayNextEventEstimator(unsigned num) {
+MonteRayNextEventEstimator<Geometry>::MonteRayNextEventEstimator(unsigned num) {
     if( num == 0 ) { num = 1; }
-
-#ifdef DEBUG
-    if( Base::debug ) {
-        std::cout << "MonteRayNextEventEstimator::MonteRayNextEventEstimator(n), n=" << num << " \n";
-    }
-#endif
-
     reallocate(num);
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 void
-MonteRayNextEventEstimator<GRID_T>::reallocate(unsigned num) {
-    if( x != NULL )     { MonteRayHostFree( x, Base::isManagedMemory ); }
-    if( y != NULL )     { MonteRayHostFree( y, Base::isManagedMemory ); }
-    if( z != NULL )     { MonteRayHostFree( z, Base::isManagedMemory ); }
+MonteRayNextEventEstimator<Geometry>::reallocate(unsigned num) {
+    if( tallyPoints != NULL )     { MonteRayHostFree( tallyPoints, Base::isManagedMemory ); }
     if( pTally != NULL ) { delete pTally; }
     if( pTallyTimeBinEdges != NULL ) { delete pTallyTimeBinEdges; }
 
     init();
-    x = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "x" );
-    y = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "y" );
-    z = (position_t*) MONTERAYHOSTALLOC( num*sizeof( position_t ), Base::isManagedMemory, "z" );
+
+    tallyPoints = (decltype(tallyPoints)) MONTERAYHOSTALLOC( num*sizeof( decltype(*tallyPoints) ), Base::isManagedMemory, "tallyPoints" );
     nAllocated = num;
 }
 
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
-MonteRayNextEventEstimator<GRID_T>::~MonteRayNextEventEstimator(){
+MonteRayNextEventEstimator<Geometry>::~MonteRayNextEventEstimator(){
     if( Base::isCudaIntermediate ) {
-        if( x != NULL )     { MonteRayDeviceFree( x ); }
-        if( y != NULL )     { MonteRayDeviceFree( y ); }
-        if( z != NULL )     { MonteRayDeviceFree( z ); }
+        if( tallyPoints != NULL )     { MonteRayDeviceFree( tallyPoints ); }
     } else {
-        if( x != NULL )     { MonteRayHostFree( x, Base::isManagedMemory ); }
-        if( y != NULL )     { MonteRayHostFree( y, Base::isManagedMemory ); }
-        if( z != NULL )     { MonteRayHostFree( z, Base::isManagedMemory ); }
+        if( tallyPoints != NULL )     { MonteRayHostFree( tallyPoints, Base::isManagedMemory ); }
         if( pTally != NULL ) { delete pTally; }
         if( pTallyTimeBinEdges != NULL ) { delete pTallyTimeBinEdges; }
     }
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::init() {
+MonteRayNextEventEstimator<Geometry>::init() {
      nUsed = 0;
      nAllocated = 0;
      radius = 0.0;
 
-     x = NULL;
-     y = NULL;
-     z = NULL;
+     tallyPoints = NULL;
      pTally = NULL;
      pTallyTimeBinEdges = NULL;
 
-     pGridBins = NULL;
-     pMatPropsHost = NULL;
+     pGeometry = NULL;
      pMatProps = NULL;
      pMatListHost = NULL;
      pMatList = NULL;
@@ -98,10 +80,9 @@ MonteRayNextEventEstimator<GRID_T>::init() {
      copiedToGPU = false;
  }
 
-template<typename GRID_T>
-void MonteRayNextEventEstimator<GRID_T>::initialize() {
+template<typename Geometry>
+void MonteRayNextEventEstimator<Geometry>::initialize() {
     if( initialized ) return;
-    //printf( "Debug: MonteRayNextEventEstimator<GRID_T>::initialize -- nUsed = %d\n ", nUsed );
 
     pTally = new MonteRayTally(nUsed);
     if( pTallyTimeBinEdges) { pTally->setTimeBinEdges( *pTallyTimeBinEdges ); }
@@ -110,36 +91,30 @@ void MonteRayNextEventEstimator<GRID_T>::initialize() {
     initialized = true;
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 unsigned
-MonteRayNextEventEstimator<GRID_T>::add( position_t xarg, position_t yarg, position_t zarg) {
+MonteRayNextEventEstimator<Geometry>::add( position_t xarg, position_t yarg, position_t zarg) {
 
      MONTERAY_VERIFY( nUsed < nAllocated, "MonteRayNextEventEstimator::add -- Detector list is full.  Can't add any more detectors." );
 
-     x[nUsed] = xarg;
-     y[nUsed] = yarg;
-     z[nUsed] = zarg;
+     tallyPoints[nUsed][0] = xarg;
+     tallyPoints[nUsed][1] = yarg;
+     tallyPoints[nUsed][2] = zarg;
      return nUsed++;
  }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::copy(const MonteRayNextEventEstimator* rhs) {
+MonteRayNextEventEstimator<Geometry>::copy(const MonteRayNextEventEstimator* rhs) {
     if( ! MonteRay::isWorkGroupMaster() ) return;
 
     if( Base::isCudaIntermediate  and !rhs->initialized ) {
-        throw std::runtime_error("MonteRayNextEventEstimator<GRID_T>::copy -- not initialized"  );
+        throw std::runtime_error("MonteRayNextEventEstimator<Geometry>::copy -- not initialized"  );
     }
 
 #ifdef __CUDACC__
-
-#ifdef DEBUG
-    if( Base::debug ) {
-        std::cout << "Debug: MonteRayNextEventEstimator::copy (const MonteRayNextEventEstimator* rhs) \n";
-    }
-#endif
 
     if( Base::isCudaIntermediate && rhs->isCudaIntermediate ) {
         throw std::runtime_error(" MonteRayNextEventEstimator::copy -- can NOT copy CUDA intermediate to CUDA intermediate.");
@@ -156,30 +131,16 @@ MonteRayNextEventEstimator<GRID_T>::copy(const MonteRayNextEventEstimator* rhs) 
     unsigned num = rhs->nAllocated;
     if( Base::isCudaIntermediate ) {
         // target is the intermediate, origin is the host
-        if( x == NULL ) {
-            x = (position_t*) MONTERAYDEVICEALLOC( num*sizeof( position_t ), "x" );
+        if( tallyPoints == NULL ) {
+            tallyPoints = tallyPoints = (decltype(tallyPoints)) MONTERAYDEVICEALLOC( num*sizeof( decltype(*tallyPoints) ), "tallyPoints" );
         }
-        if( y == NULL ) {
-            y = (position_t*) MONTERAYDEVICEALLOC( num*sizeof( position_t ), "y" );
-        }
-        if( z == NULL ) {
-            z = (position_t*) MONTERAYDEVICEALLOC( num*sizeof( position_t ), "z" );
-        }
-//        if( tally == NULL ) {
-//            tally = (tally_t*) MONTERAYDEVICEALLOC( num*sizeof( tally_t ), "tally" );
-//        }
+        MonteRayMemcpy(tallyPoints, rhs->tallyPoints, num*sizeof( decltype(*tallyPoints) ), cudaMemcpyHostToDevice);
 
-        MonteRayMemcpy(x, rhs->x, num*sizeof(position_t), cudaMemcpyHostToDevice);
-        MonteRayMemcpy(y, rhs->y, num*sizeof(position_t), cudaMemcpyHostToDevice);
-        MonteRayMemcpy(z, rhs->z, num*sizeof(position_t), cudaMemcpyHostToDevice);
-        //MonteRayMemcpy( tally, rhs->tally, num*sizeof(tally_t), cudaMemcpyHostToDevice);
-
-        pMatPropsHost = NULL;
         pMatListHost = NULL;
         pHashHost = NULL;
 
-        pGridBins = rhs->pGridBins->getDevicePtr();
-        pMatProps = rhs->pMatPropsHost->ptrData_device;
+        pGeometry = rhs->pGeometry->getDevicePtr();
+        pMatProps = rhs->pMatProps;
         pMatList = rhs->pMatListHost->ptr_device;
         pHash = rhs->pMatListHost->getHashPtr()->getPtrDevice();
         pTally = rhs->pTally->devicePtr;
@@ -190,30 +151,17 @@ MonteRayNextEventEstimator<GRID_T>::copy(const MonteRayNextEventEstimator* rhs) 
         initialized = rhs->initialized;
         copiedToGPU = rhs->copiedToGPU;
 
-    } else {
-        // target is the host, origin is the intermediate
-
-//        if( Base::debug ) std::cout << "Debug: MonteRayNextEventEstimator::copy - copying tally from device to host\n";
-//        MonteRayMemcpy( tally, rhs->tally, num*sizeof(tally_t), cudaMemcpyDeviceToHost);
-//        if( Base::debug ) std::cout << "Debug: MonteRayNextEventEstimator::copy - DONE copying tally from device to host\n";
-    }
-
-
-#ifdef DEBUG
-    if( Base::debug ) {
-        std::cout << "Debug: MonteRayNextEventEstimator::copy -- exiting." << std::endl;
-    }
-#endif
+    } 
 
 #else
 
 #endif
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::copyToGPU(){
+MonteRayNextEventEstimator<Geometry>::copyToGPU(){
     if( ! MonteRay::isWorkGroupMaster() ) return;
 
     copiedToGPU = true;
@@ -221,10 +169,10 @@ MonteRayNextEventEstimator<GRID_T>::copyToGPU(){
     Base::copyToGPU();
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::copyToCPU(){
+MonteRayNextEventEstimator<Geometry>::copyToCPU(){
     if( !copiedToGPU ) return;
 
     if( ! MonteRay::isWorkGroupMaster() ) return;
@@ -234,80 +182,32 @@ MonteRayNextEventEstimator<GRID_T>::copyToCPU(){
 
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDA_CALLABLE_MEMBER
-typename MonteRayNextEventEstimator<GRID_T>::tally_t
-MonteRayNextEventEstimator<GRID_T>::getTally(unsigned spatialIndex, unsigned timeIndex) const {
+typename MonteRayNextEventEstimator<Geometry>::tally_t
+MonteRayNextEventEstimator<Geometry>::getTally(unsigned spatialIndex, unsigned timeIndex) const {
     return pTally->getTally(spatialIndex, timeIndex);
 }
 
-
-template<typename GRID_T>
-CUDA_CALLABLE_MEMBER
-typename MonteRayNextEventEstimator<GRID_T>::position_t
-MonteRayNextEventEstimator<GRID_T>::distance(unsigned i, MonteRay::Vector3D<gpuRayFloat_t>& pos ) const {
-    using namespace std;
-    MONTERAY_ASSERT(i<nUsed);
-    MonteRay::Vector3D<gpuRayFloat_t> pos2( getX(i), getY(i), getZ(i) );
-    MonteRay::Vector3D<gpuRayFloat_t> dir = pos2 - pos;
-
-    return dir.magnitude();
-}
-
-template<typename GRID_T>
-CUDA_CALLABLE_MEMBER
-typename MonteRayNextEventEstimator<GRID_T>::position_t
-MonteRayNextEventEstimator<GRID_T>::getDistanceDirection(
-        unsigned i,
-        MonteRay::Vector3D<gpuRayFloat_t>& pos,
-        MonteRay::Vector3D<gpuRayFloat_t>& dir ) const {
-    using namespace std;
-    MONTERAY_ASSERT(i<nUsed);
-
-    MonteRay::Vector3D<gpuRayFloat_t> pos2( getX(i), getY(i), getZ(i) );
-    dir = pos2 - pos;
-
-    position_t dist = dir.magnitude();
-    position_t invDistance = 1/ dist;
-    dir *= invDistance;
-
-    return dist;
-}
-
-template<typename GRID_T>
+template<typename Geometry>
 template<unsigned N>
 CUDA_CALLABLE_MEMBER
-typename MonteRayNextEventEstimator<GRID_T>::tally_t
-MonteRayNextEventEstimator<GRID_T>::calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo& rayInfo ) {
+typename MonteRayNextEventEstimator<Geometry>::tally_t
+MonteRayNextEventEstimator<Geometry>::calcScore( unsigned threadID, Ray_t<N>& ray, RayWorkInfo& rayInfo ) {
 
-#ifdef DEBUG
-    const bool debug = false;
-#endif
-
-    if( ray.detectorIndex >= nUsed ) {
-        printf("ERROR: MonteRayNextEventEstimator::calcScore -- ray.detectorIndex < nUsed,  ray.detectorIndex = %d, nUsed  = %d\n", ray.detectorIndex, nUsed );
-    }
     MONTERAY_ASSERT( ray.detectorIndex < nUsed);
     tally_t score = 0.0;
+    
 
+    // TPB TODO: remove construction of pos2 and just have a points be a list of Vector3Ds
     MonteRay::Vector3D<gpuRayFloat_t> pos( ray.pos[0], ray.pos[1], ray.pos[2]);
-    MonteRay::Vector3D<gpuRayFloat_t> dir( ray.dir[0], ray.dir[1], ray.dir[2]);
-
-    gpuRayFloat_t dist = getDistanceDirection(
-            ray.detectorIndex,
-            pos,
-            dir );
-
-#ifdef DEBUG
-    if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- distance to detector = %20.12f\n",dist );
-#endif
+    auto distAndDir = getDistanceDirection(pos, tallyPoints[ray.detectorIndex]);
+    auto& dist = std::get<0>(distAndDir);
+    auto& dir = std::get<1>(distAndDir);
 
     gpuFloatType_t time = ray.time + dist / ray.speed();
 
-    //      float3_t pos = make_float3( x, y, z);
-    //      float3_t dir = make_float3( u, v, w);
-
-   pGridBins->rayTrace( threadID, rayInfo, pos, dir, dist, false);
+    pGeometry->rayTrace( threadID, rayInfo, pos, dir, dist, false);
 
     for( unsigned energyIndex=0; energyIndex < N; ++energyIndex) {
         gpuFloatType_t weight = ray.weight[energyIndex];
@@ -318,98 +218,59 @@ MonteRayNextEventEstimator<GRID_T>::calcScore( unsigned threadID, Ray_t<N>& ray,
 
         tally_t partialScore = 0.0;
 
-#ifdef DEBUG
-        if( debug ) {
-            printf("Debug: MonteRayNextEventEstimator::calcScore -- energyIndex=%d, energy=%f, weight=%f\n", energyIndex, energy,  weight);
-        }
-#endif
-
         gpuFloatType_t materialXS[MAXNUMMATERIALS];
         for( unsigned i=0; i < pMatList->numMaterials; ++i ){
-#ifdef DEBUG
-            if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d\n", i);
-#endif
             materialXS[i] = getTotalXS( pMatList, i, energy, 1.0);
-#ifdef DEBUG
-            if( debug ) {
-                printf("Debug: MonteRayNextEventEstimator::calcScore -- materialIndex=%d, materialXS=%f\n", i, materialXS[i]);
-            }
-#endif
         }
 
         tally_t opticalThickness = 0.0;
         for( unsigned i=0; i < rayInfo.getRayCastSize( threadID ); ++i ){
             int cell = rayInfo.getRayCastCell( threadID, i);
             gpuRayFloat_t cellDistance = rayInfo.getRayCastDist( threadID, i);
-            if( cell == UINT_MAX ) continue;
+            if( cell == std::numeric_limits<unsigned int>::max() ) continue;
 
             gpuFloatType_t totalXS = 0.0;
-            unsigned numMaterials = getNumMats( pMatProps, cell);
+            unsigned numMaterials = pMatProps->numMats(cell);
 
-#ifdef DEBUG
-            if( debug ) {
-                printf("Debug: MonteRayNextEventEstimator::calcScore -- cell=%d, cellDistance=%f, numMaterials=%d\n", cell, cellDistance, numMaterials);
-            }
-#endif
 
             for( unsigned matIndex=0; matIndex<numMaterials; ++matIndex ) {
-                unsigned matID = getMatID(pMatProps, cell, matIndex);
-                gpuFloatType_t density = getDensity(pMatProps, cell, matIndex );
+                unsigned matID = pMatProps->getMaterialID(cell, matIndex);
+                gpuFloatType_t density = pMatProps->getDensity(cell, matIndex);
                 gpuFloatType_t xs = materialXS[matID]*density;
                 totalXS += xs;
-#ifdef DEBUG
-                if( debug ) {
-                    printf("Debug: MonteRayNextEventEstimator::calcScore -- materialID=%d, density=%f, materialXS=%f, xs=%f, totalxs=%f\n", matID, density, materialXS[matID], xs, totalXS);
-                }
-#endif
             }
 
             opticalThickness += totalXS * cellDistance;
-#ifdef DEBUG
-            if( debug ) printf("Debug: MonteRayNextEventEstimator::calcScore -- optialThickness= %20.12f\n",opticalThickness );
-#endif
         }
 
         partialScore = ( weight / (2.0 * MonteRay::pi * dist*dist)  ) * exp( - opticalThickness);
         score += partialScore;
     }
 
-#ifdef DEBUG
-    if( debug ) {
-        printf("Debug: MonteRayNextEventEstimator::calcScore -- value=%e .\n" , score);
-    }
-#endif
 
-//    gpu_atomicAdd( &tally[ray.detectorIndex], score );
     pTally->score(score, ray.detectorIndex, time);
 
     return score;
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 template<unsigned N>
 CUDA_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::score( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, unsigned tid, unsigned pid ) {
-#ifdef DEBUG
-    const bool debug = false;
-
-    if( debug ) {
-        printf("Debug: MonteRayNextEventEstimator::score -- tid=%d, pid=%d, particle=%d .\n",
-                tid, pid, pRayList->points[pid].particleType);
-    }
-#endif
+MonteRayNextEventEstimator<Geometry>::score( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, unsigned tid, unsigned pid ) {
 
     // Neutrons are not yet supported
-    if( pRayList->points[pid].particleType == neutron ) return;
+    // TPB: TODO remove this. Neutrons shouldn't have made it in the bank if they're not scorable.
+    auto& ray = pRayList->points[pid];
+    if( ray.particleType == neutron ) return;
 
-    tally_t value = calcScore<N>( tid, pRayList->points[pid], *pRayInfo );
+    tally_t value = calcScore<N>( tid, ray, *pRayInfo );
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
+MonteRayNextEventEstimator<Geometry>::printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
     if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) return;
 
     if( nUsed == 0 ) {
@@ -425,10 +286,10 @@ MonteRayNextEventEstimator<GRID_T>::printPointDets( const std::string& outputFil
     out.close();
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
+MonteRayNextEventEstimator<Geometry>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
     out << "#  MonteRay results                                                    \n";
     out << "#                                                                      \n";
     out << "#       X          Y          Z      Time        Score        Score    \n";
@@ -492,15 +353,8 @@ MonteRayNextEventEstimator<GRID_T>::outputTimeBinnedTotal(std::ostream& out,unsi
     out << "# Average value = " << sum / nUsed << "\n";
 }
 
-template<typename GRID_T, unsigned N>
-CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* ptr, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
-#ifdef DEBUG
-    const bool debug = false;
-
-    if( debug ) {
-        printf("Debug: MonteRayNextEventEstimator::kernel_ScoreRayList\n");
-    }
-#endif
+template<typename Geometry, unsigned N>
+CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<Geometry>* ptr, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
 
 #ifdef __CUDACC__
     unsigned threadID = threadIdx.x + blockIdx.x*blockDim.x;
@@ -514,11 +368,6 @@ CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* pt
     while( particleID < num ) {
         pRayInfo->clear( threadID );
 
-#ifdef DEBUG
-        if( debug ) {
-            printf("Debug: MonteRayNextEventEstimator::kernel_ScoreRayList -- particleID=%d\n", particleID);
-        }
-#endif
 
         ptr->score(pRayList, pRayInfo, threadID, particleID);
 
@@ -530,14 +379,13 @@ CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<GRID_T>* pt
     }
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 template<unsigned N>
-void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, cudaStream_t* stream, bool dumpOnFailure )
+void MonteRayNextEventEstimator<Geometry>::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, cudaStream_t* stream, bool dumpOnFailure )
 {
     // negative nBlocks and nThreads forces to specified value,
     // otherwise reasonable values are used based on the specified ones
 
-    //const bool debug = false;
     if( !initialized ) { initialize(); }
     const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
@@ -547,76 +395,22 @@ void MonteRayNextEventEstimator<GRID_T>::launch_ScoreRayList( int nBlocksArg, in
     unsigned nBlocks = launchBounds.first;
     unsigned nThreads = launchBounds.second;
 
-#ifdef DEBUG
-    size_t freeMemory = 0;
-    size_t totalMemory = 0;
 #ifdef __CUDACC__
-    cudaError_t memError = cudaMemGetInfo( &freeMemory, &totalMemory);
-    freeMemory = freeMemory/1000000;
-    totalMemory = totalMemory/1000000;
-#endif
-    std::cout << "Debug: MonteRayNextEventEstimator::launch_ScoreRayList -- launching kernel_ScoreRayList on " <<
-                 PA.info() << " with " << nBlocks << " blocks, " << nThreads <<
-                 " threads, to process " << pRayList->size() << " rays," <<
-                 " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
-#endif
-
-#ifdef __CUDACC__
-#ifndef DEBUG
-    // Release compile
     if( stream ) {
-        kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, *stream>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo );
     } else {
-        kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
+        kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo );
     }
-#else
-    // Debug compile
-    kernel_ScoreRayList<<<nBlocks, nThreads, 0, 0>>>( Base::devicePtr, pRayList->devicePtr, pRayInfo->devicePtr );
-
-    bool failure = false;
-    std::stringstream msg;
-
-    // first check launch failure
-    cudaError_t error = cudaPeekAtLastError();
-    if( error != cudaSuccess ) {
-        failure = true;
-        msg << "ERROR:  MonteRayNextEventEstimator::launch_ScoreRayList -- kernel_ScoreRayList launch on " <<
-                PA.info() << " failed with error " << cudaGetErrorString(error) << ".\n";
-    }
-
-    // second check successful kernel completion.
-    error = cudaDeviceSynchronize();
-    if( !failure and error != cudaSuccess ) {
-        failure = true;
-        msg << "ERROR:  MonteRayNextEventEstimator::launch_ScoreRayList -- kernel_ScoreRayList execution on " <<
-                PA.info() << " failed with error " << cudaGetErrorString(error) << ".\n";
-    }
-
-    if( failure ) {
-        std::cout << msg.str();
-        if( dumpOnFailure ) dumpState(pRayList);
-        throw std::runtime_error( msg.str() );
-    }
-
-#endif
 #else
     kernel_ScoreRayList( this, pRayList, pRayInfo );
 #endif
 }
 
-template<typename GRID_T>
-void
-MonteRayNextEventEstimator<GRID_T>::writeToFile( const std::string& filename) {
-    std::ofstream state;
-    state.open( filename.c_str(), std::ios::binary | std::ios::out);
-    write( state );
-    state.close();
-}
 
 
-template<typename GRID_T>
+template<typename Geometry>
 void
-MonteRayNextEventEstimator<GRID_T>::readFromFile( const std::string& filename) {
+MonteRayNextEventEstimator<Geometry>::readFromFile( const std::string& filename) {
     std::ifstream state;
     state.open( filename.c_str(), std::ios::binary | std::ios::in);
     if( ! state.good() ) {
@@ -626,10 +420,10 @@ MonteRayNextEventEstimator<GRID_T>::readFromFile( const std::string& filename) {
     state.close();
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 template<unsigned N>
 void
-MonteRayNextEventEstimator<GRID_T>::dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName ) {
+MonteRayNextEventEstimator<Geometry>::dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName ) {
     const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
     std::string baseName;
@@ -646,90 +440,88 @@ MonteRayNextEventEstimator<GRID_T>::dumpState( const RayList_t<N>* pRayList, con
 
     // write out state of MonteRayNextEventEstimator class
     std::string filename = std::string("nee_state_") + baseName;
-    writeToFile( filename );
+    writeToFile( filename, *this );
 
     // write out particle list
     filename = std::string("raylist_") + baseName;
-    pRayList->writeToFile( filename );
+    writeToFile( filename, *pRayList );
 
     // write out geometry
     filename = std::string("geometry_") + baseName;
-    pGridBins->writeToFile( filename );
+    writeToFile( filename, *pGeometry );
 
     // write out material properties
     filename = std::string("matProps_") + baseName;
-    pMatPropsHost->writeToFile( filename );
+    writeToFile( filename, *pMatProps );
 
     // write out materials
     filename = std::string("materialList_") + baseName;
-    pMatListHost->writeToFile( filename );
+    writeToFile( filename, *pMatListHost );
 
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::setGeometry(const GRID_T* pGrid, const MonteRay_MaterialProperties* pMPs) {
-     pGridBins = pGrid;
-     pMatPropsHost = pMPs;
-     pMatProps = pMPs->getPtr();
+MonteRayNextEventEstimator<Geometry>::setGeometry(const Geometry* pGeometryIn, const MaterialProperties* pMPs) {
+     pGeometry = pGeometryIn;
+     pMatProps = pMPs;
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
-     pMatPropsHost = pMPs;
-     pMatProps = pMPs->getPtr();
+MonteRayNextEventEstimator<Geometry>::updateMaterialProperties( MaterialProperties* pMPs) {
+     pMatProps = pMPs;
 
      if( copiedToGPU ) {
          Base::copyToGPU();
      }
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::setMaterialList(const MonteRayMaterialListHost* ptr) {
+MonteRayNextEventEstimator<Geometry>::setMaterialList(const MonteRayMaterialListHost* ptr) {
      pMatListHost = ptr;
      pMatList = ptr->getPtr();
      pHashHost = ptr->getHashPtr();
      pHash = pHashHost->getPtr();
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::gather() {
+MonteRayNextEventEstimator<Geometry>::gather() {
     if( !pTally ) {
-        throw std::runtime_error("Error: MonteRayNextEventEstimator<GRID_T>::gather() -- Tally not allocated!!");
+        throw std::runtime_error("Error: MonteRayNextEventEstimator<Geometry>::gather() -- Tally not allocated!!");
     }
     pTally->gather();
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 CUDAHOST_CALLABLE_MEMBER
 void
-MonteRayNextEventEstimator<GRID_T>::gatherWorkGroup() {
+MonteRayNextEventEstimator<Geometry>::gatherWorkGroup() {
     // mainly for testing
     if( !pTally ) {
-        throw std::runtime_error("Error: MonteRayNextEventEstimator<GRID_T>::gatherWorkGroup() -- Tally not allocated!!");
+        throw std::runtime_error("Error: MonteRayNextEventEstimator<Geometry>::gatherWorkGroup() -- Tally not allocated!!");
     }
     pTally->gatherWorkGroup();
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 template<typename IOTYPE>
 void
-MonteRayNextEventEstimator<GRID_T>::write(IOTYPE& out) {
+MonteRayNextEventEstimator<Geometry>::write(IOTYPE& out) {
     unsigned version = 0;
     binaryIO::write( out, version );
     binaryIO::write( out, nAllocated );
     binaryIO::write( out, nUsed );
     binaryIO::write( out, radius );
-    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, x[i] ); }
-    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, y[i] ); }
-    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, z[i] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, tallyPoints[i][0] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, tallyPoints[i][1] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::write( out, tallyPoints[i][2] ); }
 
     bool hasTimeBinEdges = false;
     if( pTallyTimeBinEdges ) {
@@ -742,10 +534,10 @@ MonteRayNextEventEstimator<GRID_T>::write(IOTYPE& out) {
 
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 template<typename IOTYPE>
 void
-MonteRayNextEventEstimator<GRID_T>::read(IOTYPE& in) {
+MonteRayNextEventEstimator<Geometry>::read(IOTYPE& in) {
     initialized = false;
     copiedToGPU = false;
 
@@ -755,9 +547,9 @@ MonteRayNextEventEstimator<GRID_T>::read(IOTYPE& in) {
     reallocate(nAllocated);
     binaryIO::read( in, nUsed );
     binaryIO::read( in, radius );
-    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, x[i] ); }
-    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, y[i] ); }
-    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, z[i] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, tallyPoints[i][0] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, tallyPoints[i][1] ); }
+    for( unsigned i=0; i<nUsed; ++i ){ binaryIO::read( in, tallyPoints[i][2] ); }
 
     bool hasTimeBinEdges = true;
     binaryIO::read( in, hasTimeBinEdges );
@@ -770,10 +562,10 @@ MonteRayNextEventEstimator<GRID_T>::read(IOTYPE& in) {
 
 }
 
-template<typename GRID_T>
+template<typename Geometry>
 template<unsigned N>
 void
-MonteRayNextEventEstimator<GRID_T>::cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
+MonteRayNextEventEstimator<Geometry>::cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo ) {
     for( auto i=0; i<pRayList->size(); ++i ) {
         pRayInfo->clear(0);
         score(pRayList, pRayInfo, 0, i);
@@ -783,5 +575,3 @@ MonteRayNextEventEstimator<GRID_T>::cpuScoreRayList( const RayList_t<N>* pRayLis
 } // end namespace
 
 #endif /* MONTERAYNEXTEVENTESTIMATOR_T_HH_ */
-
-

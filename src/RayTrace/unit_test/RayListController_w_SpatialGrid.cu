@@ -3,6 +3,7 @@
 #include <iostream>
 #include <functional>
 #include <cmath>
+#include <memory>
 
 #include "GPUUtilityFunctions.hh"
 #include "gpuTally.hh"
@@ -11,7 +12,7 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
@@ -43,9 +44,6 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 
             pTally = new gpuTallyHost( pGrid->getNumCells() );
 
-            pMatProps = new MonteRay_MaterialProperties();
-            pMatProps->disableMemoryReduction();
-
             // xs from 0.0 to 100.0 mev with total cross-section of 1.0
             xs = new MonteRayCrossSectionHost(2);
 
@@ -63,9 +61,10 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
             pTally->clear();
 
             // Density of 1.0 for mat number 0
-            pMatProps->initializeMaterialDescription( std::vector<int>( pGrid->getNumCells(), 0), std::vector<float>( pGrid->getNumCells(), 1.0), pGrid->getNumCells());
-
-            pMatProps->copyToGPU();
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.initializeMaterialDescription( std::vector<int>( pGrid->getNumCells(), 0), std::vector<float>( pGrid->getNumCells(), 1.0), pGrid->getNumCells());
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             xs->setTotalXS(0, 0.00001, 1.0 );
             xs->setTotalXS(1, 100.0, 1.0 );
@@ -87,7 +86,6 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         ~UnitControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pTally;
             delete xs;
             delete metal;
@@ -95,7 +93,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 
         Grid_t* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
         MonteRayCrossSectionHost* xs;
@@ -216,27 +214,24 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     template<typename GRID_T>
     rayTraceList_t rayTrace( GRID_T* pGridInfo, Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
 
-        RayWorkInfo rayInfo(1,true);
+        auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
 #ifdef __CUDACC__
-        rayInfo.copyToGPU();
-
         cudaDeviceSynchronize();
         //std::cout << "Calling kernelRayTrace\n";
-        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, rayInfo.devicePtr,
+        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pRayInfo.get(),
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
         cudaDeviceSynchronize();
 
         gpuErrchk( cudaPeekAtLastError() );
 
-        rayInfo.copyToCPU();
 #else
-        kernelRayTrace( pGridInfo, &rayInfo,
+        kernelRayTrace( pGridInfo, pRayInfo.get(),
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
 #endif
         rayTraceList_t rayTraceList;
-        for( unsigned i = 0; i < rayInfo.getRayCastSize(0); ++i ) {
-            rayTraceList.add( rayInfo.getRayCastCell(0,i), rayInfo.getRayCastDist(0,i) );
+        for( unsigned i = 0; i < pRayInfo->getRayCastSize(0); ++i ) {
+            rayTraceList.add( pRayInfo->getRayCastCell(0,i), pRayInfo->getRayCastDist(0,i) );
         }
         return rayTraceList;
     }
@@ -273,7 +268,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
                 1,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
 
 

@@ -1,7 +1,6 @@
 #include <UnitTest++.h>
 
 #include "MonteRay_SpatialGrid.hh"
-#include "GPUSync.hh"
 #include "MonteRayCopyMemory.t.hh"
 
 using namespace MonteRay;

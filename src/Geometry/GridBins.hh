@@ -11,18 +11,17 @@
 #include <iostream>
 #include <fstream>
 
+#include "Geometry.hh"
 #include "MonteRayTypes.hh"
 #include "MonteRayVector3D.hh"
 #include "MonteRayCopyMemory.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay{
 
 class HashBins;
-class RayWorkInfo;
 
 typedef gpuFloatType_t float_t;
-typedef MonteRay::Vector3D<gpuRayFloat_t> Position_t;
-typedef MonteRay::Vector3D<gpuRayFloat_t> Direction_t;
 
 class GridBins : public CopyMemoryBase<GridBins> {
 public:

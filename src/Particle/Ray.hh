@@ -5,6 +5,7 @@
 #include "MonteRayAssert.hh"
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayConstants.hh"
+#include "Array.hh"
 
 #ifndef __CUDACC_
 #include <cmath>
@@ -12,41 +13,28 @@
 
 namespace MonteRay{
 
-typedef gpuFloatType_t* CollisionPosition_t;
-typedef gpuFloatType_t* CollisionDirection_t;
-typedef unsigned DetectorIndex_t;
+using CollisionPosition_t = Array<gpuFloatType_t, 3>&;
+using CollisionDirection_t = Array<gpuFloatType_t, 3>&;
+using DetectorIndex_t = unsigned;
 
 template< unsigned N = 1 >
 class Ray_t{
 public:
-    typedef MonteRay::ParticleType_t ParticleType_t;
-    CUDA_CALLABLE_MEMBER Ray_t(){}
+    Array<gpuFloatType_t, 3> pos = { 0.0 };
+    Array<gpuFloatType_t, 3> dir = { 0.0 };
+    Array<gpuFloatType_t, N> energy = { 0.0 };
+    Array<gpuFloatType_t, N> weight = { 0.0 };
+    gpuFloatType_t time = { 0.0 };
+    unsigned index = 0; // starting position mesh index
+    DetectorIndex_t detectorIndex = 0;  // for next-event estimator
+    ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
+
+    constexpr Ray_t(){}
 
     template< typename PARTICLE_T,
               unsigned N_ = N,
               typename std::enable_if<(N_ == 1)>::type* = nullptr >
-    Ray_t( const PARTICLE_T& particle ) {
-
-        pos[0] = particle.getPosition()[0];
-        pos[1] = particle.getPosition()[1];
-        pos[2] = particle.getPosition()[2];
-
-        dir[0] = particle.getDirection()[0];
-        dir[1] = particle.getDirection()[1];
-        dir[2] = particle.getDirection()[2];
-
-        energy[0] = particle.getEnergy();
-        weight[0] = particle.getWeight();
-
-        time = particle.getSimulationTime();
-
-        index = particle.getLocationIndex();
-    }
-
-    template< typename PARTICLE_T,
-              unsigned N_ = N,
-              typename std::enable_if<(N_ == 1)>::type* = nullptr >
-    Ray_t( const PARTICLE_T& particle, double probability ) {
+    Ray_t( const PARTICLE_T& particle, double probability = 1.0) {
 
         pos[0] = particle.getPosition()[0];
         pos[1] = particle.getPosition()[1];
@@ -99,55 +87,45 @@ public:
         }
     }
 
-
-    gpuFloatType_t pos[3] = { 0.0 };
-    gpuFloatType_t dir[3] = { 0.0 };
-    gpuFloatType_t energy[N] = { 0.0 };
-    gpuFloatType_t weight[N] = { 0.0 };
-    gpuFloatType_t time = { 0.0 };
-    unsigned index = 0; // starting position mesh index
-    DetectorIndex_t detectorIndex = 0;  // for next-event estimator
-    ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
-
-    CUDA_CALLABLE_MEMBER constexpr static unsigned getN(void ) {
+    constexpr unsigned static getN(void ) {
         return N;
     }
 
-    CUDA_CALLABLE_MEMBER CollisionPosition_t getPosition() {
+    constexpr CollisionPosition_t getPosition() {
         return pos;
     }
 
-    CUDA_CALLABLE_MEMBER CollisionDirection_t getDirection() {
+    constexpr CollisionDirection_t getDirection() {
         return dir;
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getEnergy(unsigned index = 0) const {
+    constexpr gpuFloatType_t getEnergy(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return energy[index];
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getWeight(unsigned index = 0) const {
+    constexpr gpuFloatType_t getWeight(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return weight[index];
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t getTime() {
+    constexpr gpuFloatType_t getTime() {
         return time;
     }
 
-    CUDA_CALLABLE_MEMBER unsigned getIndex() const {
+    constexpr unsigned getIndex() const {
         return index;
     }
 
-    CUDA_CALLABLE_MEMBER DetectorIndex_t getDetectorIndex() const {
+    constexpr DetectorIndex_t getDetectorIndex() const {
         return detectorIndex;
     }
 
-    CUDA_CALLABLE_MEMBER ParticleType_t getParticleType() const {
+    constexpr ParticleType_t getParticleType() const {
         return particleType;
     }
 
-    CUDA_CALLABLE_MEMBER gpuFloatType_t speed(unsigned i=0) const {
+    constexpr gpuFloatType_t speed(unsigned i=0) const {
         if( particleType == photon ) {
             return speed_of_light;
         } else {
@@ -220,8 +198,8 @@ public:
     }
 };
 
-typedef Ray_t<3> PointDetRay_t;
-typedef Ray_t<1> ParticleRay_t;
+using PointDetRay_t = Ray_t<3>; 
+using ParticleRay_t = Ray_t<1>; 
 
 } // end namespace;
 

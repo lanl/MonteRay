@@ -13,7 +13,7 @@
 #include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRayCrossSection.hh"
 
@@ -36,7 +36,6 @@ SUITE( Ray_bank_controller_fi_tester ) {
 
             pTally = new gpuTallyHost( pGrid->getNumCells() );
 
-            pMatProps = new MonteRay_MaterialProperties;
 
             u234s = new MonteRayCrossSectionHost(1);
             u235s = new MonteRayCrossSectionHost(1);
@@ -61,8 +60,9 @@ SUITE( Ray_bank_controller_fi_tester ) {
             MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
             readerObject.ReadMatData();
 
-            pMatProps->disableMemoryReduction();
-            pMatProps->setMaterialDescription( readerObject );
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.setMaterialDescription( readerObject );
 
             u234s->read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
             u235s->read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
@@ -83,8 +83,8 @@ SUITE( Ray_bank_controller_fi_tester ) {
             pMatList->add( 1, *water, 3 );
             pMatList->copyToGPU();
 
-            pMatProps->renumberMaterialIDs(*pMatList);
-            pMatProps->copyToGPU();
+            matPropBuilder.renumberMaterialIDs(*pMatList);
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             u234s->copyToGPU();
             u235s->copyToGPU();
@@ -96,7 +96,6 @@ SUITE( Ray_bank_controller_fi_tester ) {
         ~ControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pTally;
             delete u234s;
             delete u235s;
@@ -109,7 +108,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
 
         GridBins* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
         MonteRayCrossSectionHost* u234s;
@@ -133,7 +132,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
                 1024,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
 
         CHECK_EQUAL(1000000, controller.capacity());
@@ -145,7 +144,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
                 1024,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
 
         CHECK_EQUAL(1000000, controller.capacity());
@@ -158,7 +157,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
                 1024,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
 
         unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
@@ -173,14 +172,15 @@ SUITE( Ray_bank_controller_fi_tester ) {
 TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
     // exact numbers from expected path length tally in mcatk
 
+    setup();
+
     CollisionPointController<GridBins> controller( 256,
             256,
             pGrid,
             pMatList,
-            pMatProps,
+            pMatProps.get(),
             pTally );
 
-    setup();
 
     RayListInterface<1> bank1(500000);
     //    	bool end = false;
@@ -233,14 +233,14 @@ TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
 TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
     std::cout << "Debug: ********************************************* \n";
     std::cout << "Debug: Starting rayTrace tester with single looping bank \n";
+    setup();
     CollisionPointController<GridBins> controller( 1,
             256,
             pGrid,
             pMatList,
-            pMatProps,
+            pMatProps.get(),
             pTally );
     controller.setCapacity( 1000000 );
-    setup();
 
     RayListInterface<1> bank1(50000);
     bool end = false;

@@ -1,17 +1,15 @@
 #ifndef RAYLISTCONTROLLER_T_HH_
 #define RAYLISTCONTROLLER_T_HH_
 
-#include <algorithm>
-
 #include "RayListController.hh"
 
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "ExpectedPathLength.t.hh"
 #include "GPUErrorCheck.hh"
-#include "GPUSync.hh"
+#include "GPUUtilityFunctions.hh"
 #include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRay_timer.hh"
 #include "RayWorkInfo.hh"
@@ -24,7 +22,7 @@ RayListController<GRID_T,N>::RayListController(
         int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
-        MonteRay_MaterialProperties* pMP,
+        MaterialProperties* pMP,
         gpuTallyHost* pT
 ) :
 nBlocks(blocks),
@@ -62,15 +60,15 @@ PA( MonteRayParallelAssistant::getInstance() )
                 pGrid->getDevicePtr(),
                 currentBank->getPtrPoints()->devicePtr,
                 pMatList->ptr_device,
-                pMatProps->ptrData_device,
+                pMatProps,
                 pMatList->getHashPtr()->getPtrDevice(),
-                rayInfo->devicePtr,
+                rayInfo.get(),
                 pTally->temp->tally );
 #else
         rayTraceTally( pGrid->getPtr(),
                        currentBank->getPtrPoints(),
                        pMatList->getPtr(),
-                       pMatProps->getPtr(),
+                       pMatProps,
                        pMatList->getHashPtr()->getPtr(),
                        rayInfo.get(),
                        pTally->getPtr()->tally );
@@ -85,7 +83,7 @@ RayListController<GRID_T,N>::RayListController(
         int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
-        MonteRay_MaterialProperties* pMP,
+        MaterialProperties* pMP,
         unsigned numPointDets
 ) :
 nBlocks(blocks),
@@ -100,19 +98,9 @@ PA( MonteRayParallelAssistant::getInstance() )
     usingNextEventEstimator = true;
     initialize();
     kernel = [&, blocks, threads] ( void ) {
-#ifdef DEBUG
-        const bool debug = false;
-#endif
-
-        //copyPointDetToGPU();
-
-        if( currentBank->size() > 0 ) {
-            //if( PA.getWorkGroupRank() != 0 ) { return; }
-#ifdef DEBUG
-            if( debug ) std::cout << "Debug: RayListController::kernel() -- Next Event Estimator kernel. Calling pNextEventEstimator->launch_ScoreRayList.\n";
-#endif
-            pNextEventEstimator->launch_ScoreRayList(blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
-        }
+      if( currentBank->size() > 0 ) {
+        pNextEventEstimator->launch_ScoreRayList(blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
+      }
     };
 }
 
@@ -163,6 +151,7 @@ template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::~RayListController(){
 
 #ifdef __CUDACC__
+    cudaDeviceSynchronize();
     if( stream1 ) cudaStreamDestroy( *stream1 );
 #endif
 }
@@ -277,7 +266,6 @@ RayListController<GRID_T,N>::flush(bool final){
 #ifdef __CUDACC__
     gpuErrchk( cudaPeekAtLastError() );
     currentBank->copyToGPU();
-    rayInfo->copyToGPU();
     gpuErrchk( cudaEventRecord(*currentCopySync, 0) );
     gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 #endif
@@ -477,9 +465,7 @@ template<typename GRID_T, unsigned N>
 void
 RayListController<GRID_T,N>::sync(void){
     if( PA.getWorkGroupRank() != 0 ) { return; }
-
-    GPUSync sync;
-    sync.sync();
+    defaultStreamSync();
 }
 
 template<typename GRID_T, unsigned N>
@@ -500,11 +486,11 @@ RayListController<GRID_T,N>::clearTally(void) {
     //	cudaEventRecord( stopGPU.get(), stream1.get());
     //	cudaStreamWaitEvent(stream1.get(), stopGPU.get(), 0);
 
-    GPUSync sync;
+    defaultStreamSync();
     if( pTally ) pTally->clear();
     if( bank1 ) bank1->clear();
     if( bank2) bank2->clear();
-    sync.sync();
+    defaultStreamSync();
 }
 
 template<typename GRID_T, unsigned N>
@@ -550,7 +536,7 @@ RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nS
 
 template<typename GRID_T, unsigned N>
 void
-RayListController<GRID_T,N>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
+RayListController<GRID_T,N>::updateMaterialProperties( MaterialProperties* pMPs) {
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
     if( usingNextEventEstimator ) {
@@ -622,8 +608,7 @@ RayListController<GRID_T,N>::copyPointDetToGPU(void) {
 }
 
 template<typename GRID_T, unsigned N>
-void
-RayListController<GRID_T,N>::dumpPointDetForDebug(const std::string& baseFileName ) {
+void RayListController<GRID_T,N>::dumpPointDetForDebug(const std::string& baseFileName ) {
     // ensures setup - the copy to the GPU is not used
     copyPointDetToGPU();
     pNextEventEstimator->dumpState(currentBank->getPtrPoints(), baseFileName);
@@ -637,8 +622,6 @@ RayListController<GRID_T,N>::gather() {
     }
 }
 
+} // end namespace MonteRay
 
-} /* namespace MonteRay */
-
-
-#endif /* RAYLISTCONTROLLER_T_HH_ */
+#endif // RAYLISTCONTROLLER_T_HH

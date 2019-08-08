@@ -195,7 +195,7 @@ return;
 
 CUDA_CALLABLE_MEMBER
 gpuFloatType_t getTotalXSByMatProp(
-        const MonteRay_MaterialProperties_Data* matProps,
+        const MaterialProperties* pMatProps,
         const MonteRayMaterialList* pMatList,
         const HashLookup* pHash,
         unsigned HashBin,
@@ -203,9 +203,9 @@ gpuFloatType_t getTotalXSByMatProp(
         gpuFloatType_t E)
 {
     gpuFloatType_t total = 0.0f;
-    for( unsigned i=0; i< getNumMats(matProps,cell); ++i) {
-        gpuFloatType_t density = getDensity(matProps,cell,i);
-        unsigned matID = getMatID(matProps,cell,i);
+    for( unsigned i=0; i< pMatProps->numMaterials(cell); ++i) {
+        gpuFloatType_t density = pMatProps->getMaterialDensity(cell,i);
+        unsigned matID = pMatProps->getMaterialID(cell,i);
         //		unsigned materialIndex = materialIDtoIndex(pMatList, matID);
         total += getTotalXS(pMatList, matID, pHash, HashBin, E, density);
     }
@@ -213,7 +213,7 @@ gpuFloatType_t getTotalXSByMatProp(
 }
 
 gpuFloatType_t nonCudaGetTotalXSByMatProp(
-        const MonteRay_MaterialProperties* matProps,
+        const MaterialProperties* pMatProps,
         const MonteRayMaterialList* pMatList,
         const HashLookup* pHash,
         unsigned HashBin,
@@ -221,9 +221,9 @@ gpuFloatType_t nonCudaGetTotalXSByMatProp(
         gpuFloatType_t E)
 {
     gpuFloatType_t total = 0.0f;
-    for( unsigned i=0; i< matProps->getNumMaterials(cell); ++i) {
-        gpuFloatType_t density = matProps->getMaterialDensity(cell,i);
-        MonteRay_MaterialProperties::MatID_t matID = matProps->getMaterialID(cell,i);
+    for( unsigned i=0; i< pMatProps->numMaterials(cell); ++i) {
+        gpuFloatType_t density = pMatProps->getMaterialDensity(cell,i);
+        MaterialProperties::MatID_t matID = pMatProps->getMaterialID(cell,i);
         //unsigned materialIndex = materialIDtoIndex(pMatList, matID);
         total += getTotalXS(pMatList, matID, pHash, HashBin, E, density);
     }
@@ -231,15 +231,15 @@ gpuFloatType_t nonCudaGetTotalXSByMatProp(
 }
 
 gpuFloatType_t nonCudaGetTotalXSByMatProp(
-        const MonteRay_MaterialProperties* matProps,
+        const MaterialProperties* pMatProps,
         const MonteRayMaterialList* pMatList,
         unsigned cell,
         gpuFloatType_t E)
 {
     gpuFloatType_t total = 0.0f;
-    for( unsigned i=0; i< matProps->getNumMaterials(cell); ++i) {
-        gpuFloatType_t density = matProps->getMaterialDensity(cell,i);
-        unsigned matID = matProps->getMaterialID(cell,i);
+    for( unsigned i=0; i< pMatProps->numMaterials(cell); ++i) {
+        gpuFloatType_t density = pMatProps->getMaterialDensity(cell,i);
+        unsigned matID = pMatProps->getMaterialID(cell,i);
         //unsigned materialIndex = materialIDtoIndex(pMatList, matID);
         total += getTotalXS(pMatList, matID, E, density);
     }
@@ -249,25 +249,25 @@ gpuFloatType_t nonCudaGetTotalXSByMatProp(
 template<unsigned N>
 gpuFloatType_t
 FIGenericGPUTestHelper<N>::getTotalXSByMatProp(
-        const MonteRay_MaterialProperties* matProps,
+        const MaterialProperties* pMatProps,
         const MonteRayMaterialList* pMatList,
         const HashLookup* pHash,
         unsigned HashBin,
         unsigned cell,
         gpuFloatType_t E)
         {
-    return nonCudaGetTotalXSByMatProp( matProps, pMatList, pHash, HashBin, cell, E);
+    return nonCudaGetTotalXSByMatProp( pMatProps, pMatList, pHash, HashBin, cell, E);
         }
 
 template<unsigned N>
 gpuFloatType_t
 FIGenericGPUTestHelper<N>::getTotalXSByMatProp(
-        const MonteRay_MaterialProperties* matProps,
+        const MaterialProperties* pMatProps,
         const MonteRayMaterialList* pMatList,
         unsigned cell,
         gpuFloatType_t E)
         {
-    return nonCudaGetTotalXSByMatProp( matProps, pMatList, cell, E);
+    return nonCudaGetTotalXSByMatProp( pMatProps, pMatList, cell, E);
         }
 
 template<unsigned N>
@@ -275,7 +275,7 @@ CUDA_CALLABLE_KERNEL
 testTallyCrossSectionAtCollision(
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         gpuTallyType_t* results)
 {
@@ -307,7 +307,7 @@ template<unsigned N>
 CUDA_CALLABLE_KERNEL  testSumCrossSectionAtCollisionLocation(
         const RayList_t<N>* pCP,
         const MonteRayMaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         gpuTallyType_t* results)
 {
@@ -341,7 +341,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(
         unsigned nBlocks, unsigned nThreads,
         const RayListInterface<N>* pCP,
         const MonteRayMaterialListHost* pMatList,
-        const MonteRay_MaterialProperties* pMatProps )
+        const MaterialProperties* pMatProps )
         {
 
     unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
@@ -360,7 +360,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(
     cudaEvent_t sync;
     cudaEventCreate(&sync);
     testTallyCrossSectionAtCollision<<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr,
-            pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+            pMatList->ptr_device, pMatProps, pMatList->getHashPtr()->getPtrDevice(),
             tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -373,7 +373,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(
     testTallyCrossSectionAtCollision(
             pCP->getPtrPoints(),
             pMatList->getPtr(),
-            pMatProps->getPtr(),
+            pMatProps,
             pMatList->getHashPtr()->getPtr(),
             tally);
 #endif
@@ -386,7 +386,7 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
         unsigned nThreads,
         const RayListInterface<N>* pCP,
         const MonteRayMaterialListHost* pMatList,
-        const MonteRay_MaterialProperties* pMatProps )
+        const MaterialProperties* pMatProps )
         {
 
     unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
@@ -411,7 +411,7 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
     cudaEvent_t sync;
     cudaEventCreate(&sync);
     testSumCrossSectionAtCollisionLocation<<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr,
-            pMatList->ptr_device, pMatProps->ptrData_device, pMatList->getHashPtr()->getPtrDevice(),
+            pMatList->ptr_device, pMatProps, pMatList->getHashPtr()->getPtrDevice(),
             tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -424,7 +424,7 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
     testSumCrossSectionAtCollisionLocation(
             pCP->getPtrPoints(),
             pMatList->getPtr(),
-            pMatProps->getPtr(),
+            pMatProps,
             pMatList->getHashPtr()->getPtr(),
             tally);
 #endif
@@ -438,7 +438,7 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
         unsigned nThreads,
         const RayListInterface<N>* pCP,
         const MonteRayMaterialListHost* pMatList,
-        const MonteRay_MaterialProperties* pMatProps )
+        const MaterialProperties* pMatProps )
         {
 
 #ifdef __CUDACC__
@@ -469,7 +469,7 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
                  nBlocks*nThreads << "\n";
 
     RayWorkInfo rayInfo( nThreads*nBlocks );
-    rayInfo.copyToGPU();
+    auto pRayInfo = std::make_unique<RayWorkInfo>(nThreads*nBlocks);
 
     gpuErrchk( cudaPeekAtLastError() );
 
@@ -479,9 +479,9 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
             grid_device,
             pCP->getPtrPoints()->devicePtr,
             pMatList->ptr_device,
-            pMatProps->ptrData_device,
+            pMatProps,
             pMatList->getHashPtr()->getPtrDevice(),
-            rayInfo.devicePtr,
+            pRayInfo.get(),
             tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -491,13 +491,13 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
     gpuErrchk( cudaPeekAtLastError() );
     cudaFree( tally_device );
 #else
-    RayWorkInfo rayInfo( 1, true );
+    RayWorkInfo rayInfo( 1 );
 
     rayTraceTally(
             grid_device,
             pCP->getPtrPoints(),
             pMatList->getPtr(),
-            pMatProps->getPtr(),
+            pMatProps,
             pMatList->getHashPtr()->getPtr(),
             &rayInfo,
             tally);

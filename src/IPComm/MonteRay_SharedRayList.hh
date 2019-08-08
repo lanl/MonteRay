@@ -397,8 +397,8 @@ public:
 
     void addCollision2( unsigned targetRank, float_t pos[3], float_t dir[3], float_t energy, float_t weight, unsigned index) {
         COLLISION_T collision;
-        std::memcpy( collision.pos, pos, 3*sizeof(float_t));
-        std::memcpy( collision.dir, dir, 3*sizeof(float_t));
+        std::memcpy( &collision.pos, pos, 3*sizeof(float_t));
+        std::memcpy( &collision.dir, dir, 3*sizeof(float_t));
         collision.energy[0] = energy;
         collision.weight[0] = weight;
         collision.index = index;

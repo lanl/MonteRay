@@ -2,6 +2,7 @@
 
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRay_GridBins.hh"
+#include "GridBins.hh"
 
 namespace MonteRay {
 

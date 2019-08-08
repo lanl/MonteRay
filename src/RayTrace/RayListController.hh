@@ -6,14 +6,23 @@
 #include <memory>
 #include <functional>
 #include <iostream>
+#include <algorithm>
 
+#include "MonteRayMaterialList.hh"
+#include "MaterialProperties.hh"
+#include "gpuTally.hh"
+#include "RayListInterface.hh"
+#include "ExpectedPathLength.hh"
+#include "GPUErrorCheck.hh"
+#include "GPUUtilityFunctions.hh"
+#include "MonteRayNextEventEstimator.hh"
+#include "MonteRay_timer.hh"
 #include "MonteRayTypes.hh"
 #include "MonteRayParallelAssistant.hh"
 
 namespace MonteRay {
 
 class MonteRayMaterialListHost;
-class MonteRay_MaterialProperties;
 class gpuTallyHost;
 class cpuTimer;
 
@@ -37,7 +46,7 @@ public:
             int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
-            MonteRay_MaterialProperties*,
+            MaterialProperties*,
             gpuTallyHost* );
 
     /// Ctor for the next event estimator solver
@@ -45,14 +54,14 @@ public:
             int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
-            MonteRay_MaterialProperties*,
+            MaterialProperties*,
             unsigned numPointDets );
 
     /// Ctor for the writing next-event estimator collision and source points to file
     /// Can not launch a kernel
     RayListController( unsigned numPointDets, const std::string& filename );
 
-    virtual ~RayListController();
+    ~RayListController();
 
     void initialize();
     unsigned capacity(void) const;
@@ -71,7 +80,7 @@ public:
     void dumpPointDetForDebug(const std::string& baseFileName = std::string() );
     void printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
     void outputTimeBinnedTotal(std::ostream& out,unsigned nSamples=1, unsigned constantDimension=2);
-    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MaterialProperties* pMPs);
 
     void flush(bool final=false);
     void finalFlush(void);
@@ -134,7 +143,7 @@ private:
     unsigned nThreads = 0;
     GRID_T* pGrid = nullptr;
     MonteRayMaterialListHost* pMatList = nullptr;
-    MonteRay_MaterialProperties* pMatProps = nullptr;
+    MaterialProperties* pMatProps = nullptr;
     gpuTallyHost* pTally = nullptr;
     const MonteRayParallelAssistant& PA;
 

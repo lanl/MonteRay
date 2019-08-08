@@ -12,13 +12,11 @@ namespace MonteRay{
 template<unsigned N = 1>
 class RayListInterface {
 public:
-    typedef MonteRay::Ray_t<N>      RAY_T;
-    typedef MonteRay::RayList_t<N>  RAYLIST_T;
-    typedef unsigned RayListSize_t;
-    typedef gpuFloatType_t* CollisionPosition_t;
-    typedef gpuFloatType_t* CollisionDirection_t;
-    typedef unsigned DetectorIndex_t;
-    typedef MonteRay::ParticleType_t ParticleType_t;
+    using RAY_T = MonteRay::Ray_t<N>; 
+    using RAYLIST_T = MonteRay::RayList_t<N>;
+    using RayListSize_t = unsigned;
+    using DetectorIndex_t = unsigned;
+    using ParticleType_t = MonteRay::ParticleType_t;
 
     RayListInterface( unsigned num);
 
