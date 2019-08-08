@@ -4,7 +4,7 @@
 #include "RayListController.hh"
 
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "ExpectedPathLength.t.hh"
@@ -22,7 +22,7 @@ RayListController<GRID_T,N>::RayListController(
         int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
-        MonteRay_MaterialProperties* pMP,
+        MaterialProperties* pMP,
         gpuTallyHost* pT
 ) :
 nBlocks(blocks),
@@ -60,7 +60,7 @@ PA( MonteRayParallelAssistant::getInstance() )
                 pGrid->getDevicePtr(),
                 currentBank->getPtrPoints()->devicePtr,
                 pMatList->ptr_device,
-                pMatProps->ptrData_device,
+                pMatProps,
                 pMatList->getHashPtr()->getPtrDevice(),
                 rayInfo.get(),
                 pTally->temp->tally );
@@ -68,7 +68,7 @@ PA( MonteRayParallelAssistant::getInstance() )
         rayTraceTally( pGrid->getPtr(),
                        currentBank->getPtrPoints(),
                        pMatList->getPtr(),
-                       pMatProps->getPtr(),
+                       pMatProps,
                        pMatList->getHashPtr()->getPtr(),
                        rayInfo.get(),
                        pTally->getPtr()->tally );
@@ -83,7 +83,7 @@ RayListController<GRID_T,N>::RayListController(
         int threads,
         GRID_T* pGB,
         MonteRayMaterialListHost* pML,
-        MonteRay_MaterialProperties* pMP,
+        MaterialProperties* pMP,
         unsigned numPointDets
 ) :
 nBlocks(blocks),
@@ -536,7 +536,7 @@ RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nS
 
 template<typename GRID_T, unsigned N>
 void
-RayListController<GRID_T,N>::updateMaterialProperties( MonteRay_MaterialProperties* pMPs) {
+RayListController<GRID_T,N>::updateMaterialProperties( MaterialProperties* pMPs) {
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
     if( usingNextEventEstimator ) {

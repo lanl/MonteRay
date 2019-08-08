@@ -393,8 +393,6 @@ public:
 
         auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 #ifdef __CUDACC__
-
-#ifdef __CUDACC__
         cudaDeviceSynchronize();
         kernelCrossingDistance<<<1,1>>>(
                 pGridInfo->devicePtr,

@@ -3,7 +3,6 @@
 
 #include "ExpectedPathLength.hh"
 
-#include "MonteRay_MaterialProperties.hh"
 #include "MonteRay_timer.hh"
 #include "MonteRayMaterialList.hh"
 #include "HashLookup.hh"
@@ -21,7 +20,7 @@ tallyCollision(
         unsigned particleID,
         const GRIDTYPE* pGrid,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         const Ray_t<N>* p,
         RayWorkInfo* pRayInfo,
@@ -74,7 +73,7 @@ CUDA_CALLABLE_KERNEL
 rayTraceTally(const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* tally) {
@@ -112,7 +111,7 @@ MonteRay::tripleTime launchRayTraceTally(
         const GRIDTYPE* pGrid,
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties* pMatProps,
+        const MaterialProperties* pMatProps,
         gpuTallyHost* pTally
 ) {
     MonteRay::tripleTime time;
@@ -141,7 +140,7 @@ MonteRay::tripleTime launchRayTraceTally(
             pGrid->getDevicePtr(),
             pCP->getPtrPoints()->devicePtr,
             pMatList->ptr_device,
-            pMatProps->ptrData_device,
+            pMatProps,
             pMatList->getHashPtr()->getPtrDevice(),
             pRayInfo.get(),
             pTally->temp->tally );
@@ -178,7 +177,7 @@ MonteRay::tripleTime launchRayTraceTally(
     rayTraceTally( pGrid->getPtr(),
             pCP->getPtrPoints(),
             pMatList->getPtr(),
-            pMatProps->getPtr(),
+            pMatProps,
             pMatList->getHashPtr()->getPtr(),
             pRayInfo.get(),
             pTally->getPtr()->tally
@@ -199,7 +198,7 @@ MonteRay::tripleTime launchRayTraceTally(
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
 inline tallyCellSegment( const MonteRayMaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const gpuFloatType_t* materialXS,
         gpuTallyType_t* tally,
         unsigned cell,
@@ -217,7 +216,7 @@ inline tallyCellSegment( const MonteRayMaterialList* pMatList,
     typedef gpuTallyType_t score_t;
 
     xs_t totalXS = 0.0;
-    unsigned numMaterials = getNumMats( pMatProps, cell);
+    unsigned numMaterials = pMatProps->numMats(cell);
 
 #ifdef DEBUG
     if( debug ) {
@@ -227,8 +226,8 @@ inline tallyCellSegment( const MonteRayMaterialList* pMatList,
 
     for( unsigned i=0; i<numMaterials; ++i ) {
 
-        unsigned matID = getMatID(pMatProps, cell, i);
-        gpuFloatType_t density = getDensity(pMatProps, cell, i );
+        unsigned matID = pMatProps->getMaterialID(cell, i);
+        gpuFloatType_t density = pMatProps->getDensity(cell, i );
         if( density > 1e-5 ) {
             totalXS +=   materialXS[matID]*density;
         }

@@ -765,7 +765,7 @@ SUITE( NextEventEstimator_Tester ) {
 
          // write out state of MonteRayNextEventEstimator class
          std::string filename = std::string("nee_write_state_test.bin");
-         pEstimator->writeToFile( filename );
+         writeToFile( filename, *pEstimator);
 
          // read
          {
