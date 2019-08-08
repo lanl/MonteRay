@@ -6,11 +6,13 @@
 #include "MonteRayTypes.hh"
 #include "MonteRayConstants.hh"
 #include "ManagedAllocator.hh"
+#include "SimpleVector.hh"
 #include "CrossSectionUtilities.hh"
 #include "MonteRay_binaryIO.hh"
 #include "CrossSectionHash.hh"
 
 #include "BinarySearch.hh"
+
 
 namespace MonteRay {
 
@@ -19,14 +21,25 @@ class CrossSectionBuilder_t;
 
 template< typename HASHFUNCTION = FasterHash >
 class CrossSection_t : public Managed {
+private:
+    SimpleVector<gpuFloatType_t> energies;
+    SimpleVector<gpuFloatType_t> totalXS;
+    int id = 0;
+    int ZA = 0;
+    size_t numPoints = 0;
+    ParticleType_t ParticleType = neutron;
+    gpuFloatType_t AWR = 0.0;
+
+    CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION>* hash = nullptr;
+
 public:
     CrossSection_t(const CrossSection_t& rhs){
         id = rhs.id;
         ZA = rhs.ZA;
         AWR = rhs.AWR;
         ParticleType = rhs.ParticleType;
-        energy_vec.assign( rhs.energy_vec.begin(), rhs.energy_vec.end() );
-        totalXS_vec.assign( rhs.totalXS_vec.begin(), rhs.totalXS_vec.end() );
+        energies.assign( rhs.energies.begin(), rhs.energies.end() );
+        totalXS.assign( rhs.totalXS.begin(), rhs.totalXS.end() );
         build();
     };
 
@@ -36,14 +49,14 @@ public:
         AWR = rhs.AWR;
         ParticleType = rhs.ParticleType;
 
-        size_t N = rhs.energy_vec.size();
-        energy_vec.clear();
-        totalXS_vec.clear();
-        energy_vec.resize( N );
-        totalXS_vec.resize( N );
-        for( size_t i = 0; i < rhs.energy_vec.size(); ++i ) {
-            energy_vec[i] = rhs.energy_vec[i];
-            totalXS_vec[i] = rhs.totalXS_vec[i];
+        size_t N = rhs.energies.size();
+        energies.clear();
+        totalXS.clear();
+        energies.resize( N );
+        totalXS.resize( N );
+        for( size_t i = 0; i < rhs.energies.size(); ++i ) {
+            energies[i] = rhs.energies[i];
+            totalXS[i] = rhs.totalXS[i];
         }
         build();
         return *this;
@@ -59,33 +72,31 @@ private:
     friend CrossSectionBuilder_t<HASHFUNCTION>;
 
     void build(){
-        numPoints = energy_vec.size();
-        energies = energy_vec.data();
-        totalXS = totalXS_vec.data();
-        hash = new CrossSectionHash_t<gpuFloatType_t,HASHFUNCTION >( energy_vec );
+        hash = new CrossSectionHash_t<gpuFloatType_t,HASHFUNCTION >( energies );
     };
 
 public:
     void setID(int ID ){ id = ID; }
     constexpr int getID() const { return id; }
     constexpr int ZAID() const { return ZA; }
-    constexpr size_t size() const { return numPoints; }
-    constexpr gpuFloatType_t getEnergy( size_t i ) const { return *(energies+i); }
-    constexpr gpuFloatType_t getTotalXSByIndex( size_t i ) const { return *(totalXS+i); }
+    constexpr size_t size() const { return energies.size(); }
+    constexpr gpuFloatType_t getEnergy( size_t i ) const { return energies[i]; }
+    constexpr gpuFloatType_t getTotalXSByIndex( size_t i ) const { return totalXS[i]; }
     constexpr gpuFloatType_t getAWR() const { return AWR; }
     constexpr ParticleType_t getParticleType() const { return ParticleType; }
 
 
     constexpr size_t getIndex( gpuFloatType_t E ) const {
-      return LowerBoundIndex(energies, 0U, numPoints, E );
+      return LowerBoundIndex(energies.data(), 0U, this->size(), E );
     }
 
+    // TODO: make this private?  or move it into getTotalXS
     constexpr gpuFloatType_t getTotalXS(size_t i, gpuFloatType_t E ) const {
         gpuFloatType_t lowerXS =  getTotalXSByIndex(i);
         gpuFloatType_t lowerEnergy =  getEnergy(i);
 
         // off the top end of the table
-        if( i == numPoints-1 ) {
+        if( i >= this->size()-1 ) {
             return lowerXS;
         }
 
@@ -103,17 +114,20 @@ public:
         return value;
     }
 
+    // TODO: combine getTotalXS and getTotalXSViaHash
     constexpr gpuFloatType_t getTotalXS(gpuFloatType_t E ) const {
         return getTotalXS( getIndex(E), E);
     }
 
+    // TODO: combine getTotalXS and getTotalXSViaHash
     constexpr gpuFloatType_t getTotalXSviaHash(gpuFloatType_t E ) const {
         size_t lower, upper;
         hash->getIndex(lower, upper, E);
-        size_t index = LowerBoundIndex( energies, lower, upper, E);
+        size_t index = LowerBoundIndex( energies.data(), lower, upper, E);
         return getTotalXS( index, E);
     }
 
+    // TODO: replace with writeToFile
     void write( const std::string& filename ) {
         std::ofstream outfile;
 
@@ -128,24 +142,24 @@ public:
         outfile.close();
     }
 
-    template<typename S>
-    void write( S& out) {
+    void write( std::ostream& out) {
         unsigned CrossSectionFileVersion = 1;
         binaryIO::write(out, CrossSectionFileVersion );
 
         binaryIO::write(out, getParticleType() );
-        binaryIO::write(out, size() );
+        binaryIO::write(out, this->size() );
         binaryIO::write(out, getAWR() );
         binaryIO::write(out, ZAID() ); // version 1
-        for( size_t i=0; i< size(); ++i ){
+        for( size_t i=0; i< this->size(); ++i ){
             binaryIO::write(out, getEnergy(i) );
         }
-        for( size_t i=0; i< size(); ++i ){
+        for( size_t i=0; i< this->size(); ++i ){
             binaryIO::write(out, getTotalXSByIndex(i) );
         }
     }
 
 private:
+    // TODO: move read into a Builder
     template<typename S>
     void read( S& in ) {
         unsigned version;
@@ -153,6 +167,7 @@ private:
 
         binaryIO::read(in, ParticleType );
 
+        unsigned numPoints;
         if( version > 0 ) {
             binaryIO::read(in, numPoints );
         } else {
@@ -167,29 +182,16 @@ private:
             binaryIO::read(in, ZA );
         }
 
-        energy_vec.resize( numPoints);
-        totalXS_vec.resize( numPoints);
-        for( size_t i=0; i< size(); ++i ){
-            binaryIO::read(in, energy_vec[i] );
+        energies.resize( numPoints);
+        totalXS.resize( numPoints);
+        for( size_t i=0; i< this->size(); ++i ){
+            binaryIO::read(in, energies[i] );
         }
-        for( size_t i=0; i< size(); ++i ){
-            binaryIO::read(in, totalXS_vec[i] );
+        for( size_t i=0; i< this->size(); ++i ){
+            binaryIO::read(in, totalXS[i] );
         }
     }
 
-private:
-    managed_vector<gpuFloatType_t> energy_vec;
-    managed_vector<gpuFloatType_t> totalXS_vec;
-
-    int id = 0;
-    int ZA = 0;
-    size_t numPoints = 0;
-    ParticleType_t ParticleType = neutron;
-    gpuFloatType_t AWR = 0.0;
-    gpuFloatType_t* energies = nullptr;
-    gpuFloatType_t* totalXS = nullptr;
-
-    CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION>* hash = nullptr;
 };
 
 using CrossSection = CrossSection_t<>;
@@ -209,8 +211,8 @@ public:
                        )
     {
         XS.ZA = ZAID;
-        XS.energy_vec.assign( energies.begin(), energies.end() );
-        XS.totalXS_vec.assign( xsec.begin(), xsec.end() );
+        XS.energies.assign( energies.begin(), energies.end() );
+        XS.totalXS.assign( xsec.begin(), xsec.end() );
         setParticleType( type );
         setAWR( AWR );
     }
@@ -251,8 +253,8 @@ public:
         }
 
         for( auto itr = xsGrid.begin(); itr != xsGrid.end(); ++itr) {
-            XS.energy_vec.push_back( itr->first );
-            XS.totalXS_vec.push_back( itr->second );
+            XS.energies.push_back( itr->first );
+            XS.totalXS.push_back( itr->second );
         }
         setAWR( HostXS.getAWR() );
         XS.ZA = HostXS.getZAID();
