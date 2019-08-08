@@ -9,7 +9,7 @@
 #include <algorithm>
 
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "ExpectedPathLength.hh"
@@ -23,7 +23,6 @@
 namespace MonteRay {
 
 class MonteRayMaterialListHost;
-class MonteRay_MaterialProperties;
 class gpuTallyHost;
 class cpuTimer;
 
@@ -47,7 +46,7 @@ public:
             int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
-            MonteRay_MaterialProperties*,
+            MaterialProperties*,
             gpuTallyHost* );
 
     /// Ctor for the next event estimator solver
@@ -55,7 +54,7 @@ public:
             int nThreads,
             GRID_T*,
             MonteRayMaterialListHost*,
-            MonteRay_MaterialProperties*,
+            MaterialProperties*,
             unsigned numPointDets );
 
     /// Ctor for the writing next-event estimator collision and source points to file
@@ -81,7 +80,7 @@ public:
     void dumpPointDetForDebug(const std::string& baseFileName = std::string() );
     void printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension=2);
     void outputTimeBinnedTotal(std::ostream& out,unsigned nSamples=1, unsigned constantDimension=2);
-    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MaterialProperties* pMPs);
 
     void flush(bool final=false);
     void finalFlush(void);
@@ -144,7 +143,7 @@ private:
     unsigned nThreads = 0;
     GRID_T* pGrid = nullptr;
     MonteRayMaterialListHost* pMatList = nullptr;
-    MonteRay_MaterialProperties* pMatProps = nullptr;
+    MaterialProperties* pMatProps = nullptr;
     gpuTallyHost* pTally = nullptr;
     const MonteRayParallelAssistant& PA;
 

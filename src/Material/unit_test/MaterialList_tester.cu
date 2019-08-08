@@ -94,4 +94,16 @@ SUITE( MaterialList_tester ) {
   }
 #endif
 
+  TEST( material_id_to_index ) {
+    MonteRay::SimpleVector<unsigned> vec {1, 2};
+    auto mlb = MaterialList::Builder{1, Material{9}};
+    mlb.addMaterial(2, Material{99});
+    mlb.addMaterial(5, Material{999});
+    auto materialList = mlb.build();
+
+    CHECK_EQUAL(2, materialList.materialIDtoIndex(5));
+    CHECK_EQUAL(1, materialList.materialIDtoIndex(2));
+    CHECK_THROW(materialList.materialIDtoIndex(10), std::runtime_error);
+  }
+
 }

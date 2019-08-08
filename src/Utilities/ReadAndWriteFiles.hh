@@ -1,5 +1,10 @@
+#ifndef MR_READANDWRITEFILES_HH_
+#define MR_READANDWRITEFILES_HH_
+
+namespace MonteRay{
+
 template <class Object>
-void readFromFile( const std::string& filename, Object& object) {
+auto readFromFile( const std::string& filename, Object& object) {
   std::ifstream infile;
   if( infile.is_open() ) {
       infile.close();
@@ -12,12 +17,13 @@ void readFromFile( const std::string& filename, Object& object) {
   }
   assert( infile.good() );
   infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
-  object.read(infile);
+  auto retval = object.read(infile);
   infile.close();
+  return retval;
 }
 
 template <class Object>
-void writeToFile( const std::string& filename, Object&& object) const {
+void writeToFile( const std::string& filename, Object&& object) {
   std::ofstream outfile;
   outfile.open( filename.c_str(), std::ios::binary | std::ios::out);
   if( ! outfile.is_open() ) {
@@ -29,3 +35,6 @@ void writeToFile( const std::string& filename, Object&& object) const {
   object.write( outfile );
   outfile.close();
 }
+
+}
+#endif

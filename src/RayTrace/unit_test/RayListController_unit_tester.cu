@@ -11,7 +11,7 @@
 #include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
@@ -40,8 +40,6 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
             pTally = new gpuTallyHost( pGrid->getNumCells() );
 
-            pMatProps = new MonteRay_MaterialProperties();
-            pMatProps->disableMemoryReduction();
 
             // xs from 0.0 to 100.0 mev with total cross-section of 1.0
             xs = new MonteRayCrossSectionHost(2);
@@ -61,9 +59,10 @@ SUITE( RayListController_unit_tester_basic_tests ) {
             pTally->clear();
 
             // Density of 1.0 for mat number 0
-            pMatProps->initializeMaterialDescription( std::vector<int>( pGrid->getNumCells(), 0), std::vector<float>( pGrid->getNumCells(), 1.0), pGrid->getNumCells());
-
-            pMatProps->copyToGPU();
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.initializeMaterialDescription( std::vector<int>( pGrid->getNumCells(), 0), std::vector<float>( pGrid->getNumCells(), 1.0), pGrid->getNumCells());
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             xs->setTotalXS(0, 0.00001, 1.0 );
             xs->setTotalXS(1, 100.0, 1.0 );
@@ -85,7 +84,6 @@ SUITE( RayListController_unit_tester_basic_tests ) {
         ~UnitControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pTally;
             delete xs;
             delete metal;
@@ -93,7 +91,7 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
         GridBins* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
         MonteRayCrossSectionHost* xs;
@@ -237,13 +235,13 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_ten_particles_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr3\n";
+        setup();
         CollisionPointController<GridBins> controller( 1,
                 32,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
-        setup();
 
         ParticleRay_t particle[10];
         for( auto i = 0; i < 10; ++i ){

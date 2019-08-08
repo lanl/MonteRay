@@ -3,6 +3,7 @@
 
 #include "ManagedAllocator.hh"
 #include "MonteRay_binaryIO.hh"
+#include <algorithm>
 
 #define MATERIAL_LIST_VERSION 1
 namespace MonteRay{
@@ -34,6 +35,15 @@ class MaterialList: public Managed {
     }
     for(auto&& id : materialIDs_){
       binaryIO::write(outfile, id);
+    }
+  }
+
+  auto materialIDtoIndex(unsigned id) const {
+    auto iter = std::find(materialIDs_.begin(), materialIDs_.end(), id);
+    if (iter != materialIDs_.end()) {
+      return std::distance(materialIDs_.begin(), iter);
+    } else {
+      throw std::runtime_error("Material ID " + std::to_string(id) + " not found in MaterialList.");
     }
   }
 

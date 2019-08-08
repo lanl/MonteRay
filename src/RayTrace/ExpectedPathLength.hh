@@ -6,13 +6,12 @@
 #include <functional>
 #include <memory>
 
+#include "MaterialProperties.hh"
 #include "RayListInterface.hh"
 
 namespace MonteRay{
 
 class gpuTimingHost;
-class MonteRay_MaterialProperties;
-class MonteRay_MaterialProperties_Data;
 class MonteRayMaterialListHost;
 class HashLookup;
 class gpuTallyHost;
@@ -23,7 +22,7 @@ template <typename MaterialList>
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
 tallyCellSegment(const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const gpuFloatType_t* materialXS,
         gpuTallyType_t* tally,
         unsigned cell,
@@ -38,7 +37,7 @@ tallyCollision(
         unsigned particleID,
         const GRIDTYPE* pGrid,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         const Ray_t<N>* p,
         RayWorkInfo* pRayInfo,
@@ -50,7 +49,7 @@ CUDA_CALLABLE_KERNEL
 rayTraceTally(const GRIDTYPE* pGrid,
         const RayList_t<N>* pCP,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties_Data* pMatProps,
+        const MaterialProperties* pMatProps,
         const HashLookup* pHash,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* tally);
@@ -63,7 +62,7 @@ MonteRay::tripleTime launchRayTraceTally(
         const GRIDTYPE* pGrid,
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
-        const MonteRay_MaterialProperties* pMatProps,
+        const MaterialProperties* pMatProps,
         gpuTallyHost* pTally
 );
 

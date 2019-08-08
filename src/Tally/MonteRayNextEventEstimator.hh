@@ -11,14 +11,13 @@
 #include "MonteRayAssert.hh"
 #include "MonteRayCopyMemory.hh"
 #include "MonteRayVector3D.hh"
+#include "MaterialProperties.hh"
 
 namespace MonteRay {
 
 class HashLookup;
 class HashLookupHost;
 class GridBins;
-class MonteRay_MaterialProperties;
-class MonteRay_MaterialProperties_Data;
 class MonteRayMaterialListHost;
 class MonteRayMaterialList;
 class MonteRayTally;
@@ -82,8 +81,8 @@ public:
     template<unsigned N>
     void dumpState( const RayList_t<N>* pRayList, const std::string& optBaseName  = std::string("") );
 
-    CUDAHOST_CALLABLE_MEMBER void setGeometry(const Geometry* pGeometry, const MonteRay_MaterialProperties* pMPs);
-    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MonteRay_MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void setGeometry(const Geometry* pGeometry, const MaterialProperties* pMPs);
+    CUDAHOST_CALLABLE_MEMBER void updateMaterialProperties( MaterialProperties* pMPs);
 
     CUDAHOST_CALLABLE_MEMBER void setMaterialList(const MonteRayMaterialListHost* ptr);
 
@@ -124,7 +123,6 @@ public:
     void read(IOTYPE& in);
 
     // write out state of MonteRayNextEventEstimator class
-    void writeToFile( const std::string& fileName);
     void readFromFile( const std::string& fileName);
 
 private:
@@ -138,8 +136,7 @@ private:
     std::vector<gpuFloatType_t>* pTallyTimeBinEdges = NULL;
 
     const Geometry* pGeometry = NULL;
-    const MonteRay_MaterialProperties* pMatPropsHost = NULL;
-    const MonteRay_MaterialProperties_Data* pMatProps = NULL;
+    const MaterialProperties* pMatProps = NULL;
     const MonteRayMaterialListHost* pMatListHost = NULL;
     const MonteRayMaterialList* pMatList = NULL;
     const HashLookupHost* pHashHost = NULL;
@@ -153,6 +150,5 @@ template<typename Geometry, unsigned N>
 CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(MonteRayNextEventEstimator<Geometry>* ptr, const RayList_t<N>* pRayList );
 
 } /* namespace MonteRay */
-
 
 #endif /* MONTERAYNEXTEVENTESTIMATOR_HH_ */

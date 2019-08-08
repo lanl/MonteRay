@@ -12,7 +12,7 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.t.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
@@ -67,10 +67,10 @@ nee_debugger::launch(const std::string& optBaseName){
     grid.readFromFile( filename );
 
     // material properties
-    MonteRay_MaterialProperties matprops;
+    MaterialProperties::Builder matpropsBuilder;
     filename = std::string("matProps_") + baseName;
     checkFileExists(filename);
-    matprops.readFromFile( filename );
+    auto matprops = readFromFile(filename, matpropsBuilder);
 
     // materials
     MonteRayMaterialListHost matlist(1);
@@ -80,7 +80,6 @@ nee_debugger::launch(const std::string& optBaseName){
 
     grid.copyToGPU();
     matlist.copyToGPU();
-    matprops.copyToGPU();
 
     estimator.setGeometry( &grid, &matprops );
     estimator.setMaterialList( &matlist );

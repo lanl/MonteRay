@@ -12,7 +12,7 @@
 #include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayCrossSection.hh"
@@ -50,7 +50,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
             soln      = new MonteRayMaterialHost(5);
 
             pMatList = new MonteRayMaterialListHost(6,11);
-            pMatProps = new MonteRay_MaterialProperties;
         }
 
         void setup(){
@@ -58,8 +57,9 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
             MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/pwr16x16_assembly_fine.lnk3dnt" );
             readerObject.ReadMatData();
 
-            pMatProps->disableMemoryReduction();
-            pMatProps->setMaterialDescription( readerObject );
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.setMaterialDescription( readerObject );
 
             pGrid = new GridBins(readerObject);
             CHECK_EQUAL( 584820, pGrid->getNumCells() );
@@ -138,8 +138,8 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
             pMatList->add( 5, *soln, SOLN_ID );
             pMatList->copyToGPU();
 
-            pMatProps->renumberMaterialIDs(*pMatList);
-            pMatProps->copyToGPU();
+            matPropBuilder.renumberMaterialIDs(*pMatList);
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             iso1001->copyToGPU();
             iso5010->copyToGPU();
@@ -157,7 +157,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         ~ControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pTally;
 
             delete iso1001;
@@ -182,7 +181,7 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
         GridBins* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
         MonteRayCrossSectionHost* iso1001;
@@ -230,7 +229,7 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
                 nThreads,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
 
         controller.setCapacity(capacity);

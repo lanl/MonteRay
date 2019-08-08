@@ -9,7 +9,7 @@
 #include "gpuTally.hh"
 #include "ExpectedPathLength.t.hh"
 #include "MonteRayMaterial.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"
 #include "HashLookup.hh"
@@ -111,9 +111,9 @@ SUITE( RayListInterface_fi_tester ) {
         MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
         readerObject.ReadMatData();
 
-        MonteRay_MaterialProperties mp;
-        mp.disableMemoryReduction();
-        mp.setMaterialDescription( readerObject );
+        MaterialProperties::Builder mpb;
+        mpb.disableMemoryReduction();
+        mpb.setMaterialDescription( readerObject );
 
         MonteRayCrossSectionHost u234s(1);
         MonteRayCrossSectionHost u235s(1);
@@ -143,8 +143,9 @@ SUITE( RayListInterface_fi_tester ) {
         matList.add( 1, water, 3 );
         matList.copyToGPU();
 
-        mp.renumberMaterialIDs( matList );
-        mp.copyToGPU();
+        mpb.renumberMaterialIDs( matList );
+        auto mp = std::make_unique<MaterialProperties>(mpb.build());
+
 
         u234s.copyToGPU();
         u235s.copyToGPU();
@@ -155,15 +156,15 @@ SUITE( RayListInterface_fi_tester ) {
         gpuFloatType_t energy = points.getEnergy(0);
         unsigned cell = points.getIndex(0);
         unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected1 = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
-        gpuFloatType_t expected2 = helper.getTotalXSByMatProp(&mp, matList.getPtr(), cell, energy );
+        gpuFloatType_t expected1 = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+        gpuFloatType_t expected2 = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-5);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected1, 1e-6);
         CHECK_CLOSE( expected2, expected1, 1e-6);
 
         helper.setupTimers();
-        helper.launchTallyCrossSectionAtCollision(1, 1024, &points, &matList, &mp );
+        helper.launchTallyCrossSectionAtCollision(1, 1024, &points, &matList, mp.get() );
         helper.stopTimers();
 
         CHECK_CLOSE( expected1, helper.getTally(0), 1e-7 );
@@ -173,11 +174,10 @@ SUITE( RayListInterface_fi_tester ) {
         MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
         readerObject.ReadMatData();
 
-        MonteRay_MaterialProperties mp;
-        mp.disableMemoryReduction();
-        mp.setMaterialDescription( readerObject );
+        MaterialProperties::Builder mpb;
+        mpb.disableMemoryReduction();
+        mpb.setMaterialDescription( readerObject );
 
-        FIGenericGPUTestHelper<1> helper( mp.size() );
 
         RayListInterface<1> points(2);
         points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
@@ -211,8 +211,10 @@ SUITE( RayListInterface_fi_tester ) {
         matList.add( 1, water, 3 );
         matList.copyToGPU();
 
-        mp.renumberMaterialIDs( matList );
-        mp.copyToGPU();
+        mpb.renumberMaterialIDs( matList );
+        auto mp = std::make_unique<MaterialProperties>(mpb.build());
+
+        FIGenericGPUTestHelper<1> helper( mp->numCells() );
 
         u234s.copyToGPU();
         u235s.copyToGPU();
@@ -223,7 +225,7 @@ SUITE( RayListInterface_fi_tester ) {
         gpuFloatType_t energy = points.getEnergy(0);
         unsigned cell = points.getIndex(0);
         unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-5);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected, 1e-6);
@@ -233,13 +235,13 @@ SUITE( RayListInterface_fi_tester ) {
             if( points.getIndex(i) == cell ) {
                 energy = points.getEnergy(i);
                 HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-                expected += helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+                expected += helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
             }
         }
         CHECK_CLOSE( 16.6541, expected, 1e-3);
 
         helper.setupTimers();
-        helper.launchSumCrossSectionAtCollisionLocation(1, 1024, &points, &matList, &mp );
+        helper.launchSumCrossSectionAtCollisionLocation(1, 1024, &points, &matList, mp.get() );
         helper.stopTimers();
 
         CHECK_CLOSE( expected, helper.getTally(cell), 1e-3 );
@@ -261,9 +263,9 @@ SUITE( RayListInterface_fi_tester ) {
         MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
         readerObject.ReadMatData();
 
-        MonteRay_MaterialProperties mp;
-        mp.disableMemoryReduction();
-        mp.setMaterialDescription( readerObject );
+        MaterialProperties::Builder mpb;
+        mpb.disableMemoryReduction();
+        mpb.setMaterialDescription( readerObject );
 
         MonteRayCrossSectionHost u234s(1);
         MonteRayCrossSectionHost u235s(1);
@@ -293,8 +295,8 @@ SUITE( RayListInterface_fi_tester ) {
         matList.add( 1, water, 3 );
         matList.copyToGPU();
 
-        mp.renumberMaterialIDs( matList );
-        mp.copyToGPU();
+        mpb.renumberMaterialIDs( matList );
+        auto mp = std::make_unique<MaterialProperties>(mpb.build());
 
         u234s.copyToGPU();
         u235s.copyToGPU();
@@ -311,13 +313,13 @@ SUITE( RayListInterface_fi_tester ) {
         gpuFloatType_t energy = points.getEnergy(0);
         unsigned cell = points.getIndex(0);
         unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-6);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected, 1e-6);
 
         helper.setupTimers();
-        helper.launchRayTraceTally(1, 256, &points, &matList, &mp );
+        helper.launchRayTraceTally(1, 256, &points, &matList, mp.get() );
         helper.stopTimers();
 
         //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
@@ -362,9 +364,9 @@ SUITE( Collision_fi_looping_tester ) {
         MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
         readerObject.ReadMatData();
 
-        MonteRay_MaterialProperties mp;
-        mp.disableMemoryReduction();
-        mp.setMaterialDescription( readerObject );
+        MaterialProperties::Builder mpb;
+        mpb.disableMemoryReduction();
+        mpb.setMaterialDescription( readerObject );
 
         MonteRayCrossSectionHost u234s(1);
         MonteRayCrossSectionHost u235s(1);
@@ -394,8 +396,8 @@ SUITE( Collision_fi_looping_tester ) {
         matList.add( 1, water, 3 );
         matList.copyToGPU();
 
-        mp.renumberMaterialIDs( matList );
-        mp.copyToGPU();
+        mpb.renumberMaterialIDs( matList );
+        auto mp = std::make_unique<MaterialProperties>(mpb.build());
 
         u234s.copyToGPU();
         u235s.copyToGPU();
@@ -412,7 +414,7 @@ SUITE( Collision_fi_looping_tester ) {
         gpuFloatType_t energy = bank1.getEnergy(0);
         unsigned cell = bank1.getIndex(0);
         unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(&mp, matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-5);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected, 1e-6);
@@ -449,7 +451,7 @@ SUITE( Collision_fi_looping_tester ) {
                     &grid,
                     &bank1,
                     &matList,
-                    &mp,
+                    mp.get(),
                     &tally);
 
 #ifdef __CUDACC__
@@ -470,7 +472,7 @@ SUITE( Collision_fi_looping_tester ) {
                     &grid,
                     &bank2,
                     &matList,
-                    &mp,
+                    mp.get(),
                     &tally);
 
 #ifdef __CUDACC__

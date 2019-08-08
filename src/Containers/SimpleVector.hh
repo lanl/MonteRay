@@ -101,9 +101,9 @@ class SimpleVector : public Managed
     if (N <= this->capacity()){ return; }
     auto alloc_ = alloc();
     auto newBegin = alloc_traits::allocate(alloc_, N);
-    if (begin_ != nullptr){ 
+    if (begin_ != nullptr){
       std::copy(begin(), end(), newBegin);
-      alloc_traits::deallocate(alloc_, begin_, this->size()); 
+      alloc_traits::deallocate(alloc_, begin_, this->capacity()); 
     }
     this->begin_ = newBegin;
     this->reservedSize_ = N;
@@ -174,13 +174,30 @@ class SimpleVector : public Managed
     this->reservedSize_ = tempReservedSize;
   }
 
-  template <class InputIterator>
-  void assign (InputIterator first, InputIterator last){
-    this->resize( std::distance(first, last) );
+  // note: requires random access iterator
+  template <class Iterator>
+  void assign(Iterator first, Iterator last){
+    this->reserve( std::distance(first, last) );
     this->size_ = 0;
     for (; first != last; first++){
       this->emplace_back(*first);
     }
+  }
+
+  template <typename InputIterator>
+  void insert(T* oldPosition, InputIterator&& begin, InputIterator&& end){
+    auto N = std::distance(begin, end);
+    auto position_dist = std::distance(this->begin(), oldPosition);
+    reserve(this->size() + N);
+    auto position = this->begin() + position_dist;
+    for (auto it = position; it != this->end(); it++){
+      *(it + N) = std::move(*it);
+    }
+    for (; begin != end; begin++){
+      *position = *begin;
+      position++;
+    }
+    this->size_ += N;
   }
 
   constexpr T* data() {

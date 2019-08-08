@@ -13,7 +13,7 @@
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
-#include "MonteRay_MaterialProperties.hh"
+#include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRayCrossSection.hh"
 
@@ -27,7 +27,6 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
     class ControllerSetup {
     public:
         ControllerSetup(){
-            pMatProps = new MonteRay_MaterialProperties;
 
             u234s = new MonteRayCrossSectionHost(1);
             u235s = new MonteRayCrossSectionHost(1);
@@ -46,8 +45,9 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
             MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
             readerObject.ReadMatData();
 
-            pMatProps->disableMemoryReduction();
-            pMatProps->setMaterialDescription( readerObject );
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.setMaterialDescription( readerObject );
 
             pGrid = new Grid_t( readerObject );
             pGrid->copyToGPU();
@@ -74,8 +74,8 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
             pMatList->add( 1, *water, 3 );
             pMatList->copyToGPU();
 
-            pMatProps->renumberMaterialIDs(*pMatList);
-            pMatProps->copyToGPU();
+            matPropBuilder.renumberMaterialIDs(*pMatList);
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
             u234s->copyToGPU();
             u235s->copyToGPU();
@@ -87,7 +87,6 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
         ~ControllerSetup(){
             delete pGrid;
             delete pMatList;
-            delete pMatProps;
             delete pTally;
             delete u234s;
             delete u235s;
@@ -100,7 +99,7 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
 
         Grid_t* pGrid;
         MonteRayMaterialListHost* pMatList;
-        MonteRay_MaterialProperties* pMatProps;
+        std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
         MonteRayCrossSectionHost* u234s;
@@ -131,7 +130,7 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
                 256,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
 
         RayListInterface<1> bank1(500000);
@@ -188,7 +187,7 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
                 256,
                 pGrid,
                 pMatList,
-                pMatProps,
+                pMatProps.get(),
                 pTally );
         controller.setCapacity( 1000000 );
 

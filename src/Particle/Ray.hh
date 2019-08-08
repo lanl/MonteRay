@@ -20,6 +20,15 @@ using DetectorIndex_t = unsigned;
 template< unsigned N = 1 >
 class Ray_t{
 public:
+    Array<gpuFloatType_t, 3> pos = { 0.0 };
+    Array<gpuFloatType_t, 3> dir = { 0.0 };
+    Array<gpuFloatType_t, N> energy = { 0.0 };
+    Array<gpuFloatType_t, N> weight = { 0.0 };
+    gpuFloatType_t time = { 0.0 };
+    unsigned index = 0; // starting position mesh index
+    DetectorIndex_t detectorIndex = 0;  // for next-event estimator
+    ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
+
     constexpr Ray_t(){}
 
     template< typename PARTICLE_T,
@@ -77,15 +86,6 @@ public:
             particleType = photon;
         }
     }
-
-    Array<gpuFloatType_t, 3> pos = { 0.0 };
-    Array<gpuFloatType_t, 3> dir = { 0.0 };
-    Array<gpuFloatType_t, N> energy = { 0.0 };
-    Array<gpuFloatType_t, N> weight = { 0.0 };
-    gpuFloatType_t time = { 0.0 };
-    unsigned index = 0; // starting position mesh index
-    DetectorIndex_t detectorIndex = 0;  // for next-event estimator
-    ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
 
     constexpr unsigned static getN(void ) {
         return N;
