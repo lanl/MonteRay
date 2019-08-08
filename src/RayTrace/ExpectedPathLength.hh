@@ -6,6 +6,7 @@
 #include <functional>
 #include <memory>
 
+#include "MaterialProperties.hh"
 #include "RayListInterface.hh"
 
 namespace MonteRay{

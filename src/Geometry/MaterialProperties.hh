@@ -84,6 +84,14 @@ class MaterialProperties_t: public Managed {
     }
   }
 
+  template <typename MaterialList>
+  void renumberMaterialIDs(const MaterialList& matList) {
+    for (auto& id : IDs_){
+      id = matList.materialIDtoIndex(id);
+    }
+  }
+
+
 
   class Builder {
     public:

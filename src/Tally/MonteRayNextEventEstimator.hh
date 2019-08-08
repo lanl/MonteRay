@@ -11,6 +11,7 @@
 #include "MonteRayAssert.hh"
 #include "MonteRayCopyMemory.hh"
 #include "MonteRayVector3D.hh"
+#include "MaterialProperties.hh"
 
 namespace MonteRay {
 
@@ -122,7 +123,6 @@ public:
     void read(IOTYPE& in);
 
     // write out state of MonteRayNextEventEstimator class
-    void writeToFile( const std::string& fileName);
     void readFromFile( const std::string& fileName);
 
 private:
