@@ -23,10 +23,18 @@ public:
     return ptr;
   }
 
+  // placment new returns ptr unmodified (cppref)
+  void* operator new(size_t, void* ptr){
+    return ptr;
+  }
+
   void operator delete(void *ptr) {
     cudaDeviceSynchronize();
     cudaFree(ptr);
   }
+
+  // placement new delete does nothing (cppref)
+  void operator delete(void*, void*) noexcept {}
 };
 
 template<class T>
