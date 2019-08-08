@@ -1,7 +1,7 @@
 #include "MonteRayDefinitions.hh"
 #include "GPUErrorCheck.hh"
 #include "GPUAtomicAdd.hh"
-#include "ExpectedPathLength.hh"
+#include "ExpectedPathLength.t.hh"
 #include "HashLookup.hh"
 #include "RayList.hh"
 #include "GPUUtilityFunctions.hh"

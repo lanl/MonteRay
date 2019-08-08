@@ -1,7 +1,6 @@
 #include <UnitTest++.h>
 
 #include "MonteRay_GridBins.hh"
-#include "GPUSync.hh"
 #include "MonteRayCopyMemory.t.hh"
 
 using namespace MonteRay;
@@ -116,12 +115,10 @@ SUITE( MonteRay_GridBins_Tester ) {
         pResult->copyToGPU();
         CHECK_EQUAL(0, pResult->v );
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
         kernelGetNumBins<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
         gpuErrchk( cudaPeekAtLastError() );
 
         pResult->copyToCPU();
@@ -299,13 +296,11 @@ SUITE( MonteRay_GridBins_Tester ) {
         pResult->copyToGPU();
         CHECK_EQUAL(0, pResult->v );
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         kernelGetLinearIndex<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, r);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
         gpuErrchk( cudaPeekAtLastError() );
 
         pResult->copyToCPU();
@@ -338,13 +333,11 @@ SUITE( MonteRay_GridBins_Tester ) {
         pResult->copyToGPU();
         CHECK_EQUAL(0, pResult->v );
 
-        GPUSync sync1;
-        sync1.sync();
 
+        cudaStreamSynchronize(0);
         isIndexOutside<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, i);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
         gpuErrchk( cudaPeekAtLastError() );
 
         pResult->copyToCPU();
@@ -380,13 +373,11 @@ SUITE( MonteRay_GridBins_Tester ) {
         pResult->copyToGPU();
         CHECK_EQUAL(0, pResult->v );
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         kernelGetRadialIndexFromR<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, r);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
         gpuErrchk( cudaPeekAtLastError() );
 
         pResult->copyToCPU();
@@ -421,13 +412,11 @@ SUITE( MonteRay_GridBins_Tester ) {
         pResult->copyToGPU();
         CHECK_EQUAL(0, pResult->v );
 
-        GPUSync sync1;
-        sync1.sync();
+        cudaStreamSynchronize(0);
 
         kernelGetRadialIndexFromRSq<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, rSq);
 
-        GPUSync sync2;
-        sync2.sync();
+        cudaStreamSynchronize(0);
         gpuErrchk( cudaPeekAtLastError() );
 
         pResult->copyToCPU();

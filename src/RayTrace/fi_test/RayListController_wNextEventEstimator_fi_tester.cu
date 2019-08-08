@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "GPUUtilityFunctions.hh"
-#include "GPUSync.hh"
 
 #include "gpuTally.hh"
 
@@ -18,7 +17,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 
 namespace RayListController_wNextEventEstimator_fi_tester {
@@ -405,12 +404,16 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
         raylist.copyToGPU();
 
-        GPUSync sync1; sync1.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
 
         auto pRayInfo = std::make_unique<RayWorkInfo>(raylist.size());
         estimator.launch_ScoreRayList(1U,1U, &raylist, pRayInfo.get());
 
-        GPUSync sync2; sync2.sync();
+#ifdef __CUDACC__
+        cudaStreamSynchronize(0);
+#endif
 
         estimator.copyToCPU();
         double monteRayValue = estimator.getTally(0);

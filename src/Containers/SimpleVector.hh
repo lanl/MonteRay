@@ -156,8 +156,9 @@ class SimpleVector : public Managed
   constexpr const T& back() const noexcept { return *(this->end() - 1); }
 
   void clear(){
-    auto alloc_ = alloc();
-    if (begin_ != nullptr) alloc_traits::deallocate(alloc_, begin_, this->capacity());
+    for (auto val: *this){
+      val.~T();
+    }
     size_ = 0;
   }
 
