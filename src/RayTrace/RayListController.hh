@@ -17,7 +17,6 @@
 #include "GPUUtilityFunctions.hh"
 #include "MonteRayNextEventEstimator.hh"
 #include "MonteRay_timer.hh"
-#include "RayWorkInfo.hh"
 #include "MonteRayTypes.hh"
 #include "MonteRayParallelAssistant.hh"
 
@@ -194,6 +193,5 @@ template<class GRID_T>
 using NextEventEstimatorController = typename MonteRay::RayListController<GRID_T,3>;
 
 } /* namespace MonteRay */
-
 
 #endif /* RAYLISTCONTROLLER_HH_ */

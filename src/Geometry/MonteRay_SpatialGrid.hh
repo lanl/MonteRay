@@ -8,12 +8,12 @@
 //#include "Transformation.hh"
 
 #include "MonteRayCopyMemory.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 
 class MonteRay_GridSystemInterface;
 class MonteRay_GridBins;
-class RayWorkInfo;
 
 class MonteRay_SpatialGrid : public CopyMemoryBase<MonteRay_SpatialGrid> {
 public:

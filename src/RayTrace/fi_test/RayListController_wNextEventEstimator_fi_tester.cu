@@ -17,7 +17,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 
 namespace RayListController_wNextEventEstimator_fi_tester {
@@ -386,17 +386,14 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         estimator.copyToGPU();
         estimator.dumpState( &raylist, "nee_debug_dump_test2" );
 
-        Ray_t<3> ray;
-        ray = raylist.getParticle(0);
         raylist.copyToGPU();
 
 #ifdef __CUDACC__
         cudaStreamSynchronize(0);
 #endif
 
-        RayWorkInfo rayInfo( raylist.size(), true );
-        rayInfo.copyToGPU();
-        estimator.launch_ScoreRayList(1U,1U, &raylist, &rayInfo);
+        auto pRayInfo = std::make_unique<RayWorkInfo>(raylist.size());
+        estimator.launch_ScoreRayList(1U,1U, &raylist, pRayInfo.get());
 
 #ifdef __CUDACC__
         cudaStreamSynchronize(0);

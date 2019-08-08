@@ -6,10 +6,10 @@
 #include <climits>
 
 #include "MonteRay_GridBins.hh"
+#include "RayWorkInfo.hh"
 
 namespace MonteRay {
 
-class RayWorkInfo;
 
 class singleDimRayTraceMap_t {
 private:

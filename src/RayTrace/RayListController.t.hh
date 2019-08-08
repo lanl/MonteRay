@@ -7,10 +7,10 @@
 #include "MonteRay_MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
-#include "ExpectedPathLength.hh"
+#include "ExpectedPathLength.t.hh"
 #include "GPUErrorCheck.hh"
 #include "GPUUtilityFunctions.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRay_timer.hh"
 #include "RayWorkInfo.hh"
 
@@ -62,7 +62,7 @@ PA( MonteRayParallelAssistant::getInstance() )
                 pMatList->ptr_device,
                 pMatProps->ptrData_device,
                 pMatList->getHashPtr()->getPtrDevice(),
-                rayInfo->devicePtr,
+                rayInfo.get(),
                 pTally->temp->tally );
 #else
         rayTraceTally( pGrid->getPtr(),
@@ -151,6 +151,7 @@ template<typename GRID_T, unsigned N>
 RayListController<GRID_T,N>::~RayListController(){
 
 #ifdef __CUDACC__
+    cudaDeviceSynchronize();
     if( stream1 ) cudaStreamDestroy( *stream1 );
 #endif
 }
@@ -265,7 +266,6 @@ RayListController<GRID_T,N>::flush(bool final){
 #ifdef __CUDACC__
     gpuErrchk( cudaPeekAtLastError() );
     currentBank->copyToGPU();
-    rayInfo->copyToGPU();
     gpuErrchk( cudaEventRecord(*currentCopySync, 0) );
     gpuErrchk( cudaEventSynchronize(*currentCopySync) );
 #endif

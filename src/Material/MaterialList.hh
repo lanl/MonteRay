@@ -77,7 +77,7 @@ class MaterialList: public Managed {
       b_materials_.reserve(numMaterials);
       b_materialIDs_.resize(numMaterials);
       for (size_t i = 0; i < numMaterials; i++){
-        typename Material::Builder<CrossSectionList> mb(xsList);
+        typename Material::template Builder<CrossSectionList> mb(xsList);
         mb.read(stream);
         b_materials_.emplace_back(mb.build());
       }

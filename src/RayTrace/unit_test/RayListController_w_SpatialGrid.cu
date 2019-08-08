@@ -3,6 +3,7 @@
 #include <iostream>
 #include <functional>
 #include <cmath>
+#include <memory>
 
 #include "GPUUtilityFunctions.hh"
 #include "gpuTally.hh"
@@ -216,27 +217,24 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     template<typename GRID_T>
     rayTraceList_t rayTrace( GRID_T* pGridInfo, Position_t pos, Position_t dir, gpuRayFloat_t distance, bool outside=false ) {
 
-        RayWorkInfo rayInfo(1,true);
+        auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
 #ifdef __CUDACC__
-        rayInfo.copyToGPU();
-
         cudaDeviceSynchronize();
         //std::cout << "Calling kernelRayTrace\n";
-        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, rayInfo.devicePtr,
+        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pRayInfo.get(),
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
         cudaDeviceSynchronize();
 
         gpuErrchk( cudaPeekAtLastError() );
 
-        rayInfo.copyToCPU();
 #else
-        kernelRayTrace( pGridInfo, &rayInfo,
+        kernelRayTrace( pGridInfo, pRayInfo.get(),
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
 #endif
         rayTraceList_t rayTraceList;
-        for( unsigned i = 0; i < rayInfo.getRayCastSize(0); ++i ) {
-            rayTraceList.add( rayInfo.getRayCastCell(0,i), rayInfo.getRayCastDist(0,i) );
+        for( unsigned i = 0; i < pRayInfo->getRayCastSize(0); ++i ) {
+            rayTraceList.add( pRayInfo->getRayCastCell(0,i), pRayInfo->getRayCastDist(0,i) );
         }
         return rayTraceList;
     }

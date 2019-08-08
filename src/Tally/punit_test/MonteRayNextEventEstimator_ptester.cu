@@ -9,7 +9,7 @@
 #include "GridBins.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "Ray.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 
 #include "MonteRayMaterial.hh"
@@ -289,7 +289,7 @@ SUITE( NextEventEstimator_pTester ) {
         if( PA.getWorkGroupRank() == 0 ) {
 
 #ifdef __CUDACC__
-            RayWorkInfo rayInfo(pBank->size());
+            auto  pRayInfo = std::make_unique<RayWorkInfo>(pBank->size());
 
             cudaEvent_t start, stop;
             cudaEventCreate(&start);
@@ -297,7 +297,6 @@ SUITE( NextEventEstimator_pTester ) {
             pBank->copyToGPU();
             pEstimator->copyToGPU();
 
-            rayInfo.copyToGPU();
 
             cudaStreamSynchronize(0);
 
@@ -311,7 +310,7 @@ SUITE( NextEventEstimator_pTester ) {
             cudaEventCreate(&stop);
 
             cudaStreamSynchronize(*stream);
-            pEstimator->launch_ScoreRayList(1, 1, pBank.get(), &rayInfo, stream );
+            pEstimator->launch_ScoreRayList(1, 1, pBank.get(), pRayInfo.get(), stream );
 
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
@@ -403,15 +402,13 @@ SUITE( NextEventEstimator_pTester ) {
          if( PA.getWorkGroupRank() == 0 ) {
 
 #ifdef __CUDACC__
-             RayWorkInfo rayInfo(pBank->size());
+             auto  pRayInfo = std::make_unique<RayWorkInfo>(pBank->size());
 
              cudaEvent_t start, stop;
              cudaEventCreate(&start);
 
              pBank->copyToGPU();
              pEstimator->copyToGPU();
-
-             rayInfo.copyToGPU();
 
              cudaStream_t* stream = NULL;
              stream = new cudaStream_t;
@@ -423,7 +420,7 @@ SUITE( NextEventEstimator_pTester ) {
              cudaEventCreate(&stop);
 
              cudaStreamSynchronize(*stream);
-             pEstimator->launch_ScoreRayList(1, 1, pBank.get(), &rayInfo, stream );
+             pEstimator->launch_ScoreRayList(1, 1, pBank.get(), pRayInfo.get(), stream );
 
              cudaEventRecord(stop, 0);
              cudaEventSynchronize(stop);

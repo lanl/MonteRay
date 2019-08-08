@@ -16,7 +16,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 
 namespace nee_debugger_app {
@@ -87,8 +87,6 @@ nee_debugger::launch(const std::string& optBaseName){
     estimator.copyToGPU();
     //estimator.dumpState( &raylist, "nee_debug_dump_test2" );
 
-    const bool singleRay = true;
-
     for( unsigned i=0; i<raylist.size(); ++i ) {
         Ray_t<3> ray;
         ray = raylist.getParticle(i);
@@ -97,15 +95,14 @@ nee_debugger::launch(const std::string& optBaseName){
         singleSizeRaylist.add( ray );
         singleSizeRaylist.copyToGPU();
 
-        RayWorkInfo rayInfo( singleSizeRaylist.size() );
-        rayInfo.copyToGPU();
+        auto pRayInfo = std::make_unique<RayWorkInfo>( singleSizeRaylist.size() );
 
 #ifdef __CUDACC__
         cudaStreamSynchronize(0);
 #endif
 
         std::cout << "Launching ray # " << i << std::endl;
-        estimator.launch_ScoreRayList(-1,-1, &singleSizeRaylist, &rayInfo, 0, false);
+        estimator.launch_ScoreRayList(-1,-1, &singleSizeRaylist, pRayInfo.get(), 0, false);
 
 #ifdef __CUDACC__
         cudaStreamSynchronize(0);

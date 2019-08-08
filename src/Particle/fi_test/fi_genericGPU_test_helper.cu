@@ -1,7 +1,7 @@
 #include "MonteRayDefinitions.hh"
 #include "GPUErrorCheck.hh"
 #include "GPUAtomicAdd.hh"
-#include "ExpectedPathLength.hh"
+#include "ExpectedPathLength.t.hh"
 #include "HashLookup.hh"
 #include "RayList.hh"
 #include "GPUUtilityFunctions.hh"
@@ -469,7 +469,7 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
                  nBlocks*nThreads << "\n";
 
     RayWorkInfo rayInfo( nThreads*nBlocks );
-    rayInfo.copyToGPU();
+    auto pRayInfo = std::make_unique<RayWorkInfo>(nThreads*nBlocks);
 
     gpuErrchk( cudaPeekAtLastError() );
 
@@ -481,7 +481,7 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
             pMatList->ptr_device,
             pMatProps->ptrData_device,
             pMatList->getHashPtr()->getPtrDevice(),
-            rayInfo.devicePtr,
+            pRayInfo.get(),
             tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -491,7 +491,7 @@ void FIGenericGPUTestHelper<N>::launchRayTraceTally(
     gpuErrchk( cudaPeekAtLastError() );
     cudaFree( tally_device );
 #else
-    RayWorkInfo rayInfo( 1, true );
+    RayWorkInfo rayInfo( 1 );
 
     rayTraceTally(
             grid_device,

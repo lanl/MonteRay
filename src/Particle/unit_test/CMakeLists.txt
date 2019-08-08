@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs Utilities GPU_Utilities IPComm )
+set( ToolkitLibs Utilities GPU_Utilities IPComm ThirdParty )
 
 if( NOT DEFINED Cmake_template )
     message( FATAL_ERROR "Unknown directory type." )

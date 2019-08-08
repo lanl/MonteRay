@@ -9,13 +9,13 @@
 #define MONTERAYCARTESIANGRID_HH_
 
 #include "MonteRayTypes.hh"
+#include "RayWorkInfo.hh"
 #include "MonteRay_GridSystemInterface.hh"
 
 namespace MonteRay {
 
 class MonteRay_CartesianGrid;
 
-class RayWorkInfo;
 
 class MonteRay_CartesianGrid : public MonteRay_GridSystemInterface {
 public:
