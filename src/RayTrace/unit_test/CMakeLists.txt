@@ -1,6 +1,6 @@
 include( template_select )
 
-set( ToolkitLibs Utilities CrossSection Material Particle Geometry Math_Functions Tally IPComm GPU_Utilities )
+set( ToolkitLibs Utilities CrossSection Material Particle Geometry Math_Functions Tally IPComm GPU_Utilities ThirdParty)
 
 list( APPEND ${UnitName}_packages MPI )
 

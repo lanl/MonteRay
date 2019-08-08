@@ -2,6 +2,7 @@
 #define RAYWORKINFO_HH_
 
 #include <string>
+#include <iostream>
 #include "SimpleVector.hh"
 #include "MonteRayAssert.hh"
 #include "ManagedAllocator.hh"
@@ -130,7 +131,10 @@ class RayWorkInfo_t: public Managed {
 
 };
 
-using RayWorkInfo = RayWorkInfo_t<SimpleVector>;
+class RayWorkInfo : public RayWorkInfo_t<SimpleVector>{
+  public:
+  using RayWorkInfo_t<SimpleVector>::RayWorkInfo_t;
+};
 
 } // end namespace
 

@@ -259,12 +259,10 @@ SUITE( RayListController_unit_tester_basic_tests ) {
             particle[i].detectorIndex = 99;
             particle[i].particleType = 0;
         }
-        std::cout << " DONE WITH INIT \n";
         controller.setCapacity(3);
         controller.add( particle, 10 );
         CHECK_EQUAL(1, controller.size());
         CHECK_EQUAL(3, controller.getNFlushes());
-        std::cout << " DONE WITH TESTS \n";
     }
 
     /* TEST_FIXTURE(UnitControllerSetup, single_ray ){ */

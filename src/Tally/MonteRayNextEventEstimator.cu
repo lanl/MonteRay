@@ -1,4 +1,4 @@
-#include "MonteRayNextEventEstimator.hh"
+#include "MonteRayNextEventEstimator.t.hh"
 
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRay_GridBins.hh"

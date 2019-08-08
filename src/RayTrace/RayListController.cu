@@ -1,5 +1,5 @@
 
-#include "RayListController.hh"
+#include "RayListController.t.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "GridBins.hh"
 

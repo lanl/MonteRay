@@ -8,29 +8,19 @@
 
 // TODO: pull in as a git submodule unless modifications are made.
 
-#ifdef __CUDACC__
-#include <thrust/system_error.h>
-#include <thrust/system/cuda/error.h>
+#include <vector>
+#include "ManagedResource.hh"
 
 namespace MonteRay {
 
 class Managed {
 public:
-  void *operator new(size_t len) {
-    void *ptr;
-    cudaMallocManaged(&ptr, len);
-    cudaDeviceSynchronize();
-    return ptr;
-  }
+  void *operator new(size_t len);
+  void operator delete(void *ptr);
 
   // placment new returns ptr unmodified (cppref)
   void* operator new(size_t, void* ptr){
     return ptr;
-  }
-
-  void operator delete(void *ptr) {
-    cudaDeviceSynchronize();
-    cudaFree(ptr);
   }
 
   // placement new delete does nothing (cppref)
@@ -50,29 +40,14 @@ class managed_allocator
     template<class U>
     managed_allocator(const managed_allocator<U>&) {}
 
-    value_type* allocate(size_t n)
-    {
-      value_type* result = nullptr;
-
-      cudaError_t error = cudaMallocManaged( &result, n*sizeof(T), cudaMemAttachGlobal);
-
-      if(error != cudaSuccess)
-      {
-        throw thrust::system_error(error, thrust::cuda_category(), "managed_allocator::allocate(): cudaMallocManaged");
-      }
-
-      return result;
+    value_type* allocate(size_t n) {
+      return static_cast<T*>(ManagedResource().allocate(n*sizeof(T)));
     }
 
-    void deallocate(value_type* ptr, size_t)
-    {
-      cudaError_t error = cudaFree(ptr);
-
-      if(error != cudaSuccess)
-      {
-        throw thrust::system_error(error, thrust::cuda_category(), "managed_allocator::deallocate(): cudaFree");
-      }
+    void deallocate(value_type* ptr, size_t size) {
+      ManagedResource().deallocate(static_cast<void*>(ptr), size);
     }
+
 };
 
 template<class T1, class T2>
@@ -87,33 +62,10 @@ bool operator!=(const managed_allocator<T1>& lhs, const managed_allocator<T2>& r
   return !(lhs == rhs);
 }
 
-}
-#else
-namespace MonteRay {
-class Managed {};
-}
-
-template<class T>
-using managed_allocator = std::allocator<T>;
-#endif // end __CUDACC__
-
-#include <vector>
-#include <memory>
-
-namespace MonteRay {
-
-#ifdef __CUDACC__
 template<class T>
 using managed_vector = std::vector<T, managed_allocator<T>>;
 
-#else
-
-template<class T>
-using managed_vector = std::vector<T>;
-
-#endif
-
-}
+} // end namespace MonteRay
 
 
 #endif /* MANAGEDALLOCATOR_HH_ */

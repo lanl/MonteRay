@@ -9,7 +9,6 @@
 #define MONTERAY_SPATIALGRID_HELPER_HH_
 
 #include "MonteRay_SpatialGrid.hh"
-#include "GPUSync.hh"
 #include "GPUUtilityFunctions.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
@@ -392,10 +391,8 @@ public:
 
     singleDimRayTraceMap_t crossingDistance( unsigned d, Position_t& pos, Position_t& dir, gpuRayFloat_t distance  ) {
 
-        RayWorkInfo rayInfo(1,true);
-
-#ifdef __CUDACC__
         auto pRayInfo = std::make_unique<RayWorkInfo>(1);
+#ifdef __CUDACC__
 
         cudaDeviceSynchronize();
         kernelCrossingDistance<<<1,1>>>(
@@ -430,7 +427,7 @@ public:
         gpuErrchk( cudaPeekAtLastError() );
 
 #else
-        kernelRayTraceParticle( pGridInfo.get(), pRayInfo.get()
+        kernelRayTraceParticle( pGridInfo.get(), pRayInfo.get(),
                 p, distance, outside );
 #endif
         rayTraceList_t rayTraceList;

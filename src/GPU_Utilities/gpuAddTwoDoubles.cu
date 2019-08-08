@@ -1,6 +1,5 @@
 #include "gpuAddTwoDoubles.hh"
 #include "GPUAtomicAdd.hh"
-#include "GPUSync.hh"
 #include "MonteRayDefinitions.hh"
 #include "MonteRayMemory.hh"
 
@@ -85,7 +84,6 @@ double gpuAddTwoDoubles( double A, double B) {
     value_t* pB_device;
     value_t* pC_device;
 
-    GPUSync sync;
 
     pA_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoDoubles::pA_device") );
     pB_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoDoubles::pB_device") );
@@ -96,7 +94,7 @@ double gpuAddTwoDoubles( double A, double B) {
     cudaMemcpy( pC_device, c_host, allocSize, cudaMemcpyHostToDevice);
 
     add_double<<<N,2>>>(N, pA_device, pB_device, pC_device );
-    sync.sync();
+    cudaStreamSynchronize(0);
 
     cudaMemcpy( c_host, pC_device, allocSize, cudaMemcpyDeviceToHost);
 
@@ -138,14 +136,13 @@ float gpuAddTwoFloats( float A, float B) {
     pB_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoFloats::pB_device") );
     pC_device = (value_t*) MONTERAYDEVICEALLOC( allocSize, std::string("gpuAddTwoFloats::pC_device") );
 
-    GPUSync sync;
 
     cudaMemcpy( pA_device, a_host, allocSize, cudaMemcpyHostToDevice);
     cudaMemcpy( pB_device, b_host, allocSize, cudaMemcpyHostToDevice);
     cudaMemcpy( pC_device, c_host, allocSize, cudaMemcpyHostToDevice);
 
     add_single<<<N,2>>>(N, pA_device, pB_device, pC_device );
-    sync.sync();
+    cudaStreamSynchronize(0);
 
     cudaMemcpy( c_host, pC_device, allocSize, cudaMemcpyDeviceToHost);
 
