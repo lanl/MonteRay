@@ -101,8 +101,10 @@ class SimpleVector : public Managed
     if (N <= this->capacity()){ return; }
     auto alloc_ = alloc();
     auto newBegin = alloc_traits::allocate(alloc_, N);
-    std::copy(begin(), end(), newBegin);
-    if (begin_ != nullptr){ alloc_traits::deallocate(alloc_, begin_, this->size()); }
+    if (begin_ != nullptr){ 
+      std::copy(begin(), end(), newBegin);
+      alloc_traits::deallocate(alloc_, begin_, this->size()); 
+    }
     this->begin_ = newBegin;
     this->reservedSize_ = N;
   }
@@ -154,8 +156,9 @@ class SimpleVector : public Managed
   constexpr const T& back() const noexcept { return *(this->end() - 1); }
 
   void clear(){
-    auto alloc_ = alloc();
-    if (begin_ != nullptr) alloc_traits::deallocate(alloc_, begin_, this->size());
+    for (auto val: *this){
+      val.~T();
+    }
     size_ = 0;
   }
 
