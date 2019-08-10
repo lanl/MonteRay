@@ -16,9 +16,8 @@ class SimpleVector : public Managed
     size_t reservedSize_ = 0;
   public:
 
-  explicit SimpleVector(size_t N): size_(N), reservedSize_(N) {
-    auto alloc_ = alloc();
-    begin_ = alloc_traits::allocate(alloc_, N);
+  explicit SimpleVector(size_t N) {
+    this->resize(N);
   }
 
   SimpleVector() = default;
@@ -36,8 +35,15 @@ class SimpleVector : public Managed
   }
 
   SimpleVector& operator=(const SimpleVector& other) {
-    this->reserve(other.capacity());
-    std::copy(other.begin(), other.end(), this->begin_);
+    this->reserve(other.size());
+    this->size_ = other.size();
+    // copy construct elements in new memory
+    // copy assignment is incorrect since element hasn't been constructed (i.e. doesn't exist) yet
+    auto it = this->begin();
+    for(auto& val : other){
+      new (it) T{val};
+      it++;
+    }
     return *this;
   }
 
@@ -60,9 +66,14 @@ class SimpleVector : public Managed
 
   ~SimpleVector(){
     if (begin_ != nullptr) {
+      for(auto& val : *this) {
+        val.~T();
+      }
       auto alloc_ = alloc();
       alloc_traits::deallocate(alloc_, begin_, this->capacity());
     }
+    size_ = 0;
+    reservedSize_ = 0;
   }
 
   constexpr T const * begin() const noexcept {
@@ -101,9 +112,14 @@ class SimpleVector : public Managed
     if (N <= this->capacity()){ return; }
     auto alloc_ = alloc();
     auto newBegin = alloc_traits::allocate(alloc_, N);
-    if (begin_ != nullptr){
-      std::copy(begin(), end(), newBegin);
-      alloc_traits::deallocate(alloc_, begin_, this->capacity()); 
+    if (this->begin() != nullptr){
+      auto it = newBegin;
+      for (auto& val : *this){
+        new (it) T{std::move(val)};
+        val.~T(); // destructor in case T's move constructor doesn't actually move T.
+        it++;
+      }
+      alloc_traits::deallocate(alloc_, this->begin(), this->capacity()); 
     }
     this->begin_ = newBegin;
     this->reservedSize_ = N;
@@ -132,6 +148,10 @@ class SimpleVector : public Managed
       this->erase(begin() + N, end()); 
     } else {
       this->reserve(N);
+      // default construct all newly constructed elements
+      for (auto it = this->end(); it < this->begin() + N; it++){
+        new (it) T{};
+      }
       this->size_ = capacity();
     }
   }
@@ -180,8 +200,7 @@ class SimpleVector : public Managed
     this->reserve( std::distance(first, last) );
     this->size_ = 0;
     for (; first != last; first++){
-      this->emplace_back(*first);
-    }
+      this->emplace_back(*first); }
   }
 
   template <typename InputIterator>
