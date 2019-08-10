@@ -129,7 +129,7 @@ SUITE( LogHash_tester ) {
         CHECK_CLOSE( 1.008471706447709e-11 , hash.invHashFunction( 2 ), 1e-26);
         CHECK_CLOSE( 1.013526691912393e-11, hash.invHashFunction( 3 ), 1e-26 );
 
-        CHECK_EQUAL( 51688, hash.bytesize() );
+        CHECK_EQUAL( 51672, hash.bytesize() );
     }
 
 
@@ -157,7 +157,7 @@ SUITE( LogHash_tester ) {
         CHECK_CLOSE( 1.008472038516173e-11, hash.invHashFunction( 2 ), 1e-26);
         CHECK_CLOSE( 1.013526155363431e-11, hash.invHashFunction( 3 ), 1e-26 );
 
-        CHECK_EQUAL( 51672, hash.bytesize() );
+        CHECK_EQUAL( 51656, hash.bytesize() );
     }
 
     TEST( test_all_bin_eneries_are_valid_double ) {
@@ -188,7 +188,7 @@ SUITE( LogHash_tester ) {
         DoubleNuclearDataVec_t testValues = { 1e-13, 5e-13, 1e-11,  1.005e-11, 1e-10, 1.0, 1e6 };
         doubleXSHash hash(testValues);
 
-        CHECK_EQUAL( 51688, hash.bytesize() );
+        CHECK_EQUAL( 51672, hash.bytesize() );
 
         CHECK_EQUAL( 1, hash.getBinLo( 0 ) ); // 9.984373570970373e-12
         CHECK_EQUAL( 2, hash.getBinLo( 1 ) ); // 1.003441166963492e-11
@@ -261,7 +261,7 @@ SUITE( LogHash_tester ) {
         FloatNuclearDataVec_t testValues = { 1e-13, 5e-13, 1e-11,  1.005e-11, 1e-10, 1.0, 1e6 };
         floatXSHash hash(testValues);
 
-        CHECK_EQUAL( 51672, hash.bytesize() );
+        CHECK_EQUAL( 51656, hash.bytesize() );
 
         CHECK_EQUAL( 1, hash.getBinLo( 0 ) ); // 9.984373570970373e-12
         CHECK_EQUAL( 2, hash.getBinLo( 1 ) ); // 1.003441166963492e-11
@@ -336,7 +336,7 @@ SUITE( LogHash_tester ) {
            doubleXSHash hash(testValues);
 
            // doesn't change based on the array size- fixed size
-           CHECK_EQUAL( 51688, hash.bytesize() );
+           CHECK_EQUAL( 51672, hash.bytesize() );
     }
 
 
