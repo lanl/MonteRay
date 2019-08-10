@@ -1,18 +1,10 @@
-include( template_select )
+target_sources(MonteRay 
+PUBLIC 
+  "${prefix}/MonteRay/Utilities/MonteRay_binaryIO.hh"
+  "${prefix}/MonteRay/Utilities/MonteRay_timer.hh"
+  "${prefix}/MonteRay/Utilities/MonteRayVersion.hh"
+)
 
-#file(GLOB LIBRARY_SRCS "*.hh" "*.cc" )
-#add_library(Utilities ${LIBRARY_SRCS} )
-#set_target_properties(Utilities PROPERTIES LINKER_LANGUAGE CXX) 
-
-set( config_srcs MonteRayVersion.cc )
-
-list( APPEND ${UnitName}_packages UnitTest )
-
-set( ToolkitLibs )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
+if (MonteRay.tests)
+  add_subdirectory(unit_test)
 endif()
-

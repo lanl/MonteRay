@@ -1,12 +1,8 @@
-include( template_select )
-
-list( APPEND ${UnitName}_packages MPI )
-
-set( ToolkitLibs Tally ThirdParty Utilities OutputControls CrossSection Material Geometry Particle Math_Functions IPComm GPU_Utilities )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
-endif()
-
+add_executable( monteray.raytrace.parallel.fi.test )
+setCudaFilesToCppFiles()
+target_sources( monteray.raytrace.parallel.fi.test  PRIVATE
+               ${CMAKE_CURRENT_LIST_DIR}/main.cc
+               ${CMAKE_CURRENT_LIST_DIR}/RayListController_wNextEventEstimator_pfi_tester.cu
+              )
+target_link_libraries( monteray.raytrace.parallel.fi.test PRIVATE MonteRay::testing )
+add_test(NAME monteray.raytrace.parallel.fi.test COMMAND monteray.raytrace.parallel.fi.test) 

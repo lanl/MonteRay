@@ -1,14 +1,12 @@
-file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
+target_sources(MonteRay 
+PUBLIC 
+  "${prefix}/MonteRay/Material/MonteRayMaterial.hh"
+  "${prefix}/MonteRay/Material/MonteRayMaterialList.hh"
+PRIVATE
+  "${prefix}/MonteRay/Material/MonteRayMaterial.cu"
+  "${prefix}/MonteRay/Material/MonteRayMaterialList.cu"
+)
 
-include( template_select )
-
-list( APPEND ${UnitName}_packages )
-
-set( ToolkitLibs Utilities ThirdParty )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
+if (MonteRay.tests)
+  add_subdirectory(unit_test)
 endif()
-

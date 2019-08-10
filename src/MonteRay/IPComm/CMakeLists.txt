@@ -1,14 +1,12 @@
-file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
+target_sources(MonteRay 
+PUBLIC 
+  "${prefix}/MonteRay/IPComm/MonteRayParallelAssistant.hh"
+  "${prefix}/MonteRay/IPComm/MonteRay_SharedRayList.hh"
+PRIVATE
+  "${prefix}/MonteRay/IPComm/MonteRayParallelAssistant.cu"
+)
 
-include( template_select )
-
-list( APPEND ${UnitName}_packages MPI )
-
-set( ToolkitLibs Utilities )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
+if (MonteRay.tests)
+  add_subdirectory(punit_test)
+  add_subdirectory(unit_test)
 endif()
-

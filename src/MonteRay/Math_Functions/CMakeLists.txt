@@ -1,11 +1,13 @@
-include( template_select )
+target_sources(MonteRay 
+PUBLIC 
+  "${prefix}/MonteRay/Math_Functions/BinarySearch.hh"
+  "${prefix}/MonteRay/Math_Functions/LinearSearch.hh"
+  "${prefix}/MonteRay/Math_Functions/MonteRay_QuadraticRootFinder.hh"
+  "${prefix}/MonteRay/Math_Functions/MonteRayVector3D.hh"
+PRIVATE
+  "${prefix}/MonteRay/Math_Functions/MonteRay_QuadraticRootFinder.cu"
+)
 
-list( APPEND ${UnitName}_packages )
-
-set( ToolkitLibs )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
+if (MonteRay.tests)
+  add_subdirectory(unit_test)
 endif()

@@ -8,7 +8,6 @@
 //typedef unsigned cudaStream_t;
 #endif
 
-#include "MonteRayPreprocessorDefinitions.hh"
 #include "MonteRayTypes.hh"
 
 #endif /* MONTERAYDEFINITIONS_HH_ */

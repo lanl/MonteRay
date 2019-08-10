@@ -1,12 +1,9 @@
-include( template_select )
-
-list( APPEND ${UnitName}_packages MPI )
-
-set( ToolkitLibs ThirdParty Utilities OutputControls CrossSection Material Geometry Particle Math_Functions IPComm GPU_Utilities )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
-endif()
-
+add_executable( monteray.tally.parallel.test )
+setCudaFilesToCppFiles()
+target_sources( monteray.tally.parallel.test  PRIVATE
+               ${CMAKE_CURRENT_LIST_DIR}/main.cc
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRayNextEventEstimator_ptester.cu
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRayTally_ptester.cu
+              )
+target_link_libraries( monteray.tally.parallel.test PRIVATE MonteRay::testing )
+add_test(NAME monteray.tally.parallel.test COMMAND monteray.tally.parallel.test) 

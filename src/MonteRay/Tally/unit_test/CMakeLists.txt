@@ -1,9 +1,11 @@
-include( template_select )
-
-set( ToolkitLibs ThirdParty lnk3dnt Utilities CrossSection Material Geometry Particle Math_Functions IPComm GPU_Utilities )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
-endif()
+add_executable( monteray.tally.test )
+setCudaFilesToCppFiles()
+target_sources( monteray.tally.test  PRIVATE
+               ${CMAKE_CURRENT_LIST_DIR}/main.cc
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRayNextEventEstimator_unittest.cu
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRayTally_GPU_test_helper.hh
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRayTally_tester.cu
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRayTally_GPU_tester.cu
+              )
+target_link_libraries( monteray.tally.test PRIVATE MonteRay::testing )
+add_test(NAME monteray.tally.test COMMAND monteray.tally.test) 

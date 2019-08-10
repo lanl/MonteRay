@@ -1,100 +1,50 @@
-message( STATUS "src/CmakeLists.txt: -- Starting")
+target_sources(MonteRay PUBLIC 
+  "${prefix}/MonteRay/Constants.hh"
+  "${prefix}/MonteRay/Containers.hh"
+  "${prefix}/MonteRay/OutputControls.hh"
+  "${prefix}/MonteRay/Math_Functions.hh"
+  "${prefix}/MonteRay/Utilities.hh"
+  "${prefix}/MonteRay/ThirdParty.hh"
+  "${prefix}/MonteRay/CrossSection.hh"
+  "${prefix}/MonteRay/Particle.hh"
+  "${prefix}/MonteRay/IPComm.hh"
+  "${prefix}/MonteRay/GPU_Utilities.hh"
+  "${prefix}/MonteRay/CrossSection.hh"
+)
 
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src/DeviceProperties )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src/Utilities )
-#
-#ADD_SUBDIRECTORY(DeviceProperties)
-#ADD_SUBDIRECTORY(Utilities)
+target_include_directories(MonteRay PUBLIC
+  "${prefix}/MonteRay"
+  "${prefix}/MonteRay/Constants"
+  "${prefix}/MonteRay/Containers"
+  "${prefix}/MonteRay/OutputControls"
+  "${prefix}/MonteRay/Math_Functions"
+  "${prefix}/MonteRay/Geometry"
+  "${prefix}/MonteRay/CrossSection"
+  "${prefix}/MonteRay/GPU_Utilities"
+  "${prefix}/MonteRay/IPComm"
+  "${prefix}/MonteRay/Material"
+  "${prefix}/MonteRay/OutputControls"
+  "${prefix}/MonteRay/Parameters"
+  "${prefix}/MonteRay/Particle"
+  "${prefix}/MonteRay/RayTrace"
+  "${prefix}/MonteRay/Tally"
+  "${prefix}/MonteRay/ThirdParty"
+  "${prefix}/MonteRay/Utilities"
+)
 
-set( MonteRayLibName MonteRay )
+add_subdirectory(Constants)
+add_subdirectory(Containers)
+add_subdirectory(OutputControls)
+add_subdirectory(Math_Functions)
+add_subdirectory(Geometry)
+add_subdirectory(GPU_Utilities)
+add_subdirectory(CrossSection)
+add_subdirectory(IPComm)
+add_subdirectory(Material)
+add_subdirectory(Parameters)
+add_subdirectory(Particle)
+add_subdirectory(RayTrace)
+add_subdirectory(Tally)
+add_subdirectory(ThirdParty)
+add_subdirectory(Utilities)
 
-############################################
-#  Toolkit Version Creation
-#message( STATUS "%%%%%%%%%%DEBUG: Starting src/CmakeLists.txt")
-includeAllHeaders( ${TestDirNames} )
-
-set( ExportName "Toolkit" )
-
-set_property( GLOBAL PROPERTY NightlyCount "0" )
-
-addCMakeDirs()
-
-#################################################################################
-if( enable_cuda )
-  # Create MonteRay CUDA library
-  set( AllCudaFiles "")
-  globCudaFiles( "${TestDirNames}" AllCudaFiles)
-  set_source_files_properties( ${AllCudaFiles} PROPERTIES LANGUAGE CUDA )
-
-  cuda_add_library( ${MonteRayLibName} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Parameters/MonteRayDefinitions.hh )
-  #cuda_add_library(${MonteRayLibName}  SHARED ${AllCudaFiles} )
-  cuda_include_directories( ${MPI_INCLUDE_DIRS} )
-  
-  target_link_libraries( ${MonteRayLibName} ${Toolkit_libs} )
-  
-  set_target_properties(${MonteRayLibName}  PROPERTIES CUDA_SEPERABLE_COMPILATION ON )
-  target_link_libraries( ${MonteRayLibName} ${CUDA_LIB_PATH} ) 
-  CUDA_COMPILE( MONTERAY_O ${AllCudaFiles} )
-  SET( CUDA_SEPARABLE_COMPILATION ON )
-  #message(STATUS "src/CMakeLists.txt :: MONTERAY_O=${MONTERAY_O}")
-  message( STATUS "-- src/CMakeLists.txt -- CUDA_NVCC_FLAGS = ${CUDA_NVCC_FLAGS} " )
-  install( TARGETS ${MonteRayLibName}  EXPORT ${MonteRayLibName}  DESTINATION ${library_install_prefix} )
-else()
-  set( AllCudaFiles "") 
-  globCudaFiles( "${TestDirNames}" AllCudaFiles)
-endif()
-#################################################################################
-
-
-
-if( NOT enable_cuda )
-    ############################################
-    #  Create toolkit library dependent on ToolkitVersion
-
-    add_library( ${MonteRayLibName} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Parameters/MonteRayDefinitions.hh )
-    set_target_properties( ${MonteRayLibName} PROPERTIES VERSION ${Toolkit_Major_Version}.${Toolkit_Minor_Version}
-                                            SOVERSION 1 )
-    add_custom_command( TARGET ${MonteRayLibName} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove -f ${CMAKE_INSTALL_PREFIX}/.ToolkitInstalled )
-    
-    if( USING_GNU_LINKER )
-        set( allSymbols "-Wl,-whole-archive" )
-        set( usedSymbols "-Wl,-no-whole-archive" )
-    elseif( USING_LLVM_LINKER ) # Using apple's version of ld
-        append_link_property( ${MonteRayLibName} -all_load )
-    else()
-    endif()
-
-    # Adding static libs to the main dynamic one
-    if( USING_GNU_LINKER OR USING_LLVM_LINKER )
-        target_link_libraries( ${MonteRayLibName} ${allSymbols} ${Toolkit_libs} ${usedSymbols} )
-    
-        foreach( pkg UnitTest )
-            if( ${pkg}_LIBRARIES )
-               target_link_libraries( ${MonteRayLibName} ${allSymbols} ${${pkg}_LIBRARIES} ${usedSymbols} )
-            endif()
-        endforeach()
-    
-        if( USING_LLVM_LINKER )
-            target_link_libraries( ${MonteRayLibName} ${MPI_CXX_LIBRARIES} )
-        endif()    
-    
-        # This removes the previously mentioned libraries from being included when another project needs
-        # to link against libmcatk.so
-        target_link_libraries( ${MonteRayLibName} LINK_PRIVATE )
-        
-        # This adds the compiler's library location to the rpath so that customers don't need to care
-        # which compiler was actually used to build the library
-        if( DEFINED mcatk_COMPILER_LIBRARY_DIR )
-            append_link_property( ${MonteRayLibName} -Wl,-rpath,${mcatk_COMPILER_LIBRARY_DIR} )
-        endif()
-        if( CMAKE_CXX_COMPILER_ID STREQUAL "Intel" )
-            # Statically links in proprietary libraries needed by icpc
-            append_link_property( ${MonteRayLibName} -static-intel )
-        endif()
-    endif()
-        
-    install( TARGETS ${MonteRayLibName} EXPORT ${ExportName} DESTINATION ${library_install_prefix} )
-    
-    install( EXPORT ${ExportName} FILE toolkit.cmake DESTINATION cmake_files )
-    install( FILES ${CMAKE_SOURCE_DIR}/cmake_files/templates/FindMCATK.cmake DESTINATION cmake_files )
-endif() # not enable cuda

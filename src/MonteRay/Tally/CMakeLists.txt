@@ -1,14 +1,14 @@
-file(GLOB CUDA_SRCS "*.h" "*.cpp" "*.hh" "*.cu" "*.cc")
+target_sources(MonteRay 
+PUBLIC 
+  "${prefix}/MonteRay/Tally/MonteRayNextEventEstimator.hh"
+  "${prefix}/MonteRay/Tally/MonteRayNextEventEstimator.t.hh"
+  "${prefix}/MonteRay/Tally/MonteRayTally.hh"
+PRIVATE
+  "${prefix}/MonteRay/Tally/MonteRayNextEventEstimator.cu"
+  "${prefix}/MonteRay/Tally/MonteRayTally.cu"
+)
 
-include( template_select )
-
-list( APPEND ${UnitName}_packages MPI )
-
-set( ToolkitLibs Math_Functions GPU_Utilities Utilities)
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
+if (MonteRay.tests)
+  add_subdirectory(unit_test)
+  add_subdirectory(punit_test)
 endif()
-

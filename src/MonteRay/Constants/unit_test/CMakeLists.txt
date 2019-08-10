@@ -1,12 +1,7 @@
-include( template_select )
-
-list( APPEND ${UnitName}_packages  )
-
-set( ToolkitLibs Utilities OutputControls)
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
-endif()
-
+add_executable( monteray.constants.test )
+target_sources( monteray.constants.test  PRIVATE
+               ${CMAKE_CURRENT_LIST_DIR}/main.cc
+               ${CMAKE_CURRENT_LIST_DIR}/Constants_test.cc
+              )
+target_link_libraries( monteray.constants.test PRIVATE MonteRay::testing )
+add_test(NAME monteray.constants.test COMMAND monteray.constants.test) 

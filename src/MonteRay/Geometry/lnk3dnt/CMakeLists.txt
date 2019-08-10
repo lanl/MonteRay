@@ -1,16 +1,17 @@
-include( template_select )
 
-#file(GLOB LIBRARY_SRCS "*.hh" "*.cc" )
-#add_library(lnk3dnt ${LIBRARY_SRCS} )
-#set_target_properties(lnk3dnt PROPERTIES LINKER_LANGUAGE CXX) 
+target_sources(MonteRay 
+PUBLIC 
+  "${prefix}/MonteRay/Geometry/lnk3dnt/MonteRay_BinaryReadFcns.hh"
+  "${prefix}/MonteRay/Geometry/lnk3dnt/MonteRay_ByteReverser.hh"
+  "${prefix}/MonteRay/Geometry/lnk3dnt/MonteRay_ReadLnk3dnt.hh"
+  "${prefix}/MonteRay/Geometry/lnk3dnt/MonteRay_BinaryWriteFcns.hh"
+PRIVATE
+  "${prefix}/MonteRay/Geometry/lnk3dnt/MonteRay_BinaryFileFcn.cc"
+  "${prefix}/MonteRay/Geometry/lnk3dnt/MonteRay_ReadLnk3dnt.cc"
+)
 
-list( APPEND ${UnitName}_packages  )
-
-set( ToolkitLibs )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
+if (MonteRay.tests)
+  add_subdirectory(unit_test)
 endif()
+
 

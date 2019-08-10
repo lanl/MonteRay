@@ -1,12 +1,8 @@
-include( template_select )
-
-list( APPEND ${UnitName}_packages MPI )
-
-set( ToolkitLibs Utilities GPU_Utilities OutputControls )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
-endif()
-
+add_executable( monteray.ipcomm.parallel.test )
+target_sources( monteray.ipcomm.parallel.test  PRIVATE
+               ${CMAKE_CURRENT_LIST_DIR}/main.cc
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRayParallelAssistant_ptester.cc
+               ${CMAKE_CURRENT_LIST_DIR}/MonteRay_SharedRayList_ptester.cc
+              )
+target_link_libraries( monteray.ipcomm.parallel.test PRIVATE MonteRay::testing )
+add_test(NAME monteray.ipcomm.parallel.test COMMAND monteray.ipcomm.parallel.test) 

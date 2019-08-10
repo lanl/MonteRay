@@ -11,7 +11,7 @@ SUITE( Check_lnk3dnt ) {
 
      TEST( FileContainsGoodAMR ) {
    	    try {
-   		    MonteRay_ReadLnk3dnt reader( "2by2by2_box.lnk3dnt" );
+   		    MonteRay_ReadLnk3dnt reader( "lnk3dnt/2by2by2_box.lnk3dnt" );
    	        }
    	    catch(std::exception& error) {
    	    	CHECK(false);
@@ -20,7 +20,7 @@ SUITE( Check_lnk3dnt ) {
      }
      TEST( FileContainsBadAMR ) {
     	 try {
-    		 MonteRay_ReadLnk3dnt reader( "2by2by2_box_lev5.lnk3dnt" );
+    		 MonteRay_ReadLnk3dnt reader( "lnk3dnt/2by2by2_box_lev5.lnk3dnt" );
     		 reader.ReadMatData();
     		 CHECK(false);
     	 }
@@ -32,7 +32,7 @@ SUITE( Check_lnk3dnt ) {
      }
      TEST( FileContainsBadDensity ) {
     	 try {
-    		 MonteRay_ReadLnk3dnt reader(  "2by2by2_box_neg_density.lnk3dnt" );
+    		 MonteRay_ReadLnk3dnt reader(  "lnk3dnt/2by2by2_box_neg_density.lnk3dnt" );
              reader.ReadMatData();
     		 CHECK(false);
     	 }
@@ -43,7 +43,7 @@ SUITE( Check_lnk3dnt ) {
      }
      TEST( FileContainsBadMatID ) {
       	 try {
-       		 MonteRay_ReadLnk3dnt reader(  "2by2by2_box_neg_matID.lnk3dnt" );
+       		 MonteRay_ReadLnk3dnt reader(  "lnk3dnt/2by2by2_box_neg_matID.lnk3dnt" );
        		 reader.ReadMatData();
        		 CHECK(false);
       	 	}

@@ -1,9 +1,8 @@
-include( template_select )
-
-set( ToolkitLibs lnk3dnt Utilities CrossSection Material Geometry Particle Math_Functions IPComm GPU_Utilities )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
-endif()
+add_executable( monteray.thirdparty.test )
+setCudaFilesToCppFiles()
+target_sources( monteray.thirdparty.test  PRIVATE
+               ${CMAKE_CURRENT_LIST_DIR}/main.cc
+               ${CMAKE_CURRENT_LIST_DIR}/ManagedAllocator_tester.cu
+              )
+target_link_libraries( monteray.thirdparty.test PRIVATE MonteRay::testing )
+add_test(NAME monteray.thirdparty.test COMMAND monteray.thirdparty.test) 

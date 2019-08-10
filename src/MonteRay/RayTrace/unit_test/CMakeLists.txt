@@ -1,11 +1,20 @@
-include( template_select )
-
-set( ToolkitLibs Utilities CrossSection Material Particle Geometry Math_Functions Tally IPComm GPU_Utilities ThirdParty)
-
-list( APPEND ${UnitName}_packages MPI )
-
-if( NOT DEFINED Cmake_template )
-    message( FATAL_ERROR "Unknown directory type." )
-else()
-    include( ${Cmake_template} )
-endif()
+add_executable( monteray.raytrace.test )
+setCudaFilesToCppFiles()
+target_sources( monteray.raytrace.test  PRIVATE
+               ${CMAKE_CURRENT_LIST_DIR}/main.cc
+               ${CMAKE_CURRENT_LIST_DIR}/genericGPU_test_helper.hh
+               ${CMAKE_CURRENT_LIST_DIR}/genericGPU_test_helper.cu
+               ${CMAKE_CURRENT_LIST_DIR}/gpuDistanceCalculator_tester.cu
+               ${CMAKE_CURRENT_LIST_DIR}/gpuDistanceCalculator_test_helper.hh
+               ${CMAKE_CURRENT_LIST_DIR}/gpuDistanceCalculator_test_helper.cu
+               ${CMAKE_CURRENT_LIST_DIR}/gpuTally_tester.cu
+               ${CMAKE_CURRENT_LIST_DIR}/gpuTally_test_helper.hh
+               ${CMAKE_CURRENT_LIST_DIR}/gpuTally_test_helper.cu
+               ${CMAKE_CURRENT_LIST_DIR}/gpuTiming_tester.cu
+               ${CMAKE_CURRENT_LIST_DIR}/gpuTiming_test_helper.cu
+               ${CMAKE_CURRENT_LIST_DIR}/gpuTiming_test_helper.hh
+               ${CMAKE_CURRENT_LIST_DIR}/RayListController_unit_tester.cu
+               ${CMAKE_CURRENT_LIST_DIR}/RayListController_w_SpatialGrid.cu
+              )
+target_link_libraries( monteray.raytrace.test PRIVATE MonteRay::testing )
+add_test(NAME monteray.raytrace.test COMMAND monteray.raytrace.test) 
