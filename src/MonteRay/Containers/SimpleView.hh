@@ -8,10 +8,11 @@ template <class T>
 class SimpleView
 {
   private:
-  T* begin_;
-  T* end_;
+  T* begin_ = nullptr;
+  T* end_ = nullptr;
 
   public:
+  SimpleView() {} // creates a view of nothing
   SimpleView(const T* const begin, const T* const end): begin_(begin), end_(end) {}
 
   template <typename Iterator>
@@ -34,15 +35,15 @@ class SimpleView
   constexpr const auto begin() const { return begin_; }
   constexpr auto end() { return end_; }
   constexpr const auto end() const { return end_; }
-  constexpr size_t size() { return end_ - begin_; }
+  constexpr size_t size() const { return end_ - begin_; }
 
   template <typename Container>
-  constexpr bool operator==(const Container& other) {
+  constexpr bool operator== (const Container& other) const {
     return ( (this->begin() == other.begin()) and (this->end() == other.end()) );
   }
 
   template <typename Container>
-  constexpr bool operator!=(const Container& other) {
+  constexpr bool operator!= (const Container& other) const {
     return  (not this->operator==(other));
   }
 
