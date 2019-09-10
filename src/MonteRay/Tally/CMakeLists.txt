@@ -4,6 +4,8 @@ PUBLIC
   "${prefix}/MonteRay/Tally/MonteRayNextEventEstimator.t.hh"
   "${prefix}/MonteRay/Tally/MonteRayTally.hh"
   "${prefix}/MonteRay/Tally/Tally.hh"
+  "${prefix}/MonteRay/Tally/NextEventEstimator.hh"
+  "${prefix}/MonteRay/Tally/NextEventEstimator.t.hh"
 PRIVATE
   "${prefix}/MonteRay/Tally/MonteRayNextEventEstimator.cu"
   "${prefix}/MonteRay/Tally/MonteRayTally.cu"
