@@ -24,14 +24,14 @@ struct CrossSectionAndFraction: public std::tuple<const CrossSection*, gpuFloatT
 };
 
 template <typename CrossSection>
-class Material{
+class Material_t{
 private:
   gpuFloatType_t atomicWeight_;
   SimpleVector<CrossSectionAndFraction<CrossSection>> xsAndFracs_;
 
 public:
-  Material() = default;
-  Material(SimpleVector<CrossSectionAndFraction<CrossSection>>&& xsAndFracs, gpuFloatType_t atomicWeight):
+  Material_t() = default;
+  Material_t(SimpleVector<CrossSectionAndFraction<CrossSection>>&& xsAndFracs, gpuFloatType_t atomicWeight):
     xsAndFracs_(xsAndFracs), atomicWeight_(atomicWeight)
   { }
 
@@ -107,17 +107,23 @@ public:
 
     auto build(){
       normalizeFractions();
-      return Material(std::move(b_xsAndFracs_), calcAtomicWeight());
+      return Material_t(std::move(b_xsAndFracs_), calcAtomicWeight());
     }
   };
 
   template <typename CrossSectionList>
   static auto make_builder(const CrossSectionList& xsList){
-    return Material::Builder<CrossSectionList>(xsList);
+    return Material_t::Builder<CrossSectionList>(xsList);
   }
 
 };
 
 } // end namespace MonteRay
+
+#include "CrossSection.hh"
+namespace MonteRay{
+  using Material = Material_t<CrossSection>;
+}
+
 
 #endif
