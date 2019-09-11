@@ -46,6 +46,7 @@ private:
   { }
 
 public:
+  NextEventEstimator() = default; // TPB TODO: used by RayListController - remove need for this
   class Builder{
     private:
     SimpleVector<Vector3D<position_t>> b_tallyPoints_;
@@ -57,12 +58,13 @@ public:
       b_tallyPoints_.reserve(num);
     }
 
-    void add( position_t x, position_t y, position_t z){ // TODO: deprecate
-       this->addTallyPoint(x, y, z);
+    auto addTallyPoint( position_t x, position_t y, position_t z){
+       b_tallyPoints_.emplace_back(x, y, z);
+       return b_tallyPoints_.size() - 1; // RayListController expects an index of the placed point back.
     }
 
-    void addTallyPoint( position_t x, position_t y, position_t z){
-       b_tallyPoints_.emplace_back(x, y, z);
+    auto add( position_t x, position_t y, position_t z){ // TODO: deprecate
+       return this->addTallyPoint(x, y, z);
     }
 
     void setExclusionRadius(position_t r) { 

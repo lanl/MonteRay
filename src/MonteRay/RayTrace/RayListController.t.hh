@@ -3,44 +3,36 @@
 
 #include "RayListController.hh"
 
-#include "MonteRayMaterialList.hh"
-#include "MaterialProperties.hh"
-#include "gpuTally.hh"
-#include "RayListInterface.hh"
+#include "ReadAndWriteFiles.hh"
 #include "ExpectedPathLength.t.hh"
-#include "GPUErrorCheck.hh"
-#include "GPUUtilityFunctions.hh"
-#include "MonteRayNextEventEstimator.t.hh"
-#include "MonteRay_timer.hh"
-#include "RayWorkInfo.hh"
+#include "NextEventEstimator.t.hh"
 
 namespace MonteRay {
 
-template<typename GRID_T, unsigned N>
-RayListController<GRID_T,N>::RayListController(
+template<typename Geometry, unsigned N>
+RayListController<Geometry,N>::RayListController(
         int blocks,
         int threads,
-        GRID_T* pGB,
-        MonteRayMaterialListHost* pML,
+        Geometry* pGB,
+        MaterialList* pML,
         MaterialProperties* pMP,
         gpuTallyHost* pT
 ) :
 nBlocks(blocks),
 nThreads(threads),
-pGrid( pGB ),
+pGeometry( pGB ),
 pMatList( pML ),
 pMatProps( pMP ),
 pTally(pT),
 PA( MonteRayParallelAssistant::getInstance() )
 {
-    pNextEventEstimator.reset();
     initialize();
     kernel = [&, blocks, threads ] ( void ) {
         if( PA.getWorkGroupRank() != 0 ) { return; }
 
         auto launchBounds = setLaunchBounds( threads, blocks,  currentBank->getPtrPoints()->size() );
 
-#ifdef DEBUG
+#ifndef NDEBUG
         size_t freeMemory = 0;
         size_t totalMemory = 0;
 #ifdef __CUDACC__
@@ -57,19 +49,17 @@ PA( MonteRayParallelAssistant::getInstance() )
 #ifdef __CUDACC__
 
         rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
-                pGrid->getDevicePtr(),
+                pGeometry->getDevicePtr(),
                 currentBank->getPtrPoints()->devicePtr,
-                pMatList->ptr_device,
+                pMatList,
                 pMatProps,
-                pMatList->getHashPtr()->getPtrDevice(),
                 rayInfo.get(),
                 pTally->temp->tally );
 #else
-        rayTraceTally( pGrid->getPtr(),
+        rayTraceTally( pGeometry->getPtr(),
                        currentBank->getPtrPoints(),
-                       pMatList->getPtr(),
+                       pMatList,
                        pMatProps,
-                       pMatList->getHashPtr()->getPtr(),
                        rayInfo.get(),
                        pTally->getPtr()->tally );
 #endif
@@ -77,39 +67,42 @@ PA( MonteRayParallelAssistant::getInstance() )
 
 }
 
-template<typename GRID_T, unsigned N>
-RayListController<GRID_T,N>::RayListController(
+template<typename Geometry, unsigned N>
+RayListController<Geometry,N>::RayListController(
         int blocks,
         int threads,
-        GRID_T* pGB,
-        MonteRayMaterialListHost* pML,
+        Geometry* pGB,
+        MaterialList* pML,
         MaterialProperties* pMP,
         unsigned numPointDets
 ) :
 nBlocks(blocks),
 nThreads(threads),
-pGrid( pGB ),
+pGeometry( pGB ),
 pMatList( pML ),
 pMatProps( pMP ),
 pTally(NULL),
 PA( MonteRayParallelAssistant::getInstance() )
 {
-    pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator<GRID_T>>( numPointDets );
+    pNextEventEstimatorBuilder = std::make_unique<NextEventEstimator::Builder>();
+    pNextEventEstimator = std::make_unique<NextEventEstimator>( );
     usingNextEventEstimator = true;
     initialize();
     kernel = [&, blocks, threads] ( void ) {
       if( currentBank->size() > 0 ) {
-        pNextEventEstimator->launch_ScoreRayList(blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), stream1.get() );
+        launch_ScoreRayList(pNextEventEstimator.get(), blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), 
+            pGeometry, pMatProps, pMatList, stream1.get() );
       }
     };
 }
 
-template<typename GRID_T, unsigned N>
-RayListController<GRID_T,N>::RayListController( unsigned numPointDets, const std::string& filename ) :
+template<typename Geometry, unsigned N>
+RayListController<Geometry,N>::RayListController( unsigned numPointDets, const std::string& filename ) :
 PA( MonteRayParallelAssistant::getInstance() )
 {
     initialize();
-    pNextEventEstimator = std::make_shared<MonteRayNextEventEstimator<GRID_T>>( numPointDets );
+    pNextEventEstimatorBuilder = std::make_unique<NextEventEstimator::Builder>();
+    pNextEventEstimator = std::make_unique<NextEventEstimator>( );
     setOutputFileName( filename );
     usingNextEventEstimator = true;
     kernel = [&] ( void ) {
@@ -118,9 +111,9 @@ PA( MonteRayParallelAssistant::getInstance() )
     };
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T, N>::initialize(){
+RayListController<Geometry, N>::initialize(){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
     setCapacity( 100000 ); // default buffer capacity to 0.1 million.
@@ -147,8 +140,8 @@ RayListController<GRID_T, N>::initialize(){
 #endif
 }
 
-template<typename GRID_T, unsigned N>
-RayListController<GRID_T,N>::~RayListController(){
+template<typename Geometry, unsigned N>
+RayListController<Geometry,N>::~RayListController(){
 
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
@@ -156,23 +149,23 @@ RayListController<GRID_T,N>::~RayListController(){
 #endif
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 unsigned
-RayListController<GRID_T,N>::capacity(void) const {
+RayListController<Geometry,N>::capacity(void) const {
     if(currentBank) return currentBank->capacity();
     return 0;
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 unsigned
-RayListController<GRID_T,N>::size(void) const {
+RayListController<Geometry,N>::size(void) const {
     if(currentBank) return currentBank->size();
     return 0;
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::setCapacity(unsigned n) {
+RayListController<Geometry,N>::setCapacity(unsigned n) {
 //    if( n > 100000 ) {
 //        std::cout << "Debug: WARNING: MonteRay -- RayListController::setCapacity, limiting capacity to 100000\n";
 //        n = 100000;
@@ -187,55 +180,18 @@ RayListController<GRID_T,N>::setCapacity(unsigned n) {
     unsigned totalNumThreads  = launchBounds.first * launchBounds.second;
 
     // size rayInfo to total number of threads
-#ifdef __CUDACC__
     rayInfo.reset( new RayWorkInfo( totalNumThreads ) );
-#else
-    // allocate on the CPU
-    rayInfo.reset( new RayWorkInfo( 1, true ) );
-#endif
 }
 
-
-template<typename GRID_T, unsigned N>
-void
-RayListController<GRID_T,N>::add( const Ray_t<N>& ray){
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-
-    currentBank->add( ray );
-    if( size() == capacity() ) {
-        std::cout << "Debug: bank full, flushing.\n";
-        flush();
-    }
-}
-
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 unsigned
-RayListController<GRID_T,N>::getWorldRank() {
+RayListController<Geometry,N>::getWorldRank() {
     return PA.getWorldRank();
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::add( const Ray_t<N>* rayArray, unsigned num){
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-
-    int NSpaces = capacity() - size();
-
-    int NAdding = std::min(NSpaces, int(num));
-    int NRemaining = num - NAdding;
-    currentBank->add( rayArray, NAdding );
-    if( size() == capacity() ) {
-        std::cout << "Debug: bank full, flushing.\n";
-        flush();
-    }
-    if( NRemaining > 0 ) {
-        add( rayArray + NAdding, NRemaining );
-    }
-}
-
-template<typename GRID_T, unsigned N>
-void
-RayListController<GRID_T,N>::flush(bool final){
+RayListController<Geometry,N>::flush(bool final){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
 #ifdef DEBUG
@@ -296,9 +252,9 @@ RayListController<GRID_T,N>::flush(bool final){
     swapBanks();
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::flushToFile(bool final){
+RayListController<Geometry,N>::flushToFile(bool final){
     if( PA.getWorldRank() != 0 ) { return; }
 
 #ifdef DEBUG
@@ -363,9 +319,9 @@ RayListController<GRID_T,N>::flushToFile(bool final){
     }
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 size_t
-RayListController<GRID_T,N>::readCollisionsFromFile(std::string name) {
+RayListController<Geometry,N>::readCollisionsFromFile(std::string name) {
     if( PA.getWorldRank() != 0 ) { return 0; }
 
     bool end = false;
@@ -379,9 +335,9 @@ RayListController<GRID_T,N>::readCollisionsFromFile(std::string name) {
     return numParticles;
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 size_t
-RayListController<GRID_T,N>::readCollisionsFromFileToBuffer(std::string name){
+RayListController<Geometry,N>::readCollisionsFromFileToBuffer(std::string name){
     if( PA.getWorldRank() != 0 ) { return 0; }
 
     unsigned numParticles = 0;
@@ -390,9 +346,9 @@ RayListController<GRID_T,N>::readCollisionsFromFileToBuffer(std::string name){
     return numParticles;
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::startTimers(){
+RayListController<Geometry,N>::startTimers(){
     // start timers
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
@@ -403,9 +359,9 @@ RayListController<GRID_T,N>::startTimers(){
 #endif
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::stopTimers(){
+RayListController<Geometry,N>::stopTimers(){
     // stop timers and sync
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
@@ -437,9 +393,9 @@ RayListController<GRID_T,N>::stopTimers(){
 
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::swapBanks(){
+RayListController<Geometry,N>::swapBanks(){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
     // Swap banks
@@ -461,16 +417,16 @@ RayListController<GRID_T,N>::swapBanks(){
     currentBank->clear();
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::sync(void){
+RayListController<Geometry,N>::sync(void){
     if( PA.getWorkGroupRank() != 0 ) { return; }
     defaultStreamSync();
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::clearTally(void) {
+RayListController<Geometry,N>::clearTally(void) {
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
     std::cout << "Debug: clearTally called \n";
@@ -493,27 +449,27 @@ RayListController<GRID_T,N>::clearTally(void) {
     defaultStreamSync();
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::printTotalTime() const{
+RayListController<Geometry,N>::printTotalTime() const{
     std::cout << "Debug: \n";
     std::cout << "Debug: total gpuTime = " << gpuTime << "\n";
     std::cout << "Debug: total cpuTime = " << cpuTime << "\n";
     std::cout << "Debug: total wallTime = " << wallTime << "\n";
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::printCycleTime(float_t cpu, float_t gpu, float_t wall) const{
+RayListController<Geometry,N>::printCycleTime(float_t cpu, float_t gpu, float_t wall) const{
     std::cout << "Debug: \n";
     std::cout << "Debug: cycle gpuTime = " << gpu << "\n";
     std::cout << "Debug: cycle cpuTime = " << cpu << "\n";
     std::cout << "Debug: cycle wallTime = " << wall << "\n";
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
+RayListController<Geometry,N>::printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
     if( PA.getWorldRank() != 0 ) { return; }
 
     if( ! usingNextEventEstimator ) {
@@ -523,9 +479,9 @@ RayListController<GRID_T,N>::printPointDets( const std::string& outputFile, unsi
     pNextEventEstimator->printPointDets(outputFile, nSamples, constantDimension );
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
+RayListController<Geometry,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
     if( PA.getWorldRank() != 0 ) { return; }
 
     if( ! usingNextEventEstimator ) {
@@ -534,50 +490,49 @@ RayListController<GRID_T,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nS
     pNextEventEstimator->outputTimeBinnedTotal(out, nSamples, constantDimension );
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::updateMaterialProperties( MaterialProperties* pMPs) {
+RayListController<Geometry,N>::updateMaterialProperties( MaterialProperties* pMPs) {
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
-    if( usingNextEventEstimator ) {
-        pNextEventEstimator->updateMaterialProperties( pMPs );
-    }
+    pMatProps = pMPs;
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 unsigned
-RayListController<GRID_T,N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z ){
+RayListController<Geometry,N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z ){
     if( PA.getWorkGroupRank() != 0 ) { return 0; }
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::addPointDet - Next-Event Estimator not enabled." );
     }
-    return pNextEventEstimator->add( x, y, z );
+    return pNextEventEstimatorBuilder->add( x, y, z );
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::setPointDetExclusionRadius(gpuFloatType_t r){
+RayListController<Geometry,N>::setPointDetExclusionRadius(gpuFloatType_t r){
     if( PA.getWorkGroupRank() != 0 ) { return; }
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::setPointDetExclusionRadius - Next-Event Estimator not enabled." );
     }
-    pNextEventEstimator->setExclusionRadius( r );
+    pNextEventEstimatorBuilder->setExclusionRadius( r );
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::copyPointDetTallyToCPU(void) {
+RayListController<Geometry,N>::copyPointDetTallyToCPU(void) {
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::copyPointDetTallyToCPU - Next-Event Estimator not enabled." );
     }
-    pNextEventEstimator->copyToCPU();
+    cudaDeviceSynchronize();
+    /* pNextEventEstimator->copyToCPU(); */
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 gpuTallyType_t
-RayListController<GRID_T,N>::getPointDetTally(unsigned spatialIndex, unsigned timeIndex ) const {
+RayListController<Geometry,N>::getPointDetTally(unsigned spatialIndex, unsigned timeIndex ) const {
     if( PA.getWorldRank() != 0 ) { return 0.0; }
 
     if( ! isUsingNextEventEstimator() ) {
@@ -586,9 +541,9 @@ RayListController<GRID_T,N>::getPointDetTally(unsigned spatialIndex, unsigned ti
     return pNextEventEstimator->getTally(spatialIndex, timeIndex);
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::copyPointDetToGPU(void) {
+RayListController<Geometry,N>::copyPointDetToGPU(void) {
 
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::getPointDetTally - Next-Event Estimator not enabled." );
@@ -600,23 +555,22 @@ RayListController<GRID_T,N>::copyPointDetToGPU(void) {
         return;
     }
 
-    pNextEventEstimator->setGeometry( pGrid, pMatProps );
-    pNextEventEstimator->setMaterialList( pMatList );
-    pNextEventEstimator->setTimeBinEdges( TallyTimeBinEdges );
-    pNextEventEstimator->initialize();
-    pNextEventEstimator->copyToGPU();
+    pNextEventEstimatorBuilder->setTimeBinEdges( TallyTimeBinEdges );
+    pNextEventEstimator = std::make_unique<NextEventEstimator>(pNextEventEstimatorBuilder->build());
+    cudaDeviceSynchronize();
+    /* pNextEventEstimator->copyToGPU(); */
 }
 
-template<typename GRID_T, unsigned N>
-void RayListController<GRID_T,N>::dumpPointDetForDebug(const std::string& baseFileName ) {
+template<typename Geometry, unsigned N>
+void RayListController<Geometry,N>::dumpPointDetForDebug(const std::string& fileName ) {
     // ensures setup - the copy to the GPU is not used
     copyPointDetToGPU();
-    pNextEventEstimator->dumpState(currentBank->getPtrPoints(), baseFileName);
+    writeToFile(fileName, *pNextEventEstimator);
 }
 
-template<typename GRID_T, unsigned N>
+template<typename Geometry, unsigned N>
 void
-RayListController<GRID_T,N>::gather() {
+RayListController<Geometry,N>::gather() {
     if( pNextEventEstimator ) {
         pNextEventEstimator->gather();
     }
