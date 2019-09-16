@@ -37,14 +37,14 @@ class RayWorkInfo_t: public Managed {
 
 
     size = num;
-    indices.resize(size*3);
-    rayCastSize.resize(size);
-    rayCastCell.resize(size*MAXNUMRAYCELLS);
-    rayCastDistance.resize(size*MAXNUMRAYCELLS);
+    indices.resizeWithoutConstructing(size*3);
+    rayCastSize.resizeWithoutConstructing(size);
+    rayCastCell.resizeWithoutConstructing(size*MAXNUMRAYCELLS);
+    rayCastDistance.resizeWithoutConstructing(size*MAXNUMRAYCELLS);
 
-    crossingSize.resize(size*3);
-    crossingCell.resize(size*MAXNUMVERTICES*3);
-    crossingDistance.resize(size*MAXNUMVERTICES*3);
+    crossingSize.resizeWithoutConstructing(size*3);
+    crossingCell.resizeWithoutConstructing(size*MAXNUMVERTICES*3);
+    crossingDistance.resizeWithoutConstructing(size*MAXNUMVERTICES*3);
     clear();
   }
   CUDAHOST_CALLABLE_MEMBER RayWorkInfo_t(unsigned num, bool): RayWorkInfo_t(num) { }
@@ -88,7 +88,6 @@ class RayWorkInfo_t: public Managed {
 
   constexpr void addCrossingCell(unsigned dim, unsigned i, int cellID, gpuRayFloat_t dist){
     MONTERAY_ASSERT_MSG( dist >= 0, "distance must be > 0.0!" );
-    /* printf("dim %d i %d getCrossingSize(dim, i) %d \n", dim, i, getCrossingSize(dim, i)); */
     getCrossingCell(dim, i, getCrossingSize(dim,i) ) = cellID;
     getCrossingDist(dim, i, getCrossingSize(dim,i) ) = dist;
     ++(getCrossingSize(dim,i));

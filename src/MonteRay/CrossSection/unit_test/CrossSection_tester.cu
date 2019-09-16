@@ -3,6 +3,7 @@
 #include <vector>
 #include <sstream>
 #include <random>
+#include <memory>
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -53,27 +54,25 @@ SUITE( CrossSection_tester ) {
         std::vector<double> xsecs = {4, 3, 2, 1};
         int ZAID = 1001;
 
-        CrossSection* XS = new CrossSection;
         //cudaMallocManaged(&XS, sizeof(CrossSection) );
 
         //managed_allocator<CrossSection> alloc;
         //auto XS = std::allocate_shared<CrossSection>(alloc);
-        *XS = CrossSectionBuilder( ZAID, energies, xsecs ).construct();
+        auto XS = std::make_unique<CrossSection>( CrossSectionBuilder( ZAID, energies, xsecs ).construct() );
 
         CHECK_EQUAL( 4, XS->size() );
 
         CHECK_EQUAL( -1, value[0] );
 
 #ifdef __CUDACC__
-        kernelGetSize<<<1,1>>>( XS, value.data() );
+        kernelGetSize<<<1,1>>>( XS.get(), value.data() );
         cudaDeviceSynchronize();
 #else
-        kernelGetSize( XS, value.data() );
+        kernelGetSize( XS.get(), value.data() );
 #endif
         CHECK_EQUAL( 4, XS->size() );
 
         CHECK_EQUAL( 4, value[0] );
-        delete XS;
     }
 
     TEST( CrossSection_set_particle_type ) {
@@ -198,64 +197,62 @@ SUITE( CrossSection_tester ) {
         managed_vector<gpuFloatType_t> xsbyIndex_value;
         xsbyIndex_value.push_back( 0.0 );
 
-        CrossSection* XS = new CrossSection;
 
         CrossSectionBuilder xsbuilder;
         xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
 
-        *XS = xsbuilder.construct();
+        auto XS = std::make_unique<CrossSection>(xsbuilder.construct());
         deviceSynchronize();
 
 #ifdef __CUDACC__
-        kernelGetSize<<<1,1>>>( XS, size_value.data() );
+        kernelGetSize<<<1,1>>>( XS.get(), size_value.data() );
         cudaDeviceSynchronize();
 #else
-        kernelGetSize( XS, size_value.data() );
+        kernelGetSize( XS.get(), size_value.data() );
 #endif
         CHECK_EQUAL( 76525, size_value[0] );
 
         gpuFloatType_t energy = 2.0;
 #ifdef __CUDACC__
-        kernelTotalXS<<<1,1>>>( XS, xs_value.data(), energy );
+        kernelTotalXS<<<1,1>>>( XS.get(), xs_value.data(), energy );
         cudaDeviceSynchronize();
 #else
-        kernelTotalXS( XS, xs_value.data(), energy );
+        kernelTotalXS( XS.get(), xs_value.data(), energy );
 #endif
 
         CHECK_CLOSE( 7.14769f, XS->getTotalXS(energy), 1e-5);
         CHECK_CLOSE( 7.14769f, xs_value[0], 1e-5);
 
 #ifdef __CUDACC__
-        kernelGetIndex<<<1,1>>>( XS, index_value.data(), energy );
+        kernelGetIndex<<<1,1>>>( XS.get(), index_value.data(), energy );
         cudaDeviceSynchronize();
 #else
-        kernelGetIndex( XS, index_value.data(), energy );
+        kernelGetIndex( XS.get(), index_value.data(), energy );
 #endif
 
         CHECK_EQUAL( 76420, index_value[0] );
         CHECK_EQUAL( 76420, XS->getIndex(energy) );
 
 #ifdef __CUDACC__
-        kernelTotalXSByIndex<<<1,1>>>( XS, xsbyIndex_value.data(), index_value[0] );
+        kernelTotalXSByIndex<<<1,1>>>( XS.get(), xsbyIndex_value.data(), index_value[0] );
         cudaDeviceSynchronize();
 #else
-        kernelTotalXSByIndex( XS, xsbyIndex_value.data(),  XS->getIndex(energy) );
+        kernelTotalXSByIndex( XS.get(), xsbyIndex_value.data(),  XS->getIndex(energy) );
 #endif
 
         CHECK_CLOSE( 7.14769f, XS->getTotalXSByIndex(XS->getIndex(energy)), 1e-5);
         CHECK_CLOSE( 7.14769f, xsbyIndex_value[0], 1e-5);
 
 #ifdef __CUDACC__
-        kernelTotalXSByIndex<<<1,1>>>( XS, xsbyIndex_value.data(), index_value[0]+1 );
+        kernelTotalXSByIndex<<<1,1>>>( XS.get(), xsbyIndex_value.data(), index_value[0]+1 );
         cudaDeviceSynchronize();
 #else
-        kernelTotalXSByIndex( XS, xsbyIndex_value.data(),  XS->getIndex(energy)+1 );
+        kernelTotalXSByIndex( XS.get(), xsbyIndex_value.data(),  XS->getIndex(energy)+1 );
 #endif
 
         CHECK_CLOSE( 7.28222f, XS->getTotalXSByIndex(XS->getIndex(energy)+1), 1e-5);
         CHECK_CLOSE( 7.28222f, xsbyIndex_value[0], 1e-5);
 
-        delete XS;
     }
 
     class grid {
@@ -280,7 +277,16 @@ SUITE( CrossSection_tester ) {
             return index;
         }
 
+        double TotalXsec( size_t i ) const {
+            return xsValues[i];
+        }
+
+        double TotalXsec( unsigned i ) const {
+            return xsValues[i];
+        }
+
         double TotalXsec(double E, double T, unsigned i ) const {
+            MONTERAY_ASSERT(i < energyBins.size());
             double frac = ( E - energyBins[i] ) / (energyBins[i+1] - energyBins[i]);
             return xsValues[i] + (xsValues[i+1] - xsValues[i] ) * frac;
         }
@@ -413,8 +419,7 @@ SUITE( CrossSection_speed_tester ) {
         CrossSectionBuilder xsbuilder;
         xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
 
-        CrossSection* xs = new CrossSection;
-        *xs = xsbuilder.construct();
+        auto xs = std::make_unique<CrossSection>(xsbuilder.construct());
 
         std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test\n";
         cpuTimer timer;
@@ -426,7 +431,7 @@ SUITE( CrossSection_speed_tester ) {
         auto policy = false;
 #endif
 
-        transformEnergyToXS( policy, energies, xsecs, xs );
+        transformEnergyToXS( policy, energies, xsecs, xs.get() );
         timer.stop();
         std::cout << "Debug: Time to lookup " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
                 " seconds\n";
@@ -481,8 +486,7 @@ SUITE( CrossSection_speed_tester ) {
          CrossSectionBuilder xsbuilder;
          xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
 
-         CrossSection* xs = new CrossSection;
-         *xs = xsbuilder.construct();
+         auto xs = std::make_unique<CrossSection>(xsbuilder.construct());
          deviceSynchronize();
 
         // auto calcXS = [=]  __host__ __device__ (double E) { return xs->getTotalXS( E ); };
@@ -504,7 +508,7 @@ SUITE( CrossSection_speed_tester ) {
 #endif
 
          //kernelAllTotalXS<<<1024,512>>>( xs, xsecs.data(), energies.data(), energies.size() );
-         transformEnergyToXS( device_policy, energies, xsecs, xs );
+         transformEnergyToXS( device_policy, energies, xsecs, xs.get() );
 
          deviceSynchronize();
          timer.stop();
@@ -517,7 +521,7 @@ SUITE( CrossSection_speed_tester ) {
         auto host_policy = false;
 #endif
 
-         transformEnergyToXS( host_policy, energies, ref_xsecs, xs );
+         transformEnergyToXS( host_policy, energies, ref_xsecs, xs.get() );
 
          for( unsigned i = 0; i < energies.size(); ++i ){
              gpuFloatType_t percent_diff = (ref_xsecs[i] - xsecs[i] ) / ref_xsecs[i];
@@ -528,8 +532,6 @@ SUITE( CrossSection_speed_tester ) {
                  break;
              }
          }
-
-         delete xs;
      }
 
     TEST( hash_lookup_vs_standard_lookup ) {
@@ -562,8 +564,7 @@ SUITE( CrossSection_speed_tester ) {
          CrossSectionBuilder xsbuilder;
          xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
 
-         CrossSection* xs = new CrossSection;
-         *xs = xsbuilder.construct();
+         auto xs = std::make_unique<CrossSection>(xsbuilder.construct());
 //         cudaDeviceSynchronize();
 //
 //        // auto calcXS = [=]  __host__ __device__ (double E) { return xs->getTotalXS( E ); };
@@ -586,12 +587,12 @@ SUITE( CrossSection_speed_tester ) {
         auto policy = false;
 #endif
 
-         transformEnergyToXS( policy, energies, ref_xsecs, xs );
+         transformEnergyToXS( policy, energies, ref_xsecs, xs.get() );
 
          std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test on CPU via hash lookup\n";
          cpuTimer timer;
          timer.start();
-         transformEnergyToXSViaHash( policy, energies, xsecs, xs );
+         transformEnergyToXSViaHash( policy, energies, xsecs, xs.get() );
          timer.stop();
          std::cout << "Debug: Time to perform hash lookup of " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
                       " seconds\n";
@@ -606,8 +607,6 @@ SUITE( CrossSection_speed_tester ) {
                  break;
              }
          }
-
-         delete xs;
      }
 
     class testLog2Hash {
@@ -690,8 +689,7 @@ SUITE( CrossSection_speed_tester ) {
           CrossSectionBuilder_t<testLog2Hash> xsbuilder;
           xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
 
-          CrossSection_t<testLog2Hash>* xs = new CrossSection_t<testLog2Hash>;
-          *xs = xsbuilder.construct();
+          auto xs = std::make_unique<CrossSection_t<testLog2Hash>>(xsbuilder.construct());
  //         cudaDeviceSynchronize();
  //
  //        // auto calcXS = [=]  __host__ __device__ (double E) { return xs->getTotalXS( E ); };
@@ -714,12 +712,12 @@ SUITE( CrossSection_speed_tester ) {
          auto policy = false;
  #endif
 
-          transformEnergyToXS( policy, energies, ref_xsecs, xs );
+          transformEnergyToXS( policy, energies, ref_xsecs, xs.get() );
 
           std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test on CPU via log2 hash lookup\n";
           cpuTimer timer;
           timer.start();
-          transformEnergyToXSViaHash( policy, energies, xsecs, xs );
+          transformEnergyToXSViaHash( policy, energies, xsecs, xs.get() );
           timer.stop();
           std::cout << "Debug: Time to perform hash log2 lookup of " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
                        " seconds\n";
@@ -734,8 +732,6 @@ SUITE( CrossSection_speed_tester ) {
                   break;
               }
           }
-
-          delete xs;
       }
 
     class testLogHash {
@@ -818,8 +814,7 @@ SUITE( CrossSection_speed_tester ) {
           CrossSectionBuilder_t<testLogHash> xsbuilder;
           xsbuilder.read( std::string("MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin") );
 
-          CrossSection_t<testLogHash>* xs = new CrossSection_t<testLogHash>;
-          *xs = xsbuilder.construct();
+          auto xs = std::make_unique<CrossSection_t<testLogHash>>(xsbuilder.construct());
  //         cudaDeviceSynchronize();
  //
  //        // auto calcXS = [=]  __host__ __device__ (double E) { return xs->getTotalXS( E ); };
@@ -842,12 +837,12 @@ SUITE( CrossSection_speed_tester ) {
          auto policy = false;
  #endif
 
-          transformEnergyToXS( policy, energies, ref_xsecs, xs );
+          transformEnergyToXS( policy, energies, ref_xsecs, xs.get() );
 
           std::cout << "Debug: Starting U-235 neutron cross-section timing lookup test on CPU via log hash lookup\n";
           cpuTimer timer;
           timer.start();
-          transformEnergyToXSViaHash( policy, energies, xsecs, xs );
+          transformEnergyToXSViaHash( policy, energies, xsecs, xs.get() );
           timer.stop();
           std::cout << "Debug: Time to perform hash log lookup of " << nEnergies << " U-235 neutron cross-sections = " << timer.getTime() <<
                        " seconds\n";
@@ -862,8 +857,6 @@ SUITE( CrossSection_speed_tester ) {
                   break;
               }
           }
-
-          delete xs;
       }
 
 }

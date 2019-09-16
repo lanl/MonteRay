@@ -67,12 +67,38 @@ SUITE(SimpleVector_test) {
   }
 
   TEST(resize){
-    vec1.resize(10);
-    CHECK(vec1.size() == 10);
-    CHECK(vec1.capacity() == 10);
-    vec1.resize(1);
-    CHECK(vec1.size() == 1);
-    CHECK(vec1.capacity() == 10);
+    struct foo{
+      double bar = 1;
+      foo(){ bar = 10; }
+    };
+    simple_vector<foo> vec;
+    vec.resize(10);
+    CHECK(vec.size() == 10);
+    CHECK(vec.capacity() == 10);
+    for (auto& val : vec){
+      CHECK(val.bar == 10);
+    }
+    vec.resize(1);
+    CHECK(vec.size() == 1);
+    CHECK(vec.capacity() == 10);
+  }
+
+  TEST(resizeWithoutConstructing){
+    struct foo{
+      double bar = 1;
+      foo(){ bar = -10; }
+    };
+
+    simple_vector<foo> vec;
+    vec.resizeWithoutConstructing(10);
+    for (auto& val : vec){
+      CHECK(val.bar != -10);
+    }
+    CHECK(vec.size() == 10);
+    CHECK(vec.capacity() == 10);
+    vec.resizeWithoutConstructing(1);
+    CHECK(vec.size() == 1);
+    CHECK(vec.capacity() == 10);
   }
 
   TEST(swap){

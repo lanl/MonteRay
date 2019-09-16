@@ -11,7 +11,6 @@ using namespace MonteRay;
 
 SUITE( CrossSectionList_tester ) {
 
-
     TEST( CrossSectionList_CPU ) {
         std::vector<double> energies = {0, 1, 2, 3};
         std::vector<double> xsecs = {4, 3, 2, 1};
@@ -21,7 +20,6 @@ SUITE( CrossSectionList_tester ) {
         xsListBuilder.add(  CrossSectionBuilder( ZAID, energies, xsecs ).construct() );
         auto xsList = xsListBuilder.build();
         CHECK_EQUAL( 4, xsList.getXS(0).size() );
-        CHECK_EQUAL( 0, xsList.getXS(0).getID() );
         CHECK_EQUAL( 1, xsList.size() );
      }
 
@@ -93,17 +91,12 @@ SUITE( CrossSectionList_tester ) {
 
         auto xsList = xsListBuilder.build();
         CHECK_EQUAL( 2, xsList.size() );
-        CHECK_EQUAL( 0, xsList.getXS(0).getID() );
         CHECK_EQUAL( 4, xsList.getXS(0).size() );
-        CHECK_EQUAL( 1, xsList.getXS(1).getID() );
         CHECK_EQUAL( 5, xsList.getXS(1).size() );
     }
 
     TEST( read_write_CrossSectionList ){
-      std::stringstream stream;
-
       CrossSectionList::Builder xsListBuilder;
-
       std::vector<double> energies1 = {0, 1, 2, 3};
       std::vector<double> xsecs1 = {4, 3, 2, 1};
       int ZAID = 1001;
@@ -115,14 +108,13 @@ SUITE( CrossSectionList_tester ) {
       xsListBuilder.add(  CrossSectionBuilder( ZAID, energies2, xsecs2 ).construct() );
       auto xsList = xsListBuilder.build();
 
+      std::stringstream stream;
       xsList.write(stream);
       xsListBuilder.read(stream);
       auto newXSList = xsListBuilder.build();
 
       CHECK_EQUAL( 2, newXSList.size() );
-      CHECK_EQUAL( 0, newXSList.getXS(0).getID() );
       CHECK_EQUAL( 4, newXSList.getXS(0).size() );
-      CHECK_EQUAL( 1, newXSList.getXS(1).getID() );
       CHECK_EQUAL( 5, newXSList.getXS(1).size() );
     }
 }

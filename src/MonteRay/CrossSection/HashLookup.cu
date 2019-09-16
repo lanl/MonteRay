@@ -82,8 +82,10 @@ HashLookupHost::HashLookupHost(unsigned num, unsigned nBins) {
 
 
 HashLookupHost::~HashLookupHost() {
-    dtor( ptr );
-    delete ptr;
+    if(ptr != nullptr){
+      dtor( ptr );
+      delete ptr;
+    }
 
 #ifdef __CUDACC__
     if( cudaCopyMade ) {

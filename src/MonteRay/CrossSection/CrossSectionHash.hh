@@ -13,7 +13,7 @@
 #include "MonteRayTypes.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRayAssert.hh"
-#include "ManagedAllocator.hh"
+#include "SimpleVector.hh"
 #include "FasterHash.hh"
 #include "BinarySearch.hh"
 
@@ -24,27 +24,35 @@
 
 namespace MonteRay {
 
+#define TARGET_MIN_VALUE static_cast<T>(1.0e-11)
+#define TARGET_MAX_VALUE static_cast<T>(1.0e+3)
+
+
 ///\brief Provides a fast hash lookup method for an energy grid.
 
 ///\details Provides a fast hash lookup method for a positive energy grid over 1e-11 to 1e3.
 ///         Intended for energy grids only.
-template<typename T = gpuFloatType_t, typename HASHTYPE = FasterHash, class Allocator = managed_allocator<size_t> >
+template<typename T = gpuFloatType_t, typename HASHTYPE = FasterHash>
 class CrossSectionHash_t : public Managed {
 public:
     using Index_t = size_t;
     using NuclearData_t = T;
-    using IndexVec_t = std::vector< Index_t, Allocator >;
+    using IndexVec_t = SimpleVector<Index_t>;
 
     template<typename ENERGYBINCONTAINER_T>
     CrossSectionHash_t(ENERGYBINCONTAINER_T& XValues ) :
         minValue( invHashFunction(0) ),
-        maxValue( invHashFunction(numIndices-1) )
+        maxValue( invHashFunction(numIndices-1) ),
+        minIndex(hashFunction( TARGET_MIN_VALUE )),
+        maxIndex(hashFunction( TARGET_MAX_VALUE ))
     {
         if( XValues.empty() ) {
 #ifndef __CUDA_ARCH__
             throw std::runtime_error("CrossSectionHash_t::CrossSectionHash_t(XValues) -- XValues can not be empty");
 #endif
         }
+
+        numIndices = maxIndex-minIndex+1;
 
         minTable = XValues.front();
         maxTable = XValues.back();
@@ -53,8 +61,6 @@ public:
         checkValidEnergyBins(XValues);
 
         BinLo_vec.resize( numIndices );
-        BinLo = BinLo_vec.data();
-        BinLo_size = BinLo_vec.size();
 
         // using std::iota and std::transform to fill in the hash table
         // using iota instead of a traditional for loop will incur some additional
@@ -79,13 +85,14 @@ public:
          };
 
         // fill BinLo_vec with the index of the bin with 0, 1, 2, ... NBins  (use sequence in thrust)
-        std::iota(BinLo, BinLo + BinLo_size, 0);
+        std::iota(BinLo_vec.begin(), BinLo_vec.end(), 0);
 
         // lookup the lowerbound index for each bin  i
-        std::transform( BinLo, BinLo + BinLo_size, BinLo, getXValuesIndices );
+        std::transform( BinLo_vec.begin(), BinLo_vec.end(),  BinLo_vec.begin(), getXValuesIndices );
 
     }
 
+    CrossSectionHash_t() = default;
     ~CrossSectionHash_t() = default;
 
     CUDA_CALLABLE_MEMBER Index_t size() const { return numIndices;}
@@ -133,7 +140,7 @@ public:
     CUDA_CALLABLE_MEMBER
     Index_t getBinLo( const Index_t index ) const {
         MONTERAY_ASSERT_MSG( index < numIndices, "hash index is greater than the size of the hash table" );
-        return BinLo[ index ];
+        return BinLo_vec[ index ];
     }
 
     CUDA_CALLABLE_MEMBER
@@ -149,7 +156,7 @@ public:
     size_t bytesize() const {
         size_t total = 0;
         total += sizeof( *this );
-        total += sizeof( Index_t ) * BinLo_size;
+        total += sizeof( Index_t ) * BinLo_vec.size();
         return total;
     }
 
@@ -161,23 +168,19 @@ public:
     CUDA_CALLABLE_MEMBER NuclearData_t getTableSize() const { return tableSize; }
 
 //private:
-    static constexpr NuclearData_t targetMinValue = 1.0e-11; // min. value of the table
-    static constexpr NuclearData_t targetMaxValue = 1.0e+3;  // max. value of the table
 
-    const Index_t minIndex = hashFunction( targetMinValue );
-    const Index_t maxIndex = hashFunction( targetMaxValue );
-    const Index_t numIndices = maxIndex-minIndex+1;
+    Index_t minIndex = hashFunction( TARGET_MIN_VALUE );
+    Index_t maxIndex = hashFunction( TARGET_MAX_VALUE );
+    Index_t numIndices = maxIndex-minIndex+1;
 
-    const NuclearData_t minValue = targetMinValue;
-    const NuclearData_t maxValue = targetMaxValue;
+    NuclearData_t minValue = TARGET_MIN_VALUE;
+    NuclearData_t maxValue = TARGET_MAX_VALUE;
 
     NuclearData_t minTable;
     NuclearData_t maxTable;
     Index_t tableSize;
 
     IndexVec_t BinLo_vec;
-    Index_t* BinLo = nullptr;
-    int BinLo_size = 0;
 
 public:
 
@@ -196,11 +199,13 @@ public:
 
     template<typename ENERGYBINCONTAINER_T>
     void checkValidEnergyBins( const ENERGYBINCONTAINER_T& energyBins ) const {
+#ifdef DEBUG
         T previous_value = 0.0;
         for( auto itr = energyBins.begin(); itr != energyBins.end(); ++itr ){
             MONTERAY_ASSERT_MSG( *itr >= previous_value, "Values are not ascending" );
             previous_value = *itr;
         }
+#endif
     }
 
 };

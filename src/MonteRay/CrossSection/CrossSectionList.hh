@@ -48,7 +48,6 @@ public:
       auto checkZaid = [&] (const CrossSection& list_xs) { return xs.ZAID() == list_xs.ZAID(); };
       auto xsLoc = std::find_if(b_xsList_.begin(), b_xsList_.end(), checkZaid);
       if (xsLoc != b_xsList_.end()){ return; }
-      xs.setID( b_xsList_.size() );
       b_xsList_.emplace_back(std::forward<XS>(xs));
     }
 
@@ -65,13 +64,12 @@ public:
       for (size_t i = 0; i < numXS; i++){
         CrossSectionBuilder_t<HashFunction> xsBuilder;
         xsBuilder.read(stream);
-        xsBuilder.setID(i);
         b_xsList_.emplace_back(xsBuilder.construct());
       }
     }
 
     CrossSectionList_t build() {
-      return {std::move(b_xsList_)};
+      return std::move(b_xsList_);
     }
 
   };

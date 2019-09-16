@@ -4,8 +4,12 @@ string(REPLACE "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread
   mpi_compile_options "${mpi_compile_options}")
 set_target_properties(MPI::MPI_CXX PROPERTIES INTERFACE_COMPILE_OPTIONS ${mpi_compile_options})
 
-set(cuda_compute compute_52)
-set(cuda_code sm_52)
+if(cuda_arch)
+else()
+  set(cuda_arch 52) # default to 52 if not specified
+endif()
+set(cuda_compute "compute_${cuda_arch}")
+set(cuda_code "sm_${cuda_arch}")
 list(APPEND CMAKE_CUDA_FLAGS "--relocatable-device-code=true" )
 list(APPEND CMAKE_CUDA_FLAGS "--expt-extended-lambda" )
 list(APPEND CMAKE_CUDA_FLAGS "--expt-relaxed-constexpr" ) 

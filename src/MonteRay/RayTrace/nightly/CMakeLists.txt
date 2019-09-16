@@ -1,5 +1,4 @@
 add_executable( monteray.raytrace.nightly.test )
-setCudaFilesToCppFiles()
 target_sources( monteray.raytrace.nightly.test  PRIVATE
                ${CMAKE_CURRENT_LIST_DIR}/main.cc
                ${CMAKE_CURRENT_LIST_DIR}/Criticality_Accident_CollisionsFromFile_nightly_tester.cu

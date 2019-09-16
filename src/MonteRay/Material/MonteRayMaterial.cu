@@ -359,7 +359,7 @@ gpuFloatType_t MonteRayMaterialHost::launchGetTotalXS(gpuFloatType_t E, gpuFloat
     return result[0];
 }
 
-gpuFloatType_t MonteRayMaterialHost::launchGetTotalXSViaHash(HashLookupHost hash, gpuFloatType_t E, gpuFloatType_t density ) {
+gpuFloatType_t MonteRayMaterialHost::launchGetTotalXSViaHash(HashLookupHost& hash, gpuFloatType_t E, gpuFloatType_t density ) {
     gpuFloatType_t result[1];
 
 #ifdef __CUDACC__

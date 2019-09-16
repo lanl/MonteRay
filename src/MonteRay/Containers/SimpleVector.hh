@@ -141,6 +141,18 @@ class SimpleVector : public Managed
     erase(this->end() - 1);
   }
 
+  void resizeWithoutConstructing(const size_t N) {
+    if (N == size()){
+      return;
+    } else if (N < size()){ 
+      this->erase(begin() + N, end()); 
+    } else {
+      this->reserve(N);
+      // do not default construct all newly allocated elements
+      this->size_ = N;
+    }
+  }
+
   void resize(const size_t N) {
     if (N == size()){
       return;
@@ -148,11 +160,11 @@ class SimpleVector : public Managed
       this->erase(begin() + N, end()); 
     } else {
       this->reserve(N);
-      // default construct all newly constructed elements
+      // default construct all newly allocated elements
       for (auto it = this->end(); it < this->begin() + N; it++){
         new (it) T{};
       }
-      this->size_ = capacity();
+      this->size_ = N;
     }
   }
 
