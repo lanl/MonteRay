@@ -526,7 +526,9 @@ RayListController<Geometry,N>::copyPointDetTallyToCPU(void) {
     if( ! isUsingNextEventEstimator() ) {
         throw std::runtime_error( "RayListController::copyPointDetTallyToCPU - Next-Event Estimator not enabled." );
     }
+#ifdef __CUDACC__
     cudaDeviceSynchronize();
+#endif
     /* pNextEventEstimator->copyToCPU(); */
 }
 
@@ -557,7 +559,9 @@ RayListController<Geometry,N>::copyPointDetToGPU(void) {
 
     pNextEventEstimatorBuilder->setTimeBinEdges( TallyTimeBinEdges );
     pNextEventEstimator = std::make_unique<NextEventEstimator>(pNextEventEstimatorBuilder->build());
+#ifdef __CUDACC__
     cudaDeviceSynchronize();
+#endif
     /* pNextEventEstimator->copyToGPU(); */
 }
 

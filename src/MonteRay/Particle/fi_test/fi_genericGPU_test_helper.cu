@@ -116,7 +116,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
     gpuErrchk( cudaPeekAtLastError() );
     cudaFree( tally_device );
 #else
-    testTallyCrossSection<N>(pCP->getPtrPoints(), pXS->getPtr(), tally);
+    testTallyCrossSection<N>(pCP->getPtrPoints(), pXS, tally);
 #endif
     return;
         }
