@@ -17,7 +17,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.t.hh"
+#include "NextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 
 namespace RayListController_wNextEventEstimator_fi_tester {
@@ -47,31 +47,25 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
             cell2.add( 0, 1.0); // density = 1.0
             matPropsBuilder.addCell(cell2);
             pMatProps = std::make_unique<MaterialProperties>(matPropsBuilder.build());
-
-            pXS = new MonteRayCrossSectionHost(4);
-
-            pMat = new MonteRayMaterialHost(1);
-
-            pMatList = new MonteRayMaterialListHost(1,1,3);
-
         }
 
         void setup(){
 
             pGrid->copyToGPU();
 
-            pXS->setParticleType( photon );
-            pXS->setTotalXS(0, 1e-11, 1.0 );
-            pXS->setTotalXS(1, 0.75, 1.0 );
-            pXS->setTotalXS(2, 1.00, 2.0 );
-            pXS->setTotalXS(3, 3.00, 4.0 );
-            pXS->setAWR( gpu_AvogadroBarn / gpu_neutron_molar_mass );
+            std::array<gpuFloatType_t, 4> energies = {1e-11, 0.75, 1.0, 3.0};
+            std::array<gpuFloatType_t, 4> xs_values = {1.0, 1.0, 2.0, 4.0};
+            constexpr gpuFloatType_t AWR = gpu_AvogadroBarn / gpu_neutron_molar_mass;
+            CrossSectionBuilder xsBuilder(12345, energies, xs_values, photon, AWR);
 
-            pMat->add(0, *pXS, 1.0);
-            pMat->copyToGPU();
+            CrossSectionList::Builder xsListBuilder;
+            xsListBuilder.add(xsBuilder.construct());
+            pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
 
-            pMatList->add( 0, *pMat, 0 );
-            pMatList->copyToGPU();
+            auto matBuilder = Material::make_builder(*pXsList);
+            matBuilder.addIsotope(1.0, 12345);
+            MaterialList::Builder matListBuilder(0, matBuilder.build());
+            pMatList = std::make_unique<MaterialList>(matListBuilder.build());
 
             // reconstruct matPropsBuilder since the initial constructor didn't renumber material IDs.
             auto matPropsBuilder = MaterialProperties::Builder{};
@@ -82,25 +76,16 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
             cell2.add( 0, 1.0); // density = 1.0
             matPropsBuilder.addCell(cell2);
             matPropsBuilder.renumberMaterialIDs(*pMatList);
-            pMatProps = std::make_unique<MaterialProperties>(matPropsBuilder.build());
-
-            pXS->copyToGPU();
-
         }
 
         ~ControllerSetup(){
             delete pGrid;
-            delete pMatList;
-            delete pXS;
-            delete pMat;
         }
 
         GridBins* pGrid;
-        MonteRayMaterialListHost* pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        MonteRayCrossSectionHost* pXS;
-        MonteRayMaterialHost* pMat;
-
+        std::unique_ptr<MaterialList> pMatList;
+        std::unique_ptr<CrossSectionList> pXsList;
     };
 
 #if true
@@ -113,7 +98,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
         NextEventEstimatorController<GridBins> controller( 1,
                 1,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 numPointDets );
 
@@ -130,7 +115,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
         NextEventEstimatorController<GridBins> controller( 1,
                 1,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 numPointDets );
 
@@ -324,7 +309,7 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
         controller.sync();
         unsigned numParticles = controller.readCollisionsFromFileToBuffer("MonteRayTestFiles/U-04p_slab_single_source_ray_collisionFile.bin");
-        controller.dumpPointDetForDebug( "nee_debug_dump_test1");
+        /* controller.dumpPointDetForDebug( "nee_debug_dump_test1.bin"); */
 
         CHECK_EQUAL( 1, numParticles );
 
@@ -346,79 +331,73 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         //		CHECK(false);
     }
 
-    bool exists( const std::string& filename ) {
-        bool good = false;
-        std::ifstream file(filename.c_str());
-        good = file.good();
-        file.close();
-        return good;
-    }
+    /* bool exists( const std::string& filename ) { */
+    /*     bool good = false; */
+    /*     std::ifstream file(filename.c_str()); */
+    /*     good = file.good(); */
+    /*     file.close(); */
+    /*     return good; */
+    /* } */
 
-    TEST( read_nee_debug_dump_test1 ) {
-        // next-event estimator
-        // test nee save state file exists
-        std::string optBaseName = "nee_debug_dump_test1";
-        std::string baseName = optBaseName + std::string(".bin");
+    /* TEST( read_nee_debug_dump_test1 ) { */
+    /*     // next-event estimator */
+    /*     // test nee save state file exists */
+    /*     std::string filename = "nee_debug_dump_test1.bin"; */
+    /*     CHECK_EQUAL( true, exists(filename) ); */
 
-        std::string filename = std::string("nee_state_") + baseName;
-        CHECK_EQUAL( true, exists(filename) );
+    /*     auto estimator = readFromFile( filename, NextEventEstimator::Builder{} ); */
 
-        MonteRayNextEventEstimator<GridBins> estimator(0);
-        estimator.readFromFile( filename );
+    /*     // raylist */
+    /*     filename = std::string("raylist_") + baseName; */
+    /*     CHECK_EQUAL( true, exists(filename) ); */
+    /*     RayList_t<3> raylist(1); */
+    /*     raylist.readFromFile( filename ); */
 
-        // raylist
-        filename = std::string("raylist_") + baseName;
-        CHECK_EQUAL( true, exists(filename) );
-        RayList_t<3> raylist(1);
-        raylist.readFromFile( filename );
+    /*     CHECK_EQUAL( 1, raylist.size() ); */
+    /*     CHECK_CLOSE( 1.0, raylist.getEnergy(0), 1e-6); */
 
-        CHECK_EQUAL( 1, raylist.size() );
-        CHECK_CLOSE( 1.0, raylist.getEnergy(0), 1e-6);
+    /*     // geometry */
+    /*     filename = std::string("geometry_") + baseName; */
+    /*     CHECK_EQUAL( true, exists(filename) ); */
+    /*     GridBins grid; */
+    /*     grid.readFromFile( filename ); */
 
-        // geometry
-        filename = std::string("geometry_") + baseName;
-        CHECK_EQUAL( true, exists(filename) );
-        GridBins grid;
-        grid.readFromFile( filename );
+    /*     // material properties */
+    /*     MaterialProperties::Builder matPropsBuilder; */
+    /*     filename = std::string("matProps_") + baseName; */
+    /*     CHECK_EQUAL( true, exists(filename) ); */
+    /*     matPropsBuilder.readFromFile( filename ); */
+    /*     auto matProps = matPropsBuilder.build(); */
 
-        // material properties
-        MaterialProperties::Builder matPropsBuilder;
-        filename = std::string("matProps_") + baseName;
-        CHECK_EQUAL( true, exists(filename) );
-        matPropsBuilder.readFromFile( filename );
-        auto matProps = matPropsBuilder.build();
+    /*     // materials */
+    /*     MonteRayMaterialListHost matlist(1); */
+    /*     filename = std::string("materialList_") + baseName; */
+    /*     CHECK_EQUAL( true, exists(filename) ); */
+    /*     matlist.readFromFile( filename ); */
 
-        // materials
-        MonteRayMaterialListHost matlist(1);
-        filename = std::string("materialList_") + baseName;
-        CHECK_EQUAL( true, exists(filename) );
-        matlist.readFromFile( filename );
+    /*     grid.copyToGPU(); */
+    /*     matlist.copyToGPU(); */
 
-        grid.copyToGPU();
-        matlist.copyToGPU();
+    /*     /1* estimator.dumpState( &raylist, "nee_debug_dump_test2" ); *1/ */
 
-        estimator.setGeometry( &grid, &matProps );
-        estimator.setMaterialList( &matlist );
-        estimator.copyToGPU();
-        estimator.dumpState( &raylist, "nee_debug_dump_test2" );
+    /*     raylist.copyToGPU(); */
 
-        raylist.copyToGPU();
+/* #ifdef __CUDACC__ */
+    /*     cudaStreamSynchronize(0); */
+/* #endif */
 
-#ifdef __CUDACC__
-        cudaStreamSynchronize(0);
-#endif
+    /*     auto pRayInfo = std::make_unique<RayWorkInfo>(raylist.size()); */
+    /*     estimator.launch_ScoreRayList(1U,1U, &raylist, pRayInfo.get()); */
 
-        auto pRayInfo = std::make_unique<RayWorkInfo>(raylist.size());
-        estimator.launch_ScoreRayList(1U,1U, &raylist, pRayInfo.get());
+/* #ifdef __CUDACC__ */
+    /*     cudaStreamSynchronize(0); */
+/* #endif */
 
-#ifdef __CUDACC__
-        cudaStreamSynchronize(0);
-#endif
+    /*     estimator.copyToCPU(); */
+    /*     double monteRayValue = estimator.getTally(0); */
+    /*     CHECK_CLOSE( 0.0014527244, monteRayValue, 1e-8 ); */
+    /* } */
 
-        estimator.copyToCPU();
-        double monteRayValue = estimator.getTally(0);
-        CHECK_CLOSE( 0.0014527244, monteRayValue, 1e-8 );
-    }
 #endif
 }
 

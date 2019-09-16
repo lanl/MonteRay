@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <functional>
+#include <memory>
 
 #include "GPUUtilityFunctions.hh"
+#include "ReadAndWriteFiles.hh"
 
 #include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
@@ -27,29 +29,89 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
     public:
         ControllerSetup(){
 
+            const unsigned FUEL_ID=2;
+            const unsigned STAINLESS_ID=3;
+            const unsigned B4C_ID=4;
+            const unsigned WATER_ID=5;
+            const unsigned GRAPHITE_ID=6;
+            const unsigned SOLN_ID=7;
+
             cudaReset();
             gpuCheck();
 
-            iso1001 = new MonteRayCrossSectionHost(1);
-            iso5010 = new MonteRayCrossSectionHost(1);
-            iso5011 = new MonteRayCrossSectionHost(1);
-            iso6000 = new MonteRayCrossSectionHost(1);
-            iso7014 = new MonteRayCrossSectionHost(1);
-            iso8016 = new MonteRayCrossSectionHost(1);
-            iso26000 = new MonteRayCrossSectionHost(1);
-            iso40000 = new MonteRayCrossSectionHost(1);
-            iso50000 = new MonteRayCrossSectionHost(1);
-            iso92235 = new MonteRayCrossSectionHost(1);
-            iso92238 = new MonteRayCrossSectionHost(1);
+            CrossSectionList::Builder xsListBuilder;
 
-            fuel      = new MonteRayMaterialHost(3);
-            stainless = new MonteRayMaterialHost(3);
-            b4c       = new MonteRayMaterialHost(3);
-            water     = new MonteRayMaterialHost(2);
-            graphite  = new MonteRayMaterialHost(1);
-            soln      = new MonteRayMaterialHost(5);
+            auto xsBuilder = CrossSectionBuilder();
+            readInPlaceFromFile( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(1001);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(6000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/5010-70c_MonteRayCrossSection.bin", xsBuilder );;
+            xsBuilder.setZAID(5010);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/5011-70c_MonteRayCrossSection.bin", xsBuilder );;
+            xsBuilder.setZAID(5011);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/7014-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(7014);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(8016);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/26000-55c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(26000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/40000-66c_MonteRayCrossSection.bin", xsBuilder );;
+            xsBuilder.setZAID(40000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/50000-42c_MonteRayCrossSection.bin", xsBuilder );;
+            xsBuilder.setZAID(50000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92235);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92238);
+            xsListBuilder.add(xsBuilder.build());
 
-            pMatList = new MonteRayMaterialListHost(6,11);
+            pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+
+            MaterialList::Builder matListBuilder{};
+
+            auto mb = Material::make_builder(*pXsList);
+
+            mb.addIsotope(2.0, 8016);
+            mb.addIsotope(0.05, 92235);
+            mb.addIsotope(0.95, 92238);
+            matListBuilder.addMaterial( FUEL_ID, mb.build() );
+
+            mb.addIsotope(8.17151e-3, 26000);
+            mb.addIsotope(0.979604, 40000);
+            mb.addIsotope(0.0122247, 50000);
+            matListBuilder.addMaterial( STAINLESS_ID, mb.build() );
+
+            mb.addIsotope(0.16, 5010);
+            mb.addIsotope(0.64, 5011);
+            mb.addIsotope(0.204, 6000);
+            matListBuilder.addMaterial( B4C_ID, mb.build() );
+
+            mb.addIsotope(2.0, 1001);
+            mb.addIsotope(1.0, 8016);
+            matListBuilder.addMaterial( WATER_ID, mb.build() );
+
+            mb.addIsotope(1.0, 6000);
+            matListBuilder.addMaterial( GRAPHITE_ID, mb.build() );
+
+            mb.addIsotope(5.7745e-1, 1001);
+            mb.addIsotope(2.9900e-2, 7014);
+            mb.addIsotope(3.8536e-1, 8016);
+            mb.addIsotope(7.1826e-4, 92235);
+            mb.addIsotope(6.5700e-3, 92238);
+            matListBuilder.addMaterial( SOLN_ID, mb.build() );
+
+            pMatList = std::make_unique<MaterialList>(matListBuilder.build());
         }
 
         void setup(){
@@ -57,9 +119,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
             MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/pwr16x16_assembly_fine.lnk3dnt" );
             readerObject.ReadMatData();
 
-            MaterialProperties::Builder matPropBuilder{};
-            matPropBuilder.disableMemoryReduction();
-            matPropBuilder.setMaterialDescription( readerObject );
 
             pGrid = new GridBins(readerObject);
             CHECK_EQUAL( 584820, pGrid->getNumCells() );
@@ -77,131 +136,26 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
             pTally->copyToGPU();
 
-            iso1001->read( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin" );;
-            iso5010->read( "MonteRayTestFiles/5010-70c_MonteRayCrossSection.bin" );;
-            iso5011->read( "MonteRayTestFiles/5011-70c_MonteRayCrossSection.bin" );;
-            iso6000->read( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin" );;
-            iso7014->read( "MonteRayTestFiles/7014-70c_MonteRayCrossSection.bin" );;
-            iso8016->read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );;
-            iso26000->read( "MonteRayTestFiles/26000-55c_MonteRayCrossSection.bin" );;
-            iso40000->read( "MonteRayTestFiles/40000-66c_MonteRayCrossSection.bin" );;
-            iso50000->read( "MonteRayTestFiles/50000-42c_MonteRayCrossSection.bin" );;
-            iso92235->read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin" );;
-            iso92238->read( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin" );;
 
-            fuel->add(0, *iso8016,  2.0 );
-            fuel->add(1, *iso92235, 0.05 );
-            fuel->add(2, *iso92238, 0.95 );
-            fuel->normalizeFractions();
-            fuel->copyToGPU();
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.setMaterialDescription( readerObject );
 
-            stainless->add(0, *iso26000, 8.17151e-3 );
-            stainless->add(1, *iso40000, 0.979604 );
-            stainless->add(2, *iso50000, 0.0122247 );
-            stainless->normalizeFractions();
-            stainless->copyToGPU();
-
-            b4c->add(0, *iso5010, 0.16 );
-            b4c->add(1, *iso5011, 0.64 );
-            b4c->add(2, *iso6000, 0.204 );
-            b4c->normalizeFractions();
-            b4c->copyToGPU();
-
-            water->add(0, *iso1001, 2.0 );
-            water->add(1, *iso8016, 1.0 );
-            water->normalizeFractions();
-            water->copyToGPU();
-
-            graphite->add(0, *iso6000, 1.0 );
-            graphite->copyToGPU();
-
-            soln->add(0, *iso1001,  5.7745e-1 );
-            soln->add(1, *iso7014,  2.9900e-2 );
-            soln->add(2, *iso8016,  3.8536e-1 );
-            soln->add(3, *iso92235, 7.1826e-4 );
-            soln->add(4, *iso92238, 6.5700e-3 );
-            soln->normalizeFractions();
-            soln->copyToGPU();
-
-            const unsigned FUEL_ID=2;
-            const unsigned STAINLESS_ID=3;
-            const unsigned B4C_ID=4;
-            const unsigned WATER_ID=5;
-            const unsigned GRAPHITE_ID=6;
-            const unsigned SOLN_ID=7;
-
-            pMatList->add( 0, *fuel, FUEL_ID );
-            pMatList->add( 1, *stainless, STAINLESS_ID );
-            pMatList->add( 2, *b4c, B4C_ID );
-            pMatList->add( 3, *water, WATER_ID );
-            pMatList->add( 4, *graphite, GRAPHITE_ID );
-            pMatList->add( 5, *soln, SOLN_ID );
-            pMatList->copyToGPU();
 
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
-
-            iso1001->copyToGPU();
-            iso5010->copyToGPU();
-            iso5011->copyToGPU();
-            iso6000->copyToGPU();
-            iso7014->copyToGPU();
-            iso8016->copyToGPU();
-            iso26000->copyToGPU();
-            iso40000->copyToGPU();
-            iso50000->copyToGPU();
-            iso92235->copyToGPU();
-            iso92238->copyToGPU();
         }
 
         ~ControllerSetup(){
             delete pGrid;
-            delete pMatList;
             delete pTally;
-
-            delete iso1001;
-            delete iso5010;
-            delete iso5011;
-            delete iso6000;
-            delete iso7014;
-            delete iso8016;
-            delete iso26000;
-            delete iso40000;
-            delete iso50000;
-            delete iso92235;
-            delete iso92238;
-
-            delete fuel;
-            delete stainless;
-            delete b4c;
-            delete water;
-            delete graphite;
-            delete soln;
         }
 
         GridBins* pGrid;
-        MonteRayMaterialListHost* pMatList;
+        std::unique_ptr<CrossSectionList> pXsList;
+        std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
-
-        MonteRayCrossSectionHost* iso1001;
-        MonteRayCrossSectionHost* iso5010;
-        MonteRayCrossSectionHost* iso5011;
-        MonteRayCrossSectionHost* iso6000;
-        MonteRayCrossSectionHost* iso7014;
-        MonteRayCrossSectionHost* iso8016;
-        MonteRayCrossSectionHost* iso26000;
-        MonteRayCrossSectionHost* iso40000;
-        MonteRayCrossSectionHost* iso50000;
-        MonteRayCrossSectionHost* iso92235;
-        MonteRayCrossSectionHost* iso92238;
-
-        MonteRayMaterialHost* fuel;
-        MonteRayMaterialHost* stainless;
-        MonteRayMaterialHost* b4c;
-        MonteRayMaterialHost* water;
-        MonteRayMaterialHost* graphite;
-        MonteRayMaterialHost* soln;
 
     };
 
@@ -228,7 +182,7 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
                 nThreadsPerBlock,
                 nThreads,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 pTally );
 

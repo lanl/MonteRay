@@ -12,7 +12,7 @@ using namespace MonteRay;
 struct CrossSection{
   int zaid;
   constexpr auto ZAID() const {return zaid;}
-  constexpr gpuFloatType_t AWR() const {return 1.0;}
+  constexpr gpuFloatType_t getAWR() const {return 1.0;}
   constexpr gpuFloatType_t getTotalXS(gpuFloatType_t) const {return 1.0;}
 };
 
@@ -128,7 +128,7 @@ SUITE( Material_tester ) {
     CHECK_EQUAL(newMat.numIsotopes(), mat.numIsotopes());
     for (size_t i = 0; i < newMat.numIsotopes(); i++){
       CHECK_EQUAL(newMat.fraction(i), mat.fraction(i));
-      CHECK_EQUAL(newMat.xs(i).AWR(), mat.xs(i).AWR());
+      CHECK_EQUAL(newMat.xs(i).getAWR(), mat.xs(i).getAWR());
     }
   }
 

@@ -181,6 +181,10 @@ std::pair<unsigned, unsigned> setLaunchBounds( int nThreadsArg, int nRaysPerThre
     // negative nRaysPerThreadArg forces number of blocks to this value
     // returns pair(nBlocks,nThreads)
 
+#ifndef __CUDACC__
+    return (1, 1);
+#endif
+
     unsigned nRaysPerThread = std::abs(nRaysPerThreadArg);
     unsigned nThreads;
     unsigned nBlocks;
