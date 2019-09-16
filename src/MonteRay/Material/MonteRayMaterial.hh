@@ -98,7 +98,7 @@ public:
     gpuFloatType_t getTotalXS(HashLookup* pHash, gpuFloatType_t E, gpuFloatType_t density );
 
     gpuFloatType_t launchGetTotalXS(gpuFloatType_t E, gpuFloatType_t density=1.0 );
-    gpuFloatType_t launchGetTotalXSViaHash(HashLookupHost hash, gpuFloatType_t E, gpuFloatType_t density );
+    gpuFloatType_t launchGetTotalXSViaHash(HashLookupHost& hash, gpuFloatType_t E, gpuFloatType_t density );
 
     void add(unsigned index, MonteRayCrossSectionHost& xs, gpuFloatType_t frac );
     void add(unsigned index, struct MonteRayCrossSection* xs, gpuFloatType_t frac );

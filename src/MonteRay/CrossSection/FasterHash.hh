@@ -1,6 +1,8 @@
 #ifndef FASTERHASH_HH_
 #define FASTERHASH_HH_
 
+#include <cstring>
+
 #include "MonteRayTypes.hh"
 #include "MonteRayConstants.hh"
 #include "MonteRayAssert.hh"

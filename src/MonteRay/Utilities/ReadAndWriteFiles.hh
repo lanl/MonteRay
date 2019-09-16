@@ -1,5 +1,7 @@
 #ifndef MR_READANDWRITEFILES_HH_
 #define MR_READANDWRITEFILES_HH_
+#include <fstream>
+#include <cassert>
 
 namespace MonteRay{
 
@@ -20,6 +22,24 @@ auto readFromFile( const std::string& filename, Object& object) {
   auto retval = object.read(infile);
   infile.close();
   return retval;
+}
+
+template <class Object, typename T = void>
+void readInPlaceFromFile( const std::string& filename, Object& object) {
+  std::ifstream infile;
+  if( infile.is_open() ) {
+      infile.close();
+  }
+  infile.open( filename.c_str(), std::ios::binary | std::ios::in);
+
+  if( ! infile.is_open() ) {
+      fprintf(stderr, "Error:  readFromFile -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
+      throw std::runtime_error("readFromFile -- Failure to open file" );
+  }
+  assert( infile.good() );
+  infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
+  object.read(infile);
+  infile.close();
 }
 
 template <class Object>

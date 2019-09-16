@@ -8,26 +8,24 @@
 #include <iostream>
 #include <algorithm>
 
-#include "MonteRayMaterialList.hh"
+#include "MaterialList.hh"
 #include "MaterialProperties.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "ExpectedPathLength.hh"
 #include "GPUErrorCheck.hh"
 #include "GPUUtilityFunctions.hh"
-#include "MonteRayNextEventEstimator.hh"
+#include "NextEventEstimator.hh"
 #include "MonteRay_timer.hh"
 #include "MonteRayTypes.hh"
 #include "MonteRayParallelAssistant.hh"
+#include "RayWorkInfo.hh"
+#include "NextEventEstimator.hh"
 
 namespace MonteRay {
 
-class MonteRayMaterialListHost;
 class gpuTallyHost;
 class cpuTimer;
-
-template<typename GRID_T>
-class MonteRayNextEventEstimator;
 
 template< unsigned N >
 class RayListInterface;
@@ -35,25 +33,24 @@ class RayListInterface;
 template< unsigned N >
 class Ray_t;
 
-class RayWorkInfo;
-
-template<typename GRID_T, unsigned N = 1>
+template<typename Geometry, unsigned N = 1>
 class RayListController {
 public:
+    using Ray = Ray_t<N>;
 
     /// Ctor for the volumetric ray casting solver
     RayListController(int nBlocks,
             int nThreads,
-            GRID_T*,
-            MonteRayMaterialListHost*,
+            Geometry*,
+            MaterialList*,
             MaterialProperties*,
             gpuTallyHost* );
 
     /// Ctor for the next event estimator solver
     RayListController(int nBlocks,
             int nThreads,
-            GRID_T*,
-            MonteRayMaterialListHost*,
+            Geometry*,
+            MaterialList*,
             MaterialProperties*,
             unsigned numPointDets );
 
@@ -68,9 +65,26 @@ public:
     unsigned size(void) const;
     void setCapacity(unsigned n );
 
-    void add( const Ray_t<N>& ray);
-    void add( const Ray_t<N>* rayArray, unsigned num=1 );
-    void add( const void* ray, unsigned num=1 ) { add(  (const Ray_t<N>*) ray, num  ); }
+    void addRay(const Ray& ray){
+      if( PA.getWorkGroupRank() != 0 ) { return; }
+      currentBank->add( ray );
+      if( size() == capacity() ) {
+        flush();
+      }
+    }
+
+    void add( const Ray& ray){ addRay(ray); }
+    template <typename Rays>
+    void addRays(Rays&& rays){
+      for (const auto& ray: rays){
+        addRay(ray);
+      }
+    }
+    void add(const Ray* const rayArray, unsigned num=1){
+      addRays(SimpleView<const Ray>(rayArray, rayArray + num));
+    }
+    void add(const void* const rayPtr, unsigned num = 1){ add(static_cast<const Ray*>(rayPtr), num); }
+
 
     unsigned addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z );
     void setPointDetExclusionRadius(gpuFloatType_t r);
@@ -141,13 +155,14 @@ public:
 private:
     unsigned nBlocks = 0;
     unsigned nThreads = 0;
-    GRID_T* pGrid = nullptr;
-    MonteRayMaterialListHost* pMatList = nullptr;
+    Geometry* pGeometry = nullptr;
+    MaterialList* pMatList = nullptr;
     MaterialProperties* pMatProps = nullptr;
     gpuTallyHost* pTally = nullptr;
     const MonteRayParallelAssistant& PA;
 
-    std::shared_ptr<MonteRayNextEventEstimator<GRID_T>> pNextEventEstimator;
+    std::unique_ptr<NextEventEstimator::Builder> pNextEventEstimatorBuilder; // TPB TODO: why is this a shared ptr
+    std::unique_ptr<NextEventEstimator> pNextEventEstimator; // TPB TODO: why is this a shared ptr
     std::vector<gpuFloatType_t> TallyTimeBinEdges;
 
     RayListInterface<N>* currentBank = nullptr;
@@ -185,11 +200,11 @@ private:
     cudaEvent_t* currentCopySync = nullptr;
 };
 
-template<class GRID_T>
-using CollisionPointController = typename MonteRay::RayListController<GRID_T,1>;
+template<class Geometry>
+using CollisionPointController = typename MonteRay::RayListController<Geometry,1>;
 
-template<class GRID_T>
-using NextEventEstimatorController = typename MonteRay::RayListController<GRID_T,3>;
+template<class Geometry>
+using NextEventEstimatorController = typename MonteRay::RayListController<Geometry,3>;
 
 } /* namespace MonteRay */
 

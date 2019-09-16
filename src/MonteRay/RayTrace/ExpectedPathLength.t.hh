@@ -3,9 +3,8 @@
 
 #include "ExpectedPathLength.hh"
 
+#include "MaterialList.hh"
 #include "MonteRay_timer.hh"
-#include "MonteRayMaterialList.hh"
-#include "HashLookup.hh"
 #include "gpuTally.hh"
 #include "GridBins.hh"
 #include "RayWorkInfo.hh"
@@ -14,14 +13,13 @@
 
 namespace MonteRay{
 
-template<unsigned N, typename GRIDTYPE, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 CUDA_CALLABLE_MEMBER void
 tallyCollision(
         unsigned particleID,
-        const GRIDTYPE* pGrid,
+        const Geometry* pGeometry,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
-        const HashLookup* pHash,
         const Ray_t<N>* p,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* pTally
@@ -30,11 +28,6 @@ tallyCollision(
     gpuTallyType_t opticalPathLength = 0.0;
     gpuFloatType_t energy = p->energy[0];
 
-    unsigned HashBin;
-    if( p->particleType == neutron ) {
-        HashBin = getHashBin(pHash, energy);
-    }
-
     if( energy < 1e-20 ) {
         return;
     }
@@ -42,15 +35,11 @@ tallyCollision(
     Position_t pos( p->pos[0], p->pos[1], p->pos[2] );
     Direction_t dir( p->dir[0], p->dir[1], p->dir[2] );
 
-    pGrid->rayTrace(particleID, *pRayInfo, pos, dir, 1.0e6f, false);
+    pGeometry->rayTrace(particleID, *pRayInfo, pos, dir, 1.0e6f, false);
 
     gpuFloatType_t materialXS[MAXNUMMATERIALS];
-    for( unsigned i=0; i < pMatList->numMaterials; ++i ){
-        if( p->particleType == neutron ) {
-            materialXS[i] = getTotalXS( pMatList, i, pHash, HashBin, energy, 1.0);
-        } else {
-            materialXS[i] = getTotalXS( pMatList, i, energy, 1.0);
-        }
+    for( unsigned i=0; i < pMatList->numMaterials(); ++i ){
+      materialXS[i] = pMatList->material(i).getTotalXS(energy, 1.0);
     }
 
     for( unsigned i=0; i < pRayInfo->getRayCastSize(particleID); ++i ){
@@ -68,13 +57,12 @@ tallyCollision(
     }
 }
 
-template<unsigned N, typename GRIDTYPE, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 CUDA_CALLABLE_KERNEL 
-rayTraceTally(const GRIDTYPE* pGrid,
+rayTraceTally(const Geometry* pGeometry,
         const RayList_t<N>* pCP,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
-        const HashLookup* pHash,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* tally) {
 #ifdef __CUDACC__
@@ -91,7 +79,7 @@ rayTraceTally(const GRIDTYPE* pGrid,
         Ray_t<N> p = pCP->getParticle(particleID);
         pRayInfo->clear( threadID );
 
-       MonteRay::tallyCollision<N>(threadID, pGrid, pMatList, pMatProps, pHash, &p, pRayInfo, tally);
+       MonteRay::tallyCollision<N>(threadID, pGeometry, pMatList, pMatProps, &p, pRayInfo, tally);
 
 #ifdef __CUDACC__
        particleID += blockDim.x*gridDim.x;
@@ -103,12 +91,12 @@ rayTraceTally(const GRIDTYPE* pGrid,
 }
 
 
-template<unsigned N, typename GRIDTYPE, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 MonteRay::tripleTime launchRayTraceTally(
         std::function<void (void)> cpuWork,
         int nBlocks,
         int nThreads,
-        const GRIDTYPE* pGrid,
+        const Geometry* pGeometry,
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
@@ -137,11 +125,10 @@ MonteRay::tripleTime launchRayTraceTally(
     cudaEventRecord(startGPU,stream);
 
     rayTraceTally<<<nBlocks,nThreads,0,stream>>>(
-            pGrid->getDevicePtr(),
+            pGeometry->getDevicePtr(),
             pCP->getPtrPoints()->devicePtr,
             pMatList->ptr_device,
             pMatProps,
-            pMatList->getHashPtr()->getPtrDevice(),
             pRayInfo.get(),
             pTally->temp->tally );
 
@@ -174,11 +161,10 @@ MonteRay::tripleTime launchRayTraceTally(
     MonteRay::cpuTimer timer1, timer2;
     timer1.start();
 
-    rayTraceTally( pGrid->getPtr(),
+    rayTraceTally( pGeometry->getPtr(),
             pCP->getPtrPoints(),
             pMatList->getPtr(),
             pMatProps,
-            pMatList->getHashPtr()->getPtr(),
             pRayInfo.get(),
             pTally->getPtr()->tally
     );
@@ -197,7 +183,7 @@ MonteRay::tripleTime launchRayTraceTally(
 
 CUDA_CALLABLE_MEMBER
 gpuTallyType_t
-inline tallyCellSegment( const MonteRayMaterialList* pMatList,
+inline tallyCellSegment( const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
         const gpuFloatType_t* materialXS,
         gpuTallyType_t* tally,

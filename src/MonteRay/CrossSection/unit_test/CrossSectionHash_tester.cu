@@ -54,7 +54,7 @@ SUITE( CrossSectionHash_tester ) {
         CHECK_CLOSE( 1.006128513836302e-11, hash.invHashFunction( 2 ), 1e-26);
         CHECK_CLOSE( 1.011812855722383e-11, hash.invHashFunction( 3 ), 1e-26 );
 
-        CHECK_EQUAL( 47816, hash.bytesize() );
+        CHECK_EQUAL( 47800, hash.bytesize() );
     }
 
     TEST( getHashIndex_float ) {
@@ -107,7 +107,7 @@ SUITE( CrossSectionHash_tester ) {
         DoubleNuclearDataVec_t testValues = { 1e-13, 5e-13, 1e-11, 1.0005e-11, 1e-10, 1.0, 1e6 };
         CrossSectionHash_t<T> hash(testValues);
 
-        CHECK_EQUAL( 47816, hash.bytesize() );
+        CHECK_EQUAL( 47800, hash.bytesize() );
 
         CHECK_EQUAL( 1, hash.getBinLo( 0 ) ); // 9.947598300641403e-12
         CHECK_EQUAL( 2, hash.getBinLo( 1 ) ); // 1.000444171950221e-11
@@ -182,7 +182,7 @@ SUITE( CrossSectionHash_tester ) {
         FloatNuclearDataVec_t testValues = { 1e-13, 5e-13, 1e-11, 1.0005e-11, 1e-10, 1.0, 1e6 };
         CrossSectionHash_t<T> hash(testValues);
 
-        CHECK_EQUAL( 47800, hash.bytesize() );
+        CHECK_EQUAL( 47784, hash.bytesize() );
 
         CHECK_EQUAL( 1, hash.getBinLo( 0 ) ); // 9.947598300641403e-12
         CHECK_EQUAL( 2, hash.getBinLo( 1 ) ); // 1.000444171950221e-11
@@ -247,7 +247,7 @@ SUITE( CrossSectionHash_tester ) {
            CrossSectionHash_t<T> hash(testValues);
 
            // doesn't change based on the array size- fixed size
-           CHECK_EQUAL( 47816, hash.bytesize() );
+           CHECK_EQUAL( 47800, hash.bytesize() );
     }
 
     TEST( energies_stop_before_end_of_hashTable ) {

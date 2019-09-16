@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "GPUUtilityFunctions.hh"
+#include "ReadAndWriteFiles.hh"
 
 #include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
@@ -28,24 +29,67 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
     public:
         ControllerSetup(){
 
+            const unsigned METAL_ID=2;
+            const unsigned ALUMINUM_ID=3;
+            const unsigned GRAPHITE_ID=4;
+            const unsigned COPPER_ID=5;
+
             cudaReset();
             gpuCheck();
             setCudaStackSize( 2*1024 );
-            iso6000 = new MonteRayCrossSectionHost(1);
-            iso13027 = new MonteRayCrossSectionHost(1);
-            iso29063 = new MonteRayCrossSectionHost(1);
-            iso29065 = new MonteRayCrossSectionHost(1);
-            iso92234 = new MonteRayCrossSectionHost(1);
-            iso92235 = new MonteRayCrossSectionHost(1);
-            iso92236 = new MonteRayCrossSectionHost(1);
-            iso92238 = new MonteRayCrossSectionHost(1);
 
-            metal    = new MonteRayMaterialHost(4);
-            aluminum = new MonteRayMaterialHost(1);
-            graphite = new MonteRayMaterialHost(1);
-            copper   = new MonteRayMaterialHost(2);
 
-            pMatList = new MonteRayMaterialListHost(4,8);
+            CrossSectionList::Builder xsListBuilder;
+
+            auto xsBuilder = CrossSectionBuilder();
+            readInPlaceFromFile( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(6000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/13027-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(13027);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/29063-70c_MonteRayCrossSection.bin", xsBuilder );
+            xsBuilder.setZAID(29063);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/29065-70c_MonteRayCrossSection.bin", xsBuilder );
+            xsBuilder.setZAID(29065);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92234-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92234);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92235);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92236-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92236);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92238);
+            xsListBuilder.add(xsBuilder.build());
+
+            pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+
+            MaterialList::Builder matListBuilder{};
+
+            auto mb = Material::make_builder(*pXsList);
+
+            mb.addIsotope(4.9576e-4, 92234);
+            mb.addIsotope(4.4941e-2, 92235);
+            mb.addIsotope(1.5931e-4, 92236);
+            mb.addIsotope(2.5799e-3, 92238);
+            matListBuilder.addMaterial( METAL_ID, mb.build() );
+
+            mb.addIsotope(1.0, 13027);
+            matListBuilder.addMaterial( ALUMINUM_ID, mb.build() );
+
+            mb.addIsotope(1.0, 6000);
+            matListBuilder.addMaterial( GRAPHITE_ID, mb.build() );
+
+            mb.addIsotope(5.7325e-2, 29063);
+            mb.addIsotope(2.5550e-2, 29065);
+            matListBuilder.addMaterial( COPPER_ID, mb.build() );
+
+            pMatList = std::make_unique<MaterialList>(matListBuilder.build());
         }
 
         void setup(){
@@ -66,96 +110,22 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
 
             pTally->copyToGPU();
 
-            iso6000->read( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin" );
-            iso13027->read( "MonteRayTestFiles/13027-70c_MonteRayCrossSection.bin" );
-            iso29063->read( "MonteRayTestFiles/29063-70c_MonteRayCrossSection.bin" );
-            iso29065->read( "MonteRayTestFiles/29065-70c_MonteRayCrossSection.bin" );
-            iso92234->read( "MonteRayTestFiles/92234-70c_MonteRayCrossSection.bin" );
-            iso92235->read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin" );
-            iso92236->read( "MonteRayTestFiles/92236-70c_MonteRayCrossSection.bin" );
-            iso92238->read( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin" );
-
-            metal->add(0, *iso92234, 4.9576e-4 );
-            metal->add(1, *iso92235, 4.4941e-2 );
-            metal->add(2, *iso92236, 1.5931e-4 );
-            metal->add(3, *iso92238, 2.5799e-3 );
-            metal->normalizeFractions();
-            metal->copyToGPU();
-
-            aluminum->add(0, *iso13027, 1.0 );
-            aluminum->normalizeFractions();
-            aluminum->copyToGPU();
-
-            graphite->add(0, *iso6000, 1.0 );
-            graphite->copyToGPU();
-
-            copper->add(0, *iso29063,  5.7325e-2 );
-            copper->add(1, *iso29065,  2.5550e-2 );
-            copper->normalizeFractions();
-            copper->copyToGPU();
-
-            const unsigned METAL_ID=2;
-            const unsigned ALUMINUM_ID=3;
-            const unsigned GRAPHITE_ID=4;
-            const unsigned COPPER_ID=5;
-
-            pMatList->add( 0, *metal, METAL_ID );
-            pMatList->add( 1, *aluminum, ALUMINUM_ID );
-            pMatList->add( 2, *graphite, GRAPHITE_ID );
-            pMatList->add( 3, *copper, COPPER_ID );
-            pMatList->copyToGPU();
-
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
-            iso6000->copyToGPU();
-            iso13027->copyToGPU();
-            iso29063->copyToGPU();
-            iso29065->copyToGPU();
-            iso92234->copyToGPU();
-            iso92235->copyToGPU();
-            iso92236->copyToGPU();
-            iso92238->copyToGPU();
         }
 
         ~ControllerSetup(){
             delete pGrid;
-            delete pMatList;
             delete pTally;
-
-            delete iso6000;
-            delete iso13027;
-            delete iso29063;
-            delete iso29065;
-            delete iso92234;
-            delete iso92235;
-            delete iso92236;
-            delete iso92238;
-
-            delete metal;
-            delete aluminum;
-            delete graphite;
-            delete copper;
         }
 
         Grid_t* pGrid;
-        MonteRayMaterialListHost* pMatList;
+        std::unique_ptr<CrossSectionList> pXsList;
+        std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
 
-        MonteRayCrossSectionHost* iso6000;
-        MonteRayCrossSectionHost* iso13027;
-        MonteRayCrossSectionHost* iso29063;
-        MonteRayCrossSectionHost* iso29065;
-        MonteRayCrossSectionHost* iso92234;
-        MonteRayCrossSectionHost* iso92235;
-        MonteRayCrossSectionHost* iso92236;
-        MonteRayCrossSectionHost* iso92238;
-
-        MonteRayMaterialHost* metal;
-        MonteRayMaterialHost* aluminum;
-        MonteRayMaterialHost* graphite;
-        MonteRayMaterialHost* copper;
     };
 
 
@@ -181,7 +151,7 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
                 nThreadsPerBlock,
                 nThreads,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 pTally );
 

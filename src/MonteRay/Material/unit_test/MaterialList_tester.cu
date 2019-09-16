@@ -27,7 +27,7 @@ struct Material{
   };
 };
 
-using MaterialList = MonteRay::MaterialList<Material, MonteRay::SimpleVector>;
+using MaterialList = MonteRay::MaterialList_t<Material, MonteRay::SimpleVector>;
 
 SUITE( MaterialList_tester ) {
 

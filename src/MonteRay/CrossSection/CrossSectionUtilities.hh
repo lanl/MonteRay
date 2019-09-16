@@ -6,6 +6,7 @@
 #include <utility>
 #include <cstddef>
 #include <functional>
+#include <iostream>
 
 namespace MonteRay {
 
@@ -45,7 +46,13 @@ getTotal(const T& CrossSection, double E, size_t index) {
     return CrossSection.TotalXsec(E, -1.0, index);
 }
 
-typedef std::function<double (double E, size_t index)  > xsByIndexFunct_t;
+template <typename T>
+typename std::enable_if< has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
+getTotal(const T& CrossSection, size_t index) {
+    return CrossSection.TotalXsec(index);
+}
+
+typedef std::function<double (size_t index)  > xsByIndexFunct_t;
 typedef std::function<double (double E) > toEnergyFunc_t;
 typedef std::function<double (double E)  > totalXSFunct_t;
 
@@ -61,7 +68,7 @@ createXSGrid(const CROSS_SECTION_T& CrossSection, const toEnergyFunc_t& toEnergy
     // build initial grid;
     for( unsigned i=0; i<CrossSection.getEnergyGrid().GridSize(); ++i ){
         double energy = toEnergyFunc( (CrossSection.getEnergyGrid())[i] );
-        double totalXS = xsByIndexFunc( energy, i);
+        double totalXS = xsByIndexFunc(i);
         linearGrid.push_back( std::make_pair(energy, totalXS ) );
     }
     return linearGrid;
