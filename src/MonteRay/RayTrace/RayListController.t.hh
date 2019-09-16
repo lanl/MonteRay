@@ -194,7 +194,7 @@ void
 RayListController<Geometry,N>::flush(bool final){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
-#ifdef DEBUG
+#ifndef NDEBUG
     const bool debug = false;
     if( debug ) std::cout << "Debug: RayListController<N>::flush\n";
 #endif
@@ -230,7 +230,7 @@ RayListController<Geometry,N>::flush(bool final){
     kernel();
 
     // only uncomment for testing, forces the cpu and gpu to sync
-#ifdef DEBUG
+#ifndef NDEBUG
 #ifdef __CUDACC__
     gpuErrchk( cudaPeekAtLastError() );
 #endif
@@ -257,7 +257,7 @@ void
 RayListController<Geometry,N>::flushToFile(bool final){
     if( PA.getWorldRank() != 0 ) { return; }
 
-#ifdef DEBUG
+#ifndef NDEBUG
     const bool debug = false;
 
     if( debug ) {
@@ -271,7 +271,7 @@ RayListController<Geometry,N>::flushToFile(bool final){
 
     if( ! fileIsOpen ) {
         try {
-#ifdef DEBUG
+#ifndef NDEBUG
             if( debug ) std::cout << "Debug: RayListController::flushToFile - opening file, filename=" << outputFileName << "\n";
 #endif
             currentBank->openOutput( outputFileName );
@@ -287,7 +287,7 @@ RayListController<Geometry,N>::flushToFile(bool final){
     }
 
     try {
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug )  std::cout << "Debug: RayListController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
 #endif
         currentBank->writeBank();
@@ -303,7 +303,7 @@ RayListController<Geometry,N>::flushToFile(bool final){
 
     if( final ) {
         try {
-#ifdef DEBUG
+#ifndef NDEBUG
             if( debug ) std::cout << "Debug: RayListController::flushToFile - file flush, closing collision file\n";
 #endif
             currentBank->closeOutput();

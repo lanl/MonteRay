@@ -35,7 +35,7 @@ public:
     }
 
     void copy(const MonteRay_SingleValueCopyMemory<T>* rhs) {
-#ifdef DEBUG
+#ifndef NDEBUG
         if( this->debug ) {
             std::cout << "Debug: 1- MonteRay_SingleValueCopyMemory::copy(const resultClass* rhs) \n";
         }

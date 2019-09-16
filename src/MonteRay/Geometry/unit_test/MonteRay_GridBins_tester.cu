@@ -74,7 +74,7 @@ SUITE( MonteRay_GridBins_Tester ) {
 
         void copy(const resultClass* rhs) {
 
-#ifdef DEBUG
+#ifndef NDEBUG
             if( this->debug ) {
                 std::cout << "Debug: 1- resultClass::copy(const resultClass* rhs) \n";
             }

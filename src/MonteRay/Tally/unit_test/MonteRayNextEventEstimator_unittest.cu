@@ -36,7 +36,7 @@ SUITE( NextEventEstimator_Tester ) {
 
     TEST(  MonteRayNextEventEstimator_get_invalid_X ) {
         MonteRayNextEventEstimator<GridBins> estimator(1);
-#ifdef DEBUG
+#ifndef NDEBUG
         CHECK_THROW( estimator.getPoint(10), std::runtime_error );
 #endif
     }

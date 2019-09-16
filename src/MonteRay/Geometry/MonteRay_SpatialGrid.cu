@@ -525,7 +525,7 @@ MonteRay_SpatialGrid::rayTrace(
         const gpuRayFloat_t distance,
         bool outsideDistances) const {
 
-#ifdef DEBUG
+#ifndef NDEBUG
     const bool debug = false;
     if( debug ) printf("MonteRay_SpatialGrid::rayTrace(int* global_indices, int* gpuRayFloat_t* distances, Position_t pos, Direction_t dir, gpuRayFloat distance, bool OutsideDistances\n");
 #endif
@@ -539,7 +539,7 @@ MonteRay_SpatialGrid::rayTrace(
 
     pGridSystem->rayTrace(threadID, rayInfo, pos, dir, distance, outsideDistances );
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf("MonteRay_SpatialGrid::rayTrace -- number of distances = %d\n", rayInfo.getRayCastSize(threadID) );
 #endif
 

@@ -26,7 +26,7 @@ class SimpleView
              bool
            > = true >
   constexpr SimpleView(Container&& container): begin_(&(*container.begin())), end_(&(*container.end())){
-    MONTERAY_ASSERT(container.end() != container.begin() + container.size());
+    MONTERAY_ASSERT(container.end() == container.begin() + container.size());
   }
 
   constexpr auto& operator[](size_t i) noexcept { return *(begin_ + i);}

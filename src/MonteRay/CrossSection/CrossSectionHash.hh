@@ -199,7 +199,7 @@ public:
 
     template<typename ENERGYBINCONTAINER_T>
     void checkValidEnergyBins( const ENERGYBINCONTAINER_T& energyBins ) const {
-#ifdef DEBUG
+#ifndef NDEBUG
         T previous_value = 0.0;
         for( auto itr = energyBins.begin(); itr != energyBins.end(); ++itr ){
             MONTERAY_ASSERT_MSG( *itr >= previous_value, "Values are not ascending" );
