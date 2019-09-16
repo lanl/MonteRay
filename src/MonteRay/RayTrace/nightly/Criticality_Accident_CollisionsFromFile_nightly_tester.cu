@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <functional>
+#include <memory>
 
 #include "GPUUtilityFunctions.hh"
+#include "ReadAndWriteFiles.hh"
 
 #include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
@@ -27,28 +29,86 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
     public:
         ControllerSetup(){
 
+            const unsigned METAL_ID=2;
+            const unsigned AIR_ID=3;
+            const unsigned CONCRETE_ID=4;
+
             cudaReset();
             gpuCheck();
+            CrossSectionList::Builder xsListBuilder;
 
-            iso1001  = new MonteRayCrossSectionHost(1);
-            iso6000  = new MonteRayCrossSectionHost(1);
-            iso7014  = new MonteRayCrossSectionHost(1);
-            iso8016  = new MonteRayCrossSectionHost(1);
-            iso12000 = new MonteRayCrossSectionHost(1);
-            iso13027 = new MonteRayCrossSectionHost(1);
-            iso14000 = new MonteRayCrossSectionHost(1);
-            iso18040 = new MonteRayCrossSectionHost(1);
-            iso20000 = new MonteRayCrossSectionHost(1);
-            iso26000 = new MonteRayCrossSectionHost(1);
-            iso92234 = new MonteRayCrossSectionHost(1);
-            iso92235 = new MonteRayCrossSectionHost(1);
-            iso92238 = new MonteRayCrossSectionHost(1);
+            auto xsBuilder = CrossSectionBuilder();
 
-            metal     = new MonteRayMaterialHost(3);
-            air       = new MonteRayMaterialHost(4);
-            concrete  = new MonteRayMaterialHost(8);
+            readInPlaceFromFile( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(1001);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(6000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/7014-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(7014);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(8016);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/12000-62c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(12000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/13027-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(13027);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/14000-60c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(14000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/18040-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(18040);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/20000-62c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(20000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/26000-55c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(26000);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92234-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92234);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92235);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin", xsBuilder);
+            xsBuilder.setZAID(92238);
+            xsListBuilder.add(xsBuilder.build());
 
-            pMatList = new MonteRayMaterialListHost(3,13);
+            pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+
+            MaterialList::Builder matListBuilder{};
+
+            auto mb = Material::make_builder(*pXsList);
+            // metal
+            mb.addIsotope( 1.025e-2, 92234 );
+            mb.addIsotope( 9.37683e-1, 92235 );
+            mb.addIsotope( 5.20671e-2, 92238 );
+            matListBuilder.addMaterial( METAL_ID, mb.build() );
+             
+            // air
+            mb.addIsotope(1.3851e-2,  1001);
+            mb.addIsotope(7.66749e-1, 7014);
+            mb.addIsotope(2.13141e-1, 8016);
+            mb.addIsotope(6.24881e-3, 18040);
+            matListBuilder.addMaterial( AIR_ID, mb.build() );
+
+            // concrete
+            mb.addIsotope(1.06692e-1, 1001);
+            mb.addIsotope(2.53507e-1, 6000);
+            mb.addIsotope(4.45708e-1, 8016);
+            mb.addIsotope(2.23318e-2, 12000);
+            mb.addIsotope(2.97588e-3, 13027);
+            mb.addIsotope(2.13364e-2, 14000);
+            mb.addIsotope(1.39329e-1, 20000);
+            mb.addIsotope(2.42237e-3, 26000);
+            matListBuilder.addMaterial( CONCRETE_ID, mb.build() );
+            
+            pMatList = std::make_unique<MaterialList>(matListBuilder.build());
         }
 
         void setup(){
@@ -76,119 +136,20 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 
             pTally->copyToGPU();
 
-            iso1001->read( "MonteRayTestFiles/1001-70c_MonteRayCrossSection.bin" );
-            iso6000->read( "MonteRayTestFiles/6000-70c_MonteRayCrossSection.bin" );
-            iso7014->read( "MonteRayTestFiles/7014-70c_MonteRayCrossSection.bin" );
-            iso8016->read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
-            iso12000->read( "MonteRayTestFiles/12000-62c_MonteRayCrossSection.bin" );
-            iso13027->read( "MonteRayTestFiles/13027-70c_MonteRayCrossSection.bin" );
-            iso14000->read( "MonteRayTestFiles/14000-60c_MonteRayCrossSection.bin" );
-            iso18040->read( "MonteRayTestFiles/18040-70c_MonteRayCrossSection.bin" );
-            iso20000->read( "MonteRayTestFiles/20000-62c_MonteRayCrossSection.bin" );
-            iso26000->read( "MonteRayTestFiles/26000-55c_MonteRayCrossSection.bin" );
-            iso92234->read( "MonteRayTestFiles/92234-70c_MonteRayCrossSection.bin" );
-            iso92235->read( "MonteRayTestFiles/92235-70c_MonteRayCrossSection.bin" );
-            iso92238->read( "MonteRayTestFiles/92238-70c_MonteRayCrossSection.bin" );
-
-            metal->add(0, *iso92234, 1.025e-2 );
-            metal->add(1, *iso92235, 9.37683e-1 );
-            metal->add(2, *iso92238, 5.20671e-2 );
-            metal->normalizeFractions();
-            metal->copyToGPU();
-
-            air->add(0, *iso1001,  1.3851e-2 );
-            air->add(1, *iso7014,  7.66749e-1 );
-            air->add(2, *iso8016,  2.13141e-1 );
-            air->add(3, *iso18040, 6.24881e-3 );
-            air->normalizeFractions();
-            air->copyToGPU();
-
-            concrete->add(0, *iso1001,  1.06692e-1 );
-            concrete->add(1, *iso6000,  2.53507e-1 );
-            concrete->add(2, *iso8016,  4.45708e-1 );
-            concrete->add(3, *iso12000, 2.23318e-2 );
-            concrete->add(4, *iso13027, 2.97588e-3 );
-            concrete->add(5, *iso14000, 2.13364e-2 );
-            concrete->add(6, *iso20000, 1.39329e-1 );
-            concrete->add(7, *iso26000, 2.42237e-3 );
-            concrete->normalizeFractions();
-            concrete->copyToGPU();
-
-            const unsigned METAL_ID=2;
-            const unsigned AIR_ID=3;
-            const unsigned CONCRETE_ID=4;
-
-            pMatList->add( 0, *metal, METAL_ID );
-            pMatList->add( 1, *air, AIR_ID );
-            pMatList->add( 2, *concrete, CONCRETE_ID );
-            pMatList->copyToGPU();
-
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
-
-            iso1001->copyToGPU();
-            iso6000->copyToGPU();
-            iso7014->copyToGPU();
-            iso8016->copyToGPU();
-            iso12000->copyToGPU();
-            iso13027->copyToGPU();
-            iso14000->copyToGPU();
-            iso18040->copyToGPU();
-            iso20000->copyToGPU();
-            iso26000->copyToGPU();
-            iso92234->copyToGPU();
-            iso92235->copyToGPU();
-            iso92238->copyToGPU();
-
         }
 
         ~ControllerSetup(){
             delete pGrid;
-            delete pMatList;
             delete pTally;
-
-            delete iso1001;  //1
-            delete iso6000;  //2
-            delete iso7014;  //3
-            delete iso8016;  //4
-            delete iso12000; //5
-            delete iso13027; //6
-            delete iso14000; //7
-            delete iso18040; //8
-            delete iso20000; //9
-            delete iso26000; //10
-            delete iso92234; //11
-            delete iso92235; //12
-            delete iso92238; //13
-
-            delete metal;
-            delete air;
-            delete concrete;
         }
 
         GridBins* pGrid;
-        MonteRayMaterialListHost* pMatList;
+        std::unique_ptr<CrossSectionList> pXsList;
+        std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
         gpuTallyHost* pTally;
-
-        MonteRayCrossSectionHost* iso1001;  //1
-        MonteRayCrossSectionHost* iso6000;  //2
-        MonteRayCrossSectionHost* iso7014;  //3
-        MonteRayCrossSectionHost* iso8016;  //4
-        MonteRayCrossSectionHost* iso12000; //5
-        MonteRayCrossSectionHost* iso13027; //6
-        MonteRayCrossSectionHost* iso14000; //7
-        MonteRayCrossSectionHost* iso18040; //8
-        MonteRayCrossSectionHost* iso20000; //9
-        MonteRayCrossSectionHost* iso26000; //10
-        MonteRayCrossSectionHost* iso92234; //11
-        MonteRayCrossSectionHost* iso92235; //12
-        MonteRayCrossSectionHost* iso92238; //13
-
-        MonteRayMaterialHost* metal;
-        MonteRayMaterialHost* air;
-        MonteRayMaterialHost* concrete;
-
     };
 
 
@@ -210,7 +171,7 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
                 nThreadsPerBlock,
                 nThreads,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 pTally );
         controller.setCapacity(capacity);

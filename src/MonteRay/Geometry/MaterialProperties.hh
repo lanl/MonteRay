@@ -2,10 +2,10 @@
 #define NEW_MONTERAY_MATERIALPROPERTIES_HH_
 
 #include "MonteRayAssert.hh"
-#include "SimpleVector.hh"
 #include "MonteRay_binaryIO.hh"
 #include "ManagedAllocator.hh"
 #include <iostream>
+#include <algorithm>
 #define MATERIAL_PROPERTIES_VERSION 1
 
 namespace MonteRay{
@@ -337,8 +337,11 @@ class MaterialProperties_t: public Managed {
   };
 };
 
-using MaterialProperties = MaterialProperties_t<SimpleVector>;
-
 } // end namespace MonteRay
+
+#include "SimpleVector.hh"
+namespace MonteRay{
+  using MaterialProperties = MaterialProperties_t<SimpleVector>;
+}
 
 #endif // NEW_MONTERAY_MATERIALPROPERTIES_HH_
