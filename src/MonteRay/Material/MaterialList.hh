@@ -4,11 +4,12 @@
 #include "ManagedAllocator.hh"
 #include "MonteRay_binaryIO.hh"
 #include <algorithm>
+#include "SimpleVector.hh"
 
 #define MATERIAL_LIST_VERSION 1
 namespace MonteRay{
 
-template <typename Material, template <typename... T> class Container = std::vector>
+template <typename Material, template <typename... T> class Container = SimpleVector>
 class MaterialList_t: public Managed {
   private:
   Container<Material> materials_;
@@ -21,6 +22,7 @@ class MaterialList_t: public Managed {
 
   public:
   constexpr auto size() const { return materials_.size(); }
+  constexpr auto numMaterials() const { return this->size(); }
   constexpr auto getNumberMaterials() const { return this->size(); }
   constexpr unsigned id(unsigned i) const { return materialIDs_[i]; }
   constexpr const Material& material(unsigned i) const { return materials_[i]; }
@@ -108,7 +110,6 @@ class MaterialList_t: public Managed {
 } // end namespace MonteRay
 
 #include "Material.hh"
-#include "SimpleVector.hh"
 namespace MonteRay{
   using MaterialList = MaterialList_t<Material, SimpleVector>;
 }

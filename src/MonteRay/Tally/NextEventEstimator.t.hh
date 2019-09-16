@@ -39,7 +39,7 @@ NextEventEstimator::calcScore( const int threadID, const Ray_t<N>& ray, RayWorkI
     // TPB: this could be removed entirely and done in a different kernel, then this function could take a list of XS
     // this could relieve register pressure, potentially.  Reduce monolithic kernels into smaller ones.  Also better for determining kernel timing.
     for( int i=0; i < matList.numMaterials(); ++i ){
-      materialXS[i] = matList.getTotalXS(i, energy, 1.0);
+      materialXS[i] = matList.material(i).getTotalXS(energy, 1.0);
     }
 
     tally_t opticalThickness = 0.0;
@@ -85,7 +85,7 @@ CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(NextEventEstimator* ptr, const RayList
 #endif
 
 template<unsigned N, typename Geometry, typename MaterialProperties, typename MaterialList>
-void NextEventEstimator::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, 
+void launch_ScoreRayList( NextEventEstimator* const pNextEventEstimator, int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, 
   RayWorkInfo* pRayInfo, const Geometry* const pGeometry, const MaterialProperties* const pMatProps, 
   const MaterialList* const pMatList, const cudaStream_t* const pStream = nullptr){
   // negative nBlocks and nThreads forces to specified value,
@@ -99,10 +99,10 @@ void NextEventEstimator::launch_ScoreRayList( int nBlocksArg, int nThreadsArg, c
   int nBlocks = launchBounds.first;
   int nThreads = launchBounds.second;
   cudaStream_t stream = pStream ? *pStream : 0 ;
-  kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( this, pRayList->devicePtr, pRayInfo, 
-      pGeometry, pMatProps, pMatList );
+  kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( pNextEventEstimator, pRayList->devicePtr, pRayInfo, 
+      pGeometry->getDevicePtr(), pMatProps, pMatList );
 #else
-  cpuScoreRayList( this, pRayList, pRayInfo, pGeometry, pMatProps, pMatList );
+  cpuScoreRayList( pNextEventEstimator, pRayList, pRayInfo, pGeometry, pMatProps, pMatList );
 #endif
 }
 

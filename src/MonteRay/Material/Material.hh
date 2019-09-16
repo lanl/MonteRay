@@ -71,7 +71,7 @@ public:
 
     auto calcAtomicWeight(){
       return gpu_neutron_molar_mass * std::accumulate(b_xsAndFracs_.begin(), b_xsAndFracs_.end(), 0.0, 
-          [](auto&& sum, auto&& xsAndFrac){return sum + xsAndFrac.fraction()*xsAndFrac.xs().AWR();});
+          [](auto&& sum, auto&& xsAndFrac){return sum + xsAndFrac.fraction()*xsAndFrac.xs().getAWR();});
     }
 
     auto normalizeFractions(){
@@ -107,7 +107,9 @@ public:
 
     auto build(){
       normalizeFractions();
-      return Material_t(std::move(b_xsAndFracs_), calcAtomicWeight());
+      auto retval = Material_t(std::move(b_xsAndFracs_), calcAtomicWeight());
+      b_xsAndFracs_.clear();
+      return retval;
     }
   };
 
