@@ -8,6 +8,7 @@ target_sources(MonteRay PUBLIC
   "${prefix}/MonteRay/CrossSection.hh"
   "${prefix}/MonteRay/Particle.hh"
   "${prefix}/MonteRay/IPComm.hh"
+  "${prefix}/MonteRay/Tally.hh"
   "${prefix}/MonteRay/GPU_Utilities.hh"
   "${prefix}/MonteRay/CrossSection.hh"
 )

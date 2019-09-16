@@ -88,7 +88,6 @@ class RayWorkInfo_t: public Managed {
 
   constexpr void addCrossingCell(unsigned dim, unsigned i, int cellID, gpuRayFloat_t dist){
     MONTERAY_ASSERT_MSG( dist >= 0, "distance must be > 0.0!" );
-    /* printf("dim %d i %d getCrossingSize(dim, i) %d \n", dim, i, getCrossingSize(dim, i)); */
     getCrossingCell(dim, i, getCrossingSize(dim,i) ) = cellID;
     getCrossingDist(dim, i, getCrossingSize(dim,i) ) = dist;
     ++(getCrossingSize(dim,i));

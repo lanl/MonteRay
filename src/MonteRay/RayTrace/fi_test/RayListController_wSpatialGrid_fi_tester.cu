@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "GPUUtilityFunctions.hh"
+#include "ReadAndWriteFiles.hh"
 
 #include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
@@ -28,17 +29,6 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
     public:
         ControllerSetup(){
 
-            u234s = new MonteRayCrossSectionHost(1);
-            u235s = new MonteRayCrossSectionHost(1);
-            u238s = new MonteRayCrossSectionHost(1);
-            h1s = new MonteRayCrossSectionHost(1);
-            o16s = new MonteRayCrossSectionHost(1);
-
-            metal = new MonteRayMaterialHost(3);
-            water = new MonteRayMaterialHost(2);
-
-            pMatList = new MonteRayMaterialListHost(2,5);
-
         }
 
         void setup(){
@@ -55,62 +45,55 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
             pTally = new gpuTallyHost( pGrid->getNumCells() );
             pTally->copyToGPU();
 
-            u234s->read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
-            u235s->read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
-            u238s->read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
-            h1s->read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
-            o16s->read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
+            CrossSectionList::Builder xsListBuilder;
+            auto xsBuilder = CrossSectionBuilder();
+            readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
+            xsBuilder.setZAID(92234);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
+            xsBuilder.setZAID(92235);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
+            xsBuilder.setZAID(92238);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
+            xsBuilder.setZAID(1001);
+            xsListBuilder.add(xsBuilder.build());
+            readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
+            xsBuilder.setZAID(8016);
+            xsListBuilder.add(xsBuilder.build());
 
-            metal->add(0, *u234s, 0.01);
-            metal->add(1, *u235s, 0.98);
-            metal->add(2, *u238s, 0.01);
-            metal->copyToGPU();
+            pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
 
-            water->add(0, *h1s, 2.0f/3.0f );
-            water->add(1, *o16s, 1.0f/3.0f );
-            water->copyToGPU();
+            MaterialList::Builder matListBuilder{};
 
-            pMatList->add( 0, *metal, 2 );
-            pMatList->add( 1, *water, 3 );
-            pMatList->copyToGPU();
+            auto mb = Material::make_builder(*pXsList);
+
+            mb.addIsotope(0.01, 92234);
+            mb.addIsotope(0.98, 92235);
+            mb.addIsotope(0.01, 92238);
+            matListBuilder.addMaterial( 2, mb.build() );
+
+
+            mb.addIsotope(2.0f/3.0f, 1001);
+            mb.addIsotope(1.0f/3.0f, 8016);
+            matListBuilder.addMaterial( 3, mb.build() );
+            pMatList = std::make_unique<MaterialList>(matListBuilder.build());
 
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
-
-            u234s->copyToGPU();
-            u235s->copyToGPU();
-            u238s->copyToGPU();
-            h1s->copyToGPU();
-            o16s->copyToGPU();
         }
 
         ~ControllerSetup(){
             delete pGrid;
-            delete pMatList;
             delete pTally;
-            delete u234s;
-            delete u235s;
-            delete u238s;
-            delete h1s;
-            delete o16s;
-            delete metal;
-            delete water;
         }
 
         Grid_t* pGrid;
-        MonteRayMaterialListHost* pMatList;
+        std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
+        std::unique_ptr<CrossSectionList> pXsList;
         gpuTallyHost* pTally;
-
-        MonteRayCrossSectionHost* u234s;
-        MonteRayCrossSectionHost* u235s;
-        MonteRayCrossSectionHost* u238s;
-        MonteRayCrossSectionHost* h1s;
-        MonteRayCrossSectionHost* o16s;
-
-        MonteRayMaterialHost* metal;
-        MonteRayMaterialHost* water;
-
     };
 
     TEST( Reset ) {
@@ -129,7 +112,7 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
         CollisionPointController<Grid_t> controller( 256,
                 256,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 pTally );
 
@@ -186,7 +169,7 @@ SUITE( Ray_bank_controller_with_Cartesian_SpatialGrid_fi_tester ) {
         CollisionPointController<Grid_t> controller( 256,
                 256,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 pTally );
         controller.setCapacity( 1000000 );

@@ -4,23 +4,25 @@
 #include "ManagedAllocator.hh"
 #include "MonteRay_binaryIO.hh"
 #include <algorithm>
+#include "SimpleVector.hh"
 
 #define MATERIAL_LIST_VERSION 1
 namespace MonteRay{
 
-template <typename Material, template <typename... T> class Container = std::vector>
-class MaterialList: public Managed {
+template <typename Material, template <typename... T> class Container = SimpleVector>
+class MaterialList_t: public Managed {
   private:
   Container<Material> materials_;
   Container<unsigned> materialIDs_;
 
-  MaterialList(Container<Material>&& materials, Container<unsigned>&& materialIDs): 
+  MaterialList_t(Container<Material>&& materials, Container<unsigned>&& materialIDs): 
     materials_(materials),
     materialIDs_(materialIDs) 
   {}
 
   public:
   constexpr auto size() const { return materials_.size(); }
+  constexpr auto numMaterials() const { return this->size(); }
   constexpr auto getNumberMaterials() const { return this->size(); }
   constexpr unsigned id(unsigned i) const { return materialIDs_[i]; }
   constexpr const Material& material(unsigned i) const { return materials_[i]; }
@@ -43,7 +45,7 @@ class MaterialList: public Managed {
     if (iter != materialIDs_.end()) {
       return std::distance(materialIDs_.begin(), iter);
     } else {
-      throw std::runtime_error("Material ID " + std::to_string(id) + " not found in MaterialList.");
+      throw std::runtime_error("Material ID " + std::to_string(id) + " not found in MaterialList_t.");
     }
   }
 
@@ -79,7 +81,7 @@ class MaterialList: public Managed {
       unsigned version;
       binaryIO::read(stream, version);
       if (version != MATERIAL_LIST_VERSION){
-        throw std::runtime_error("MaterialList binary IO: file version " + std::to_string(version) + 
+        throw std::runtime_error("MaterialList_t binary IO: file version " + std::to_string(version) + 
             " incompatible with required version " + std::to_string(MATERIAL_LIST_VERSION));
       }
       decltype(b_materials_.size()) numMaterials;
@@ -96,14 +98,20 @@ class MaterialList: public Managed {
       }
     }
 
-    MaterialList build() { 
+    MaterialList_t build() { 
       if (b_materials_.size() == 0) {
-        throw std::runtime_error("Building empty MaterialList");
+        throw std::runtime_error("Building empty MaterialList_t");
       }
-      return MaterialList{std::move(b_materials_), std::move(b_materialIDs_)}; }
+      return MaterialList_t{std::move(b_materials_), std::move(b_materialIDs_)}; }
   };
 };
 
 #undef MATERIAL_LIST_VERSION
 } // end namespace MonteRay
+
+#include "Material.hh"
+namespace MonteRay{
+  using MaterialList = MaterialList_t<Material, SimpleVector>;
+}
+
 #endif

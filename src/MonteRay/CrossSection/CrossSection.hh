@@ -90,6 +90,7 @@ public:
 
     // TODO: combine getTotalXS and getTotalXSViaHash
     constexpr gpuFloatType_t getTotalXS(gpuFloatType_t E ) const {
+
         return getTotalXS( getIndex(E), E);
     }
 
@@ -185,10 +186,10 @@ public:
     gpuFloatType_t b_AWR = 0.0;
     CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION> b_hash;
 
-    template<typename T>
+    template<typename Container>
     CrossSectionBuilder_t( int ZAID,
-                           std::vector<T> energies,
-                           std::vector<T> xsec,
+                           Container&& energies,
+                           Container&& xsec,
                            ParticleType_t type = neutron,
                            gpuFloatType_t AWR = 0.0
                          )
@@ -243,6 +244,7 @@ public:
         b_ZA = HostXS.getZAID();
     }
 
+    void setZAID( int ZA ) { b_ZA = ZA; }
     void setAWR(gpuFloatType_t AWR) { b_AWR = AWR; }
     void setParticleType( ParticleType_t ParticleTypeIn ) { b_ParticleType = ParticleTypeIn; }
 
@@ -251,6 +253,10 @@ public:
     CrossSection_t<HASHFUNCTION> construct(){
         b_hash = CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION>( b_energies );
         return {std::move(b_energies), std::move(b_totalXS), b_ZA, b_ParticleType, b_AWR, std::move(b_hash)};
+    }
+
+    auto build() {
+      return construct();
     }
 
     // TODO: replace w/ readFromFile
@@ -282,8 +288,8 @@ public:
         if( version > 0 ) {
             binaryIO::read(in, numPoints );
         } else {
-            // version 0 wrote an int
-            int N;
+            // version 0 wrote int
+            unsigned N;
             binaryIO::read(in, N );
             numPoints = N;
         }

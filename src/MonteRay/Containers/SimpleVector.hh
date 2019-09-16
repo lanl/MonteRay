@@ -149,7 +149,7 @@ class SimpleVector : public Managed
     } else {
       this->reserve(N);
       // do not default construct all newly allocated elements
-      this->size_ = capacity();
+      this->size_ = N;
     }
   }
 
@@ -164,7 +164,7 @@ class SimpleVector : public Managed
       for (auto it = this->end(); it < this->begin() + N; it++){
         new (it) T{};
       }
-      this->size_ = capacity();
+      this->size_ = N;
     }
   }
 

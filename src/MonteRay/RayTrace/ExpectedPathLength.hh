@@ -12,8 +12,6 @@
 namespace MonteRay{
 
 class gpuTimingHost;
-class MonteRayMaterialListHost;
-class HashLookup;
 class gpuTallyHost;
 class tripleTime;
 class RayWorkInfo;
@@ -31,35 +29,33 @@ tallyCellSegment(const MaterialList* pMatList,
         gpuFloatType_t weight,
         gpuTallyType_t opticalPathLength);
 
-template<unsigned N, typename GRIDTYPE, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 CUDA_CALLABLE_MEMBER void
 tallyCollision(
         unsigned particleID,
-        const GRIDTYPE* pGrid,
+        const Geometry* pGeometry,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
-        const HashLookup* pHash,
         const Ray_t<N>* p,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* pTally
 );
 
-template<unsigned N, typename GRIDTYPE, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 CUDA_CALLABLE_KERNEL 
-rayTraceTally(const GRIDTYPE* pGrid,
+rayTraceTally(const Geometry* pGeometry,
         const RayList_t<N>* pCP,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
-        const HashLookup* pHash,
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* tally);
 
-template<unsigned N, typename GRIDTYPE, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 MonteRay::tripleTime launchRayTraceTally(
         std::function<void (void)> cpuWork,
         int nBlocks,
         int nThreads,
-        const GRIDTYPE* pGrid,
+        const Geometry* pGeometry,
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,

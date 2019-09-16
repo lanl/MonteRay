@@ -3,6 +3,7 @@
 #include <iostream>
 #include <functional>
 #include <memory>
+#include <array>
 #include <unistd.h>
 
 #include "GPUUtilityFunctions.hh"
@@ -10,7 +11,7 @@
 #include "gpuTally.hh"
 
 #include "MonteRay_timer.hh"
-#include "RayListController.hh"
+#include "RayListController.hh" 
 #include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
@@ -18,7 +19,6 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayNextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
 #include "MonteRayParallelAssistant.hh"
 
@@ -33,15 +33,11 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         ControllerSetup(){
             const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
-            //cudaReset();
-            //gpuCheck();
             pGrid = new GridBins();
             pGrid->setVertices( 0, 0.0, 2.0, 2);
             pGrid->setVertices( 1, -10.0, 10.0, 1);
             pGrid->setVertices( 2, -10.0, 10.0, 1);
             pGrid->finalize();
-
-            pMatList = new MonteRayMaterialListHost(1,1,3);
 
             auto matPropBuilder = MaterialProperties::Builder{};
 
@@ -52,13 +48,27 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
             cell2.add( 0, 1.0); // density = 1.0
             matPropBuilder.addCell(cell2);
             
+            CrossSectionList::Builder xsListBuilder;
+            // create ficticous xs w/ zaid 12345
+            std::array<gpuFloatType_t, 4> energies = {1e-11, 0.75, 1.0, 3.0};
+            std::array<gpuFloatType_t, 4> xs_values = {1.0, 1.0, 2.0, 4.0};
+            constexpr gpuFloatType_t AWR = gpu_AvogadroBarn / gpu_neutron_molar_mass;
+            CrossSectionBuilder xsBuilder(12345, energies, xs_values, neutron, AWR);
+
+            xsListBuilder.add(xsBuilder.construct());
+            pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+
+            // using CrossSectionList as a dictionary, create materials and material list
+            auto matBuilder = Material::make_builder(*pXsList);
+
+            matBuilder.addIsotope(1.0, 12345);
+            // create list builder and add material to list w/ id 0 
+            MaterialList::Builder matListBuilder(0, matBuilder.build());
+            pMatList = std::make_unique<MaterialList>(matListBuilder.build());
+
             matPropBuilder.renumberMaterialIDs(*pMatList);
+
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
-
-            pXS = new MonteRayCrossSectionHost(4);
-
-            pMat = new MonteRayMaterialHost(1);
-
 
         }
 
@@ -68,35 +78,17 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
             if( PA.getWorkGroupRank() !=0  ) return;
             pGrid->copyToGPU();
 
-            pXS->setParticleType( photon );
-            pXS->setTotalXS(0, 1e-11, 1.0 );
-            pXS->setTotalXS(1, 0.75, 1.0 );
-            pXS->setTotalXS(2, 1.00, 2.0 );
-            pXS->setTotalXS(3, 3.00, 4.0 );
-            pXS->setAWR( gpu_AvogadroBarn / gpu_neutron_molar_mass );
-
-            pMat->add(0, *pXS, 1.0);
-            pMat->copyToGPU();
-
-            pMatList->add( 0, *pMat, 0 );
-            pMatList->copyToGPU();
-
-            pXS->copyToGPU();
 
         }
 
         ~ControllerSetup(){
             delete pGrid;
-            delete pMatList;
-            delete pXS;
-            delete pMat;
         }
 
         GridBins* pGrid;
-        MonteRayMaterialListHost* pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        MonteRayCrossSectionHost* pXS;
-        MonteRayMaterialHost* pMat;
+        std::unique_ptr<MaterialList> pMatList;
+        std::unique_ptr<CrossSectionList> pXsList;
 
     };
 
@@ -122,7 +114,7 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         NextEventEstimatorController<GridBins> controller( 1,
                 1,
                 pGrid,
-                pMatList,
+                pMatList.get(),
                 pMatProps.get(),
                 numPointDets );
 
@@ -180,8 +172,6 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
             CHECK_EQUAL( 0, controller.capacity());
         }
 
-        //        std::cout << "Debug: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \n";
-        //        std::cout << "Debug: RayListController_wNexteVentEstimator_fi_tester.cc:: testOnGPU - flushing \n";
         controller.sync();
         controller.flush(true);
         controller.sync();
@@ -199,144 +189,5 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         }
     }
 }
-
-//SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
-//
-//    class ControllerSetup {
-//    public:
-//        ControllerSetup(){
-//
-//            std::vector<double> xverts, yverts, zverts;
-//
-//            xverts.push_back(-10.0); xverts.push_back(0.0); xverts.push_back(1.0); xverts.push_back(11.0);
-//            yverts.push_back(-10.0); yverts.push_back(10.0);
-//            zverts.push_back(-10.0); zverts.push_back(10.0);
-//
-//            //cudaReset();
-//            //gpuCheck();
-//            pGrid = new GridBins();
-//            pGrid->setVertices( 0, xverts );
-//            pGrid->setVertices( 1, yverts );
-//            pGrid->setVertices( 2, zverts );
-//            pGrid->finalize();
-//
-//            pMatProps = new MaterialProperties;
-//
-//            MonteRay_CellProperties cell1, cell2;
-//            cell1.add( 0, 0.0); // vacuum
-//            pMatProps->add( cell1 );
-//
-//            cell2.add( 0, 10.0); // density = 10.0
-//            pMatProps->add( cell2 );
-//            pMatProps->add( cell1 );
-//
-//            pXS = new MonteRayCrossSectionHost(1);
-//
-//            pMat = new MonteRayMaterialHost(1);
-//
-//            pMatList = new MonteRayMaterialListHost(1,1,3);
-//
-//        }
-//
-//        void setup(){
-//
-//            pGrid->copyToGPU();
-//            pXS->read( "MonteRayTestFiles/92000-04p_MonteRayCrossSection.bin");
-//            CHECK_EQUAL( photon, pXS->getParticleType());
-//
-//            pMat->add(0, *pXS, 1.0);
-//            pMat->copyToGPU();
-//
-//            pMatList->add( 0, *pMat, 0 );
-//            pMatList->copyToGPU();
-//
-//            pMatProps->renumberMaterialIDs(*pMatList);
-//            pMatProps->copyToGPU();
-//
-//            pXS->copyToGPU();
-//
-//        }
-//
-//        ~ControllerSetup(){
-//            delete pGrid;
-//            delete pMatList;
-//            delete pMatProps;
-//            delete pXS;
-//            delete pMat;
-//        }
-//
-//        GridBins* pGrid;
-//        MonteRayMaterialListHost* pMatList;
-//        MaterialProperties* pMatProps;
-//        MonteRayCrossSectionHost* pXS;
-//        MonteRayMaterialHost* pMat;
-//    };
-//
-//#if true
-//    TEST_FIXTURE(ControllerSetup, testOnGPU ){
-//        unsigned numPointDets = 1;
-//
-//        setup();
-//        NextEventEstimatorController<GridBins> controller( 1,
-//                1,
-//                pGrid,
-//                pMatList,
-//                pMatProps,
-//                numPointDets );
-//        controller.setCapacity(10);
-//
-//        CHECK_EQUAL( true, controller.isUsingNextEventEstimator() );
-//        unsigned id = controller.addPointDet( 5.0, 0.0, 0.0 );
-//        CHECK_EQUAL( 0, id);
-//
-//        gpuFloatType_t microXS = pXS->getTotalXS( 1.0 );
-//        CHECK_CLOSE( 30.9887, microXS, 1e-4);
-//
-//        gpuFloatType_t AWR = pXS->getAWR();
-//        CHECK_CLOSE( 235.984, AWR, 1e-3);
-//        gpuFloatType_t AW = AWR * gpu_neutron_molar_mass;
-//        //printf("Debug: AW=%20.10f \n", AW);
-//        CHECK_CLOSE( 238.0287933350, AW , 1e-3 );
-//
-//        //getMicroTotalXS(ptr, E ) * density * gpu_AvogadroBarn / ptr->AtomicWeight;
-//        //ptr->AtomicWeight = total * gpu_neutron_molar_mass;
-//        gpuFloatType_t expectedXS = microXS * 10.0f * gpu_AvogadroBarn /  AW;
-//        //printf("Debug: expectedXS=%20.12f \n", expectedXS);
-//        gpuFloatType_t xs = pMatList->getTotalXS(0, 1.0, 10.0, photon);
-//        gpuFloatType_t Mat_AWR = pMat->getAtomicWeight();
-//        //printf("Debug: Mat_AWR=%20.10f \n", Mat_AWR);
-//
-//        double diffFromMCATK = std::abs(xs - 0.78365591543) * 100.0 / 0.78365591543;
-//        // printf("Debug: Percent Diff=%20.10f \n", diffFromMCATK);
-//        CHECK( diffFromMCATK < 0.1 ); // LinLin conversion threshold error
-//
-//        CHECK_CLOSE( 0.784014642239, xs, 1e-6 );
-//        CHECK_CLOSE( 0.784014642239, expectedXS, 1e-6 );
-//        CHECK_CLOSE( expectedXS, xs, 1e-6 );
-//        CHECK_CLOSE( 238.0287933350, Mat_AWR , 1e-3 );
-//        CHECK_CLOSE( AW, Mat_AWR , 1e-3 );
-//
-//        controller.copyPointDetToGPU();
-//        controller.sync();
-//        unsigned numParticles = controller.readCollisionsFromFile("MonteRayTestFiles/U-04p_slab_single_source_ray_collisionFile.bin");
-//        CHECK_EQUAL( 1, numParticles );
-//        controller.sync();
-//        controller.copyPointDetTallyToCPU();
-//
-//        double expectedScore = (0.5/(2.0*MonteRay::pi*(5.001*5.001))) *  exp( -1.0*xs);
-//
-//        double monteRayValue = controller.getPointDetTally(0);
-//        double mcatkValue = 1.4532455123e-03;
-//        diffFromMCATK = std::abs(monteRayValue - mcatkValue) * 100.0 / mcatkValue;
-//        //     	printf("Debug: MonteRay Score = %20.10f \n", monteRayValue);
-//        //     	printf("Debug: Score Percent Diff from MCATK=%20.10f \n", diffFromMCATK);
-//        CHECK( diffFromMCATK < 0.036 ); // percent difference = 3 one hundredths of a percent
-//
-//        CHECK_CLOSE( expectedScore, monteRayValue, 1e-7);
-//        CHECK_CLOSE( 0.0014527244, monteRayValue, 1e-8 );
-//        //		CHECK(false);
-//    }
-//#endif
-//}
 
 } // end namespace
