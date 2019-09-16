@@ -83,8 +83,9 @@ public:
 
   CUDA_CALLABLE_MEMBER
   gpuTallyType_t getTally(int spatial_index, int time_index = 0 ) const {
-    MONTERAY_ASSERT(data_.size() < getIndex(spatial_index, time_index));
-    return data_[ getIndex(spatial_index, time_index) ];
+    int index = getIndex(spatial_index, time_index);
+    MONTERAY_ASSERT(data_.size() > index);
+    return data_[ index ];
   }
 
   CUDA_CALLABLE_MEMBER
