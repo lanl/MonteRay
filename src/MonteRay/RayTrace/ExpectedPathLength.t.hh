@@ -127,7 +127,7 @@ MonteRay::tripleTime launchRayTraceTally(
     rayTraceTally<<<nBlocks,nThreads,0,stream>>>(
             pGeometry->getDevicePtr(),
             pCP->getPtrPoints()->devicePtr,
-            pMatList->ptr_device,
+            pMatList,
             pMatProps,
             pRayInfo.get(),
             pTally->temp->tally );
@@ -163,7 +163,7 @@ MonteRay::tripleTime launchRayTraceTally(
 
     rayTraceTally( pGeometry->getPtr(),
             pCP->getPtrPoints(),
-            pMatList->getPtr(),
+            pMatList,
             pMatProps,
             pRayInfo.get(),
             pTally->getPtr()->tally

@@ -16,7 +16,7 @@
 #include "MonteRayMaterialList.hh"
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 
 namespace RayListController_fi_tester {
 
