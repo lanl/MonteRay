@@ -35,7 +35,7 @@ SUITE( CopyMemory_tester ) {
         }
 
         void copy(const testCopyClass* rhs) {
-#ifdef DEBUG
+#ifndef NDEBUG
             if( debug ) {
                 std::cout << "Debug: testCopyClass::operator= (const RayList_t<N>& rhs) \n";
             }

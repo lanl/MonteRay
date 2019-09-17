@@ -75,7 +75,7 @@ MonteRay_GridSystemInterface::orderCrossings(
 
     // Order the distance crossings to provide a rayTrace
 
-#ifdef DEBUG
+#ifndef NDEBUG
     const bool debug = false;
 
     if( debug ) {
@@ -103,7 +103,7 @@ MonteRay_GridSystemInterface::orderCrossings(
         maxNumCrossings += end[i];
     }
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- maxNumCrossings=%d\n",maxNumCrossings);
 #endif
 
@@ -122,7 +122,7 @@ MonteRay_GridSystemInterface::orderCrossings(
             }
         }
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug )  {
             for( unsigned d = 0; d<NUMDIM; ++d) {
                 printf( "Debug: GridSystemInterface::orderCrossings -- dim=%u, minDistance[%u]=%f\n",d, d, minDistances[d]);
@@ -139,7 +139,7 @@ MonteRay_GridSystemInterface::orderCrossings(
             }
         }
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- minDim=%d\n",minDim);
         if( debug ) printf( "Debug: GridSystemInterface::orderCrossings -- minDist=%f\n",minDist);
 #endif
@@ -149,7 +149,7 @@ MonteRay_GridSystemInterface::orderCrossings(
         // test for outside of the grid
         outside = isOutside( indices );
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) {
             if( outside )  printf( "Debug: ray is outside \n" );
             if( !outside ) printf( "Debug: ray is inside \n" );
@@ -172,7 +172,7 @@ MonteRay_GridSystemInterface::orderCrossings(
             }
             rayInfo.addRayCastCell( threadID, global_index, deltaDistance );
 
-#ifdef DEBUG
+#ifndef NDEBUG
             if( debug ) {
                 printf( "Debug: ****************** \n" );
                 printf( "Debug:  Entry Num    = %d\n", rayInfo.getRayCastSize(threadID) );
@@ -189,7 +189,7 @@ MonteRay_GridSystemInterface::orderCrossings(
             break;
         }
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) {
             if( start[minDim]+1 >= rayInfo.getCrossingSize(minDim,threadID) ) {
                 printf( "Debug: Error - start[minDim]+1 >= distances[minDim].size() \n");
@@ -260,7 +260,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
         const gpuRayFloat_t distance,
         const int start_index) const {
 
-#ifdef DEBUG
+#ifndef NDEBUG
     const bool debug = false;
 
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
@@ -273,7 +273,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     if( std::abs(dir) <= FLT_EPSILON ) { return; }
 #endif
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance  -- Bins=%p \n", &Bins );
 #endif
 
@@ -285,7 +285,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
 
     int nBins = Bins.getNumBins();
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - nBins=%d\n", nBins );
 #endif
 
@@ -301,7 +301,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     unsigned offset = int(std::signbit(-dir));
 #endif
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - offset=%d\n", offset );
 #endif
 

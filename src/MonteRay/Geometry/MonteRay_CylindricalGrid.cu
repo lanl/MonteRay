@@ -71,7 +71,7 @@ CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_CylindricalGrid::copyToGPU(void) {
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) std::cout << "Debug: MonteRay_CylindricalGrid::copyToGPU \n";
 #endif
 
@@ -148,14 +148,14 @@ MonteRay_CylindricalGrid::convertFromCartesian( const Position_t& pos) const {
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CylindricalGrid::getIndex( const Position_t& particle_pos) const{
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) { printf("Debug: MonteRay_CylindricalGrid::getIndex -- starting\n"); }
 #endif
 
     int indices[3]= {0, 0, 0};
     Position_t pos = convertFromCartesian( particle_pos );
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) { printf("%i\n", pRVertices->isRadial() ); }
 #endif
 
@@ -269,7 +269,7 @@ MonteRay_CylindricalGrid::rayTrace(
         const gpuRayFloat_t distance,
         const bool outsideDistances ) const{
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- \n");
 #endif
 
@@ -280,13 +280,13 @@ MonteRay_CylindricalGrid::rayTrace(
         gpuRayFloat_t particleRSq = calcParticleRSq( pos );
         indices[R] = pRVertices->getRadialIndexFromRSq(particleRSq);
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- R Direction -  dimension=%d, index=%d\n", R, indices[R]);
 #endif
 
         radialCrossingDistances(R, threadID, rayInfo, pos, dir, particleRSq, indices[R], distance );
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- R Direction -  dimension=%d, number of radial crossings = %d\n", R, rayInfo.getCrossingSize(R,threadID) );
 #endif
 
@@ -300,13 +300,13 @@ MonteRay_CylindricalGrid::rayTrace(
     if( DIM  > 1 ) {
         indices[Z] = pZVertices->getLinearIndex( pos[z] );
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- Z Direction -  dimension=%d, index=%d\n", Z, indices[Z]);
 #endif
 
         planarCrossingDistance( Z, threadID, rayInfo, *pZVertices, pos[z], dir[z], distance, indices[Z] );
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- Z Direction -  dimension=%d, number of planar crossings = %d\n", Z, rayInfo.getCrossingSize(Z,threadID) );
 #endif
 
@@ -318,7 +318,7 @@ MonteRay_CylindricalGrid::rayTrace(
 
     orderCrossings<2>( threadID, rayInfo, indices, distance, outsideDistances );
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- number of total crossings = %d\n", rayInfo.getRayCastSize(threadID) );
 #endif
     return;
@@ -360,7 +360,7 @@ MonteRay_CylindricalGrid::radialCrossingDistances(
         const gpuRayFloat_t distance ) const {
     //------ Distance to Cylinder's Radial-boundary
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         printf("Debug: MonteRay_CylindricalGrid::radialCrossingDistances -- \n");
     }
@@ -381,7 +381,7 @@ MonteRay_CylindricalGrid::radialCrossingDistances(
             distance,
             rIndex);
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         printf("Debug: Inward ray trace size=%d\n",rayInfo.getCrossingSize(dim, threadID));
         if( rayTerminated ) {
@@ -422,7 +422,7 @@ unsigned
 MonteRay_CylindricalGrid::getNumBins( unsigned d) const {
     MONTERAY_ASSERT( d < COORD_DIM );
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins -- d= %d\n", d);
     if( debug ) printf("Debug: MonteRay_CylindricalGrid::getNumBins --calling pGridBins[d]->getNumBins()\n");
 #endif

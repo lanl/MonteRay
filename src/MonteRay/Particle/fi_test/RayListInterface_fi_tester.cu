@@ -5,6 +5,7 @@
 
 #include "fi_genericGPU_test_helper.hh"
 
+#include "ReadAndWriteFiles.hh"
 #include "GPUUtilityFunctions.hh"
 #include "gpuTally.hh"
 #include "ExpectedPathLength.t.hh"
@@ -32,21 +33,22 @@ SUITE( RayListInterface_fi_tester ) {
         FIGenericGPUTestHelper<1> helper(points->size());
         points->copyToGPU();
 
-        MonteRayCrossSectionHost* xs = new MonteRayCrossSectionHost(1);
-        xs->read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin");
-        xs->copyToGPU();
+        CrossSectionList::Builder xsListBuilder;
+        auto xsBuilder = CrossSectionBuilder();
+        readInPlaceFromFile("MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder);
+        xsBuilder.setZAID(92235);
+        auto xsPtr = std::make_unique<CrossSection>(xsBuilder.build());
 
         gpuFloatType_t energy = points->getEnergy(0);
-        gpuFloatType_t expected = getTotalXS(xs->getXSPtr(), energy);
+        gpuFloatType_t expected = xsPtr->getTotalXS(energy);
         CHECK_CLOSE(  7.85419f, expected, 1e-5);
 
         helper.setupTimers();
-        helper.launchTallyCrossSection(1, 1024, points, xs);
+        helper.launchTallyCrossSection(1, 1024, points, xsPtr.get());
         helper.stopTimers();
 
         CHECK_CLOSE( expected, helper.getTally(0), 1e-7 );
 
-        delete xs;
         delete points;
     }
 
@@ -56,47 +58,44 @@ SUITE( RayListInterface_fi_tester ) {
         FIGenericGPUTestHelper<1> helper(points.size());
         points.copyToGPU();
 
-        MonteRayCrossSectionHost u234s(1);
-        MonteRayCrossSectionHost u235s(1);
-        MonteRayCrossSectionHost u238s(1);
-        MonteRayCrossSectionHost h1s(1);
-        MonteRayCrossSectionHost o16s(1);
+        CrossSectionList::Builder xsListBuilder;
+        auto xsBuilder = CrossSectionBuilder();
+        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92234);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92235);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92238);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(1001);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(8016);
+        xsListBuilder.add(xsBuilder.build());
 
-        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
+        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
 
-        MonteRayMaterialHost metal(3);
-        metal.add(0, u234s, 0.01);
-        metal.add(1, u235s, 0.98);
-        metal.add(2, u238s, 0.01);
-        metal.copyToGPU();
+        MaterialList::Builder matListBuilder{};
+        auto mb = Material::make_builder(*pXsList);
+        mb.addIsotope(0.01, 92234);
+        mb.addIsotope(0.98, 92235);
+        mb.addIsotope(0.01, 92238);
+        matListBuilder.addMaterial(0, mb.build() );
 
-        MonteRayMaterialHost water(2);
-        water.add(0, h1s, 0.667 );
-        water.add(1, o16s, 0.333 );
-        water.copyToGPU();
-
-        MonteRayMaterialListHost matList(2,5);
-        matList.add( 0, metal, 0 );
-        matList.add( 1, water, 1 );
-        matList.copyToGPU();
-
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
+        mb.addIsotope(0.667, 1001);
+        mb.addIsotope(0.333, 8016);
+        matListBuilder.addMaterial(1, mb.build() );
+        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
 
         gpuFloatType_t energy = points.getEnergy(0);
-        unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected = getTotalXS(matList.getPtr(), 0, matList.getHashPtr()->getPtr(), HashBin, energy, 18.0 );
+        gpuFloatType_t expected = pMatList->material(0).getTotalXS( energy, 18.0 );
         CHECK_CLOSE(  0.36215, expected, 1e-5);
 
         helper.setupTimers();
-        helper.launchTallyCrossSection(1, 1024, &points, &matList, 0, 18.0);
+        helper.launchTallyCrossSection(1, 1024, &points, pMatList.get(), 0, 18.0);
         helper.stopTimers();
 
         CHECK_CLOSE( expected, helper.getTally(0), 1e-7 );
@@ -115,56 +114,50 @@ SUITE( RayListInterface_fi_tester ) {
         mpb.disableMemoryReduction();
         mpb.setMaterialDescription( readerObject );
 
-        MonteRayCrossSectionHost u234s(1);
-        MonteRayCrossSectionHost u235s(1);
-        MonteRayCrossSectionHost u238s(1);
-        MonteRayCrossSectionHost h1s(1);
-        MonteRayCrossSectionHost o16s(1);
+        CrossSectionList::Builder xsListBuilder;
+        auto xsBuilder = CrossSectionBuilder();
+        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92234);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92235);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92238);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(1001);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(8016);
+        xsListBuilder.add(xsBuilder.build());
 
-        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
+        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
 
-        MonteRayMaterialHost metal(3);
-        metal.add(0, u234s, 0.01);
-        metal.add(1, u235s, 0.98);
-        metal.add(2, u238s, 0.01);
-        metal.copyToGPU();
+        MaterialList::Builder matListBuilder{};
+        auto mb = Material::make_builder(*pXsList);
+        mb.addIsotope(0.01, 92234);
+        mb.addIsotope(0.98, 92235);
+        mb.addIsotope(0.01, 92238);
+        matListBuilder.addMaterial(2, mb.build() );
 
-        MonteRayMaterialHost water(2);
-        water.add(0, h1s, 0.667 );
-        water.add(1, o16s, 0.333 );
-        water.copyToGPU();
+        mb.addIsotope(0.667, 1001);
+        mb.addIsotope(0.333, 8016);
+        matListBuilder.addMaterial(3, mb.build() );
+        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
 
-        MonteRayMaterialListHost matList(2,5);
-        matList.add( 0, metal, 2 );
-        matList.add( 1, water, 3 );
-        matList.copyToGPU();
-
-        mpb.renumberMaterialIDs( matList );
+        mpb.renumberMaterialIDs( *pMatList );
         auto mp = std::make_unique<MaterialProperties>(mpb.build());
-
-
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
 
         gpuFloatType_t energy = points.getEnergy(0);
         unsigned cell = points.getIndex(0);
-        unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected1 = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
-        gpuFloatType_t expected2 = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), cell, energy );
+        gpuFloatType_t expected1 = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-5);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected1, 1e-6);
-        CHECK_CLOSE( expected2, expected1, 1e-6);
 
         helper.setupTimers();
-        helper.launchTallyCrossSectionAtCollision(1, 1024, &points, &matList, mp.get() );
+        helper.launchTallyCrossSectionAtCollision(1, 1024, &points, pMatList.get(), mp.get() );
         helper.stopTimers();
 
         CHECK_CLOSE( expected1, helper.getTally(0), 1e-7 );
@@ -183,49 +176,47 @@ SUITE( RayListInterface_fi_tester ) {
         points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
         points.copyToGPU();
 
-        MonteRayCrossSectionHost u234s(1);
-        MonteRayCrossSectionHost u235s(1);
-        MonteRayCrossSectionHost u238s(1);
-        MonteRayCrossSectionHost h1s(1);
-        MonteRayCrossSectionHost o16s(1);
+        CrossSectionList::Builder xsListBuilder;
+        auto xsBuilder = CrossSectionBuilder();
+        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92234);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92235);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92238);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(1001);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(8016);
+        xsListBuilder.add(xsBuilder.build());
 
-        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
+        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
 
-        MonteRayMaterialHost metal(3);
-        metal.add(0, u234s, 0.01);
-        metal.add(1, u235s, 0.98);
-        metal.add(2, u238s, 0.01);
-        metal.copyToGPU();
+        MaterialList::Builder matListBuilder{};
+        auto mb = Material::make_builder(*pXsList);
+        mb.addIsotope(0.01, 92234);
+        mb.addIsotope(0.98, 92235);
+        mb.addIsotope(0.01, 92238);
+        matListBuilder.addMaterial(2, mb.build() );
 
-        MonteRayMaterialHost water(2);
-        water.add(0, h1s, 0.667 );
-        water.add(1, o16s, 0.333 );
-        water.copyToGPU();
+        mb.addIsotope(0.667, 1001);
+        mb.addIsotope(0.333, 8016);
+        matListBuilder.addMaterial(3, mb.build() );
+        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
 
-        MonteRayMaterialListHost matList(2,5);
-        matList.add( 0, metal, 2 );
-        matList.add( 1, water, 3 );
-        matList.copyToGPU();
 
-        mpb.renumberMaterialIDs( matList );
+        mpb.renumberMaterialIDs( *pMatList );
         auto mp = std::make_unique<MaterialProperties>(mpb.build());
 
         FIGenericGPUTestHelper<1> helper( mp->numCells() );
 
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
-
         gpuFloatType_t energy = points.getEnergy(0);
         unsigned cell = points.getIndex(0);
-        unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-5);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected, 1e-6);
@@ -234,14 +225,13 @@ SUITE( RayListInterface_fi_tester ) {
         for( unsigned i=0; i<points.size(); ++i){
             if( points.getIndex(i) == cell ) {
                 energy = points.getEnergy(i);
-                HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-                expected += helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+                expected += helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
             }
         }
         CHECK_CLOSE( 16.6541, expected, 1e-3);
 
         helper.setupTimers();
-        helper.launchSumCrossSectionAtCollisionLocation(1, 1024, &points, &matList, mp.get() );
+        helper.launchSumCrossSectionAtCollisionLocation(1, 1024, &points, pMatList.get(), mp.get() );
         helper.stopTimers();
 
         CHECK_CLOSE( expected, helper.getTally(cell), 1e-3 );
@@ -267,42 +257,40 @@ SUITE( RayListInterface_fi_tester ) {
         mpb.disableMemoryReduction();
         mpb.setMaterialDescription( readerObject );
 
-        MonteRayCrossSectionHost u234s(1);
-        MonteRayCrossSectionHost u235s(1);
-        MonteRayCrossSectionHost u238s(1);
-        MonteRayCrossSectionHost h1s(1);
-        MonteRayCrossSectionHost o16s(1);
+        CrossSectionList::Builder xsListBuilder;
+        auto xsBuilder = CrossSectionBuilder();
+        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92234);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92235);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92238);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(1001);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(8016);
+        xsListBuilder.add(xsBuilder.build());
 
-        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
+        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
 
-        MonteRayMaterialHost metal(3);
-        metal.add(0, u234s, 0.01);
-        metal.add(1, u235s, 0.98);
-        metal.add(2, u238s, 0.01);
-        metal.copyToGPU();
+        MaterialList::Builder matListBuilder{};
+        auto mb = Material::make_builder(*pXsList);
+        mb.addIsotope(0.01, 92234);
+        mb.addIsotope(0.98, 92235);
+        mb.addIsotope(0.01, 92238);
+        matListBuilder.addMaterial(2, mb.build() );
 
-        MonteRayMaterialHost water(2);
-        water.add(0, h1s, 0.667 );
-        water.add(1, o16s, 0.333 );
-        water.copyToGPU();
+        mb.addIsotope(0.667, 1001);
+        mb.addIsotope(0.333, 8016);
+        matListBuilder.addMaterial(3, mb.build() );
+        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
 
-        MonteRayMaterialListHost matList(2,5);
-        matList.add( 0, metal, 2 );
-        matList.add( 1, water, 3 );
-        matList.copyToGPU();
-
-        mpb.renumberMaterialIDs( matList );
+        mpb.renumberMaterialIDs( *pMatList );
         auto mp = std::make_unique<MaterialProperties>(mpb.build());
-
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
 
         RayListInterface<1> points(2);
         points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
@@ -312,14 +300,13 @@ SUITE( RayListInterface_fi_tester ) {
 
         gpuFloatType_t energy = points.getEnergy(0);
         unsigned cell = points.getIndex(0);
-        unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-6);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected, 1e-6);
 
         helper.setupTimers();
-        helper.launchRayTraceTally(1, 256, &points, &matList, mp.get() );
+        helper.launchRayTraceTally(1, 256, &points, pMatList.get(), mp.get() );
         helper.stopTimers();
 
         //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
@@ -368,42 +355,40 @@ SUITE( Collision_fi_looping_tester ) {
         mpb.disableMemoryReduction();
         mpb.setMaterialDescription( readerObject );
 
-        MonteRayCrossSectionHost u234s(1);
-        MonteRayCrossSectionHost u235s(1);
-        MonteRayCrossSectionHost u238s(1);
-        MonteRayCrossSectionHost h1s(1);
-        MonteRayCrossSectionHost o16s(1);
+        CrossSectionList::Builder xsListBuilder;
+        auto xsBuilder = CrossSectionBuilder();
+        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92234);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92235);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(92238);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(1001);
+        xsListBuilder.add(xsBuilder.build());
+        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
+        xsBuilder.setZAID(8016);
+        xsListBuilder.add(xsBuilder.build());
 
-        u234s.read( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin" );
-        u235s.read( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin" );
-        u238s.read( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin" );
-        h1s.read( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin" );
-        o16s.read( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin" );
+        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
 
-        MonteRayMaterialHost metal(3);
-        metal.add(0, u234s, 0.01);
-        metal.add(1, u235s, 0.98);
-        metal.add(2, u238s, 0.01);
-        metal.copyToGPU();
+        MaterialList::Builder matListBuilder{};
+        auto mb = Material::make_builder(*pXsList);
+        mb.addIsotope(0.01, 92234);
+        mb.addIsotope(0.98, 92235);
+        mb.addIsotope(0.01, 92238);
+        matListBuilder.addMaterial(2, mb.build() );
 
-        MonteRayMaterialHost water(2);
-        water.add(0, h1s, 0.667 );
-        water.add(1, o16s, 0.333 );
-        water.copyToGPU();
+        mb.addIsotope(0.667, 1001);
+        mb.addIsotope(0.333, 8016);
+        matListBuilder.addMaterial(3, mb.build() );
+        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
 
-        MonteRayMaterialListHost matList(2,5);
-        matList.add( 0, metal, 2 );
-        matList.add( 1, water, 3 );
-        matList.copyToGPU();
-
-        mpb.renumberMaterialIDs( matList );
+        mpb.renumberMaterialIDs( *pMatList );
         auto mp = std::make_unique<MaterialProperties>(mpb.build());
-
-        u234s.copyToGPU();
-        u235s.copyToGPU();
-        u238s.copyToGPU();
-        h1s.copyToGPU();
-        o16s.copyToGPU();
 
         RayListInterface<1> bank1(100000);
         bool end = false;
@@ -413,8 +398,7 @@ SUITE( Collision_fi_looping_tester ) {
 
         gpuFloatType_t energy = bank1.getEnergy(0);
         unsigned cell = bank1.getIndex(0);
-        unsigned HashBin = getHashBin( matList.getHashPtr()->getPtr(), energy );
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), matList.getPtr(), matList.getHashPtr()->getPtr(), HashBin, cell, energy );
+        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
         CHECK_CLOSE( 4.44875, energy, 1e-5);
         CHECK_EQUAL( 485557, cell);
         CHECK_CLOSE( 0.353442, expected, 1e-6);
@@ -450,7 +434,7 @@ SUITE( Collision_fi_looping_tester ) {
                     256,
                     &grid,
                     &bank1,
-                    &matList,
+                    pMatList.get(),
                     mp.get(),
                     &tally);
 
@@ -471,7 +455,7 @@ SUITE( Collision_fi_looping_tester ) {
                     256,
                     &grid,
                     &bank2,
-                    &matList,
+                    pMatList.get(),
                     mp.get(),
                     &tally);
 

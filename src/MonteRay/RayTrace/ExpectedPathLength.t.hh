@@ -127,7 +127,7 @@ MonteRay::tripleTime launchRayTraceTally(
     rayTraceTally<<<nBlocks,nThreads,0,stream>>>(
             pGeometry->getDevicePtr(),
             pCP->getPtrPoints()->devicePtr,
-            pMatList->ptr_device,
+            pMatList,
             pMatProps,
             pRayInfo.get(),
             pTally->temp->tally );
@@ -163,7 +163,7 @@ MonteRay::tripleTime launchRayTraceTally(
 
     rayTraceTally( pGeometry->getPtr(),
             pCP->getPtrPoints(),
-            pMatList->getPtr(),
+            pMatList,
             pMatProps,
             pRayInfo.get(),
             pTally->getPtr()->tally
@@ -193,7 +193,7 @@ inline tallyCellSegment( const MaterialList* pMatList,
         gpuFloatType_t weight,
         gpuTallyType_t opticalPathLength ) {
 
-#ifdef DEBUG
+#ifndef NDEBUG
     const bool debug = false;
 #endif
 
@@ -204,7 +204,7 @@ inline tallyCellSegment( const MaterialList* pMatList,
     xs_t totalXS = 0.0;
     unsigned numMaterials = pMatProps->numMats(cell);
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         printf("GPU::tallyCellSegment:: cell=%d, numMaterials=%d\n", cell, numMaterials);
     }
@@ -234,7 +234,7 @@ inline tallyCellSegment( const MaterialList* pMatList,
 
     gpu_atomicAdd( &tally[cell], score);
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         printf("GPU::tallyCellSegment:: total score=%f\n", tally[cell] );
     }

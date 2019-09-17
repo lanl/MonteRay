@@ -18,11 +18,16 @@ struct Geometry : public Managed {
       rayInfo.addCrossingCell(0, threadID, 0, distance);
       rayInfo.addRayCastCell(threadID, 0, distance);
   }
+  const auto getDevicePtr() const { return this; }
 };
 
 struct MaterialList : public Managed {
+  struct Material{
+    constexpr double getTotalXS(double, double) const {return 0.5;}
+  };
   constexpr int numMaterials() const {return 1;}
   constexpr double getTotalXS(int, double, double) const {return 0.5;}
+  constexpr auto material(int) const {return Material{}; }
 };
 
 struct MaterialProperties : public Managed {
@@ -131,7 +136,7 @@ SUITE( NextEventEstimator_Tester ) {
     for(int i =0; i < max_n_rays; i++){
       bank.add(ray);
     }
-    pNee->cpuScoreRayList(&bank, pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get());
+    cpuScoreRayList(pNee.get(), &bank, pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get());
   }
 
   TEST_FIXTURE(NEE_Fixture, launch_ScoreRayList){
@@ -143,7 +148,7 @@ SUITE( NextEventEstimator_Tester ) {
     bank.copyToGPU();
     auto stream = std::make_unique<cudaStream_t>();
     *stream = 0; // default stream
-    pNee->launch_ScoreRayList(1, 1, &bank, pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get(), stream.get() );
+    launch_ScoreRayList(pNee.get(), 1, 1, &bank, pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get(), stream.get() );
     cudaDeviceSynchronize();
     CHECK_CLOSE(max_n_rays*1.0/(2.0*M_PI)*std::exp(-1.0), pNee->getTally(0, 0), 1E-6); 
 #endif

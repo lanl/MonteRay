@@ -182,7 +182,7 @@ std::pair<unsigned, unsigned> setLaunchBounds( int nThreadsArg, int nRaysPerThre
     // returns pair(nBlocks,nThreads)
 
 #ifndef __CUDACC__
-    return (1, 1);
+    return {1, 1};
 #endif
 
     unsigned nRaysPerThread = std::abs(nRaysPerThreadArg);

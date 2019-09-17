@@ -2,6 +2,7 @@
 #define MONTERAY_TALLY_HH_
 
 #include <vector>
+#include <cstring>
 #include <string>
 #include <memory>
 
@@ -83,8 +84,9 @@ public:
 
   CUDA_CALLABLE_MEMBER
   gpuTallyType_t getTally(int spatial_index, int time_index = 0 ) const {
-    MONTERAY_ASSERT(data_.size() < getIndex(spatial_index, time_index));
-    return data_[ getIndex(spatial_index, time_index) ];
+    int index = getIndex(spatial_index, time_index);
+    MONTERAY_ASSERT(data_.size() > index);
+    return data_[ index ];
   }
 
   CUDA_CALLABLE_MEMBER
@@ -108,7 +110,7 @@ public:
     }
 
     if( MonteRayParallelAssistant::getInstance().getInterWorkGroupRank() != 0 ) {
-        memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
+      std::memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
     } else {
         data_ = std::move(globalData);
     }
@@ -129,7 +131,7 @@ public:
     }
 
     if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) {
-        memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
+      std::memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
     } else {
         data_ = std::move(globalData);
     }

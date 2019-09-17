@@ -135,7 +135,7 @@ private:
 
     //bool regular = false;
 
-#ifdef DEBUG
+#ifndef NDEBUG
     static const bool debug = false;
 #endif
 };

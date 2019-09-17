@@ -1,9 +1,6 @@
 #ifndef SIMPLEVIEW_H_
 #define SIMPLEVIEW_H_
 
-#include <cassert>
-#include "MonteRayAssert.hh"
-
 namespace MonteRay{
 template <class T>
 class SimpleView
@@ -25,9 +22,7 @@ class SimpleView
              !std::is_same<Container,SimpleView>::value, 
              bool
            > = true >
-  constexpr SimpleView(Container&& container): begin_(&(*container.begin())), end_(&(*container.end())){
-    MONTERAY_ASSERT(container.end() != container.begin() + container.size());
-  }
+  constexpr SimpleView(Container&& container): begin_(&(*container.begin())), end_(&(*container.end())){ }
 
   constexpr auto& operator[](size_t i) noexcept { return *(begin_ + i);}
   constexpr const auto& operator[](size_t i) const noexcept { return *(begin_ + i);}

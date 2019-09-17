@@ -73,7 +73,7 @@ SUITE( MonteRay_SphericalGrid_GPU_basic_tests ) {
 
         void copy(const resultClass* rhs) {
 
-#ifdef DEBUG
+#ifndef NDEBUG
             if( this->debug ) {
                 std::cout << "Debug: 1- resultClass::copy(const resultClass* rhs) \n";
             }

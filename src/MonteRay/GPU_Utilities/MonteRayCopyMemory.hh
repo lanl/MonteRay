@@ -42,7 +42,7 @@ public:
 
     static const bool isManagedMemory = false;
 
-#ifdef DEBUG
+#ifndef NDEBUG
     static const bool debug = false;
 #endif
 };
