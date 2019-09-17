@@ -8,6 +8,7 @@
 SUITE( gpu_utility_functions_simple_tests ) {
     using namespace MonteRay;
 
+#ifdef __CUDACC__
     TEST( setLaunchBounds_pos_threads_pos_nRaysPerThread ) {
         auto bounds = setLaunchBounds( 1, 1, 100000);
         CHECK_EQUAL( 3125, bounds.first ); // blocks
@@ -55,4 +56,16 @@ SUITE( gpu_utility_functions_simple_tests ) {
         CHECK_EQUAL( 390, bounds.first ); // blocks
         CHECK_EQUAL( 256, bounds.second ); // threads
     }
+#else
+    TEST( setLaunchBounds_CPU ) {
+        auto bounds = setLaunchBounds( 256, 1, 2568016 );
+        CHECK_EQUAL( 1, bounds.first ); // blocks
+        CHECK_EQUAL( 1, bounds.second ); // threads
+
+        bounds = setLaunchBounds( -256, -2, 2568016 );
+        CHECK_EQUAL( 1, bounds.first ); // blocks
+        CHECK_EQUAL( 1, bounds.second ); // threads
+    }
+
+#endif
 }

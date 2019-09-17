@@ -9,7 +9,7 @@ CUDAHOST_CALLABLE_MEMBER
 RayList_t<N>::RayList_t(RayListSize_t num) {
     if( num == 0 ) { num = 1; }
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( Base::debug ) {
         std::cout << "RayList_t::RayList_t(n), n=" << num << " \n";
     }
@@ -55,7 +55,7 @@ RayList_t<N>::copy(const RayList_t<N>* rhs) {
 
 #ifdef __CUDACC__
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( Base::debug ) {
         std::cout << "Debug: RayList_t::copy (const RayList_t<N>& rhs) \n";
     }

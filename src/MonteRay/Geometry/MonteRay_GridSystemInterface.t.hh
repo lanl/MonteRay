@@ -44,11 +44,11 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
 
     const bool outward = OUTWARD;
 
-#ifdef DEBUG
+#ifndef NDEBUG
     const bool debug = false;
 #endif
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ){
         printf("Debug: MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection -- \n");
     }
@@ -119,7 +119,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
             maxDistance = rayDistances.R1;
         }
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ){
             printf("Debug: minDistance=%f, maxDistance=%f\n", minDistance, maxDistance);
         }

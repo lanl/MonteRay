@@ -11,7 +11,7 @@ template<class Derived>
 CUDAHOST_CALLABLE_MEMBER
 CopyMemoryBase<Derived>::CopyMemoryBase(){
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         std::cout << "Debug: CopyMemoryBase::CopyMemoryBase() -- allocating " << sizeof( Derived ) << " bytes\n";
     }
@@ -31,13 +31,13 @@ CopyMemoryBase<Derived>::~CopyMemoryBase(){
 
     if( ! isCudaIntermediate ) {
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) std::cout << "Debug: CopyMemoryBase::~CopyMemoryBase() -- calling intermediatePtr->Derived::~Derived()\n";
 #endif
 
         intermediatePtr->Derived::~Derived();
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) std::cout << "Debug: CopyMemoryBase::~CopyMemoryBase() -- calling deleteGPUMemory()\n";
 #endif
         deleteGPUMemory();
@@ -50,7 +50,7 @@ void*
 CopyMemoryBase<Derived>::operator new(size_t len) {
 
 #ifndef __CUDA_ARCH__
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         std::cout << "Debug: CopyMemoryBase::new -- Custom new operator, size=" << len << "\n";
     }
@@ -65,7 +65,7 @@ void*
 CopyMemoryBase<Derived>::operator new[](size_t len) {
 
 #ifndef __CUDA_ARCH__
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         std::cout << "Debug: CopyMemoryBase::new[] -- Custom new[] operator, size=" << len << "\n";
     }
@@ -79,7 +79,7 @@ CUDAHOST_CALLABLE_MEMBER
 void
 CopyMemoryBase<Derived>::copyToGPU(void) {
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         std::cout << "Debug: CopyMemoryBase::copyToGPU() \n";
     }
@@ -112,13 +112,13 @@ CUDAHOST_CALLABLE_MEMBER
 void
 CopyMemoryBase<Derived>::deleteGPUMemory(){
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) std::cout << "Debug: CopyMemoryBase::deleteGPUMemory -- calling MonteRayHostFree( intermediatePtr )\n";
 #endif
 
     MonteRayHostFree(intermediatePtr, isManagedMemory);
 #ifdef __CUDACC__
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) std::cout << "Debug: CopyMemoryBase::deleteGPUMemory -- calling MonteRayDeviceFree( devicePtr )\n";
 #endif
     MonteRayDeviceFree( devicePtr );
@@ -131,7 +131,7 @@ void
 CopyMemoryBase<Derived>::operator delete(void* ptr) {
 
 #ifndef __CUDA_ARCH__
-#ifdef DEBUG
+#ifndef NDEBUG
     if( debug ) {
         std::cout << "Debug: CopyMemoryBase::delete -- Custom delete operator.\n";
     }

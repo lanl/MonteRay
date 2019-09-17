@@ -63,7 +63,7 @@ namespace MonteRay{
 }
 
 
-#ifdef DEBUG
+#ifndef NDEBUG
 /**
  * This macro checks return value of the CUDA runtime call and exits
  * the application if the call failed.

@@ -136,7 +136,7 @@ SUITE( NextEventEstimator_Tester ) {
     for(int i =0; i < max_n_rays; i++){
       bank.add(ray);
     }
-    pNee->cpuScoreRayList(&bank, pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get());
+    cpuScoreRayList(pNee.get(), &bank, pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get());
   }
 
   TEST_FIXTURE(NEE_Fixture, launch_ScoreRayList){

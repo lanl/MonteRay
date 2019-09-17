@@ -314,7 +314,7 @@ public:
     void addCollisionLocal(unsigned targetRank, const COLLISION_T& collision) {
         MONTERAY_ASSERT( targetRank < nRanks );
 
-#ifdef DEBUG
+#ifndef NDEBUG
         const bool debug = false;
 #endif
 
@@ -336,7 +336,7 @@ public:
                 ptrLocalCollisionPointList[ getCollisionBufferOffset(targetRank,currentBucket)  + header->size] = collision;
                 ++header->size;
 
-#ifdef DEBUG
+#ifndef NDEBUG
                 if( debug ) printf( "Debug: addCollisionLocal - add particle, rank = %d, bucket = %d, size = %d\n", targetRank, currentBucket, header->size );
 #endif
 
@@ -455,7 +455,7 @@ public:
     }
 
     COLLISION_T getCollisionFromLocal( unsigned targetRank, unsigned bucket, unsigned i ){
-#ifdef DEBUG
+#ifndef NDEBUG
         const bool debug = false;
 #endif
 
@@ -465,7 +465,7 @@ public:
         unsigned offset = getCollisionBufferOffset(targetRank,bucket);
         unsigned index = offset + i;
 
-#ifdef DEBUG
+#ifndef NDEBUG
         if( debug ) printf( "Debug: getCollisionFromLocal -- index = %d, x=%f\n",index,ptrLocalCollisionPointList[index].pos[0]);
 #endif
 

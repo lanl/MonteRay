@@ -30,7 +30,7 @@ CUDA_CALLABLE_MEMBER inline void MonteRayAssert( bool test, const char *file, in
     }
 }
 
-#ifdef DEBUG
+#ifndef NDEBUG
 #define MONTERAY_ASSERT(test) { MonteRayAssert(test, __FILE__, __LINE__); }
 #else
 #define MONTERAY_ASSERT(test) { (void)0; }
@@ -42,7 +42,7 @@ CUDA_CALLABLE_MEMBER inline void MonteRayAssertMsg( bool test, const char* messa
     }
 }
 
-#ifdef DEBUG
+#ifndef NDEBUG
 #define MONTERAY_ASSERT_MSG(test, message) { MonteRayAssertMsg(test, message, __FILE__, __LINE__); }
 #else
 #define MONTERAY_ASSERT_MSG(test, message) { (void)0; }
