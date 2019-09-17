@@ -2,6 +2,7 @@
 #define MONTERAY_TALLY_HH_
 
 #include <vector>
+#include <cstring>
 #include <string>
 #include <memory>
 
@@ -109,7 +110,7 @@ public:
     }
 
     if( MonteRayParallelAssistant::getInstance().getInterWorkGroupRank() != 0 ) {
-        memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
+      std::memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
     } else {
         data_ = std::move(globalData);
     }
@@ -130,7 +131,7 @@ public:
     }
 
     if( MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0 ) {
-        memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
+      std::memset( data_.begin(), 0, data_.size()*sizeof( gpuTallyType_t ) );
     } else {
         data_ = std::move(globalData);
     }

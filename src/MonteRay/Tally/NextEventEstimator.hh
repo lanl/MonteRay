@@ -120,22 +120,6 @@ public:
   CUDA_CALLABLE_MEMBER tally_t calcScore( const int threadID, const Ray_t<N>& ray, RayWorkInfo& rayInfo, 
       const Geometry& geometry, const MaterialProperties& matProps, const MaterialList& matList);
 
-  template<unsigned N, typename Geometry, typename MaterialProperties, typename MaterialList>
-  void cpuScoreRayList( const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, 
-      const Geometry* const pGeometry, const MaterialProperties* const pMatProps, const MaterialList* const pMatList){
-    for(auto particleID = 0; particleID < pRayList->size(); particleID++) {
-      constexpr int threadID = 0;
-      pRayInfo->clear(threadID);
-      auto& ray = pRayList->points[particleID];
-      calcScore(threadID, ray, *pRayInfo, *pGeometry, *pMatProps, *pMatList);
-    }
-  }
-
-  template<unsigned N, typename Geometry, typename MaterialProperties, typename MaterialList>
-  void launch_ScoreRayList( int nBlocks, int nThreads, const RayList_t<N>* pRayList, RayWorkInfo* pRayInfo, 
-      const Geometry* const pGeometry, const MaterialProperties* const pMatProps, const MaterialList* const pMatList, 
-      const cudaStream_t* const stream);
-
   const auto& getPoint(int i) const { 
     MONTERAY_ASSERT(i<tallyPoints_.size());  
     return tallyPoints_[i]; 
@@ -249,6 +233,19 @@ public:
   }
 
 };
+
+
+  template<unsigned N, typename Geometry, typename MaterialProperties, typename MaterialList>
+  inline void cpuScoreRayList(NextEventEstimator* const pNextEventEstimator, const RayList_t<N>* pRayList, 
+      RayWorkInfo* pRayInfo, const Geometry* const pGeometry, const MaterialProperties* const pMatProps, 
+      const MaterialList* const pMatList){
+    for(auto particleID = 0; particleID < pRayList->size(); particleID++) {
+      constexpr int threadID = 0;
+      pRayInfo->clear(threadID);
+      auto& ray = pRayList->points[particleID];
+      pNextEventEstimator->calcScore(threadID, ray, *pRayInfo, *pGeometry, *pMatProps, *pMatList);
+    }
+  }
 
 template<unsigned N, typename Geometry, typename MaterialProperties, typename MaterialList>
 CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(NextEventEstimator* ptr, const RayList_t<N>* pRayList, 
