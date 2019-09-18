@@ -1,8 +1,8 @@
-# prepend -Xcompiler infront of -pthread when compiling w/ cuda
+# prepend -Xcompiler infront of -fexceptions when compiling w/ cuda
 get_target_property(mpi_compile_options MPI::MPI_CXX INTERFACE_COMPILE_OPTIONS)
-string(REPLACE "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread" 
+string(REPLACE "-fexceptions" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-fexceptions" 
   mpi_compile_options "${mpi_compile_options}")
-set_target_properties(MPI::MPI_CXX PROPERTIES INTERFACE_COMPILE_OPTIONS ${mpi_compile_options})
+set_target_properties(MPI::MPI_CXX PROPERTIES INTERFACE_COMPILE_OPTIONS "${mpi_compile_options}")
 
 if(cuda_arch)
 else()
@@ -19,5 +19,3 @@ string( REPLACE ";" " " CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" )
 set_target_properties(MonteRay PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(MonteRay PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(MonteRay INTERFACE cuda)
-
-
