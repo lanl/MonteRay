@@ -11,7 +11,6 @@ if(cuda_arch)
   set(cuda_code "sm_${cuda_arch}")
   set(cuda_arch_flags "-cudart static -gencode arch=${cuda_compute},code=${cuda_code}")
 else()
-  set(cuda_arch 61) # default to 52 if not specified
   # Use the findCUDA functions to find the arch but don't use find_package(CUDA)
   include( "FindCUDA/select_compute_arch" ) 
   cuda_select_nvcc_arch_flags(cuda_arch_flags Auto)
