@@ -6,20 +6,20 @@ string(REPLACE "-fexceptions" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-fex
 set_target_properties(MPI::MPI_CXX PROPERTIES INTERFACE_COMPILE_OPTIONS "${mpi_compile_options}")
 
 unset(cuda_arch_flags)
-if(cuda_arch)
-  set(cuda_compute "compute_${cuda_arch}")
-  set(cuda_code "sm_${cuda_arch}")
-  set(cuda_arch_flags "-cudart static -gencode arch=${cuda_compute},code=${cuda_code}")
-else()
-  # Use the findCUDA functions to find the arch but don't use find_package(CUDA)
-  include( "FindCUDA/select_compute_arch" ) 
-  cuda_select_nvcc_arch_flags(cuda_arch_flags Auto)
+if(NOT cuda_arch)
+  # default to Auto if none is provided
+  set(cuda_arch "Auto")
 endif()
+
+# Use the findCUDA functions to find the arch but don't use find_package(CUDA)
+include( "FindCUDA/select_compute_arch" ) 
+cuda_select_nvcc_arch_flags(cuda_arch_flags ${cuda_arch})
 message(STATUS "config_nvcc.cmake -- cuda_arch_flags=${cuda_arch_flags}")
 
 list(APPEND CMAKE_CUDA_FLAGS "--relocatable-device-code=true" )
 list(APPEND CMAKE_CUDA_FLAGS "--expt-extended-lambda" )
 list(APPEND CMAKE_CUDA_FLAGS "--expt-relaxed-constexpr" ) 
+list(APPEND CMAKE_CUDA_FLAGS "-cudart static" ) 
 list(APPEND CMAKE_CUDA_FLAGS "${cuda_arch_flags}" ) 
 
 string( REPLACE ";" " " CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" )
