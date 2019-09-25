@@ -1,5 +1,5 @@
-# Cmake 3.8 is needed for proper CUDA support
-CMAKE_MINIMUM_REQUIRED(VERSION 3.12.1)
+# Cmake 3.14 is needed for proper CUDA + MPI support
+CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 message( STATUS " -- CMakeList.txt -- Configuring MonteRay ")
 
 if(DEFINED PROJECT_NAME)
