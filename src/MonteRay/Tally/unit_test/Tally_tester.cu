@@ -6,6 +6,8 @@
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
 #include "Tally.hh"
+#include "Containers.hh"
+#include "Tally_GPU_test_helper.hh"
 
 namespace MontRayTally_tester_namespace {
 
@@ -97,6 +99,26 @@ SUITE( MonteRayTally_tester ) {
       CHECK_CLOSE( 0.0, tally.getTally(0,0), 1e-6);
       CHECK_CLOSE( 1.0, tally.getTally(0,1), 1e-6);
       CHECK_CLOSE( 2.0, tally.getTally(0,2), 1e-6);
+  }
+
+  TEST( score_device ) {
+    // std::vector doesn't work here for timeEdges as Tally holds a view
+    // to the time bin data and doesn't copy the data into a
+    // MonteRay::SimpleVector. Do we want to change that? J. Sweezy
+
+    MonteRay::SimpleVector<MonteRay::gpuFloatType_t> timeEdges= { 1.0, 2.0, 10.0, 99.0, 100.0 };
+    auto pTally = std::make_unique<TallyGPUTestHelper::TallyGPUTester>(1, timeEdges);
+
+    MonteRay::gpuFloatType_t time = 1.5;
+    pTally->score(1.0f, 0, time);
+    CHECK_CLOSE( 0.0, pTally->getTally(0,0), 1e-6);
+    CHECK_CLOSE( 1.0, pTally->getTally(0,1), 1e-6);
+
+    time = 2.5;
+    pTally->score(2.0f, 0, time);
+    CHECK_CLOSE( 0.0, pTally->getTally(0,0), 1e-6);
+    CHECK_CLOSE( 1.0, pTally->getTally(0,1), 1e-6);
+    CHECK_CLOSE( 2.0, pTally->getTally(0,2), 1e-6);
   }
 }
 

@@ -69,7 +69,8 @@ public:
 
     void setExclusionRadius(position_t r) { 
       printf("Warning: MonteRay::NextEventEstimator Exclusion radius is not yet implemented.\n");
-      b_radius_ = r; }
+      b_radius_ = r;
+    }
 
     template<typename Edges>
     void setTimeBinEdges( const Edges& edges) {
