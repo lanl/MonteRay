@@ -266,12 +266,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
 #endif
 
-    //  constexpr gpuRayFloat_t epsilon = std::numeric_limits<gpuRayFloat_t>::epsilon();
-#ifdef __CUDACC__
-    if( abs(dir) <= FLT_EPSILON ) { return; }
-#else
-    if( std::abs(dir) <= FLT_EPSILON ) { return; }
-#endif
+    if( Math::abs(dir) <= std::numeric_limits<gpuRayFloat_t>::epsilon() ) { return; }
 
 #ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance  -- Bins=%p \n", &Bins );
@@ -313,11 +308,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     int dirIncrement = std::copysign( 1, dir );
 #endif
 
-#ifdef __CUDACC__
-    unsigned num_indices = abs(end_index - start_index ) + 1;
-#else
-    unsigned num_indices = std::abs(end_index - start_index ) + 1;
-#endif
+    unsigned num_indices = Math::abs(end_index - start_index ) + 1;
 
     int current_index = start_index;
 

@@ -80,7 +80,7 @@ class MonteRay_GridSystemInterface {
 #define OUTSIDE_INDEX UINT_MAX;
 public:
     using GridBins_t = MonteRay_GridBins;
-    typedef GridBins_t* pGridBins_t;
+    using pGridBins_t = GridBins_t*;
     //static const unsigned OUTSIDE = UINT_MAX;
 
     CUDA_CALLABLE_MEMBER MonteRay_GridSystemInterface(unsigned dim) : DIM(dim) {}
@@ -91,6 +91,15 @@ public:
     CUDA_CALLABLE_MEMBER
     virtual void
     rayTrace( const unsigned threadID,
+              RayWorkInfo& rayInfo,
+              const GridBins_t::Position_t& particle_pos,
+              const GridBins_t::Position_t& particle_dir,
+              const gpuRayFloat_t distance,
+              const bool outsideDistances=false ) const = 0;
+
+    CUDA_CALLABLE_MEMBER
+    virtual void
+    rayTraceWithMovingMaterials( const unsigned threadID,
               RayWorkInfo& rayInfo,
               const GridBins_t::Position_t& particle_pos,
               const GridBins_t::Position_t& particle_dir,

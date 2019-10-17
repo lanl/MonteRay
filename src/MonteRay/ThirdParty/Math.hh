@@ -18,7 +18,7 @@ namespace Math{
   constexpr float   fabs(float val) {return fabsf(val);}
   constexpr double  fabs(double val) {return ::fabs(val);}
   template <typename T>
-  constexpr T abs(T val) {return abs(val);}
+  constexpr T abs(T val) {return ::abs(val);}
   constexpr float   abs(float val) {return fabsf(val);}
   constexpr double  abs(double val) {return ::fabs(val);}
   constexpr float   floor(float val) {return floorf(val);}
