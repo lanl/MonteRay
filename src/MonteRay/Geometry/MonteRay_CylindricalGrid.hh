@@ -70,6 +70,17 @@ public:
             const bool outsideDistances=false ) const;
 
     CUDA_CALLABLE_MEMBER
+    virtual void
+    rayTraceWithMovingMaterials( const unsigned threadID,
+              RayWorkInfo& rayInfo,
+              const GridBins_t::Position_t& particle_pos,
+              const GridBins_t::Position_t& particle_dir,
+              const gpuRayFloat_t distance,
+              const gpuRayFloat_t speed,
+              const MaterialProperties& matProps,
+              const bool outsideDistances=false ) const {}
+
+    CUDA_CALLABLE_MEMBER
     void
     crossingDistance(
             const unsigned dim,

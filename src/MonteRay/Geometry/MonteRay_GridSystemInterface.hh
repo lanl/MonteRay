@@ -7,6 +7,7 @@
 
 #include "MonteRay_GridBins.hh"
 #include "RayWorkInfo.hh"
+#include "MaterialProperties.hh"
 
 namespace MonteRay {
 
@@ -104,6 +105,8 @@ public:
               const GridBins_t::Position_t& particle_pos,
               const GridBins_t::Position_t& particle_dir,
               const gpuRayFloat_t distance,
+              const gpuRayFloat_t speed,
+              const MaterialProperties& matProps,
               const bool outsideDistances=false ) const = 0;
 
     CUDA_CALLABLE_MEMBER

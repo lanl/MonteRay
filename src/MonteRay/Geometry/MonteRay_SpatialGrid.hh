@@ -9,6 +9,7 @@
 
 #include "MonteRayCopyMemory.hh"
 #include "RayWorkInfo.hh"
+#include "MaterialProperties.hh"
 
 namespace MonteRay {
 
@@ -165,6 +166,17 @@ public:
               const Position_t& dir,
               const gpuRayFloat_t distance,
               const bool outsideDistances=false) const;
+
+    CUDA_CALLABLE_MEMBER
+    void
+    rayTraceWithMovingMaterials( const unsigned threadID,
+              RayWorkInfo& rayInfo,
+              const Position_t& particle_pos,
+              const Position_t& particle_dir,
+              const gpuRayFloat_t distance,
+              const gpuRayFloat_t speed,
+              const MaterialProperties& matProps,
+              const bool outsideDistances=false ) const {}
 
     CUDA_CALLABLE_MEMBER
     void
