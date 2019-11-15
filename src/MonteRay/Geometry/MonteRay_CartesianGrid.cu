@@ -21,7 +21,9 @@ using ptrCartesianGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_Cartes
 CUDA_CALLABLE_KERNEL  createDeviceInstance(MonteRay_CartesianGrid** pPtrInstance, ptrCartesianGrid_result_t* pResult, MonteRay_GridBins* pGridX, MonteRay_GridBins* pGridY, MonteRay_GridBins* pGridZ ) {
     *pPtrInstance = new MonteRay_CartesianGrid( 3, pGridX, pGridY, pGridZ );
     pResult->v = *pPtrInstance;
-    //if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
+#ifndef NDEBUG
+    if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
+#endif
 }
 
 CUDA_CALLABLE_KERNEL  deleteDeviceInstance(MonteRay_CartesianGrid** pPtrInstance) {
@@ -75,7 +77,9 @@ MonteRay_CartesianGrid::~MonteRay_CartesianGrid(void){
 CUDAHOST_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::copyToGPU(void) {
+#ifndef NDEBUG
     if( debug ) std::cout << "Debug: MonteRay_CartesianGrid::copyToGPU \n";
+#endif
 #ifdef __CUDACC__
     if( ! MonteRay::isWorkGroupMaster() ) return;
 
@@ -99,11 +103,15 @@ MonteRay_CartesianGrid::copyToGPU(void) {
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CartesianGrid::getIndex( const GridBins_t::Position_t& particle_pos) const{
+#ifndef NDEBUG
     if( debug ) printf("Debug: MonteRay_CartesianGrid::getIndex -- starting\n");
+#endif
 
     int indices[3]= {0,0,0};
-    for( auto d = 0; d < DIM; ++d ) {
+    for( unsigned d = 0; d < DIM; ++d ) {
+#ifndef NDEBUG
         if( debug ) printf("Debug: MonteRay_CartesianGrid::getIndex -- d = %d\n",d);
+#endif
         indices[d] = getDimIndex(d, particle_pos[d] );
 
         // outside the grid
@@ -112,7 +120,10 @@ MonteRay_CartesianGrid::getIndex( const GridBins_t::Position_t& particle_pos) co
         }
     }
 
+
+#ifndef NDEBUG
     if( debug ) printf("Debug: MonteRay_CartesianGrid::getIndex -- calling calcIndex\n");
+#endif
     return calcIndex( indices );
 }
 
@@ -137,8 +148,10 @@ MonteRay_CartesianGrid::getVolume(unsigned index ) const {
 CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CartesianGrid::getNumBins( unsigned d) const {
+#ifndef NDEBUG
     if( debug ) printf("Debug: MonteRay_CartesianGrid::getNumBins -- d= %d\n", d);
     if( debug ) printf("Debug: MonteRay_CartesianGrid::getNumBins --calling pGridBins[d]->getNumBins()\n");
+#endif
     return pGridBins[d]->getNumBins();
 }
 
@@ -200,7 +213,9 @@ MonteRay_CartesianGrid::rayTrace(
         const gpuRayFloat_t distance,
         const bool outsideDistances ) const{
 
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- \n");
+#endif
 
     int indices[3] = {0, 0, 0}; // current position indices in the grid, must be int because can be outside
 
@@ -208,11 +223,15 @@ MonteRay_CartesianGrid::rayTrace(
 
         indices[d] = getDimIndex(d, particle_pos[d] );
 
+#ifndef NDEBUG
         if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, index=%d\n", d, indices[d]);
+#endif
 
         planarCrossingDistance( d, threadID, rayInfo, *(pGridBins[d]), particle_pos[d], particle_dir[d], distance,indices[d]);
 
+#ifndef NDEBUG
         if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- dimension=%d, number of planar crossings = %d\n", d, rayInfo.getCrossingSize(d,threadID) );
+#endif
 
         // if outside and ray doesn't move inside then ray never enters the grid
         if( isIndexOutside(d,indices[d]) && rayInfo.getCrossingSize(d,threadID) == 0  ) {
@@ -222,9 +241,113 @@ MonteRay_CartesianGrid::rayTrace(
 
     orderCrossings<3>( threadID, rayInfo, indices, distance, outsideDistances );
 
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::rayTrace -- number of total crossings = %d\n", rayInfo.getRayCastSize(threadID) );
+#endif
     return;
 }
+
+
+CUDA_CALLABLE_MEMBER
+DirectionAndSpeed MonteRay_CartesianGrid::convertToCellReferenceFrame(
+    const Vector3D<gpuRayFloat_t>& cellVelocity,
+    GridBins_t::Direction_t dir,
+    gpuRayFloat_t speed) const
+{
+  dir = dir*speed - cellVelocity;
+  speed = dir.magnitude();
+  dir /= speed;
+  return {dir, speed};
+}
+
+CUDA_CALLABLE_MEMBER DistAndDim 
+MonteRay_CartesianGrid::getMinDistToSurface(
+       const GridBins_t::Position_t& pos,
+       const GridBins_t::Direction_t& dir,
+       const int indices[] 
+       ) const {
+ int d = 0;
+ gpuRayFloat_t minDistToSurf = (pGridBins[d]->vertices[indices[d] + Math::signbit(-dir[d])] - pos[d])/dir[d];
+ unsigned minDistIndex = 0;
+ for (d=1; d<DIM; ++d){
+   auto distToSurface = (pGridBins[d]->vertices[indices[d] + Math::signbit(-dir[d])] - pos[d])/dir[d];
+   if (distToSurface < minDistToSurf){
+     minDistIndex = d;
+     minDistToSurf = distToSurface;
+   }
+  }
+ if (minDistToSurf < 0) {
+   minDistToSurf = 0;
+ }
+ return {minDistToSurf, minDistIndex};
+}
+
+CUDA_CALLABLE_MEMBER
+gpuRayFloat_t MonteRay_CartesianGrid::getDistanceToInsideOfMesh(const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir) const {
+  gpuRayFloat_t dist = 0.0;
+  for (int d = 0; d < static_cast<int>(DIM); d++){
+    dist = Math::max(dist, pGridBins[d]->distanceToGetInsideLinearMesh(pos, dir, d));
+  }
+  return dist;
+}
+
+CUDA_CALLABLE_MEMBER
+void
+MonteRay_CartesianGrid::rayTraceWithMovingMaterials(
+        const unsigned threadID,
+        RayWorkInfo& rayInfo,
+        GridBins_t::Position_t pos,
+        const GridBins_t::Direction_t& dir,
+        gpuRayFloat_t distanceRemaining,
+        const gpuRayFloat_t speed,
+        const MaterialProperties& matProps,
+        const bool outsideDistances) const{
+
+  // move ray to mesh and short-circuit if outside and moving away from mesh
+  auto distanceToInsideOfMesh = getDistanceToInsideOfMesh(pos, dir);
+  if (distanceRemaining < distanceToInsideOfMesh){
+    return;
+  }
+  pos += distanceToInsideOfMesh*dir;
+  distanceRemaining -= distanceToInsideOfMesh;
+  auto indices = calcIndices(pos);
+
+  while(distanceRemaining > std::numeric_limits<gpuRayFloat_t>::epsilon()){
+    // get "global" cell index, which is set to max if cell is outside mesh
+    auto cellIndex = calcIndex(indices.data());
+
+    // adjust dir and energy if moving materials
+    auto dirAndSpeed = matProps.usingMaterialMotion() ?
+      convertToCellReferenceFrame(matProps.velocity(cellIndex), dir, speed) : 
+      DirectionAndSpeed{dir, speed};
+
+    auto distAndDim = getMinDistToSurface(pos, dirAndSpeed.direction(), indices.data());
+
+    // min dist found, move ray
+    if ( distAndDim.distance() < distanceRemaining ) {
+      rayInfo.addRayCastCell(threadID, cellIndex, distAndDim.distance());
+
+      // update distance and position
+      distanceRemaining -= distAndDim.distance();
+      pos += distAndDim.distance()*dirAndSpeed.direction();
+
+      // update indices
+      dirAndSpeed.direction()[distAndDim.dimension()] < 0 ? 
+        indices[distAndDim.dimension()]-- : 
+        indices[distAndDim.dimension()]++;
+      // short-circuit if ray left the mesh
+      if( isIndexOutside(distAndDim.dimension(), indices[distAndDim.dimension()] ) ) {
+        return;
+      }
+    } else {
+      rayInfo.addRayCastCell(threadID, cellIndex, distanceRemaining);
+      return;
+    }
+  }
+  return;
+
+}
+
 
 CUDA_CALLABLE_MEMBER
 void
@@ -249,7 +372,9 @@ MonteRay_CartesianGrid::crossingDistance(
         const gpuRayFloat_t dir,
         const gpuRayFloat_t distance ) const {
 
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( dim, threadID, rayInfo, float_t pos, float_t dir, float_t distance ) const \n");
+#endif
     crossingDistance(dim, threadID, rayInfo, *(pGridBins[dim]), pos, dir, distance, false);
     return;
 }
@@ -266,9 +391,13 @@ MonteRay_CartesianGrid::crossingDistance(
         const gpuRayFloat_t distance,
         const bool equal_spacing) const {
 
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance( dim, threadID, rayInfo, GridBins_t& Bins, float_t pos, float_t dir, float_t distance, bool equal_spacing) const \n");
+#endif
     int index = Bins.getLinearIndex(pos);
+#ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_CartesianGrid::crossingDistance -- calling MonteRay_GridSystemInterface::planarCrossingDistance.\n");
+#endif
     planarCrossingDistance( dim, threadID, rayInfo, Bins, pos, dir, distance, index);
     return;
 }

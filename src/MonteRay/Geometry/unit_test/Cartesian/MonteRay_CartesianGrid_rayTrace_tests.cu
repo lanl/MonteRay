@@ -44,15 +44,12 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
         MonteRay_SpatialGrid::pArrayOfpGridInfo_t pGridInfo;
     };
 
-    typedef singleDimRayTraceMap_t distances_t;
-    typedef singleDimRayTraceMap_t rayTraceMap_t;
-    typedef rayTraceList_t rayTrace_t;
-    typedef MonteRay_CartesianGrid CartesianGrid;
+    using CartesianGrid = MonteRay_CartesianGrid;
 
     TEST( CrossingDistance_in_1D_PosXDir ) {
         //CHECK(false);
         gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+        CartesianGrid cart(3,data.pGridInfo);
 
         Position_t position ( -9.5, -9.5,  -9.5 );
         Position_t direction(    1,   0,    0 );
@@ -615,7 +612,7 @@ SUITE( MonteRay_CartesianGrid_rayTrace_Tests) {
 
     const gpuRayFloat_t s2 = std::sqrt(2.0);
     void checkDistances( const std::vector<unsigned>& expectedIndex,
-            const std::vector<gpuRayFloat_t>& expectedDistance, const rayTrace_t& distances )
+            const std::vector<gpuRayFloat_t>& expectedDistance, const rayTraceList_t& distances )
     {
         CHECK_EQUAL( expectedIndex.size(), expectedDistance.size() );
         CHECK_EQUAL( expectedIndex.size(), distances.size() );

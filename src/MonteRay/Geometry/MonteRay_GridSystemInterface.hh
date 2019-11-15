@@ -8,9 +8,36 @@
 #include "MonteRay_GridBins.hh"
 #include "RayWorkInfo.hh"
 #include "MaterialProperties.hh"
+#include "ThirdParty/Math.hh"
+#include "ThirdParty/Array.hh"
 
 namespace MonteRay {
 
+using DimType = int;
+
+struct DistAndDim : public std::tuple<gpuRayFloat_t, DimType>{
+  using std::tuple<gpuRayFloat_t, DimType>::tuple;
+  constexpr auto distance() const { return std::get<0>(*this); }
+  constexpr auto dimension() const { return std::get<1>(*this); }
+
+  constexpr void setDistance(gpuRayFloat_t val) { std::get<0>(*this) = val; }
+  constexpr void setDimension(DimType val) { std::get<1>(*this) = val; }
+};
+
+struct DistAndDir : public DistAndDim {
+  CUDA_CALLABLE_MEMBER DistAndDir(gpuRayFloat_t dist, DimType dim, bool posDir): DistAndDim(dist, dim), positiveDir_(posDir) {}
+  bool positiveDir_;
+  constexpr auto isPositiveDir() const { return positiveDir_; }
+};
+
+struct DirectionAndSpeed : public std::tuple<MonteRay_GridBins::Direction_t, gpuRayFloat_t>{
+  using std::tuple<MonteRay_GridBins::Direction_t, gpuRayFloat_t>::tuple;
+  constexpr auto& direction() const { return std::get<0>(*this); }
+  constexpr auto speed() const { return std::get<1>(*this); }
+
+  constexpr void setDirection(MonteRay_GridBins::Direction_t& direction) { std::get<0>(*this) = direction; }
+  constexpr void setSpeed(gpuRayFloat_t val) { std::get<1>(*this) = val; }
+};
 
 class singleDimRayTraceMap_t {
 private:
@@ -49,7 +76,7 @@ public:
     CUDA_CALLABLE_MEMBER ~rayTraceList_t(){}
 
     // for conversion of old tests
-    CUDA_CALLABLE_MEMBER rayTraceList_t(RayWorkInfo&, const unsigned threadID, int dim = -1);
+    CUDA_CALLABLE_MEMBER rayTraceList_t(RayWorkInfo& rayInfo, const unsigned threadID, int dim = -1);
 
     CUDA_CALLABLE_MEMBER
     void add( const unsigned cell, const gpuRayFloat_t dist);
@@ -102,9 +129,9 @@ public:
     virtual void
     rayTraceWithMovingMaterials( const unsigned threadID,
               RayWorkInfo& rayInfo,
-              const GridBins_t::Position_t& particle_pos,
-              const GridBins_t::Position_t& particle_dir,
-              const gpuRayFloat_t distance,
+              GridBins_t::Position_t particle_pos,
+              const GridBins_t::Direction_t& particle_dir,
+              gpuRayFloat_t distance,
               const gpuRayFloat_t speed,
               const MaterialProperties& matProps,
               const bool outsideDistances=false ) const = 0;
@@ -138,6 +165,7 @@ public:
 
     CUDAHOST_CALLABLE_MEMBER
     virtual MonteRay_GridSystemInterface* getDeviceInstancePtr(void) = 0;
+
 
 protected:
 

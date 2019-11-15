@@ -34,9 +34,6 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
 
 #ifndef NDEBUG
     const bool debug = false;
-#endif
-
-#ifndef NDEBUG
     if( debug ){
         printf("Debug: MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection -- \n");
     }

@@ -19,7 +19,7 @@ class MaterialProperties_t: public Managed {
     using MatID_t = short int;
     using Density_t = gpuFloatType_t;
     using Cell_Index_t = int;
-    using Velocity_t = Vector3D<gpuFloatType_t>;
+    using Velocity_t = Vector3D<gpuRayFloat_t>;
   private: 
 
 
@@ -66,10 +66,11 @@ class MaterialProperties_t: public Managed {
   constexpr auto getMatID( unsigned cellNum, unsigned matNum ) const { return this->getMaterialID(cellNum, matNum); }
   constexpr auto numVelocities() { return velocities_.size(); }
   constexpr auto usingMaterialMotion() const { return usingMaterialMotion_; }
-  constexpr const auto& getVelocity( unsigned cellNum ) const { 
+  constexpr const auto& velocity( unsigned cellNum ) const { 
     MONTERAY_ASSERT_MSG(usingMaterialMotion_, "calling MaterialProperties::getVelocity when velocities have not been set.");
     return velocities_[cellNum]; 
   }
+  constexpr const auto& getVelocity( unsigned cellNum ) const { return velocity(cellNum); }
 
   // TPB TODO: Save these functions and see they are useful later
   /* constexpr const auto cellMaterialIDs const (unsigned cellNum) { */

@@ -4,28 +4,29 @@
 #include <limits>
 
 #include "MonteRayTypes.hh"
+#include "ThirdParty/Math.hh"
 
 namespace MonteRay {
 
-typedef gpuRayFloat_t Float_t;
+using Float_t = gpuRayFloat_t;
 
-class Roots {
-public:
-    static constexpr Float_t inf = std::numeric_limits<Float_t>::infinity();
-    CUDA_CALLABLE_MEMBER Roots(){}
-    CUDA_CALLABLE_MEMBER ~Roots(){}
+struct Roots {
+    static constexpr gpuRayFloat_t inf = std::numeric_limits<gpuRayFloat_t>::infinity();
 
-    Float_t R1 = inf;
-    Float_t R2 = inf;
+    gpuRayFloat_t R1 = inf;
+    gpuRayFloat_t R2 = inf;
 
-    CUDA_CALLABLE_MEMBER Float_t min(){ if( R1 < R2 ) return R1; return R2; }
+    CUDA_CALLABLE_MEMBER constexpr gpuRayFloat_t min(){ return Math::min(R1, R2); }
+    CUDA_CALLABLE_MEMBER constexpr gpuRayFloat_t areInf(){ 
+      return (R1 == inf) && (R2 == inf);
+    }
 };
 
 CUDA_CALLABLE_MEMBER
-Float_t FindMinPositiveRoot(Float_t, Float_t, Float_t);
+gpuRayFloat_t FindMinPositiveRoot(gpuRayFloat_t, gpuRayFloat_t, gpuRayFloat_t);
 
 CUDA_CALLABLE_MEMBER
-Roots FindPositiveRoots(Float_t, Float_t, Float_t);
+Roots FindPositiveRoots(gpuRayFloat_t, gpuRayFloat_t, gpuRayFloat_t);
 
 
 } /* namespace MonteRay */

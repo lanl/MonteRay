@@ -86,8 +86,8 @@ public:
 
     CUDA_CALLABLE_MEMBER void modifyForRadial(void);
 
-    CUDA_CALLABLE_MEMBER bool isLinear(void) const { if( type == LINEAR) return true; return false; }
-    CUDA_CALLABLE_MEMBER bool isRadial(void) const { if( type == RADIAL) return true; return false; }
+    CUDA_CALLABLE_MEMBER bool isLinear(void) const { return type == LINEAR ? true : false; }
+    CUDA_CALLABLE_MEMBER bool isRadial(void) const { return type == RADIAL ? true : false; }
 
     // returns -1 for one neg side of mesh
     // and number of bins on the pos side of the mesh
@@ -96,7 +96,24 @@ public:
     CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r) const;
     CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t rSq) const;
 
-    CUDA_CALLABLE_MEMBER bool isIndexOutside( int i) const { if( i < 0 ||  i >= getNumBins() ) return true; return false; }
+    CUDA_CALLABLE_MEMBER bool isIndexOutside( int i) const { return ( i < 0 ||  i >= getNumBins() ) ? true : false; }
+
+    CUDA_CALLABLE_MEMBER inline
+    gpuRayFloat_t distanceToGetInsideLinearMesh(const Position_t& pos, const Direction_t& dir, const int dim){
+      gpuRayFloat_t dist = 0;
+      if (pos[dim] >= this->vertices[this->getNumBins() - 1]){
+        dist = dir[dim] < 0 ?
+          (this->vertices[this->getNumBins() - 1] - pos[dim])/dir[dim] : 
+          std::numeric_limits<gpuRayFloat_t>::infinity();
+      } else if (pos[dim] <= this->vertices[0]) {
+        dist = dir[dim] > 0 ?
+          (this->vertices[0] - pos[dim])/dir[dim] : 
+          std::numeric_limits<gpuRayFloat_t>::infinity();
+      } else {
+        return 0.0;
+      }
+      return dist + std::numeric_limits<gpuRayFloat_t>::epsilon(); 
+    }
 
 public:
 

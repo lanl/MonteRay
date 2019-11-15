@@ -432,4 +432,32 @@ SUITE( MonteRay_GridBins_Tester ) {
     }
 #endif
 
+    TEST( distanceToGetInsideLinearMesh ){
+       auto gridInfo = MonteRay_GridBins(-10.0, 10.0, 1);
+       MonteRay_GridBins::Position_t pos = {0.0, 0.0, 0.0};
+       MonteRay_GridBins::Position_t dir = {1.0, 0.0, 0.0};
+       int dim = 0;
+       auto dist = gridInfo.distanceToGetInsideLinearMesh(pos, dir, dim);
+       CHECK_EQUAL(0.0, dist);
+
+       pos = {-20.0, 30.0, -40.0};
+       dir = {1.0, 0.0, 0.0};
+       dist = gridInfo.distanceToGetInsideLinearMesh(pos, dir, dim);
+       CHECK_EQUAL(static_cast<gpuRayFloat_t>(10.0) + std::numeric_limits<gpuRayFloat_t>::epsilon(), dist);
+
+       dir = {0.0, -1.0, 0.0};
+       dim = 1;
+       dist = gridInfo.distanceToGetInsideLinearMesh(pos, dir, dim);
+       CHECK_EQUAL(static_cast<gpuRayFloat_t>(20.0) + std::numeric_limits<gpuRayFloat_t>::epsilon(), dist);
+
+       dir = {0.0, 1.0, 0.0};
+       dist = gridInfo.distanceToGetInsideLinearMesh(pos, dir, dim);
+       CHECK_EQUAL(std::numeric_limits<gpuRayFloat_t>::infinity(), dist);
+
+       dir = {0.0, 0.0, -1.0};
+       dim = 2;
+       dist = gridInfo.distanceToGetInsideLinearMesh(pos, dir, dim);
+       CHECK_EQUAL(std::numeric_limits<gpuRayFloat_t>::infinity(), dist);
+    }
+
 }

@@ -15,26 +15,41 @@ namespace Math{
   constexpr double  cos(double val) {return ::cos(val);}
   constexpr float   sin(float val) {return sinf(val);}
   constexpr double  sin(double val) {return ::sin(val);}
+
   constexpr float   fabs(float val) {return fabsf(val);}
   constexpr double  fabs(double val) {return ::fabs(val);}
   template <typename T>
   constexpr T abs(T val) {return ::abs(val);}
   constexpr float   abs(float val) {return fabsf(val);}
   constexpr double  abs(double val) {return ::fabs(val);}
+
   constexpr float   floor(float val) {return floorf(val);}
   constexpr double  floor(double val) {return ::floor(val);}
+  constexpr float   ceil(float val) {return ceilf(val);}
+  constexpr double  ceil(double val) {return ::ceil(val);}
+
   template <typename T>
-  constexpr T min(T val) {return min(val);}
+  constexpr T min(T val) {return ::min(val);}
   constexpr float   fmin(float val1, float val2) {return fminf(val1, val2);}
   constexpr double  fmin(double val1, double val2) {return ::fmin(val1, val2);}
   constexpr float   min(float val1, float val2) {return fminf(val1, val2);}
   constexpr double  min(double val1, double val2) {return ::fmin(val1, val2);}
+
+  template <typename T>
+  constexpr T max(T val) {return ::max(val);}
   constexpr float   fmax(float val1, float val2) {return fmaxf(val1, val2);}
   constexpr double  fmax(double val1, double val2) {return ::fmax(val1, val2);}
-  template <typename T>
-  constexpr T max(T val) {return max(val);}
   constexpr float   max(float val1, float val2) {return fmaxf(val1, val2);}
   constexpr double  max(double val1, double val2) {return ::fmax(val1, val2);}
+
+  template <typename T>
+  constexpr auto signbit(T val) {return ::signbit(val);}
+  constexpr auto signbit(float val) {return ::signbit(val);} // explicitly defined to avoid ICE on CUDA 10.1
+  constexpr auto signbit(double val) {return ::signbit(val);}
+
+  template <typename T>
+  constexpr auto copysign(T&& val) {return ::copysignf(std::forward<T>(val));}
+
 #else
   using std::exp;
   using std::sqrt;
@@ -48,6 +63,8 @@ namespace Math{
   using std::fmax;
   using std::min;
   using std::max;
+  using std::signbit;
+  using std::copysign;
 #endif
 } // end namespace Math
 #endif

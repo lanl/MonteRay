@@ -52,13 +52,13 @@ CUDA_CALLABLE_MEMBER
 rayTraceList_t::rayTraceList_t(RayWorkInfo& rayInfo, const unsigned threadID, int dim){
 
     if( dim < 0 ) {
-        for( unsigned i=0; i<rayInfo.getRayCastSize(threadID); ++i ) {
+        for ( unsigned i=0; i<rayInfo.getRayCastSize(threadID); ++i ) {
             add( rayInfo.getRayCastCell(threadID,i),  rayInfo.getRayCastDist(threadID,i));
         }
         return;
     }
 
-    for( unsigned i=0; i<rayInfo.getCrossingSize(dim,threadID); ++i ) {
+    for ( unsigned i=0; i<rayInfo.getCrossingSize(dim,threadID); ++i ) {
         add( rayInfo.getCrossingCell(dim,threadID,i),  rayInfo.getCrossingDist(dim,threadID,i));
     }
 }
@@ -260,17 +260,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
         const gpuRayFloat_t distance,
         const int start_index) const {
 
-#ifndef NDEBUG
-    const bool debug = false;
-
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
-#endif
-
     if( Math::abs(dir) <= std::numeric_limits<gpuRayFloat_t>::epsilon() ) { return; }
-
-#ifndef NDEBUG
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance  -- Bins=%p \n", &Bins );
-#endif
 
     if( start_index < 0 ) {
         if( dir < 0.0 ) {
@@ -279,22 +269,13 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     }
 
     int nBins = Bins.getNumBins();
-
-#ifndef NDEBUG
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - nBins=%d\n", nBins );
-#endif
-
     if( start_index >= nBins ) {
         if( dir > 0.0 ) {
             return;
         }
     }
 
-#ifdef __CUDA_ARCH__
-    unsigned offset = int(signbit(-dir));
-#else
-    unsigned offset = int(std::signbit(-dir));
-#endif
+    unsigned offset = unsigned(Math::signbit(-dir));
 
 #ifndef NDEBUG
     if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - offset=%d\n", offset );
@@ -302,11 +283,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
 
     int end_index = offset*(nBins-1);;
 
-#ifdef __CUDA_ARCH__
-    int dirIncrement = copysignf( 1, dir );
-#else
-    int dirIncrement = std::copysign( 1, dir );
-#endif
+    int dirIncrement = Math::signbit(dir) ? -1 : 1;
 
     unsigned num_indices = Math::abs(end_index - start_index ) + 1;
 

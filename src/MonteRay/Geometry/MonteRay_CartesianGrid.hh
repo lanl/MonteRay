@@ -51,8 +51,29 @@ public:
     CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const;
 
     CUDA_CALLABLE_MEMBER
-    void
-    rayTrace( const unsigned threadID,
+    DirectionAndSpeed convertToCellReferenceFrame(
+      const Vector3D<gpuRayFloat_t>& cellVelocity,
+      GridBins_t::Direction_t dir,
+      gpuRayFloat_t speed) const;
+    
+    CUDA_CALLABLE_MEMBER 
+    auto calcIndices(const GridBins_t::Position_t& pos) const {
+      return Array<int, 3>{ getDimIndex(0, pos[0] ),
+                            getDimIndex(1, pos[1] ),
+                            getDimIndex(2, pos[2] ) };
+    }
+    
+    CUDA_CALLABLE_MEMBER 
+    DistAndDim getMinDistToSurface( 
+        const GridBins_t::Position_t& pos, 
+        const GridBins_t::Direction_t& dir, 
+        const int indices[]) const;
+
+    CUDA_CALLABLE_MEMBER
+    gpuRayFloat_t getDistanceToInsideOfMesh(const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir) const;
+
+    CUDA_CALLABLE_MEMBER
+    void rayTrace( const unsigned threadID,
               RayWorkInfo& rayInfo,
               const GridBins_t::Position_t& particle_pos,
               const GridBins_t::Position_t& particle_dir,
@@ -60,19 +81,18 @@ public:
               const bool outsideDistances=false ) const;
 
     CUDA_CALLABLE_MEMBER
-    void
-    rayTraceWithMovingMaterials( const unsigned threadID,
+    void rayTraceWithMovingMaterials( 
+              const unsigned threadID,
               RayWorkInfo& rayInfo,
-              const GridBins_t::Position_t& particle_pos,
-              const GridBins_t::Position_t& particle_dir,
-              const gpuRayFloat_t distance,
+              GridBins_t::Position_t particle_pos,
+              const GridBins_t::Direction_t& particle_dir,
+              gpuRayFloat_t distance,
               const gpuRayFloat_t speed,
               const MaterialProperties& matProps,
-              const bool outsideDistances=false ) const {}
+              const bool outsideDistances=false ) const override;
 
     CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(  const unsigned dim,
+    void crossingDistance(  const unsigned dim,
                        const unsigned threadID,
                        RayWorkInfo& rayInfo,
                        const GridBins_t::Position_t& pos,
@@ -81,8 +101,7 @@ public:
 
 
     CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(  const unsigned dim,
+    void crossingDistance(  const unsigned dim,
                        const unsigned threadID,
                        RayWorkInfo& rayInfo,
                        const gpuRayFloat_t pos,
@@ -91,8 +110,7 @@ public:
 private:
 
     CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance( const unsigned dim,
+    void crossingDistance( const unsigned dim,
                       const unsigned threadID,
                       RayWorkInfo& rayInfo,
                       const GridBins_t& Bins,
@@ -109,7 +127,9 @@ private:
     pArrayOfpGridInfo_t pGridBins;
     //bool regular = false;
 
+#ifndef NDEBUG
     const bool debug = false;
+#endif
 };
 
 } /* namespace MonteRay */

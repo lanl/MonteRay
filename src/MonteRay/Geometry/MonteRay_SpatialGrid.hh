@@ -167,16 +167,11 @@ public:
               const gpuRayFloat_t distance,
               const bool outsideDistances=false) const;
 
+    // TPB: this exists because inheritance
+    template <typename... Args>
     CUDA_CALLABLE_MEMBER
-    void
-    rayTraceWithMovingMaterials( const unsigned threadID,
-              RayWorkInfo& rayInfo,
-              const Position_t& particle_pos,
-              const Position_t& particle_dir,
-              const gpuRayFloat_t distance,
-              const gpuRayFloat_t speed,
-              const MaterialProperties& matProps,
-              const bool outsideDistances=false ) const {}
+    void rayTraceWithMovingMaterials(Args&&... args) const {
+    }
 
     CUDA_CALLABLE_MEMBER
     void
