@@ -1,5 +1,5 @@
 #include <UnitTest++.h>
-#include "MonteRay_SpatialGrid_GPU_helper.hh"
+#include "../MonteRay_SpatialGrid_GPU_helper.hh"
 
 namespace MonteRay_SpatialGrid_Cartesian_GPU_tester {
 

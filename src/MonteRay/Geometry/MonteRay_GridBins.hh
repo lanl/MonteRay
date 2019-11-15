@@ -73,6 +73,10 @@ public:
         //if( debug ) printf("Debug: MonteRay_GridBins::getNumBins -- \n");
         return numBins;
     }
+    CUDA_CALLABLE_MEMBER unsigned size(void) const {
+        //if( debug ) printf("Debug: MonteRay_GridBins::getNumBins -- \n");
+        return numBins;
+    }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getMinVertex(void) const {return minVertex; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getMaxVertex(void) const {return maxVertex; }
     CUDA_CALLABLE_MEMBER unsigned getNumVertices(void) const { return nVertices; }
@@ -101,9 +105,9 @@ public:
     CUDA_CALLABLE_MEMBER inline
     gpuRayFloat_t distanceToGetInsideLinearMesh(const Position_t& pos, const Direction_t& dir, const int dim){
       gpuRayFloat_t dist = 0;
-      if (pos[dim] >= this->vertices[this->getNumBins() - 1]){
+      if (pos[dim] >= this->vertices[this->getNumBins()]){
         dist = dir[dim] < 0 ?
-          (this->vertices[this->getNumBins() - 1] - pos[dim])/dir[dim] : 
+          (this->vertices[this->getNumBins()] - pos[dim])/dir[dim] : 
           std::numeric_limits<gpuRayFloat_t>::infinity();
       } else if (pos[dim] <= this->vertices[0]) {
         dist = dir[dim] > 0 ?
