@@ -12,7 +12,7 @@ public:
     typedef MonteRay_GridBins::Position_t Position_t;
     typedef MonteRay_GridBins::Direction_t Direction_t;
 
-    enum coord {R=0,Z=1,Theta=2,DimMax=2};  //Theta not supported
+    enum coord {R=0,CZ=1,Theta=2,DimMax=2};  //Theta not supported
     enum cart_coord {x=0, y=1, z=2};
 
     using GridBins_t = MonteRay_GridBins;
@@ -60,6 +60,39 @@ public:
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getVolume( unsigned index ) const;
 
     CUDA_CALLABLE_MEMBER
+    DirectionAndSpeed convertToCellReferenceFrame(
+        const Vector3D<gpuRayFloat_t>& cellVelocity,
+        const GridBins_t::Position_t& pos,
+        GridBins_t::Direction_t dir,
+        gpuRayFloat_t speed) const;
+    
+    CUDA_CALLABLE_MEMBER 
+    Array<int, 3> calcIndices(const GridBins_t::Position_t& pos) const;
+
+    CUDA_CALLABLE_MEMBER 
+    DistAndDir getMinRadialDistAndDir( 
+        const GridBins_t::Position_t& pos, 
+        const GridBins_t::Direction_t& dir, 
+        const int radialIndex) const;
+    
+    CUDA_CALLABLE_MEMBER 
+    DistAndDir getMinDistToSurface( 
+        const GridBins_t::Position_t& pos, 
+        const GridBins_t::Direction_t& dir, 
+        const int indices[]) const;
+
+    CUDA_CALLABLE_MEMBER 
+    constexpr bool isMovingInward(
+            const GridBins_t::Position_t& pos,
+            const GridBins_t::Position_t& dir) const {
+      // unnormalized 'normal' * dir for circle drawn through pos w/ origin (0,0)
+      return Math::signbit(pos[x]*dir[x] + pos[y]*dir[y]); 
+    }
+
+    CUDA_CALLABLE_MEMBER
+    gpuRayFloat_t getDistanceToInsideOfMesh(const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir) const;
+
+    CUDA_CALLABLE_MEMBER
     void
     rayTrace(
             const unsigned threadID,
@@ -70,15 +103,15 @@ public:
             const bool outsideDistances=false ) const;
 
     CUDA_CALLABLE_MEMBER
-    virtual void
+    void
     rayTraceWithMovingMaterials( const unsigned threadID,
               RayWorkInfo& rayInfo,
-              const GridBins_t::Position_t& particle_pos,
-              const GridBins_t::Position_t& particle_dir,
-              const gpuRayFloat_t distance,
+              GridBins_t::Position_t pos,
+              const GridBins_t::Direction_t& dir,
+              gpuRayFloat_t distanceRemaining,
               const gpuRayFloat_t speed,
               const MaterialProperties& matProps,
-              const bool outsideDistances=false ) const {}
+              const bool outsideDistances=false ) const override;
 
     CUDA_CALLABLE_MEMBER
     void

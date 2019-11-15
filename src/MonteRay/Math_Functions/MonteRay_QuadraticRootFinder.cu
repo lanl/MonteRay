@@ -21,7 +21,7 @@ FindMinPositiveRoot(gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t C) {
 
     /// For doubles, NearEpsilon ~= 1.0e-14
     const gpuRayFloat_t NearEpsilon = 100.0 * std::numeric_limits<gpuRayFloat_t>::epsilon();
-    const gpuRayFloat_t minposRoot = std::numeric_limits<gpuRayFloat_t>::infinity();
+    gpuRayFloat_t minposRoot = std::numeric_limits<gpuRayFloat_t>::infinity();
 
     gpuRayFloat_t Discriminant = B*B - 4.0 * A * C;
 

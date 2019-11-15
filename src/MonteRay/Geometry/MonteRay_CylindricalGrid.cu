@@ -11,8 +11,8 @@ namespace MonteRay {
 
 using ptrCylindricalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_CylindricalGrid*>;
 
-CUDA_CALLABLE_KERNEL  createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridZ ) {
-    *pPtrInstance = new MonteRay_CylindricalGrid( 2, pGridR, pGridZ );
+CUDA_CALLABLE_KERNEL  createDeviceInstance(MonteRay_CylindricalGrid** pPtrInstance, ptrCylindricalGrid_result_t* pResult, MonteRay_GridBins* pGridR, MonteRay_GridBins* pGridCZ ) {
+    *pPtrInstance = new MonteRay_CylindricalGrid( 2, pGridR, pGridCZ );
     pResult->v = *pPtrInstance;
     //if( debug ) printf( "Debug: createDeviceInstance -- pPtrInstance = %d\n", pPtrInstance );
 }
@@ -36,20 +36,20 @@ MonteRay_GridSystemInterface(dim)
     DIM = dim;
 
     pRVertices = pBins[R];
-    if( DIM > 1 ) { pZVertices = pBins[Z]; }
+    if( DIM > 1 ) { pZVertices = pBins[CZ]; }
     //if( DIM > 2 ) { pThetaVertices = pBins[Theta]; }
     validate();
 }
 
 CUDA_CALLABLE_MEMBER
-MonteRay_CylindricalGrid::MonteRay_CylindricalGrid(unsigned dim, GridBins_t* pGridR, GridBins_t* pGridZ ) :
+MonteRay_CylindricalGrid::MonteRay_CylindricalGrid(unsigned dim, GridBins_t* pGridR, GridBins_t* pGridCZ ) :
 MonteRay_GridSystemInterface(dim)
 {
     MONTERAY_VERIFY( dim == DimMax, "MonteRay_CylindricalGrid::ctor -- only 2-D is allowed" ); // No greater than 2-D.
 
     DIM = 2;
     pRVertices = pGridR;
-    pZVertices = pGridZ;
+    pZVertices = pGridCZ;
     validate();
 }
 
@@ -117,17 +117,24 @@ MonteRay_CylindricalGrid::validateR(void) {
 }
 
 CUDA_CALLABLE_MEMBER
+Array<int, 3> MonteRay_CylindricalGrid::calcIndices(const GridBins_t::Position_t& pos) const {
+
+  Position_t cyl_pos = convertFromCartesian( pos );
+  Array<int, 3> indices;
+  indices[R] = pRVertices->getRadialIndexFromR( cyl_pos[R] );
+
+  if( DIM>1 ) { indices[CZ] = getAxialIndex( cyl_pos[CZ] ); }
+
+  return indices;
+}
+
+CUDA_CALLABLE_MEMBER
 MonteRay_CylindricalGrid::Position_t
 MonteRay_CylindricalGrid::convertFromCartesian( const Position_t& pos) const {
-    Position_t particleMeshPosition = {0.0, 0.0, 0.0};
 
-    gpuRayFloat_t r = sqrt(pos[x]*pos[x] + pos[y]*pos[y]);
-    particleMeshPosition[R] = r;
+    return { Math::sqrt(pos[x]*pos[x] + pos[y]*pos[y]), pos[z], 0.0 };
 
-    if(DIM > 1) {
-        particleMeshPosition[Z] =  pos[z];
-    }
-
+    // TPB: retain comment if we want to implement RZT geometries
     //     if(DIM > 2) {
     //         const double smallR = 1.0e-8;
     //         double theta = 0.0;
@@ -141,7 +148,7 @@ MonteRay_CylindricalGrid::convertFromCartesian( const Position_t& pos) const {
     //         particleMeshPosition[Theta] =  theta / (2.0*mcatk::Constants::pi); // to get revolutions
     //     }
 
-    return particleMeshPosition;
+    // return particleMeshPosition;
 }
 
 
@@ -149,26 +156,16 @@ CUDA_CALLABLE_MEMBER
 unsigned
 MonteRay_CylindricalGrid::getIndex( const Position_t& particle_pos) const{
 #ifndef NDEBUG
-    if( debug ) { printf("Debug: MonteRay_CylindricalGrid::getIndex -- starting\n"); }
+  if( debug ) { printf("Debug: MonteRay_CylindricalGrid::getIndex -- starting\n"); }
 #endif
-
-    int indices[3]= {0, 0, 0};
-    Position_t pos = convertFromCartesian( particle_pos );
-
-#ifndef NDEBUG
-    if( debug ) { printf("%i\n", pRVertices->isRadial() ); }
-#endif
-
-    indices[0] = pRVertices->getRadialIndexFromR( pos[R] );
-
-    if( DIM>1 ) { indices[1] = getAxialIndex( pos[Z] ); }
-
-    for( auto d = 0; d < DIM; ++d ) {
-        // outside the grid
-        if( isIndexOutside(d, indices[d] ) ) { return UINT_MAX; }
+  const auto indices = calcIndices(particle_pos);
+  // set to max if outside the grid
+  for( auto d = 0; d < DIM; ++d ) {
+    if( isIndexOutside(d, indices[d] ) ) {
+      return std::numeric_limits<unsigned>::max(); 
     }
-
-    return calcIndex( indices );;
+  }
+  return calcIndex( indices.data() );;
 }
 
 CUDA_CALLABLE_MEMBER
@@ -181,7 +178,7 @@ MonteRay_CylindricalGrid::isIndexOutside( unsigned d, int i) const {
         if( i >= numRBins ) { return true; }
     }
 
-    if( d == Z ) {
+    if( d == CZ ) {
         if( i < 0 ||  i >= numZBins ){ return true; }
     }
 
@@ -198,10 +195,10 @@ MonteRay_CylindricalGrid::calcIndex( const int indices[] ) const{
     if( DIM > 1) {
         index += indices[1]*numRBins;
     }
+
     //    if( DIM > 2) {
     //        index += indices[2]*numZBins*numRBins;
     //    }
-
     return index;
 }
 
@@ -296,22 +293,22 @@ MonteRay_CylindricalGrid::rayTrace(
         }
     }
 
-    // Crossing distance in Z direction
+    // Crossing distance in CZ direction
     if( DIM  > 1 ) {
-        indices[Z] = pZVertices->getLinearIndex( pos[z] );
+        indices[CZ] = pZVertices->getLinearIndex( pos[z] );
 
 #ifndef NDEBUG
-        if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- Z Direction -  dimension=%d, index=%d\n", Z, indices[Z]);
+        if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- CZ Direction -  dimension=%d, index=%d\n", CZ, indices[CZ]);
 #endif
 
-        planarCrossingDistance( Z, threadID, rayInfo, *pZVertices, pos[z], dir[z], distance, indices[Z] );
+        planarCrossingDistance( CZ, threadID, rayInfo, *pZVertices, pos[z], dir[z], distance, indices[CZ] );
 
 #ifndef NDEBUG
-        if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- Z Direction -  dimension=%d, number of planar crossings = %d\n", Z, rayInfo.getCrossingSize(Z,threadID) );
+        if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- CZ Direction -  dimension=%d, number of planar crossings = %d\n", CZ, rayInfo.getCrossingSize(CZ,threadID) );
 #endif
 
         // if outside and ray doesn't move inside then ray never enters the grid
-        if( isIndexOutside(Z,indices[Z]) && rayInfo.getCrossingSize(Z,threadID) == 0  ) {
+        if( isIndexOutside(CZ,indices[CZ]) && rayInfo.getCrossingSize(CZ,threadID) == 0  ) {
             return;
         }
     }
@@ -322,6 +319,131 @@ MonteRay_CylindricalGrid::rayTrace(
     if( debug ) printf( "Debug: MonteRay_CylindricalGrid::rayTrace -- number of total crossings = %d\n", rayInfo.getRayCastSize(threadID) );
 #endif
     return;
+}
+
+CUDA_CALLABLE_MEMBER
+DirectionAndSpeed MonteRay_CylindricalGrid::convertToCellReferenceFrame(
+    const Vector3D<gpuRayFloat_t>& cellVelocity,
+    const GridBins_t::Position_t& pos,
+    GridBins_t::Direction_t dir,
+    gpuRayFloat_t speed) const {
+
+  dir *= speed;
+  dir[z] = dir[z] - cellVelocity[CZ];
+  auto radiusSqr = pos[x]*pos[x] + pos[y]*pos[y];
+  if(radiusSqr > 0.0){
+    auto relativeRadialVelocity = cellVelocity[R] / Math::sqrt(radiusSqr);
+    dir[x] = dir[x] - pos[x] * relativeRadialVelocity;
+    dir[y] = dir[y] - pos[y] * relativeRadialVelocity;
+  }
+  speed = dir.magnitude();
+  dir /= speed;
+  return {dir, speed};
+}
+
+CUDA_CALLABLE_MEMBER 
+DistAndDir MonteRay_CylindricalGrid::getMinRadialDistAndDir( 
+    const GridBins_t::Position_t& pos, 
+    const GridBins_t::Direction_t& dir, 
+    const int radialIndex) const { 
+
+  const auto A = calcQuadraticA( dir );
+  const auto B = calcQuadraticB( pos, dir);
+  const auto pRSq = calcParticleRSq(pos);
+  // recalc this every time in case the cell velocity changes the ray's radial trajectory
+  bool inwardTrajectory = (radialIndex == 0 ? false : isMovingInward(pos, dir));
+
+  Roots roots = FindPositiveRoots(A,B, pRSq - pRVertices->verticesSq[radialIndex - inwardTrajectory]);
+   // no-hit on surface, turn ray around
+  if (roots.areInf( )) {
+    // if point is outside mesh, then it just doesn't intersect the mesh
+    if (radialIndex >= pRVertices->getNumBins()){
+      return {Roots::inf, R, not inwardTrajectory};
+    }
+    inwardTrajectory = false;
+    roots = FindPositiveRoots(A,B, pRSq - pRVertices->verticesSq[radialIndex]);
+  }
+  return {roots.min(), R, not inwardTrajectory};
+}
+  
+
+CUDA_CALLABLE_MEMBER 
+DistAndDir MonteRay_CylindricalGrid::getMinDistToSurface( 
+    const GridBins_t::Position_t& pos, 
+    const GridBins_t::Direction_t& dir, 
+    const int indices[]) const { 
+
+  auto minRadialDistAndDir = getMinRadialDistAndDir(pos, dir, indices[R]);
+  auto minCZDistAndDir = DistAndDir{(pZVertices->vertices[indices[CZ] + Math::signbit(-dir[z])] - pos[z])/dir[z], CZ, Math::signbit(-dir[z])};
+
+  return minRadialDistAndDir.distance() < minCZDistAndDir.distance() ? 
+    minRadialDistAndDir : minCZDistAndDir;
+}
+
+CUDA_CALLABLE_MEMBER
+gpuRayFloat_t MonteRay_CylindricalGrid::getDistanceToInsideOfMesh(const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir) const {
+  gpuRayFloat_t radialDist = (calcParticleRSq(pos) >= pRVertices->verticesSq[pRVertices->getNumBins() - 1]) ? 
+      (isMovingInward(pos, dir) ? 
+         getMinRadialDistAndDir(pos, dir, pRVertices->getNumBins()).distance() + std::numeric_limits<gpuRayFloat_t>::epsilon() : 
+         Roots::inf) :
+      0.0;
+  return Math::max(radialDist, pZVertices->distanceToGetInsideLinearMesh(pos, dir, z));
+}
+
+CUDA_CALLABLE_MEMBER
+void
+MonteRay_CylindricalGrid::rayTraceWithMovingMaterials( const unsigned threadID,
+          RayWorkInfo& rayInfo,
+          GridBins_t::Position_t pos,
+          const GridBins_t::Direction_t& dir,
+          gpuRayFloat_t distanceRemaining,
+          const gpuRayFloat_t speed,
+          const MaterialProperties& matProps,
+          const bool outsideDistances ) const {
+
+  auto distanceToInsideOfMesh = getDistanceToInsideOfMesh(pos, dir);
+  if (distanceRemaining < distanceToInsideOfMesh){
+    return;
+  }
+  pos += distanceToInsideOfMesh*dir;
+  distanceRemaining -= distanceToInsideOfMesh;
+  auto indices = calcIndices(pos);
+
+  while(distanceRemaining > std::numeric_limits<gpuRayFloat_t>::epsilon()){
+    // get "global" cell index, which is set to max if cell is outside mesh
+    auto cellIndex = calcIndex(indices.data());
+
+    // adjust dir and energy if moving materials
+    auto dirAndSpeed = matProps.usingMaterialMotion() ?
+      convertToCellReferenceFrame(matProps.velocity(cellIndex), pos, dir, speed) : 
+      DirectionAndSpeed{dir, speed};
+
+    auto newDir = dirAndSpeed.direction();
+    auto distAndDir = getMinDistToSurface(pos, dirAndSpeed.direction(), indices.data());
+
+    // min dist found, move ray and tally
+    if ( distAndDir.distance() < distanceRemaining ) {
+      rayInfo.addRayCastCell(threadID, cellIndex, distAndDir.distance());
+
+      // update distance and position
+      distanceRemaining -= distAndDir.distance();
+      pos += distAndDir.distance()*dirAndSpeed.direction();
+
+      // update indices
+      distAndDir.isPositiveDir() ?
+        indices[distAndDir.dimension()]++ : 
+        indices[distAndDir.dimension()]-- ;
+
+      // short-circuit if ray left the mesh
+      if( isIndexOutside(distAndDir.dimension(), indices[distAndDir.dimension()] ) ) {
+        return;
+      }
+    } else {
+      rayInfo.addRayCastCell(threadID, cellIndex, distanceRemaining);
+      return;
+    }
+  }
+  return;
 }
 
 CUDA_CALLABLE_MEMBER
@@ -340,7 +462,7 @@ MonteRay_CylindricalGrid::crossingDistance(
         radialCrossingDistances( dim, threadID, rayInfo, pos, dir, rSq, index, distance );
     }
 
-    if( dim == Z ) {
+    if( dim == CZ ) {
         int index = pZVertices->getLinearIndex( pos[z] );
         planarCrossingDistance( dim, threadID, rayInfo, *pZVertices, pos[z], dir[z], distance, index );
     }

@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 
-#include "MonteRay_SpatialGrid_GPU_helper.hh"
+#include "../MonteRay_SpatialGrid_GPU_helper.hh"
 #include "MonteRayConstants.hh"
 
 #include <stdexcept>
