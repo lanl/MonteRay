@@ -251,6 +251,7 @@ MonteRay_CartesianGrid::rayTrace(
 CUDA_CALLABLE_MEMBER
 DirectionAndSpeed MonteRay_CartesianGrid::convertToCellReferenceFrame(
     const Vector3D<gpuRayFloat_t>& cellVelocity,
+    const GridBins_t::Position_t&, // here to maintain same API as other grid types
     GridBins_t::Direction_t dir,
     gpuRayFloat_t speed) const
 {
@@ -260,7 +261,7 @@ DirectionAndSpeed MonteRay_CartesianGrid::convertToCellReferenceFrame(
   return {dir, speed};
 }
 
-CUDA_CALLABLE_MEMBER DistAndDim 
+CUDA_CALLABLE_MEMBER DistAndDir
 MonteRay_CartesianGrid::getMinDistToSurface(
        const GridBins_t::Position_t& pos,
        const GridBins_t::Direction_t& dir,
@@ -279,7 +280,7 @@ MonteRay_CartesianGrid::getMinDistToSurface(
  if (minDistToSurf < 0) {
    minDistToSurf = 0;
  }
- return {minDistToSurf, minDistIndex};
+ return {minDistToSurf, minDistIndex, std::signbit(-dir[minDistIndex])};
 }
 
 CUDA_CALLABLE_MEMBER
@@ -318,25 +319,25 @@ MonteRay_CartesianGrid::rayTraceWithMovingMaterials(
 
     // adjust dir and energy if moving materials
     auto dirAndSpeed = matProps.usingMaterialMotion() ?
-      convertToCellReferenceFrame(matProps.velocity(cellIndex), dir, speed) : 
+      convertToCellReferenceFrame(matProps.velocity(cellIndex), pos, dir, speed) : 
       DirectionAndSpeed{dir, speed};
 
-    auto distAndDim = getMinDistToSurface(pos, dirAndSpeed.direction(), indices.data());
+    auto distAndDir = getMinDistToSurface(pos, dirAndSpeed.direction(), indices.data());
 
     // min dist found, move ray
-    if ( distAndDim.distance() < distanceRemaining ) {
-      rayInfo.addRayCastCell(threadID, cellIndex, distAndDim.distance());
+    if ( distAndDir.distance() < distanceRemaining ) {
+      rayInfo.addRayCastCell(threadID, cellIndex, distAndDir.distance());
 
       // update distance and position
-      distanceRemaining -= distAndDim.distance();
-      pos += distAndDim.distance()*dirAndSpeed.direction();
+      distanceRemaining -= distAndDir.distance();
+      pos += distAndDir.distance()*dirAndSpeed.direction();
 
       // update indices
-      dirAndSpeed.direction()[distAndDim.dimension()] < 0 ? 
-        indices[distAndDim.dimension()]-- : 
-        indices[distAndDim.dimension()]++;
+      dirAndSpeed.direction()[distAndDir.dimension()] < 0 ? 
+        indices[distAndDir.dimension()]-- : 
+        indices[distAndDir.dimension()]++;
       // short-circuit if ray left the mesh
-      if( isIndexOutside(distAndDim.dimension(), indices[distAndDim.dimension()] ) ) {
+      if( isIndexOutside(distAndDir.dimension(), indices[distAndDir.dimension()] ) ) {
         return;
       }
     } else {

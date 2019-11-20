@@ -10,7 +10,6 @@
 
 #include "MonteRayTypes.hh"
 #include "GPUErrorCheck.hh"
-#include "MonteRay_QuadraticRootFinder.hh"
 #include "RayWorkInfo.hh"
 
 namespace MonteRay {

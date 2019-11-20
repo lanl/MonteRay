@@ -24,7 +24,6 @@ tallyCollision(
         RayWorkInfo* pRayInfo,
         gpuTallyType_t* pTally
 ) {
-    using enteringFraction_t = gpuTallyType_t;
     gpuTallyType_t opticalPathLength = 0.0;
     gpuFloatType_t energy = p->energy[0];
 
@@ -227,7 +226,7 @@ inline tallyCellSegment( const MaterialList* pMatList,
     gpuTallyType_t cellOpticalPathLength = totalXS*distance;
 
     if( totalXS >  1e-5 ) {
-        attenuation =  exp( - cellOpticalPathLength );
+        attenuation =  exp( - cellOpticalPathLength ); // TPB: this is a double-precision exponent
         score = ( 1.0 / totalXS ) * ( 1.0 - attenuation );
     }
     score *= exp( -opticalPathLength ) * weight;
@@ -241,6 +240,82 @@ inline tallyCellSegment( const MaterialList* pMatList,
 #endif
 
     return cellOpticalPathLength;
+}
+
+template<typename Geometry, typename MaterialList>
+void rayTraceOnGridWithMovingMaterials( 
+          Ray_t<1> ray,
+          gpuRayFloat_t timeRemaining,
+          const Geometry& geometry,
+          const MaterialProperties& matProps,
+          const MaterialList& matList,
+          gpuTallyType_t* tally) {
+
+  MONTERAY_ASSERT_MSG(ray.particleType == neutron, "rayTraceWithMovingMaterials is only valid for neutrons.");
+
+  auto distanceToInsideOfMesh = geometry.getDistanceToInsideOfMesh(ray.position(), ray.direction());
+  if (distanceToInsideOfMesh/ray.speed() > timeRemaining){
+    return;
+  }
+
+  ray.position() += distanceToInsideOfMesh*ray.direction();
+  timeRemaining -= distanceToInsideOfMesh/ray.speed();
+  auto indices = geometry.calcIndices(ray.position());
+
+  gpuRayFloat_t opticalPathLength = 0.0;
+  while(timeRemaining > std::numeric_limits<gpuRayFloat_t>::epsilon()){
+    // get "global" cell index, which is set to max if cell is outside mesh
+    auto cellIndex = geometry.calcIndex(indices.data());
+
+    // adjust dir and energy if moving materials
+    // TODO: remove decltype ?
+    using DirectionAndSpeed = decltype( geometry.convertToCellReferenceFrame(matProps.velocity(cellIndex), ray.position(), ray.direction(), ray.speed()) );
+    auto dirAndSpeed = matProps.usingMaterialMotion() ?
+      geometry.convertToCellReferenceFrame(matProps.velocity(cellIndex), ray.position(), ray.direction(), ray.speed()) : 
+      DirectionAndSpeed{ray.direction(), ray.speed()};
+
+    auto distAndDir = geometry.getMinDistToSurface(ray.position(), dirAndSpeed.direction(), indices.data());
+
+    // min dist found, move ray and tally
+    distAndDir.setDistance( Math::min(distAndDir.distance(), timeRemaining*dirAndSpeed.speed()) );
+
+    // update time and position since these values are probs in registers still
+    timeRemaining -= distAndDir.distance()/dirAndSpeed.speed();
+    ray.position() += distAndDir.distance()*dirAndSpeed.direction();
+
+    auto energy = dirAndSpeed.speed()*dirAndSpeed.speed()*
+      inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
+    auto matIDs = matProps.cellMaterialIDs(cellIndex);
+    // TODO: make this a function call 
+    gpuFloatType_t totalXS = 0.0;
+    for (auto id : matIDs){
+      totalXS += matList.material(id).getTotalXS(energy);
+    }
+
+    // calc attenuation, add score to tally, update ray's weight
+    gpuFloatType_t attenuation = 1.0;
+    auto score = distAndDir.distance();
+    if( totalXS > static_cast<gpuFloatType_t>(1e-5) ) {
+      attenuation = Math::exp( -totalXS*distAndDir.distance() );
+      opticalPathLength += distAndDir.distance() * totalXS;
+      score = ray.getWeight() / totalXS *
+        ( static_cast<gpuRayFloat_t>(1.0) - attenuation );
+    }
+
+    gpu_atomicAdd(&tally[cellIndex], score);
+    // adjust ray's weight
+    ray.setWeight(ray.getWeight()*attenuation);
+    if (opticalPathLength > 5.0) { return; } // TODO: make this configurable, e-5 is approx 0.7%
+
+    // update indices
+    distAndDir.isPositiveDir() ?
+      indices[distAndDir.dimension()]++ : 
+      indices[distAndDir.dimension()]-- ;
+
+    // short-circuit if ray left the mesh
+    if( geometry.isIndexOutside(distAndDir.dimension(), indices[distAndDir.dimension()] ) ) { return; }
+  }
+  return;
 }
 
 } /* end namespace */

@@ -358,7 +358,7 @@ DistAndDir MonteRay_CylindricalGrid::getMinRadialDistAndDir(
   if (roots.areInf( )) {
     // if point is outside mesh, then it just doesn't intersect the mesh
     if (radialIndex >= pRVertices->getNumBins()){
-      return {Roots::inf, R, not inwardTrajectory};
+      return {std::numeric_limits<gpuRayFloat_t>::infinity(), R, not inwardTrajectory};
     }
     inwardTrajectory = false;
     roots = FindPositiveRoots(A,B, pRSq - pRVertices->verticesSq[radialIndex]);

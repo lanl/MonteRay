@@ -53,10 +53,11 @@ SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests) {
   };
 
   TEST_FIXTURE( CartesianGrid, ConvertToCellReferenceFrame ) {
+    Position_t pos(0.0,   0.0,    0.0);
     Direction_t dir(1.0,   0.0,    0.0);
     gpuRayFloat_t speed = 4.0;
     Direction_t velocity{3.0, -2.0, 3.0};
-    auto newDirAndSpeed = cart.convertToCellReferenceFrame(velocity, dir, speed);
+    auto newDirAndSpeed = cart.convertToCellReferenceFrame(velocity, pos, dir, speed);
     auto newSpeed = std::sqrt(1.0 + 2.0*2.0 + 3.0*3.0);
     CHECK_CLOSE(newSpeed, newDirAndSpeed.speed(), 1e-6);
     CHECK_CLOSE(1.0/newSpeed, newDirAndSpeed.direction()[0], 1e-6);

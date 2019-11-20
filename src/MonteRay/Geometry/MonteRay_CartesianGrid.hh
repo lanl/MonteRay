@@ -53,6 +53,7 @@ public:
     CUDA_CALLABLE_MEMBER
     DirectionAndSpeed convertToCellReferenceFrame(
       const Vector3D<gpuRayFloat_t>& cellVelocity,
+      const GridBins_t::Position_t&, // unused to maintain same API as cylindrical and spherical grid
       GridBins_t::Direction_t dir,
       gpuRayFloat_t speed) const;
     
@@ -64,7 +65,7 @@ public:
     }
     
     CUDA_CALLABLE_MEMBER 
-    DistAndDim getMinDistToSurface( 
+    DistAndDir getMinDistToSurface( 
         const GridBins_t::Position_t& pos, 
         const GridBins_t::Direction_t& dir, 
         const int indices[]) const;

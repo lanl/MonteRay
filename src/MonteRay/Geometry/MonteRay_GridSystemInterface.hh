@@ -10,24 +10,20 @@
 #include "MaterialProperties.hh"
 #include "ThirdParty/Math.hh"
 #include "ThirdParty/Array.hh"
+#include "MonteRay_QuadraticRootFinder.hh"
 
 namespace MonteRay {
 
 using DimType = int;
-
-struct DistAndDim : public std::tuple<gpuRayFloat_t, DimType>{
-  using std::tuple<gpuRayFloat_t, DimType>::tuple;
+struct DistAndDir : public std::tuple<gpuRayFloat_t, DimType, bool>{
+  using std::tuple<gpuRayFloat_t, DimType, bool>::tuple;
   constexpr auto distance() const { return std::get<0>(*this); }
   constexpr auto dimension() const { return std::get<1>(*this); }
+  constexpr auto isPositiveDir() const { return std::get<2>(*this); }
 
   constexpr void setDistance(gpuRayFloat_t val) { std::get<0>(*this) = val; }
   constexpr void setDimension(DimType val) { std::get<1>(*this) = val; }
-};
-
-struct DistAndDir : public DistAndDim {
-  CUDA_CALLABLE_MEMBER DistAndDir(gpuRayFloat_t dist, DimType dim, bool posDir): DistAndDim(dist, dim), positiveDir_(posDir) {}
-  bool positiveDir_;
-  constexpr auto isPositiveDir() const { return positiveDir_; }
+  constexpr void setDir(bool val) { std::get<2>(*this) = val; }
 };
 
 struct DirectionAndSpeed : public std::tuple<MonteRay_GridBins::Direction_t, gpuRayFloat_t>{
@@ -38,6 +34,7 @@ struct DirectionAndSpeed : public std::tuple<MonteRay_GridBins::Direction_t, gpu
   constexpr void setDirection(MonteRay_GridBins::Direction_t& direction) { std::get<0>(*this) = direction; }
   constexpr void setSpeed(gpuRayFloat_t val) { std::get<1>(*this) = val; }
 };
+
 
 class singleDimRayTraceMap_t {
 private:
