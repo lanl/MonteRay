@@ -5,6 +5,8 @@
 #include "MonteRay_binaryIO.hh"
 #include "ManagedAllocator.hh"
 #include "MonteRayVector3D.hh"
+#include "SimpleView.hh"
+
 #include <iostream>
 #include <algorithm>
 #define MATERIAL_PROPERTIES_VERSION 1
@@ -21,7 +23,6 @@ class MaterialProperties_t: public Managed {
     using Cell_Index_t = int;
     using Velocity_t = Vector3D<gpuRayFloat_t>;
   private: 
-
 
   Container<Offset_t> offset_;
   Container<MatID_t> IDs_;
@@ -71,6 +72,11 @@ class MaterialProperties_t: public Managed {
     return velocities_[cellNum]; 
   }
   constexpr const auto& getVelocity( unsigned cellNum ) const { return velocity(cellNum); }
+
+  constexpr SimpleView<const MatID_t> cellMaterialIDs(int cellNum) const {
+    return {&IDs_[offset_[cellNum]], &IDs_[offset_[cellNum + 1]]};
+  }
+
 
   // TPB TODO: Save these functions and see they are useful later
   /* constexpr const auto cellMaterialIDs const (unsigned cellNum) { */

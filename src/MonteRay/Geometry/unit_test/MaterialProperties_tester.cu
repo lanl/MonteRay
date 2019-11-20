@@ -191,6 +191,31 @@ SUITE( NewMaterialProperties_tests ) {
     CHECK_EQUAL(0, matProps.numVelocities());
   }
 
+  TEST(cellMaterialIDs){
+    auto mpb = MaterialProperties::Builder{};
+
+    std::vector<MatID_t> ids{1, 2, 3};
+    std::vector<Density_t> densities{1.1, 2.2, 3.3};
+    int nCells = 3;
+    mpb.initializeMaterialDescription(ids, densities, nCells);
+
+    mpb.addCellMaterial(0, 4, 4.4);
+    mpb.addCellMaterial(2, 5, 5.5);
+
+    const auto matProps = mpb.build();
+
+    auto cellZeroIDs = matProps.cellMaterialIDs(0);
+    CHECK_EQUAL(2, cellZeroIDs.size());
+    CHECK_EQUAL(1, cellZeroIDs[0]);
+    CHECK_EQUAL(4, cellZeroIDs[1]);
+
+    auto cellTwoIDs = matProps.cellMaterialIDs(2);
+    CHECK_EQUAL(2, cellTwoIDs.size());
+    CHECK_EQUAL(3, cellTwoIDs[0]);
+    CHECK_EQUAL(5, cellTwoIDs[1]);
+
+  }
+
 
 }
 
