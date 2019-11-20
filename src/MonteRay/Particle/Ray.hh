@@ -5,31 +5,32 @@
 #include "MonteRayAssert.hh"
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayConstants.hh"
-#include "Array.hh"
-
-#ifndef __CUDACC_
-#include <cmath>
-#endif
+#include "ThirdParty/Array.hh"
+#include "ThirdParty/Math.hh"
+#include "MonteRayVector3D.hh"
 
 namespace MonteRay{
 
-using CollisionPosition_t = Array<gpuFloatType_t, 3>&;
-using CollisionDirection_t = Array<gpuFloatType_t, 3>&;
+using Position_t = Vector3D<gpuFloatType_t>;
+using Direction_t = Position_t;
+using CollisionPosition_t = Position_t&;
+using CollisionDirection_t = Direction_t&;
+
 using DetectorIndex_t = unsigned;
 
 template< unsigned N = 1 >
 class Ray_t{
 public:
-    Array<gpuFloatType_t, 3> pos = { 0.0 };
-    Array<gpuFloatType_t, 3> dir = { 0.0 };
-    Array<gpuFloatType_t, N> energy = { 0.0 };
-    Array<gpuFloatType_t, N> weight = { 0.0 };
-    gpuFloatType_t time = { 0.0 };
+    Position_t  pos = { 0.0 };
+    Direction_t dir = { 0.0 };
+    Array<gpuFloatType_t, N> energy = { gpuFloatType_t(0.0) };
+    Array<gpuFloatType_t, N> weight = { gpuFloatType_t(1.0) };
+    gpuFloatType_t time = 0.0;
     unsigned index = 0; // starting position mesh index
     DetectorIndex_t detectorIndex = 0;  // for next-event estimator
     ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
 
-    constexpr Ray_t(){}
+    constexpr Ray_t() = default;
 
     template< typename PARTICLE_T,
               unsigned N_ = N,
@@ -80,37 +81,47 @@ public:
         index = particle.getLocationIndex();
         detectorIndex = argDetectorIndex;
 
-        if( particle.getType()->isANeutron() ) {
-            particleType = neutron;
-        } else {
-            particleType = photon;
-        }
+        particleType = particle.getType()->isANeutron() ? neutron : photon;
     }
 
     constexpr unsigned static getN(void ) {
         return N;
     }
 
-    constexpr CollisionPosition_t getPosition() {
-        return pos;
-    }
+    constexpr const Position_t& getPosition() const { return pos; }
 
-    constexpr CollisionDirection_t getDirection() {
-        return dir;
-    }
+    constexpr const auto& position() const { return pos; }
+    constexpr auto& position() { return pos; }
+
+    constexpr const auto& direction() const { return dir; }
+    constexpr auto& direction() { return dir; }
+
+    constexpr const Direction_t& getDirection() const { return dir; }
+    constexpr void setDirection(const Direction_t& posIn){ pos = posIn; }
 
     constexpr gpuFloatType_t getEnergy(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return energy[index];
+    }
+    constexpr void setEnergy(gpuFloatType_t val, unsigned index = 0) {
+        MONTERAY_ASSERT( index < N);
+        energy[index] = val;
     }
 
     constexpr gpuFloatType_t getWeight(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return weight[index];
     }
+    constexpr void setWeight(gpuFloatType_t val, unsigned index = 0) {
+        MONTERAY_ASSERT( index < N);
+        weight[index] = val;
+    }
 
-    constexpr gpuFloatType_t getTime() {
+    constexpr gpuFloatType_t getTime() const {
         return time;
+    }
+    constexpr void setTime(gpuFloatType_t val) {
+        time = val;
     }
 
     constexpr unsigned getIndex() const {
@@ -126,16 +137,9 @@ public:
     }
 
     constexpr gpuFloatType_t speed(unsigned i=0) const {
-        if( particleType == photon ) {
-            return speed_of_light;
-        } else {
-            // neutron
-#ifdef __CUDACC__
-            return (neutron_speed_from_energy_const() * sqrtf( energy[i] ));
-#else
-            return neutron_speed_from_energy_const() * std::sqrt( energy[i] );
-#endif
-        }
+        return particleType == photon ?
+          speed_of_light : 
+          neutron_speed_from_energy_const() * Math::sqrt(energy[i]);
     }
 
     template<typename S>
