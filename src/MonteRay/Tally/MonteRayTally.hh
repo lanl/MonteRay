@@ -63,7 +63,7 @@ public:
         initialized = true;
 
         if( numTimeBinElements == 0 ) {
-            std::vector<gpuFloatType_t> default_edges = { float_inf };
+            std::vector<gpuFloatType_t> default_edges = { inf };
             setTimeBinEdges( default_edges );
         }
         data_size = getIndex( (numSpatialBins-1), numTimeBinElements );
@@ -107,9 +107,9 @@ public:
 
     template<typename T>
     void setTimeBinEdges( std::vector<T> edges) {
-        if( edges.size() == 0 ) { edges.push_back( float_inf ); }
+        if( edges.size() == 0 ) { edges.push_back( inf ); }
         if( edges.front() == 0.0 ) { edges.erase( edges.begin() ); }
-        if( edges.back() < float_inf ) { edges.push_back( float_inf ); }
+        if( edges.back() < inf ) { edges.push_back( inf ); }
         pTimeBinEdges->resize( edges.size() );
         for( unsigned i=0; i<edges.size(); ++i) {
             (*pTimeBinEdges)[i] = edges[i];
