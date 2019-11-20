@@ -3,6 +3,8 @@
 // Issue is NVIDA made different functions for floats rather than overload a common function name, much like the old math.h lib.
 // This creates the proper overloads if we're inside CUDA code (ifdef __CUDA_ARCH__)
 // Also, nvidia populates the global namespace with its math functions rather than putting them in a namespace.
+//
+#include <cmath>
 namespace Math{
 #ifdef __CUDA_ARCH__
   constexpr float   exp(float val) { return expf(val); }
