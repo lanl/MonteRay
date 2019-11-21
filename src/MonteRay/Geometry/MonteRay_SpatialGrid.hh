@@ -167,12 +167,6 @@ public:
               const gpuRayFloat_t distance,
               const bool outsideDistances=false) const;
 
-    // TPB: this exists because inheritance
-    template <typename... Args>
-    CUDA_CALLABLE_MEMBER
-    void rayTraceWithMovingMaterials(Args&&... args) const {
-    }
-
     CUDA_CALLABLE_MEMBER
     void
     crossingDistance( const unsigned dim,

@@ -64,17 +64,6 @@ public:
 
     CUDA_CALLABLE_MEMBER
     void
-    rayTraceWithMovingMaterials( const unsigned threadID,
-              RayWorkInfo& rayInfo,
-              GridBins_t::Position_t particle_pos,
-              const GridBins_t::Direction_t& particle_dir,
-              gpuRayFloat_t distance,
-              const gpuRayFloat_t speed,
-              const MaterialProperties& matProps,
-              const bool outsideDistances=false ) const override {} 
-
-    CUDA_CALLABLE_MEMBER
-    void
     crossingDistance(
             const unsigned dim,
             const unsigned threadID,

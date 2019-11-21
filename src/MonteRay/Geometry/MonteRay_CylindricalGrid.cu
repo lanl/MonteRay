@@ -392,62 +392,6 @@ gpuRayFloat_t MonteRay_CylindricalGrid::getDistanceToInsideOfMesh(const GridBins
 
 CUDA_CALLABLE_MEMBER
 void
-MonteRay_CylindricalGrid::rayTraceWithMovingMaterials( const unsigned threadID,
-          RayWorkInfo& rayInfo,
-          GridBins_t::Position_t pos,
-          const GridBins_t::Direction_t& dir,
-          gpuRayFloat_t distanceRemaining,
-          const gpuRayFloat_t speed,
-          const MaterialProperties& matProps,
-          const bool outsideDistances ) const {
-
-  auto distanceToInsideOfMesh = getDistanceToInsideOfMesh(pos, dir);
-  if (distanceRemaining < distanceToInsideOfMesh){
-    return;
-  }
-  pos += distanceToInsideOfMesh*dir;
-  distanceRemaining -= distanceToInsideOfMesh;
-  auto indices = calcIndices(pos);
-
-  while(distanceRemaining > std::numeric_limits<gpuRayFloat_t>::epsilon()){
-    // get "global" cell index, which is set to max if cell is outside mesh
-    auto cellIndex = calcIndex(indices.data());
-
-    // adjust dir and energy if moving materials
-    auto dirAndSpeed = matProps.usingMaterialMotion() ?
-      convertToCellReferenceFrame(matProps.velocity(cellIndex), pos, dir, speed) : 
-      DirectionAndSpeed{dir, speed};
-
-    auto newDir = dirAndSpeed.direction();
-    auto distAndDir = getMinDistToSurface(pos, dirAndSpeed.direction(), indices.data());
-
-    // min dist found, move ray and tally
-    if ( distAndDir.distance() < distanceRemaining ) {
-      rayInfo.addRayCastCell(threadID, cellIndex, distAndDir.distance());
-
-      // update distance and position
-      distanceRemaining -= distAndDir.distance();
-      pos += distAndDir.distance()*dirAndSpeed.direction();
-
-      // update indices
-      distAndDir.isPositiveDir() ?
-        indices[distAndDir.dimension()]++ : 
-        indices[distAndDir.dimension()]-- ;
-
-      // short-circuit if ray left the mesh
-      if( isIndexOutside(distAndDir.dimension(), indices[distAndDir.dimension()] ) ) {
-        return;
-      }
-    } else {
-      rayInfo.addRayCastCell(threadID, cellIndex, distanceRemaining);
-      return;
-    }
-  }
-  return;
-}
-
-CUDA_CALLABLE_MEMBER
-void
 MonteRay_CylindricalGrid::crossingDistance(
         const unsigned dim,
         const unsigned threadID,
