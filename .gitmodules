@@ -1,0 +1,3 @@
+[submodule "dependencies/variant"]
+	path = dependencies/mpark_variant
+	url = ssh://git@xcp-stash.lanl.gov:7999/mpark/variant.git
