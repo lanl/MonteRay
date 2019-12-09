@@ -100,7 +100,7 @@ void launch_ScoreRayList( NextEventEstimator* const pNextEventEstimator, int nBl
   int nThreads = launchBounds.second;
   cudaStream_t stream = pStream ? *pStream : 0 ;
   kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( pNextEventEstimator, pRayList->devicePtr, pRayInfo, 
-      pGeometry->getDevicePtr(), pMatProps, pMatList );
+      pGeometry, pMatProps, pMatList );
 #else
   cpuScoreRayList( pNextEventEstimator, pRayList, pRayInfo, pGeometry, pMatProps, pMatList );
 #endif

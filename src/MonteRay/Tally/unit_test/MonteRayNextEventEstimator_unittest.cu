@@ -5,7 +5,6 @@
 
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
-#include "GridBins.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "Ray.hh"
 #include "MonteRayNextEventEstimator.t.hh"
@@ -18,6 +17,7 @@
 namespace nextEventEsimator_unittest{
 
 using namespace MonteRay;
+using Grid_t = MonteRay_SpatialGrid;
 
 SUITE( NextEventEstimator_Tester ) {
 
@@ -28,21 +28,21 @@ SUITE( NextEventEstimator_Tester ) {
     }
 
     TEST(  MonteRayNextEventEstimator_ctor ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
+        MonteRayNextEventEstimator<Grid_t> estimator(1);
         CHECK_EQUAL(0, estimator.size() );
         CHECK_EQUAL(1, estimator.capacity() );
         CHECK_CLOSE( 0.0, estimator.getExclusionRadius(), 1e-6 );
     }
 
     TEST(  MonteRayNextEventEstimator_get_invalid_X ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
+        MonteRayNextEventEstimator<Grid_t> estimator(1);
 #ifndef NDEBUG
         CHECK_THROW( estimator.getPoint(10), std::runtime_error );
 #endif
     }
 
     TEST( add ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
+        MonteRayNextEventEstimator<Grid_t> estimator(1);
         unsigned id = estimator.add( 1.0, 2.0, 3.0);
         CHECK_EQUAL( 0, id);
         CHECK_CLOSE( 1.0, estimator.getPoint(0)[0], 1e-6 );
@@ -51,13 +51,13 @@ SUITE( NextEventEstimator_Tester ) {
     }
 
     TEST( add_too_many ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
+        MonteRayNextEventEstimator<Grid_t> estimator(1);
         unsigned id = estimator.add( 1.0, 2.0, 3.0);
         CHECK_THROW( estimator.add( 1.0, 2.0, 3.0), std::runtime_error );
     }
 
     TEST( set_exclusion_radius ) {
-        MonteRayNextEventEstimator<GridBins> estimator(1);
+        MonteRayNextEventEstimator<Grid_t> estimator(1);
         estimator.setExclusionRadius( 1.9 );
         CHECK_CLOSE( 1.9, estimator.getExclusionRadius(), 1e-6 );
     }
@@ -69,11 +69,13 @@ SUITE( NextEventEstimator_Tester ) {
         CalcScore_test(){
 
             // Two 1-cm think slabs in x direction
-            grid.setVertices( 0, 0.0, 2.0, 2);
-            grid.setVertices( 1, -10.0, 10.0, 1);
-            grid.setVertices( 2, -10.0, 10.0, 1);
-            grid.finalize();
-            grid.copyToGPU();
+            pGrid = std::make_unique<Grid_t>(TransportMeshType::Cartesian,
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{0.0, 2.0, 2},
+              MonteRay_GridBins{-10.0, 10.0, 1},
+              MonteRay_GridBins{-10.0, 10.0, 1} }
+            );
+
 
             MaterialProperties::Builder matPropsBuilder;
             MaterialProperties::Builder::Cell cell1, cell2;
@@ -106,20 +108,20 @@ SUITE( NextEventEstimator_Tester ) {
 
             pXS->copyToGPU();
 
-            pEstimator = std::make_unique<MonteRayNextEventEstimator<GridBins>>( 10 );
-            pEstimator->setGeometry( &grid, pMatProps.get() );
+            pEstimator = std::make_unique<MonteRayNextEventEstimator<Grid_t>>( 10 );
+            pEstimator->setGeometry( pGrid.get(), pMatProps.get() );
             pEstimator->setMaterialList( pMatList.get() );
         }
         ~CalcScore_test(){ }
 
     public:
-        GridBins grid;
+        std::unique_ptr<Grid_t> pGrid;
         std::unique_ptr<MonteRayMaterialListHost> pMatList;
         std::unique_ptr<MonteRayMaterialHost> pMat;
         std::unique_ptr<MonteRayCrossSectionHost> pXS;
         std::unique_ptr<MaterialProperties> pMatProps;
 
-        std::unique_ptr<MonteRayNextEventEstimator<GridBins>> pEstimator;
+        std::unique_ptr<MonteRayNextEventEstimator<Grid_t>> pEstimator;
     };
 
 #ifndef MEMCHECK
@@ -769,7 +771,7 @@ SUITE( NextEventEstimator_Tester ) {
 
          // read
          {
-             MonteRayNextEventEstimator<GridBins> estimator(0);
+             MonteRayNextEventEstimator<Grid_t> estimator(0);
 
              // test file exists
              std::ifstream exists(filename.c_str());

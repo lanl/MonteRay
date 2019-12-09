@@ -6,7 +6,6 @@
 
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
-#include "GridBins.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "Ray.hh"
 #include "MonteRayNextEventEstimator.t.hh"
@@ -27,11 +26,12 @@ SUITE( NextEventEstimator_pTester ) {
         CalcScore_test(){
 
             // Two 1-cm think slabs in x direction
-            grid.setVertices( 0, 0.0, 2.0, 2);
-            grid.setVertices( 1, -10.0, 10.0, 1);
-            grid.setVertices( 2, -10.0, 10.0, 1);
-            grid.finalize();
-            grid.copyToGPU();
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian,
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{0.0, 2.0, 2},
+              MonteRay_GridBins{-10.0, 10.0, 1},
+              MonteRay_GridBins{-10.0, 10.0, 1} }
+            );
 
             MaterialProperties::Builder matPropsBuilder;
             MaterialProperties::Builder::Cell cell1, cell2;
@@ -64,20 +64,20 @@ SUITE( NextEventEstimator_pTester ) {
 
             pXS->copyToGPU();
 
-            pEstimator = std::unique_ptr<MonteRayNextEventEstimator<GridBins>>( new MonteRayNextEventEstimator<GridBins>(10) );
-            pEstimator->setGeometry( &grid, pMatProps.get() );
+            pEstimator = std::unique_ptr<MonteRayNextEventEstimator<MonteRay_SpatialGrid>>( new MonteRayNextEventEstimator<MonteRay_SpatialGrid>(10) );
+            pEstimator->setGeometry( pGrid.get(), pMatProps.get() );
             pEstimator->setMaterialList( pMatList.get() );
         }
         ~CalcScore_test(){}
 
     public:
-        GridBins grid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<MonteRayMaterialListHost> pMatList;
         std::unique_ptr<MonteRayMaterialHost> pMat;
         std::unique_ptr<MonteRayCrossSectionHost> pXS;
         std::unique_ptr<MaterialProperties> pMatProps;
 
-        std::unique_ptr<MonteRayNextEventEstimator<GridBins>> pEstimator;
+        std::unique_ptr<MonteRayNextEventEstimator<MonteRay_SpatialGrid>> pEstimator;
     };
 
     TEST_FIXTURE(CalcScore_test, getTally ) {

@@ -73,8 +73,6 @@ MonteRayNextEventEstimator<Geometry>::init() {
      pMatProps = NULL;
      pMatListHost = NULL;
      pMatList = NULL;
-     pHashHost = NULL;
-     pHash = NULL;
 
      initialized = false;
      copiedToGPU = false;
@@ -137,12 +135,10 @@ MonteRayNextEventEstimator<Geometry>::copy(const MonteRayNextEventEstimator* rhs
         MonteRayMemcpy(tallyPoints, rhs->tallyPoints, num*sizeof( decltype(*tallyPoints) ), cudaMemcpyHostToDevice);
 
         pMatListHost = NULL;
-        pHashHost = NULL;
 
-        pGeometry = rhs->pGeometry->getDevicePtr();
+        pGeometry = rhs->pGeometry;
         pMatProps = rhs->pMatProps;
         pMatList = rhs->pMatListHost->ptr_device;
-        pHash = rhs->pMatListHost->getHashPtr()->getPtrDevice();
         pTally = rhs->pTally->devicePtr;
 
         nAllocated = rhs->nAllocated;
@@ -485,8 +481,6 @@ void
 MonteRayNextEventEstimator<Geometry>::setMaterialList(const MonteRayMaterialListHost* ptr) {
      pMatListHost = ptr;
      pMatList = ptr->getPtr();
-     pHashHost = ptr->getHashPtr();
-     pHash = pHashHost->getPtr();
 }
 
 template<typename Geometry>

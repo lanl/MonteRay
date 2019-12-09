@@ -17,7 +17,6 @@ namespace MonteRay {
 
 class HashLookup;
 class HashLookupHost;
-class GridBins;
 class MonteRayMaterialListHost;
 class MonteRayMaterialList;
 class MonteRayTally;
