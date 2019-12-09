@@ -239,16 +239,14 @@ SUITE( RayListInterface_fi_tester ) {
 
     TEST( rayTraceTally_GodivaR )
     {
-        //cudaReset();
+        auto pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+          std::array<MonteRay_GridBins, 3>{
+          MonteRay_GridBins{-33.5, 33.5, 100},
+          MonteRay_GridBins{-33.5, 33.5, 100},
+          MonteRay_GridBins{-33.5, 33.5, 100} }
+          );
 
-        GridBins* grid_host = new GridBins;
-        grid_host->setVertices( 0, -33.5, 33.5, 100);
-        grid_host->setVertices( 1, -33.5, 33.5, 100);
-        grid_host->setVertices( 2, -33.5, 33.5, 100);
-        grid_host->finalize();
-
-        FIGenericGPUTestHelper<1> helper( 0 );
-        helper.copyGridtoGPU(grid_host);
+        FIGenericGPUTestHelper<1> helper( pGrid->getNumCells() );
 
         MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
         readerObject.ReadMatData();
@@ -306,7 +304,7 @@ SUITE( RayListInterface_fi_tester ) {
         CHECK_CLOSE( 0.353442, expected, 1e-6);
 
         helper.setupTimers();
-        helper.launchRayTraceTally(1, 256, &points, pMatList.get(), mp.get() );
+        helper.launchRayTraceTally(1, 256, &points, pMatList.get(), mp.get(), pGrid.get() );
         helper.stopTimers();
 
         //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
@@ -314,12 +312,6 @@ SUITE( RayListInterface_fi_tester ) {
 
         CHECK_CLOSE( 0.0201584, helper.getTally(24), 1e-5 );
         CHECK_CLOSE( 0.0504394, helper.getTally(500182), 1e-4 );
-        //    	for( unsigned i=0; i<grid_host->num[0]*grid_host->num[1]*grid_host->num[2]; ++i) {
-        //    		if( helper.getTally(i) > 0.0 ) {
-        //    			std::cout << "i = " << i << " tally = " << helper.getTally(i) << "\n";
-        //    		}
-        //    	}
-        delete grid_host;
     }
 #endif
 
@@ -327,26 +319,20 @@ SUITE( RayListInterface_fi_tester ) {
 
 SUITE( Collision_fi_looping_tester ) {
 
-    TEST( setup ) {
-        //gpuCheck();
-    }
-
     TEST( rayTraceTally_GodivaR_wGlobalLauncher )
     {
         std::cout << "Debug: ********************************************* \n";
         std::cout << "Debug: Starting rayTrace tester with Global Launcher \n";
         FIGenericGPUTestHelper<1> helper(  1 );
 
-        //cudaReset();
-        GridBins grid;
-        grid.setVertices( 0, -33.5, 33.5, 100);
-        grid.setVertices( 1, -33.5, 33.5, 100);
-        grid.setVertices( 2, -33.5, 33.5, 100);
+        auto pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+          std::array<MonteRay_GridBins, 3>{
+          MonteRay_GridBins{-33.5, 33.5, 100},
+          MonteRay_GridBins{-33.5, 33.5, 100},
+          MonteRay_GridBins{-33.5, 33.5, 100} }
+        );
 
-        grid.copyToGPU();
-
-        gpuTallyHost tally( grid.getNumCells() );
-        tally.copyToGPU();
+        auto pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
 
         MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
         readerObject.ReadMatData();
@@ -432,11 +418,11 @@ SUITE( Collision_fi_looping_tester ) {
                     cpuWork1,
                     1,
                     256,
-                    &grid,
+                    pGrid.get(),
                     &bank1,
                     pMatList.get(),
                     mp.get(),
-                    &tally);
+                    pTally.get());
 
 #ifdef __CUDACC__
             std::cout << "Debug: Time in GPU raytrace kernel=" << time.gpuTime << " secs.\n";
@@ -453,11 +439,11 @@ SUITE( Collision_fi_looping_tester ) {
                     cpuWork2,
                     1,
                     256,
-                    &grid,
+                    pGrid.get(),
                     &bank2,
                     pMatList.get(),
                     mp.get(),
-                    &tally);
+                    pTally.get());
 
 #ifdef __CUDACC__
             std::cout << "Debug: Time in GPU raytrace kernel=" << time.gpuTime << " secs.\n";
@@ -472,16 +458,8 @@ SUITE( Collision_fi_looping_tester ) {
 
         helper.stopTimers();
 
-        tally.copyToCPU();
-
-        CHECK_CLOSE( 0.0201584, tally.getTally(24), 1e-5 );
-        CHECK_CLOSE( 0.0504394, tally.getTally(500182), 1e-4 );
-        //    for( unsigned i=0; i<grid.getNumCells(); ++i) {
-        //        if( tally.getTally(i) > 0.0 ) {
-        //            std::cout << "i = " << i << " tally = " << tally.getTally(i) << "\n";
-        //        }
-        //    }
-
+        CHECK_CLOSE( 0.0201584, pTally->getTally(24), 1e-5 );
+        CHECK_CLOSE( 0.0504394, pTally->getTally(500182), 1e-4 );
     }
 
 }
