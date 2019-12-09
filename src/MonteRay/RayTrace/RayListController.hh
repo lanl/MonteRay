@@ -10,7 +10,7 @@
 
 #include "MaterialList.hh"
 #include "MaterialProperties.hh"
-#include "gpuTally.hh"
+#include "BasicTally.hh"
 #include "RayListInterface.hh"
 #include "ExpectedPathLength.hh"
 #include "GPUErrorCheck.hh"
@@ -24,7 +24,6 @@
 
 namespace MonteRay {
 
-class gpuTallyHost;
 class cpuTimer;
 
 template< unsigned N >
@@ -44,7 +43,7 @@ public:
             Geometry*,
             MaterialList*,
             MaterialProperties*,
-            gpuTallyHost* );
+            BasicTally* );
 
     /// Ctor for the next event estimator solver
     RayListController(int nBlocks,
@@ -158,7 +157,7 @@ private:
     Geometry* pGeometry = nullptr;
     MaterialList* pMatList = nullptr;
     MaterialProperties* pMatProps = nullptr;
-    gpuTallyHost* pTally = nullptr;
+    BasicTally* pTally = nullptr;
     const MonteRayParallelAssistant& PA;
 
     std::unique_ptr<NextEventEstimator::Builder> pNextEventEstimatorBuilder; // TPB TODO: why is this a shared ptr

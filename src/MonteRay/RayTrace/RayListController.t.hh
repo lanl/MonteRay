@@ -16,7 +16,7 @@ RayListController<Geometry,N>::RayListController(
         Geometry* pGB,
         MaterialList* pML,
         MaterialProperties* pMP,
-        gpuTallyHost* pT
+        BasicTally* pT
 ) :
 nBlocks(blocks),
 nThreads(threads),
@@ -45,23 +45,36 @@ PA( MonteRayParallelAssistant::getInstance() )
                      " threads, to process " << currentBank->getPtrPoints()->size() << " rays," <<
                      " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
+        /* constexpr gpuFloatType_t timeRemaining = 10.0E6; */
+        /* rayTraceTallyWithMovingMaterials( */
+        /*     currentBank->getPtrPoints(), */
+        /*     timeRemaining, */
+        /*     pGeometry, */
+        /*     pMatProps, */
+        /*     pMatList, */
+        /*     pTally->temp->tally, */
+        /*     stream1.get()); */
+
+        /* auto visitor = [=](auto& pGeometry){ */
+        /*   /// stuff */
+        /* }; */
+        /* mpark::visit(visitor, geometry); */
 
 #ifdef __CUDACC__
-
         rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
-                pGeometry->getDevicePtr(),
+                pGeometry,
                 currentBank->getPtrPoints()->devicePtr,
                 pMatList,
                 pMatProps,
                 rayInfo.get(),
-                pTally->temp->tally );
+                pTally->data() );
 #else
-        rayTraceTally( pGeometry->getPtr(),
+        rayTraceTally( pGeometry,
                        currentBank->getPtrPoints(),
                        pMatList,
                        pMatProps,
                        rayInfo.get(),
-                       pTally->getPtr()->tally );
+                       pTally->data() );
 #endif
     };
 
@@ -194,15 +207,11 @@ void
 RayListController<Geometry,N>::flush(bool final){
     if( PA.getWorkGroupRank() != 0 ) { return; }
 
-#ifndef NDEBUG
-    const bool debug = false;
-    if( debug ) std::cout << "Debug: RayListController<N>::flush\n";
-#endif
-
     if( isSendingToFile() ) { flushToFile(final); }
 
     if( currentBank->size() == 0 ) {
         if( final ) {
+            stopTimers();
             printTotalTime();
             currentBank->clear();
         }
@@ -210,10 +219,10 @@ RayListController<Geometry,N>::flush(bool final){
     }
 
     if( nFlushs > 0 ) {
-        std::cout << "Debug: flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n";
+        /* std::cout << "Debug: flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n"; */
         stopTimers();
     }
-    std::cout << "Debug: flush nFlushs =" <<nFlushs << " -- starting timers\n";
+    /* std::cout << "Debug: flush nFlushs =" <<nFlushs << " -- starting timers\n"; */
 
     startTimers();
 
@@ -529,7 +538,6 @@ RayListController<Geometry,N>::copyPointDetTallyToCPU(void) {
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
-    /* pNextEventEstimator->copyToCPU(); */
 }
 
 template<typename Geometry, unsigned N>
@@ -562,7 +570,6 @@ RayListController<Geometry,N>::copyPointDetToGPU(void) {
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
-    /* pNextEventEstimator->copyToGPU(); */
 }
 
 template<typename Geometry, unsigned N>

@@ -7,9 +7,7 @@ target_sources( monteray.raytrace.test  PRIVATE
                ${CMAKE_CURRENT_LIST_DIR}/gpuDistanceCalculator_tester.cu
                ${CMAKE_CURRENT_LIST_DIR}/gpuDistanceCalculator_test_helper.hh
                ${CMAKE_CURRENT_LIST_DIR}/gpuDistanceCalculator_test_helper.cu
-               ${CMAKE_CURRENT_LIST_DIR}/gpuTally_tester.cu
-               ${CMAKE_CURRENT_LIST_DIR}/gpuTally_test_helper.hh
-               ${CMAKE_CURRENT_LIST_DIR}/gpuTally_test_helper.cu
+               ${CMAKE_CURRENT_LIST_DIR}/BasicTally_tester.cu
                ${CMAKE_CURRENT_LIST_DIR}/gpuTiming_tester.cu
                ${CMAKE_CURRENT_LIST_DIR}/gpuTiming_test_helper.cu
                ${CMAKE_CURRENT_LIST_DIR}/gpuTiming_test_helper.hh

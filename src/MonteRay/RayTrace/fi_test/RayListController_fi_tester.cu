@@ -6,45 +6,33 @@
 #include "GPUUtilityFunctions.hh"
 #include "ReadAndWriteFiles.hh"
 
-#include "gpuTally.hh"
+#include "BasicTally.hh"
+#include "MonteRay_SpatialGrid.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
-#include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 
 namespace RayListController_fi_tester {
 
 using namespace MonteRay;
 
 SUITE( Ray_bank_controller_fi_tester ) {
+    using Grid_t = MonteRay_SpatialGrid;
 
     class ControllerSetup {
     public:
         ControllerSetup(){
 
-            pGrid = new GridBins;
-            pGrid->setVertices(0, -33.5, 33.5, 100);
-            pGrid->setVertices(1, -33.5, 33.5, 100);
-            pGrid->setVertices(2, -33.5, 33.5, 100);
-
-            pTally = new gpuTallyHost( pGrid->getNumCells() );
-        }
-
-        void setup(){
-
-
-            pGrid->copyToGPU();
-
-            pTally->copyToGPU();
-
             MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
             readerObject.ReadMatData();
+
+            pGrid = std::make_unique<Grid_t>( readerObject );
 
             MaterialProperties::Builder matPropBuilder{};
             matPropBuilder.disableMemoryReduction();
@@ -87,41 +75,37 @@ SUITE( Ray_bank_controller_fi_tester ) {
 
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
+            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
         }
 
-        ~ControllerSetup(){
-            delete pGrid;
-            delete pTally;
-        }
-
-        GridBins* pGrid;
-        std::unique_ptr<CrossSectionList> pXsList;
+        std::unique_ptr<Grid_t> pGrid;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        gpuTallyHost* pTally;
+        std::unique_ptr<CrossSectionList> pXsList;
+        std::unique_ptr<BasicTally> pTally;
     };
 
 #if false
 
     TEST_FIXTURE(ControllerSetup, ctor ){
-        CollisionPointController controller( 1024,
+        CollisionPointController<Grid_t> controller( 1024,
                 1024,
-                pGrid,
-                pMatList,
+                pGrid.get(),
+                pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         CHECK_EQUAL(1000000, controller.capacity());
         CHECK_EQUAL(0, controller.size());
     }
 
     TEST_FIXTURE(ControllerSetup, setCapacity ){
-        CollisionPointController controller( 1024,
+        CollisionPointController<Grid_t> controller( 1024,
                 1024,
-                pGrid,
-                pMatList,
+                pGrid.get(),
+                pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         CHECK_EQUAL(1000000, controller.capacity());
         controller.setCapacity(10);
@@ -129,12 +113,12 @@ SUITE( Ray_bank_controller_fi_tester ) {
     }
 
     TEST_FIXTURE(ControllerSetup, add_a_particle ){
-        CollisionPointController controller( 1024,
+        CollisionPointController<Grid_t> controller( 1024,
                 1024,
-                pGrid,
-                pMatList,
+                pGrid.get(),
+                pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
         controller.add( 0.0, 0.0, 0.0,
@@ -148,19 +132,14 @@ SUITE( Ray_bank_controller_fi_tester ) {
 TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
     // exact numbers from expected path length tally in mcatk
 
-    setup();
-
-    CollisionPointController<GridBins> controller( 256,
+    CollisionPointController<Grid_t> controller( 256,
             256,
-            pGrid,
+            pGrid.get(),
             pMatList.get(),
             pMatProps.get(),
-            pTally );
-
+            pTally.get() );
 
     RayListInterface<1> bank1(500000);
-    //    	bool end = false;
-    //    	unsigned offset = 0;
 
     double x = 0.0001;
     double y = 0.0001;
@@ -198,10 +177,8 @@ TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
     CHECK_EQUAL( 0, controller.size() );
     controller.flush(true);
 
-    pTally->copyToCPU();
-
-    CHECK_CLOSE( 0.601248*nI*nJ, pTally->getTally(index), 1e-6*nI*nJ );
-    CHECK_CLOSE( 0.482442*nI*nJ, pTally->getTally(index+1), 1e-6*nI*nJ );
+    CHECK_CLOSE( 0.601248*nI*nJ, pTally->getTally(index), 5e-6*nI*nJ );
+    CHECK_CLOSE( 0.482442*nI*nJ, pTally->getTally(index+1), 5e-6*nI*nJ );
 
 }
 
@@ -209,13 +186,12 @@ TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
 TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
     std::cout << "Debug: ********************************************* \n";
     std::cout << "Debug: Starting rayTrace tester with single looping bank \n";
-    setup();
-    CollisionPointController<GridBins> controller( 1,
+    CollisionPointController<Grid_t> controller( 1,
             256,
-            pGrid,
+            pGrid.get(),
             pMatList.get(),
             pMatProps.get(),
-            pTally );
+            pTally.get() );
     controller.setCapacity( 1000000 );
 
     RayListInterface<1> bank1(50000);
@@ -236,8 +212,6 @@ TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
         }
 
     }
-
-    pTally->copyToCPU();
 
     // TODO - find the discrepancy
     CHECK_CLOSE( 0.0201738, pTally->getTally(24), 1e-5 );  // 0.0201584 is benchmark value - not sure why the slight difference

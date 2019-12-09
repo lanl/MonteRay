@@ -1,5 +1,6 @@
 #include <UnitTest++.h>
 
+#include "MonteRay_CylindricalGrid.t.hh"
 #include "MonteRay_CartesianGrid.t.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "MonteRayVector3D.hh"
@@ -20,7 +21,6 @@ struct MockMaterial{
 struct MockMaterialList {
   constexpr auto material(int) const {return MockMaterial{};}
 };
-
 struct MockVoidMaterial{
   constexpr gpuRayFloat_t getTotalXS(gpuRayFloat_t) const {return 0.0; }
 };
@@ -28,7 +28,7 @@ struct MockVoidMaterialList {
   constexpr auto material(int) const {return MockVoidMaterial{};}
 };
 
-SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests) {
+SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests ) {
 
   using Position_t = Vector3D<gpuRayFloat_t>;
   using Direction_t = Vector3D<gpuRayFloat_t>;
@@ -36,35 +36,16 @@ SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests) {
 
   enum coord {X,Y,Z,DIM};
 
-  class GridTestData {
-  public:
-
-    GridTestData(){
-      std::vector<gpuRayFloat_t> vertices{ -1, 0, 1 };
-
-      pGridInfo[X] = new GridBins_t();
-      pGridInfo[Y] = new GridBins_t();
-      pGridInfo[Z] = new GridBins_t();
-
-      pGridInfo[X]->initialize( vertices );
-      pGridInfo[Y]->initialize( vertices );
-      pGridInfo[Z]->initialize( vertices );
-
-      }
-      ~GridTestData(){
-          delete pGridInfo[X];
-          delete pGridInfo[Y];
-          delete pGridInfo[Z];
-      }
-
-      MonteRay_SpatialGrid::pArrayOfpGridInfo_t pGridInfo;
-  };
-
   class CartesianGrid{
     public:
-      GridTestData gridTestData;
       MonteRay_CartesianGrid cart;
-      CartesianGrid(): gridTestData(GridTestData{}), cart(3, gridTestData.pGridInfo){}
+      CartesianGrid():  
+        cart(3, std::array<MonteRay_GridBins, 3> {
+                  MonteRay_GridBins{-1, 1, 2},
+                  MonteRay_GridBins{-1, 1, 2},
+                  MonteRay_GridBins{-1, 1, 2} 
+                }
+        ) {}
   };
 
   TEST_FIXTURE( CartesianGrid, RayTraceWithNonMovingMaterials){
@@ -154,6 +135,77 @@ SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests) {
     CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[4], 1e-5 );
     CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[5], 1e-5 );
     CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[1], 1e-5 );
+  }
+}
+
+SUITE( MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_Tests ) {
+
+  using Position_t = Vector3D<gpuRayFloat_t>;
+  using Direction_t = Vector3D<gpuRayFloat_t>;
+  using GridBins_t = MonteRay_GridBins;
+
+  enum cartesian_coord {x=0,y=1,z=2};
+  enum cylindrical_coord {R=0,CZ=1,Theta=2,DIM=2};
+
+  class CylindricalGrid{
+    public:
+      gpuRayFloat_t two = 2.0;
+      gpuRayFloat_t one = 1.0;
+      MonteRay_CylindricalGrid cyl;
+      CylindricalGrid(): 
+          cyl(2, std::array<MonteRay_GridBins, 3>{
+                    MonteRay_GridBins{0.0, 2.0, 2, MonteRay_GridBins::RADIAL},
+                    MonteRay_GridBins{-1.0, 1.0, 2},
+                    MonteRay_GridBins{-1, 0, 1} 
+                 }
+          ) 
+      {
+        int size = cyl.getNumBins(0)*cyl.getNumBins(1);
+        CHECK_EQUAL(4, size);
+      }
+  };
+
+  TEST_FIXTURE( CylindricalGrid, RayTraceWithMovingMaterials){
+
+    std::unique_ptr<MaterialProperties> pMatProps;
+    auto mpb = MaterialProperties::Builder();
+    using Cell = MaterialProperties::Builder::Cell;
+    Cell cell{ {1}, {1.0} }; // set material IDs and densities
+    // velocities are (r, z, t), t is not used
+    mpb.addCell(cell);
+    mpb.setCellVelocity(0, {0.0, -0.5, 0.0});
+    mpb.addCell(cell);
+    mpb.setCellVelocity(1, {0.0,  0.5, 0.0});
+    mpb.addCell(cell);
+    mpb.setCellVelocity(2, {-2.0, -0.5, 0.0});
+    mpb.addCell(cell);
+    mpb.setCellVelocity(3, {-2.0, 0.5, 0.0});
+
+    pMatProps = std::make_unique<MaterialProperties>(mpb.build());
+
+    std::vector<gpuTallyType_t> tallyData(4, 0);
+
+    Ray_t<1> ray;
+    const double speed = 1.0/sqrt(4.0/5.0);
+    auto energy = speed*speed*inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
+    ray.setEnergy(energy);
+
+    gpuFloatType_t timeRemaining = 10.0E6;
+
+    gpuFloatType_t val = -2.5/Math::sqrt(2.0);
+    ray.position() = Position_t{ val, val, -1.0 };
+    ray.direction() = Direction_t{Math::sqrt(two), Math::sqrt(two), one}.normalize();
+
+    MockVoidMaterialList voidMatList{};
+    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, cyl, *pMatProps, voidMatList, tallyData.data());
+
+    CHECK_CLOSE( 1.0, tallyData[1], 1e-6 );
+
+    CHECK_CLOSE( 0.75*sqrt(2.0), tallyData[0], 1e-6 );
+
+    CHECK_CLOSE( 0.75*sqrt(2.0), tallyData[2], 1e-6 );
+
+    CHECK_CLOSE( 1.0, tallyData[3], 1e-6 );
   }
 }
 

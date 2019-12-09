@@ -6,7 +6,7 @@
 #include "GPUUtilityFunctions.hh"
 #include "ReadAndWriteFiles.hh"
 
-#include "gpuTally.hh"
+#include "BasicTally.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
@@ -101,30 +101,21 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
             matPropBuilder.disableMemoryReduction();
             matPropBuilder.setMaterialDescription( readerObject );
 
-            pGrid = new Grid_t(readerObject);
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
             CHECK_EQUAL( 952, pGrid->getNumCells() );
 
-            pTally = new gpuTallyHost( pGrid->getNumCells() );
-
-            pGrid->copyToGPU();
-
-            pTally->copyToGPU();
+            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
 
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
         }
 
-        ~ControllerSetup(){
-            delete pGrid;
-            delete pTally;
-        }
-
-        Grid_t* pGrid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<CrossSectionList> pXsList;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        gpuTallyHost* pTally;
+        std::unique_ptr<BasicTally> pTally;
 
     };
 
@@ -150,10 +141,10 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
         CollisionPointController<Grid_t> controller(
                 nThreadsPerBlock,
                 nThreads,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         controller.setCapacity(capacity);
 
@@ -161,10 +152,8 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
         CHECK_EQUAL( 12118350 , numCollisions );
 
         controller.sync();
-        pTally->copyToCPU();
 
-        gpuTallyHost benchmarkTally(952);
-        benchmarkTally.read( "MonteRayTestFiles/Zeus2_Cylindrical_cpuTally_n5_particles1000_cycles50.bin" );
+        auto benchmarkTally = readFromFile( "MonteRayTestFiles/Zeus2_Cylindrical_cpuTally_n5_particles1000_cycles50.bin", *pTally );
 
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
 

@@ -7,7 +7,6 @@
 #include "RayListInterface.hh"
 #include "MonteRayCrossSection.hh"
 #include "MonteRayMaterialList.hh"
-#include "GridBins.hh"
 
 #ifndef __CUDACC__
 #include "MonteRay_timer.hh"

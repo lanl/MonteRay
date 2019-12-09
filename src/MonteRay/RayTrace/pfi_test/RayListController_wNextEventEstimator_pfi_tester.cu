@@ -8,11 +8,8 @@
 
 #include "GPUUtilityFunctions.hh"
 
-#include "gpuTally.hh"
-
 #include "MonteRay_timer.hh"
 #include "RayListController.hh" 
-#include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
 #include "MaterialProperties.hh"
@@ -21,6 +18,7 @@
 #include "MonteRayConstants.hh"
 #include "MonteRayCrossSection.hh"
 #include "MonteRayParallelAssistant.hh"
+#include "MonteRay_SpatialGrid.hh"
 
 namespace RayListController_wNextEventEstimator_pfi_tester {
 
@@ -33,11 +31,13 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         ControllerSetup(){
             const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
-            pGrid = new GridBins();
-            pGrid->setVertices( 0, 0.0, 2.0, 2);
-            pGrid->setVertices( 1, -10.0, 10.0, 1);
-            pGrid->setVertices( 2, -10.0, 10.0, 1);
-            pGrid->finalize();
+
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{0.0, 2.0, 2},
+              MonteRay_GridBins{-10.0, 10.0, 1},
+              MonteRay_GridBins{-10.0, 10.0, 1} }
+            );
 
             auto matPropBuilder = MaterialProperties::Builder{};
 
@@ -76,16 +76,11 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
             const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
 
             if( PA.getWorkGroupRank() !=0  ) return;
-            pGrid->copyToGPU();
 
 
         }
 
-        ~ControllerSetup(){
-            delete pGrid;
-        }
-
-        GridBins* pGrid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<MaterialProperties> pMatProps;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<CrossSectionList> pXsList;
@@ -111,9 +106,9 @@ SUITE( RayListController_wNextEventEstimator_pfi_tester_suite ) {
         }
 
         setup();
-        NextEventEstimatorController<GridBins> controller( 1,
+        NextEventEstimatorController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
                 numPointDets );

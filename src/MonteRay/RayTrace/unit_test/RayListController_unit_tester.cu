@@ -8,7 +8,6 @@
 #include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
-#include "GridBins.hh"
 #include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
@@ -16,6 +15,7 @@
 #include "MaterialProperties.hh"
 
 #include "UnitControllerBase.hh"
+#include "MonteRay_SpatialGrid.hh"
 
 namespace RayListController_unit_tester{
 
@@ -27,12 +27,14 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     public:
         UnitControllerSetup(){
 
-            pGrid = new GridBins;
-            pGrid->setVertices(0, -5.0, 5.0, 10);
-            pGrid->setVertices(1, -5.0, 5.0, 10);
-            pGrid->setVertices(2, -5.0, 5.0, 10);
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{-5, 5, 10},
+              MonteRay_GridBins{-5, 5, 10},
+              MonteRay_GridBins{-5, 5, 10} }
+            );
 
-            pTally = new gpuTallyHost( pGrid->getNumCells() );
+            pTally = std::make_unique<BasicTally>(pGrid->getNumCells());
 
             // Density of 1.0 for mat number 0
             MaterialProperties::Builder matPropBuilder{};
@@ -46,33 +48,25 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 #ifdef __CUDACC__
             gpuErrchk( cudaPeekAtLastError() );
 #endif
-            pGrid->copyToGPU();
-            pTally->copyToGPU();
-            pTally->clear();
 
 #ifdef __CUDACC__
             gpuErrchk( cudaPeekAtLastError() );
 #endif
         }
 
-        ~UnitControllerSetup(){
-            delete pGrid;
-            delete pTally;
-        }
-
         std::unique_ptr<MaterialProperties> pMatProps;
-        GridBins* pGrid;
-        gpuTallyHost* pTally;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
+        std::unique_ptr<BasicTally> pTally;
     };
 
     TEST_FIXTURE(UnitControllerSetup, ctor_set_capacity ){
         std::cout << "Debug: CollisionPointController_unit_tester -- ctor\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 1024,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         CHECK_EQUAL(100000, controller.capacity());
         CHECK_EQUAL(0, controller.size());
@@ -82,12 +76,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 32,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         unsigned i = pGrid->getIndex( Position_t( 0.0, 0.0, 0.0 ) );
         ParticleRay_t particle;
@@ -112,12 +106,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_a_particle_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr1\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 32,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         unsigned i = pGrid->getIndex( Position_t(0.0, 0.0, 0.0) );
 
@@ -140,12 +134,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, add_two_particles_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr2\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 1024,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         unsigned i = pGrid->getIndex( Position_t(0.0, 0.0, 0.0) );
 
@@ -181,12 +175,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
     TEST_FIXTURE(UnitControllerSetup, add_ten_particles_via_ptr ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle_via_ptr3\n";
         setup();
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 32,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         ParticleRay_t particle[10];
         for( auto i = 0; i < 10; ++i ){
@@ -210,12 +204,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, single_ray ){
         std::cout << "Debug: CollisionPointController_unit_tester -- single_ray\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         setup();
 
@@ -254,7 +248,6 @@ SUITE( RayListController_unit_tester_basic_tests ) {
         controller.flush(true);
 
         std::cout << "Debug: CollisionPointController_unit_tester -- single_ray - copyToCPU \n";
-        pTally->copyToCPU();
 
         float distance = 0.5f;
         CHECK_CLOSE( (1.0f-std::exp(-testXS*distance))/testXS, pTally->getTally(i), 1e-5 );
@@ -263,12 +256,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, write_single_ray_to_file ){
         std::cout << "Debug: CollisionPointController_unit_tester -- write_single_ray_to_file\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         setup();
 
@@ -312,12 +305,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, read_single_ray_to_file ){
         std::cout << "Debug: CollisionPointController_unit_tester -- read_single_ray_to_file\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         setup();
 
@@ -337,15 +330,13 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
         controller.readCollisionsFromFile( "single_ray_collision.bin" );
 
-        pTally->copyToCPU();
-
         float distance = 0.5f;
         CHECK_CLOSE( (1.0f-std::exp(-testXS*distance))/testXS, pTally->getTally(i), 1e-5 );
     }
 
     TEST_FIXTURE(UnitControllerSetup, set_write_to_file_only_via_ctor ){
         std::cout << "Debug: CollisionPointController_unit_tester -- add_a_particle\n";
-        CollisionPointController<GridBins> controller( 2, std::string("collisionPoints_via_ctor_test_file.bin") );
+        CollisionPointController<MonteRay_SpatialGrid> controller( 2, std::string("collisionPoints_via_ctor_test_file.bin") );
         CHECK_EQUAL( true, controller.isSendingToFile() );
 
         gpuFloatType_t x = 0.5;
@@ -378,12 +369,12 @@ SUITE( RayListController_unit_tester_basic_tests ) {
 
     TEST_FIXTURE(UnitControllerSetup, read_single_ray_to_file_from_writeonly_ctor ){
         std::cout << "Debug: CollisionPointController_unit_tester -- read_single_ray_to_file_from_writeonly_ctor\n";
-        CollisionPointController<GridBins> controller( 1,
+        CollisionPointController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         setup();
 
@@ -402,8 +393,6 @@ SUITE( RayListController_unit_tester_basic_tests ) {
         CHECK_EQUAL( 555, i);
 
         controller.readCollisionsFromFile( "collisionPoints_via_ctor_test_file.bin" );
-
-        pTally->copyToCPU();
 
         float distance = 0.5f;
         CHECK_CLOSE( (1.0f-std::exp(-testXS*distance))/testXS, pTally->getTally(i), 1e-5 );

@@ -9,45 +9,37 @@
 
 #include "gpuDistanceCalculator_test_helper.hh"
 #include "RayWorkInfo.hh"
+#include "MonteRay_SpatialGrid.hh"
+
+
+namespace MonteRay_DistanceCalculatorTester {
 
 using namespace MonteRay;
+using Position_t = MonteRay_SpatialGrid::Position_t;
+using Direction_t = MonteRay_SpatialGrid::Direction_t;
 
 SUITE( DistanceCalculatorGPU_Tester ) {
-
-    class DistanceCalculatorGPUTest	{
-    public:
-
-        DistanceCalculatorGPUTest(){
-            distances = NULL;
-            cells = NULL;
-
-            grid_host = new GridBins;
-            grid_host->setVertices(0, 0.0, 10.0, 10);
-            grid_host->setVertices(1, 0.0, 10.0, 10);
-            grid_host->setVertices(2, 0.0, 10.0, 10);
-            grid_host->finalize();
-
-            numCells = grid_host->getNumCells();
-            distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
-            cells = (int*) malloc( sizeof(int) * numCells );
-        }
-
-        ~DistanceCalculatorGPUTest(){
-            delete grid_host;
-            free( distances );
-            free( cells );
-        }
-
-        GridBins* grid_host;
-
-        gpuRayFloat_t* distances;
-        int* cells;
-        unsigned numCells;
-    };
 
     TEST( setup ) {
         //gpuCheck();
     }
+
+    class DistanceCalculatorGPUTest	{
+    public:
+
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
+
+        DistanceCalculatorGPUTest(){
+
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{0.0, 10.0, 10},
+              MonteRay_GridBins{0.0, 10.0, 10},
+              MonteRay_GridBins{0.0, 10.0, 10} }
+            );
+        }
+
+    };
 
     TEST_FIXTURE(DistanceCalculatorGPUTest, rayTrace_outside_to_inside_posDir_one_crossing ) {
         gpuDistanceCalculatorTestHelper tester;
@@ -55,12 +47,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Direction_t dir( 1.0, 0.0, 0.0);
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(pos,dir,distance,false);
+        tester.launchRayTrace(pos,dir,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, tester.pRayInfo->getRayCastSize(0));
@@ -77,12 +68,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Direction_t dir( 1.0, 0.0, 0.0);
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(pos,dir,distance,true);
+        tester.launchRayTrace(pos,dir,distance,true,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -100,12 +90,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Direction_t dir( 1.0, 0.0, 0.0);
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(pos,dir,distance,true);
+        tester.launchRayTrace(pos,dir,distance,true,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -118,32 +107,16 @@ SUITE( DistanceCalculatorGPU_Tester ) {
     class DistanceCalculatorGPUTest2	{
     public:
 
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
+
         DistanceCalculatorGPUTest2(){
-            distances = NULL;
-            cells = NULL;
-
-            grid_host = new GridBins;
-            grid_host->setVertices(0, -10.0, 10.0, 20);
-            grid_host->setVertices(1, -10.0, 10.0, 20);
-            grid_host->setVertices(2, -10.0, 10.0, 20);
-            grid_host->finalize();
-
-            numCells = grid_host->getNumCells();
-            distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
-            cells = (int*) malloc( sizeof(int) * numCells );
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+                std::array<MonteRay_GridBins, 3>{
+                MonteRay_GridBins{-10.0, 10.0, 20},
+                MonteRay_GridBins{-10.0, 10.0, 20},
+                MonteRay_GridBins{-10.0, 10.0, 20} }
+            );
         }
-
-        ~DistanceCalculatorGPUTest2(){
-            delete grid_host;
-            free( distances );
-            free( cells );
-        }
-
-        GridBins* grid_host;
-
-        gpuRayFloat_t* distances;
-        int* cells;
-        unsigned numCells;
     };
 
     TEST_FIXTURE(DistanceCalculatorGPUTest2, rayTrace_in_1D_PosXDir ) {
@@ -153,12 +126,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 1.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,true);
+        tester.launchRayTrace(position,direction,distance,true,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -175,12 +147,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 1.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,true);
+        tester.launchRayTrace(position,direction,distance,true,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -197,12 +168,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,true);
+        tester.launchRayTrace(position,direction,distance,true,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 0, numCrossings);
@@ -215,12 +185,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,true);
+        tester.launchRayTrace(position,direction,distance,true,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 0, numCrossings);
@@ -232,12 +201,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -254,12 +222,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -276,12 +243,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 21.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 20, numCrossings);
@@ -304,12 +270,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -326,12 +291,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -344,32 +308,16 @@ SUITE( DistanceCalculatorGPU_Tester ) {
     class DistanceCalculatorGPUTest3	{
     public:
 
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
+
         DistanceCalculatorGPUTest3(){
-            distances = NULL;
-            cells = NULL;
-
-            grid_host = new GridBins;
-            grid_host->setVertices(0, -1.0, 1.0, 2);
-            grid_host->setVertices(1, -1.0, 1.0, 2);
-            grid_host->setVertices(2, -1.0, 1.0, 2);
-            grid_host->finalize();
-
-            numCells = grid_host->getNumCells();
-            distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
-            cells = (int*) malloc( sizeof(int) * numCells );
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+                std::array<MonteRay_GridBins, 3>{
+                MonteRay_GridBins{-1.0, 1.0, 2},
+                MonteRay_GridBins{-1.0, 1.0, 2},
+                MonteRay_GridBins{-1.0, 1.0, 2} }
+            );
         }
-
-        ~DistanceCalculatorGPUTest3(){
-            delete grid_host;
-            free( distances );
-            free( cells );
-        }
-
-        GridBins* grid_host;
-
-        gpuRayFloat_t* distances;
-        int* cells;
-        unsigned numCells;
     };
 
     TEST( reset2) {
@@ -385,12 +333,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         gpuRayFloat_t distance = 10.0;
 
         tester.pRayInfo->clear();
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -410,12 +357,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -435,12 +381,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -460,12 +405,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = (0.5+0.25+0.25)*std::sqrt(2.0);
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -485,12 +429,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -510,12 +453,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -534,12 +476,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(  1.0,  0.0,  0.0 );
         gpuRayFloat_t distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 0, numCrossings);
@@ -552,12 +493,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         Position_t direction(  1.0,  0.0,  0.0 );
         gpuRayFloat_t distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 0, numCrossings);
@@ -571,12 +511,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -594,12 +533,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -617,12 +555,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 1.5;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 1, numCrossings);
@@ -637,12 +574,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 1.5;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 1, numCrossings);
@@ -657,12 +593,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 1.5;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -679,12 +614,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 1.5;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -697,32 +631,16 @@ SUITE( DistanceCalculatorGPU_Tester ) {
     class DistanceCalculatorGPUTest4	{
     public:
 
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
+
         DistanceCalculatorGPUTest4(){
-            distances = NULL;
-            cells = NULL;
-
-            grid_host = new GridBins;
-            grid_host->setVertices( 0, 0.0, 3.0, 3);
-            grid_host->setVertices( 1, 0.0, 3.0, 3);
-            grid_host->setVertices( 2, 0.0, 3.0, 3);
-            grid_host->finalize();
-
-            numCells = grid_host->getNumCells();
-            distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
-            cells = (int*) malloc( sizeof(int) * numCells );
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+                std::array<MonteRay_GridBins, 3>{
+                MonteRay_GridBins{0.0, 3.0, 3},
+                MonteRay_GridBins{0.0, 3.0, 3},
+                MonteRay_GridBins{0.0, 3.0, 3} }
+            );
         }
-
-        ~DistanceCalculatorGPUTest4(){
-            delete grid_host;
-            free( distances );
-            free( cells );
-        }
-
-        GridBins* grid_host;
-
-        gpuRayFloat_t* distances;
-        int* cells;
-        unsigned numCells;
     };
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_posX_posY ) {
@@ -733,12 +651,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -756,12 +673,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -779,12 +695,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -802,12 +717,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 2, numCrossings);
@@ -825,12 +739,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -850,12 +763,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -875,12 +787,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -900,12 +811,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -925,12 +835,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -950,12 +859,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -975,12 +883,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -1000,12 +907,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -1025,12 +931,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -1050,12 +955,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -1075,12 +979,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         double distance = 10.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 3, numCrossings);
@@ -1095,32 +998,16 @@ SUITE( DistanceCalculatorGPU_Tester ) {
     class DistanceCalculatorGPUTest5	{
     public:
 
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
+
         DistanceCalculatorGPUTest5(){
-            distances = NULL;
-            cells = NULL;
-
-            grid_host =  new GridBins;
-            grid_host->setVertices( 0, -5.0, 5.0, 10);
-            grid_host->setVertices( 1, -5.0, 5.0, 10);
-            grid_host->setVertices( 2, -5.0, 5.0, 10);
-            grid_host->finalize();
-
-            numCells = grid_host->getNumCells();
-            distances = (gpuRayFloat_t*) malloc( sizeof(gpuRayFloat_t) * numCells );
-            cells = (int*) malloc( sizeof(int) * numCells );
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+                std::array<MonteRay_GridBins, 3>{
+                MonteRay_GridBins{-5.0, 5.0, 10},
+                MonteRay_GridBins{-5.0, 5.0, 10},
+                MonteRay_GridBins{-5.0, 5.0, 10} }
+            );
         }
-
-        ~DistanceCalculatorGPUTest5(){
-            delete grid_host;
-            free( distances );
-            free( cells );
-        }
-
-        GridBins* grid_host;
-
-        gpuRayFloat_t* distances;
-        int* cells;
-        unsigned numCells;
     };
 
     TEST_FIXTURE(DistanceCalculatorGPUTest5, rayTrace_3D_start_in_middle ) {
@@ -1131,12 +1018,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         direction.normalize();
         gpuRayFloat_t distance = 1000.0;
 
-        tester.copyGridtoGPU(grid_host);
         tester.setupTimers();
-        tester.launchRayTrace(position,direction,distance,false);
+        tester.launchRayTrace(position,direction,distance,false,pGrid.get());
         tester.stopTimers();
-        tester.copyDistancesFromGPU(distances);
-        tester.copyCellsFromCPU( cells );
+        auto distances = tester.getDistancesFromGPU();
+        auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
         CHECK_EQUAL( 5, numCrossings);
@@ -1152,3 +1038,5 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         CHECK_CLOSE( 1.0, distances[4], 1e-6 );
     }
 }
+
+} // end namespace

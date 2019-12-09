@@ -7,11 +7,11 @@
 #include "GPUUtilityFunctions.hh"
 #include "ReadAndWriteFiles.hh"
 
-#include "gpuTally.hh"
+#include "BasicTally.hh"
+#include "MonteRay_SpatialGrid.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
-#include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
 #include "MaterialProperties.hh"
@@ -120,22 +120,17 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
             readerObject.ReadMatData();
 
 
-            pGrid = new GridBins(readerObject);
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
             CHECK_EQUAL( 584820, pGrid->getNumCells() );
 
-            CHECK_CLOSE( -40.26, pGrid->min(0), 1e-2 );
-            CHECK_CLOSE( -40.26, pGrid->min(1), 1e-2 );
-            CHECK_CLOSE( -80.00, pGrid->min(2), 1e-2 );
-            CHECK_CLOSE(  40.26, pGrid->max(0), 1e-2 );
-            CHECK_CLOSE(  40.26, pGrid->max(1), 1e-2 );
-            CHECK_CLOSE(  80.00, pGrid->max(2), 1e-2 );
+            CHECK_CLOSE( -40.26, pGrid->getMinVertex(0), 1e-2 );
+            CHECK_CLOSE( -40.26, pGrid->getMinVertex(1), 1e-2 );
+            CHECK_CLOSE( -80.00, pGrid->getMinVertex(2), 1e-2 );
+            CHECK_CLOSE(  40.26, pGrid->getMaxVertex(0), 1e-2 );
+            CHECK_CLOSE(  40.26, pGrid->getMaxVertex(1), 1e-2 );
+            CHECK_CLOSE(  80.00, pGrid->getMaxVertex(2), 1e-2 );
 
-            pTally = new gpuTallyHost( pGrid->getNumCells() );
-
-            pGrid->copyToGPU();
-
-            pTally->copyToGPU();
-
+            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
 
             MaterialProperties::Builder matPropBuilder{};
             matPropBuilder.disableMemoryReduction();
@@ -146,16 +141,11 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
         }
 
-        ~ControllerSetup(){
-            delete pGrid;
-            delete pTally;
-        }
-
-        GridBins* pGrid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<CrossSectionList> pXsList;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        gpuTallyHost* pTally;
+        std::unique_ptr<BasicTally> pTally;
 
     };
 
@@ -178,13 +168,13 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         std::cout << "Running PWR_Assembly from collision file with nBlocks=" << launchBounds.first <<
                 " nThreads=" << launchBounds.second << " collision buffer capacity=" << capacity << "\n";
 
-        CollisionPointController<GridBins> controller(
+        CollisionPointController<MonteRay_SpatialGrid> controller(
                 nThreadsPerBlock,
                 nThreads,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         controller.setCapacity(capacity);
 
@@ -192,10 +182,8 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         CHECK_EQUAL( 16698848 , numCollisions );
 
         controller.sync();
-        pTally->copyToCPU();
 
-        gpuTallyHost benchmarkTally(1);
-        benchmarkTally.read( "MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin" );
+        auto benchmarkTally = readFromFile( "MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin", *pTally);
 
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
             if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){

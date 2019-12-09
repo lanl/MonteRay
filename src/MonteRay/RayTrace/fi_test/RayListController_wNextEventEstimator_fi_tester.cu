@@ -10,7 +10,6 @@
 
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
-#include "GridBins.hh"
 #include "MonteRayMaterial.hh"
 #include "MonteRayMaterialList.hh"
 #include "MaterialProperties.hh"
@@ -19,6 +18,7 @@
 #include "MonteRayConstants.hh"
 #include "NextEventEstimator.t.hh"
 #include "MonteRayCrossSection.hh"
+#include "MonteRay_SpatialGrid.hh"
 
 namespace RayListController_wNextEventEstimator_fi_tester {
 
@@ -30,13 +30,13 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
     public:
         ControllerSetup(){
 
-            //cudaReset();
-            //gpuCheck();
-            pGrid = new GridBins();
-            pGrid->setVertices( 0, 0.0, 2.0, 2);
-            pGrid->setVertices( 1, -10.0, 10.0, 1);
-            pGrid->setVertices( 2, -10.0, 10.0, 1);
-            pGrid->finalize();
+            
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{0.0, 2.0, 2},
+              MonteRay_GridBins{-10.0, 10.0, 1},
+              MonteRay_GridBins{-10.0, 10.0, 1} }
+            );
 
             auto matPropsBuilder = MaterialProperties::Builder{};
 
@@ -50,8 +50,6 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
         }
 
         void setup(){
-
-            pGrid->copyToGPU();
 
             std::array<gpuFloatType_t, 4> energies = {1e-11, 0.75, 1.0, 3.0};
             std::array<gpuFloatType_t, 4> xs_values = {1.0, 1.0, 2.0, 4.0};
@@ -78,11 +76,7 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
             matPropsBuilder.renumberMaterialIDs(*pMatList);
         }
 
-        ~ControllerSetup(){
-            delete pGrid;
-        }
-
-        GridBins* pGrid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<MaterialProperties> pMatProps;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<CrossSectionList> pXsList;
@@ -95,9 +89,9 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
 
     TEST_FIXTURE(ControllerSetup, ctorForNEE ){
         unsigned numPointDets = 1;
-        NextEventEstimatorController<GridBins> controller( 1,
+        NextEventEstimatorController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
                 numPointDets );
@@ -112,9 +106,9 @@ SUITE( RayListController_wNextEventEstimator_fi_tester_suite ) {
         unsigned numPointDets = 1;
 
         setup();
-        NextEventEstimatorController<GridBins> controller( 1,
+        NextEventEstimatorController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
                 numPointDets );
@@ -193,13 +187,12 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
             yverts.push_back(-10.0); yverts.push_back(10.0);
             zverts.push_back(-10.0); zverts.push_back(10.0);
 
-            //cudaReset();
-            //gpuCheck();
-            pGrid = new GridBins();
-            pGrid->setVertices( 0, xverts );
-            pGrid->setVertices( 1, yverts );
-            pGrid->setVertices( 2, zverts );
-            pGrid->finalize();
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{xverts},
+              MonteRay_GridBins{yverts},
+              MonteRay_GridBins{zverts} }
+            );
 
             pXS = new MonteRayCrossSectionHost(1);
 
@@ -221,7 +214,6 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
         void setup(){
 
-            pGrid->copyToGPU();
             pXS->read( "MonteRayTestFiles/92000-04p_MonteRayCrossSection.bin");
             CHECK_EQUAL( photon, pXS->getParticleType());
 
@@ -248,13 +240,12 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         }
 
         ~ControllerSetup(){
-            delete pGrid;
             delete pMatList;
             delete pXS;
             delete pMat;
         }
 
-        GridBins* pGrid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         MonteRayMaterialListHost* pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
         MonteRayCrossSectionHost* pXS;
@@ -266,9 +257,9 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
         unsigned numPointDets = 1;
 
         setup();
-        NextEventEstimatorController<GridBins> controller( 1,
+        NextEventEstimatorController<MonteRay_SpatialGrid> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList,
                 pMatProps.get(),
                 numPointDets );

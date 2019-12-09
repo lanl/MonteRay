@@ -2,11 +2,15 @@
 #define EXPECTEDPATHLENGTH_T_HH_
 
 #include "ExpectedPathLength.hh"
+#include <algorithm>
+
+#ifdef __CUDACC__
+#include <thrust/for_each.h>
+#endif
 
 #include "MaterialList.hh"
 #include "MonteRay_timer.hh"
-#include "gpuTally.hh"
-#include "GridBins.hh"
+#include "BasicTally.hh"
 #include "RayWorkInfo.hh"
 #include "GPUAtomicAdd.hh"
 #include "GPUUtilityFunctions.hh"
@@ -99,7 +103,7 @@ MonteRay::tripleTime launchRayTraceTally(
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
-        gpuTallyHost* pTally
+        BasicTally* const pTally
 ) {
     MonteRay::tripleTime time;
 
@@ -124,12 +128,12 @@ MonteRay::tripleTime launchRayTraceTally(
     cudaEventRecord(startGPU,stream);
 
     rayTraceTally<<<nBlocks,nThreads,0,stream>>>(
-            pGeometry->getDevicePtr(),
+            pGeometry,
             pCP->getPtrPoints()->devicePtr,
             pMatList,
             pMatProps,
             pRayInfo.get(),
-            pTally->temp->tally );
+            pTally->data() );
 
     cudaEventRecord(stopGPU,stream);
     cudaStreamWaitEvent(stream, stopGPU, 0);
@@ -160,13 +164,12 @@ MonteRay::tripleTime launchRayTraceTally(
     MonteRay::cpuTimer timer1, timer2;
     timer1.start();
 
-    rayTraceTally( pGeometry->getPtr(),
+    rayTraceTally( pGeometry,
             pCP->getPtrPoints(),
             pMatList,
             pMatProps,
             pRayInfo.get(),
-            pTally->getPtr()->tally
-    );
+            pTally->data() );
     timer1.stop();
     timer2.start();
     cpuWork();
@@ -192,22 +195,12 @@ inline tallyCellSegment( const MaterialList* pMatList,
         gpuFloatType_t weight,
         gpuTallyType_t opticalPathLength ) {
 
-#ifndef NDEBUG
-    const bool debug = false;
-#endif
-
     typedef gpuTallyType_t xs_t;
     typedef gpuTallyType_t attenuation_t;
     typedef gpuTallyType_t score_t;
 
     xs_t totalXS = 0.0;
     unsigned numMaterials = pMatProps->numMats(cell);
-
-#ifndef NDEBUG
-    if( debug ) {
-        printf("GPU::tallyCellSegment:: cell=%d, numMaterials=%d\n", cell, numMaterials);
-    }
-#endif
 
     for( unsigned i=0; i<numMaterials; ++i ) {
 
@@ -216,9 +209,6 @@ inline tallyCellSegment( const MaterialList* pMatList,
         if( density > 1e-5 ) {
             totalXS +=   materialXS[matID]*density;
         }
-        //    if( debug ) {
-        //      printf("GPU::tallyCellSegment::       material=%d, density=%f, xs=%f, totalxs=%f\n", i, density, xs, totalXS);
-        //    }
     }
 
     attenuation_t attenuation = 1.0;
@@ -233,12 +223,6 @@ inline tallyCellSegment( const MaterialList* pMatList,
 
     gpu_atomicAdd( &tally[cell], score);
 
-#ifndef NDEBUG
-    if( debug ) {
-        printf("GPU::tallyCellSegment:: total score=%f\n", tally[cell] );
-    }
-#endif
-
     return cellOpticalPathLength;
 }
 
@@ -249,7 +233,7 @@ void rayTraceOnGridWithMovingMaterials(
           const Geometry& geometry,
           const MaterialProperties& matProps,
           const MaterialList& matList,
-          gpuTallyType_t* tally) {
+          gpuTallyType_t* const tally) {
 
   MONTERAY_ASSERT_MSG(ray.particleType == neutron, "rayTraceWithMovingMaterials is only valid for neutrons.");
 
@@ -316,6 +300,33 @@ void rayTraceOnGridWithMovingMaterials(
     if( geometry.isIndexOutside(distAndDir.dimension(), indices[distAndDir.dimension()] ) ) { return; }
   }
   return;
+}
+
+template<typename Geometry, typename MaterialList>
+void rayTraceTallyWithMovingMaterials(
+          const RayList_t<1>* const collisionPoints,
+          gpuRayFloat_t timeRemaining,
+          const Geometry* const geometry,
+          const MaterialProperties* const matProps,
+          const MaterialList* const matList,
+          const gpuTallyType_t* tally,
+          cudaStream_t* stream = nullptr) {
+
+  const RayList_t<1>* const begin = collisionPoints->devicePtr;
+  const RayList_t<1>* const end = collisionPoints->devicePtr + collisionPoints->size();
+#ifdef __CUDACC__
+  thrust::for_each(thrust::cuda::par.on(*stream), begin, end,
+    [=] __device__ (const auto& ray){
+      rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *geometry, *matProps, *matList, tally);
+    }
+  );
+#else 
+  std::for_each(begin, end,
+    [=] (const auto& ray){
+      rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *geometry, *matProps, *matList, tally);
+    }
+  );
+#endif
 }
 
 } /* end namespace */
