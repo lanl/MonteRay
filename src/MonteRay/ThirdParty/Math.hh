@@ -5,6 +5,7 @@
 // Also, nvidia populates the global namespace with its math functions rather than putting them in a namespace.
 //
 #include <cmath>
+#include <algorithm>
 namespace Math{
 #ifdef __CUDA_ARCH__
   constexpr float   exp(float val) { return expf(val); }
