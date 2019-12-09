@@ -11,9 +11,6 @@ target_sources( monteray.geometry.cylindrical.test  PRIVATE
                ${CMAKE_CURRENT_LIST_DIR}/MonteRay_CylindricalGrid_rayTrace_GPU_tests.cu
                ${CMAKE_CURRENT_LIST_DIR}/MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_tests.cu
                ${CMAKE_CURRENT_LIST_DIR}/MonteRay_CylindricalGrid_crossingDistance_tests.cu
-               ${CMAKE_CURRENT_LIST_DIR}/../genericGPU_test_helper.hh
-               ${CMAKE_CURRENT_LIST_DIR}/../MonteRay_SpatialGrid_GPU_helper.hh
-               ${CMAKE_CURRENT_LIST_DIR}/../MonteRay_SpatialGrid_GPU_helper.cu
               )
 
 target_link_libraries( monteray.geometry.cylindrical.test PRIVATE MonteRay::testing )

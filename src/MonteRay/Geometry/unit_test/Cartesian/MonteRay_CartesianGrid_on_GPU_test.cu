@@ -261,7 +261,7 @@ SUITE( MonteRay_CartesianGrid_GPU_basic_tests ) {
             std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
             pResult->copyToGPU();
 
-            kernelGetDimIndexDirect<<<1,1>>>( pCart->getDeviceInstancePtr(), pResult->devicePtr, d, pos);
+            kernelGetDimIndexDirect<<<1,1>>>(pCart->getDeviceInstancePtr(), pResult->devicePtr, d, pos);
             gpuErrchk( cudaPeekAtLastError() );
             pResult->copyToCPU();
             return pResult->v;

@@ -1,10 +1,3 @@
-/*
- * MonteRayGridSystemInterface.cc
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #include "MonteRay_GridSystemInterface.t.hh"
 #include <float.h>
 
@@ -164,24 +157,26 @@ MonteRay_GridSystemInterface::orderCrossings(
             MONTERAY_ASSERT_MSG( ( deltaDistance >= 0.0 ),
                     "ERROR:  MONTERAY -- MonteRay_GridSystemInterface::orderCrossings, delta distance is negative");
 
-            unsigned global_index;
-            if( !outside ) {
-                global_index = calcIndex( indices );
-            } else {
-                global_index = MonteRay_GridSystemInterface::OUTSIDE_GRID;
-            }
-            rayInfo.addRayCastCell( threadID, global_index, deltaDistance );
+            if (deltaDistance > 0.0){
+                unsigned global_index;
+                if( !outside ) {
+                    global_index = calcIndex( indices );
+                } else {
+                    global_index = MonteRay_GridSystemInterface::OUTSIDE_GRID;
+                }
+                rayInfo.addRayCastCell( threadID, global_index, deltaDistance );
 
 #ifndef NDEBUG
-            if( debug ) {
-                printf( "Debug: ****************** \n" );
-                printf( "Debug:  Entry Num    = %d\n", rayInfo.getRayCastSize(threadID) );
-                printf( "Debug:     index[0]  = %d\n", indices[0] );
-                printf( "Debug:     index[1]  = %d\n", indices[1] );
-                printf( "Debug:     index[2]  = %d\n", indices[2] );
-                printf( "Debug:     distance  = %f\n", deltaDistance );
-            }
+                if( debug ) {
+                    printf( "Debug: ****************** \n" );
+                    printf( "Debug:  Entry Num    = %d\n", rayInfo.getRayCastSize(threadID) );
+                    printf( "Debug:     index[0]  = %d\n", indices[0] );
+                    printf( "Debug:     index[1]  = %d\n", indices[1] );
+                    printf( "Debug:     index[2]  = %d\n", indices[2] );
+                    printf( "Debug:     distance  = %f\n", deltaDistance );
+                }
 #endif
+            }
 
         }
 
@@ -277,10 +272,6 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
 
     unsigned offset = unsigned(Math::signbit(-dir));
 
-#ifndef NDEBUG
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - offset=%d\n", offset );
-#endif
-
     int end_index = offset*(nBins-1);;
 
     int dirIncrement = Math::signbit(dir) ? -1 : 1;
@@ -325,6 +316,22 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     }
 
     return;
+}
+
+void MonteRay_GridSystemInterface::write(std::ostream& outfile) const {
+  binaryIO::write(outfile, DIM);
+  for( int i = 0; i<DIM; ++i) {
+    gridBins[i].write(outfile);
+  }
+}
+
+void MonteRay_GridSystemInterface::read(std::istream& infile) {
+  unsigned dimension;
+  binaryIO::read(infile, dimension);
+  std::array<GridBins_t, 3> gridBins;
+  for( unsigned i = 0; i < DIM; i++){
+    gridBins[i].read(infile);
+  }
 }
 
 } /* namespace MonteRay */

@@ -7,26 +7,22 @@
 
 namespace MonteRay {
 
-class MonteRay_SphericalGrid : public MonteRay_GridSystemInterface {
+class MonteRay_SphericalGrid {
 public:
     typedef MonteRay_GridBins::Position_t Position_t;
     typedef MonteRay_GridBins::Direction_t Direction_t;
 
     enum coord {R=0,DimMax=1};
+    int DIM = 1;
 
     using GridBins_t = MonteRay_GridBins;
     using pGridInfo_t = GridBins_t*;
     using pArrayOfpGridInfo_t = pGridInfo_t[3];
 
-    CUDA_CALLABLE_MEMBER MonteRay_SphericalGrid(unsigned d, pArrayOfpGridInfo_t pBins);
-    CUDA_CALLABLE_MEMBER MonteRay_SphericalGrid(unsigned d, GridBins_t* );
+    MonteRay_SphericalGrid(unsigned d, pArrayOfpGridInfo_t pBins);
+    MonteRay_SphericalGrid(unsigned d, GridBins_t* );
 
-    CUDA_CALLABLE_MEMBER virtual ~MonteRay_SphericalGrid(void);
-
-    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void);
-
-    CUDAHOST_CALLABLE_MEMBER
-    MonteRay_SphericalGrid* getDeviceInstancePtr();
+    CUDA_CALLABLE_MEMBER auto dimension() const { return DIM; }
 
     CUDA_CALLABLE_MEMBER void validate(void);
     CUDA_CALLABLE_MEMBER void validateR(void);
@@ -54,8 +50,7 @@ public:
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getVolume( unsigned index ) const;
 
     CUDA_CALLABLE_MEMBER
-    void
-    rayTrace( const unsigned threadID,
+    void rayTrace( const unsigned threadID,
               RayWorkInfo& rayInfo,
               const GridBins_t::Position_t& pos,
               const GridBins_t::Position_t& dir,
@@ -63,8 +58,7 @@ public:
               const bool outsideDistances=false) const;
 
     CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(
+    void crossingDistance(
             const unsigned dim,
             const unsigned threadID,
             RayWorkInfo& rayInfo,

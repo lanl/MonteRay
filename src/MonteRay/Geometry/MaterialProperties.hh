@@ -90,11 +90,6 @@ class MaterialProperties_t: public Managed {
   auto getPtr() { std::cout << " Warning: getPtr() is deprecated."; return this; }
   const auto getPtr() const { std::cout << " Warning: getPtr() is deprecated."; return this; }
 
-  // TODO: implement write/read
-  void writeToFile(const std::string&) const {
-
-  }
-
   void write(std::ostream& stream) const {
     unsigned version = MATERIAL_PROPERTIES_VERSION;
     binaryIO::write(stream, version);
@@ -176,8 +171,6 @@ class MaterialProperties_t: public Managed {
     Builder(T&& obj){
       setMaterialDescription(std::forward<T>(obj));
     }
-
-    void readFromFile(const std::string&) const {}
 
     MaterialProperties_t read(std::istream& stream){
       unsigned version;
