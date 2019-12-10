@@ -1,35 +1,44 @@
 #include <UnitTest++.h>
 
-#include "../MonteRay_SpatialGrid_GPU_helper.hh"
+#include "../CrossingDistanceHelper.hh"
+#include "MonteRay_CartesianGrid.hh"
 
 namespace MonteRay_CartesianGrid_crossingDistance_GPU_tests{
 
 using namespace MonteRay;
-using namespace MonteRay_SpatialGrid_helper;
 
 SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 #ifdef __CUDACC__
 
     typedef singleDimRayTraceMap_t distances_t;
     typedef singleDimRayTraceMap_t rayTraceMap_t;
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_in_1D_PosXDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
+    using Position_t = MonteRay_CartesianGrid::Position_t;
 
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
+    class CartesianGridTester {
+      public:
+      std::unique_ptr<MonteRay_CartesianGrid> pCart;
+      CartesianGridTester(){
+        std::vector<gpuRayFloat_t> vertices{
+            -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
+        pCart = std::make_unique<MonteRay_CartesianGrid>(3, 
+          std::array<MonteRay_GridBins, 3>{
+            MonteRay_GridBins{vertices},
+            MonteRay_GridBins{vertices},
+            MonteRay_GridBins{vertices}
+          }
+        );
+      }
+    };
+
+
+    TEST_FIXTURE(CartesianGridTester, CrossingDistance_in_1D_PosXDir ) {
         Position_t position ( -9.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 1.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -39,24 +48,12 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     }
 
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_in_1D_NegXDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, CrossingDistance_in_1D_NegXDir ) {
         Position_t position ( -8.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 1.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 1, distances.id(0) );
@@ -65,68 +62,32 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 1.0, distances.dist(1), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Outside_negSide_negDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Outside_negSide_negDir ) {
         Position_t position ( -10.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL(  0, distances.size() );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Outside_posSide_posDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Outside_posSide_posDir ) {
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL(  0, distances.size() );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Outside_negSide_posDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Outside_negSide_posDir ) {
         Position_t position ( -10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -137,24 +98,12 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Outside_posSide_negDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Outside_posSide_negDir ) {
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 20, distances.id(0) );
@@ -165,24 +114,12 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
         Position_t position (  -10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 21.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 22, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -202,24 +139,12 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Crossing_entire_grid_starting_outside_finish_outside_neg_dir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Crossing_entire_grid_starting_outside_finish_outside_neg_dir ) {
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(   -1,   0,    0 );
         gpuRayFloat_t distance = 21.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 22, distances.size() );
         CHECK_EQUAL( 20, distances.id(0) );
@@ -238,24 +163,12 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 21.0, distances.dist(21), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Inside_cross_out_negDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Inside_cross_out_negDir ) {
         Position_t position (  -8.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 1, distances.id(0) );
@@ -266,24 +179,12 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, Inside_cross_out_posDir ) {
-		std::vector<gpuRayFloat_t> vertices= {
-		        	-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-		              0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
-
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Y, vertices);
-        setGrid( MonteRay_SpatialGrid::CART_Z, vertices);
-        initialize();
-        copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTester, Inside_cross_out_posDir ) {
         Position_t position (  8.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
         gpuRayFloat_t distance = 2.0;
 
-        distances_t distances = crossingDistance( 0, position[0], direction[0], distance);
+        distances_t distances = crossingDistance(pCart.get(), 0, position[0], direction[0], distance);
 
         CHECK_EQUAL( 3, distances.size() );
         CHECK_EQUAL( 18, distances.id(0) );
@@ -294,22 +195,27 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, crossingDistance_2D_internal_hit_corner_posXDir_posYDir ) {
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, -1, 1, 2);
-        setGrid( MonteRay_SpatialGrid::CART_Y, -1, 1, 2);
-        setGrid( MonteRay_SpatialGrid::CART_Z, -1, 1, 2);
-        initialize();
-        copyToGPU();
+    class CartesianGridTesterTwo {
+      public:
+      std::unique_ptr<MonteRay_CartesianGrid> pCart;
+      CartesianGridTesterTwo(){
 
+        pCart = std::make_unique<MonteRay_CartesianGrid>(3, 
+          MonteRay_GridBins{-1, 1, 2},
+          MonteRay_GridBins{-1, 1, 2},
+          MonteRay_GridBins{-1, 1, 2}
+        );
+      }
+    };
+
+    TEST_FIXTURE(CartesianGridTesterTwo, crossingDistance_2D_internal_hit_corner_posXDir_posYDir ) {
         Position_t position (  -.5, -.5, -.5 );
         Position_t direction(  1.0,  1.0,  0.0 );
         direction.normalize();
         gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
         unsigned dim = 0;
-        distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
+        distances_t distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -319,7 +225,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         dim = 1;
         distances.clear();
-        distances = crossingDistance( dim, position[dim], direction[dim], distance);
+        distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -329,22 +235,26 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, crossingDistance_2D_start_on_an_external_corner_posX_posY ) {
-        setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-		setDimension( 3 );
-        setGrid( MonteRay_SpatialGrid::CART_X, 0, 3, 3);
-        setGrid( MonteRay_SpatialGrid::CART_Y, 0, 3, 3);
-        setGrid( MonteRay_SpatialGrid::CART_Z, 0, 3, 3);
-        initialize();
-        copyToGPU();
+    class CartesianGridTesterThree {
+      public:
+      std::unique_ptr<MonteRay_CartesianGrid> pCart;
+      CartesianGridTesterThree(){
+        pCart = std::make_unique<MonteRay_CartesianGrid>(3, 
+          MonteRay_GridBins{0, 3, 3},
+          MonteRay_GridBins{0, 3, 3},
+          MonteRay_GridBins{0, 3, 3}
+        );
+      }
+    };
 
+    TEST_FIXTURE(CartesianGridTesterThree, crossingDistance_2D_start_on_an_external_corner_posX_posY ) {
         Position_t position (  0.0, 0.0, 0.5 );
         Position_t direction(  1.0,  1.0,  0.0 );
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
         unsigned dim = 0;
-        distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
+        distances_t distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -360,7 +270,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         dim = 1;
         distances.clear();
-        distances = crossingDistance( dim, position[dim], direction[dim], distance);
+        distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( -1, distances.id(0) );
@@ -375,22 +285,14 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, crossingDistance_2D_start_on_an_external_corner_negX_negY ) {
-    	setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-    	setDimension( 3 );
-    	setGrid( MonteRay_SpatialGrid::CART_X, 0, 3, 3);
-    	setGrid( MonteRay_SpatialGrid::CART_Y, 0, 3, 3);
-    	setGrid( MonteRay_SpatialGrid::CART_Z, 0, 3, 3);
-    	initialize();
-    	copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTesterThree, crossingDistance_2D_start_on_an_external_corner_negX_negY ) {
     	Position_t position (  3.0,  3.0, 0.5 );
     	Position_t direction( -1.0, -1.0, 0.0 );
     	direction.normalize();
     	gpuRayFloat_t distance = 10.0;
 
     	unsigned dim = 0;
-    	distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
+    	distances_t distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -406,7 +308,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         dim = 1;
         distances.clear();
-        distances = crossingDistance( dim, position[dim], direction[dim], distance);
+        distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
         CHECK_EQUAL( 5, distances.size() );
         CHECK_EQUAL( 3, distances.id(0) );
@@ -421,22 +323,14 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, crossingDistance_2D_start_outside_on_an_external_corner_posX_posY ) {
-    	setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-    	setDimension( 3 );
-    	setGrid( MonteRay_SpatialGrid::CART_X, 0, 3, 3);
-    	setGrid( MonteRay_SpatialGrid::CART_Y, 0, 3, 3);
-    	setGrid( MonteRay_SpatialGrid::CART_Z, 0, 3, 3);
-    	initialize();
-    	copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTesterThree, crossingDistance_2D_start_outside_on_an_external_corner_posX_posY ) {
     	Position_t position ( -1.0, -1.0, 0.5 );
     	Position_t direction(  1.0,  1.0, 0.0 );
     	direction.normalize();
     	gpuRayFloat_t distance = 10.0;
 
     	unsigned dim = 0;
-    	distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
+    	distances_t distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( -1, distances.id(0) );
@@ -453,7 +347,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
     	dim = 1;
     	distances.clear();
-    	distances = crossingDistance( dim, position[dim], direction[dim], distance);
+    	distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( -1, distances.id(0) );
@@ -468,22 +362,14 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
     	CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
      }
 
-    TEST_FIXTURE(SpatialGridGPUTester, crossingDistance_2D_start_outside_an_external_corner_negX_negY ) {
-    	setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-    	setDimension( 3 );
-    	setGrid( MonteRay_SpatialGrid::CART_X, 0, 3, 3);
-    	setGrid( MonteRay_SpatialGrid::CART_Y, 0, 3, 3);
-    	setGrid( MonteRay_SpatialGrid::CART_Z, 0, 3, 3);
-    	initialize();
-    	copyToGPU();
-
+    TEST_FIXTURE(CartesianGridTesterThree, crossingDistance_2D_start_outside_an_external_corner_negX_negY ) {
     	Position_t position (  4.0,  4.0, 0.5 );
     	Position_t direction( -1.0, -1.0, 0.0 );
     	direction.normalize();
     	gpuRayFloat_t distance = 10.0;
 
     	unsigned dim = 0;
-    	distances_t distances = crossingDistance( dim, position[dim], direction[dim], distance);
+    	distances_t distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( 3, distances.id(0) );
@@ -499,7 +385,7 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_GPU_Tests) {
 
         dim = 1;
         distances.clear();
-        distances = crossingDistance( dim, position[dim], direction[dim], distance);
+        distances = crossingDistance(pCart.get(), dim, position[dim], direction[dim], distance);
 
     	CHECK_EQUAL( 5, distances.size() );
     	CHECK_EQUAL( 3, distances.id(0) );

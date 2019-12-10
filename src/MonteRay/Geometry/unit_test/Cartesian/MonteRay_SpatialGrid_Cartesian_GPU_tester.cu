@@ -28,12 +28,7 @@ SUITE( MonteRay_SpatialGrid_Cartesian_GPU_Tests ) {
         setGrid( MonteRay_SpatialGrid::CART_Z, verticesZ);
         initialize();
         copyToGPU();
-
-        CHECK_EQUAL(   20, getNumGridBins(MonteRay_SpatialGrid::CART_X) );
-        CHECK_EQUAL(   20, getNumGridBins(MonteRay_SpatialGrid::CART_Y) );
-        CHECK_EQUAL(   4, getNumGridBins(MonteRay_SpatialGrid::CART_Z) );
-        CHECK_CLOSE(-10.0, getMinVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
-        CHECK_CLOSE( 10.0, getMaxVertex(MonteRay_SpatialGrid::CART_X), 1e-6 );
+        pGrid = std::make_unique<CartesianGrid>(3, GridBins{vertices}, GridBins{vertices}, GridBins{verticesZ});
     }
 
     TEST_FIXTURE(SpatialGridGPUTester, read_test_Vertices_access_on_GPU ){

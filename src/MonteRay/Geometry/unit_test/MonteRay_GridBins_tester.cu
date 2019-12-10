@@ -179,7 +179,8 @@ SUITE( MonteRay_GridBins_Tester ) {
     bool* testVal;
     cudaMallocManaged(&testVal, sizeof(bool));
     testMonteRayGridBinsOnGPU<<<1, 1>>>(testVal, pRadialBins.get());
-    CHECK(testVal);
+    cudaDeviceSynchronize();
+    CHECK(*testVal);
   }
 
 #endif
