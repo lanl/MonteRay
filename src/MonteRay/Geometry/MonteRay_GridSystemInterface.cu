@@ -157,7 +157,7 @@ MonteRay_GridSystemInterface::orderCrossings(
             MONTERAY_ASSERT_MSG( ( deltaDistance >= 0.0 ),
                     "ERROR:  MONTERAY -- MonteRay_GridSystemInterface::orderCrossings, delta distance is negative");
 
-            if (deltaDistance > 0.0){
+            /* if (deltaDistance > 0.0){ */ // TPB Commented out - uncommenting this matches old behavior of GridBins.hh
                 unsigned global_index;
                 if( !outside ) {
                     global_index = calcIndex( indices );
@@ -176,7 +176,7 @@ MonteRay_GridSystemInterface::orderCrossings(
                     printf( "Debug:     distance  = %f\n", deltaDistance );
                 }
 #endif
-            }
+            /* } */
 
         }
 

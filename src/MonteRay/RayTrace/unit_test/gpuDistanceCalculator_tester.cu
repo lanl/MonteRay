@@ -518,11 +518,13 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 2, numCrossings);
+        CHECK_EQUAL( 3, numCrossings);
         CHECK_EQUAL( 0, cells[0]);
         CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[0], 1e-7 );
-        CHECK_EQUAL( 3, cells[1]);
-        CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[1], 1e-7 );
+        CHECK_EQUAL( 1, cells[1]);
+        CHECK_CLOSE( 0, distances[1], 1e-7 );
+        CHECK_EQUAL( 3, cells[2]);
+        CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[2], 1e-7 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_internal_hit_corner_negXDir_negYDir ) {
@@ -540,11 +542,13 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 2, numCrossings);
+        CHECK_EQUAL( 3, numCrossings);
         CHECK_EQUAL( 3, cells[0]);
         CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[0], 1e-7 );
-        CHECK_EQUAL( 0, cells[1]);
-        CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[1], 1e-7 );
+        CHECK_EQUAL( 2, cells[1]);
+        CHECK_CLOSE( 0, distances[1], 1e-7 );
+        CHECK_EQUAL( 0, cells[2]);
+        CHECK_CLOSE( 0.50f*std::sqrt(2.0f), distances[2], 1e-7 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_posX_start_on_internal_gridline ) {
@@ -581,9 +585,11 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 1, numCrossings);
-        CHECK_EQUAL( 0, cells[0]);
-        CHECK_CLOSE( 1.0f, distances[0], 1e-7 );
+        CHECK_EQUAL( 2, numCrossings);
+        CHECK_EQUAL( 1, cells[0]);
+        CHECK_CLOSE( 0, distances[0], 1e-7 );
+        CHECK_EQUAL( 0, cells[1]);
+        CHECK_CLOSE( 1.0f, distances[1], 1e-7 );
     }
     TEST_FIXTURE(DistanceCalculatorGPUTest3, rayTrace_2D_posX_start_on_external_boundary_gridline ) {
         gpuDistanceCalculatorTestHelper tester;
@@ -658,11 +664,13 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 2, numCrossings);
+        CHECK_EQUAL( 3, numCrossings);
         CHECK_EQUAL( 4, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-7 );
-        CHECK_EQUAL( 8, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-7 );
+        CHECK_EQUAL( 5, cells[1]);
+        CHECK_CLOSE( 0.0f, distances[1], 1e-7 );
+        CHECK_EQUAL( 8, cells[2]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-7 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_negX_negY ) {
@@ -680,11 +688,22 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 2, numCrossings);
-        CHECK_EQUAL( 4, cells[0]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-7 );
-        CHECK_EQUAL( 0, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-7 );
+        CHECK_EQUAL( 5, numCrossings);
+        CHECK_EQUAL( 8, cells[0]);
+        CHECK_CLOSE( 0.0f, distances[0], 1e-7 );
+
+        CHECK_EQUAL( 7, cells[1]);
+        CHECK_CLOSE( 0.0f, distances[1], 1e-7 );
+
+        CHECK_EQUAL( 4, cells[2]);
+        CHECK_CLOSE( std::sqrt(2.0), distances[2], 1e-7 );
+
+        CHECK_EQUAL( 3, cells[3]);
+        CHECK_CLOSE( 0.0f, distances[3], 1e-7 );
+
+        CHECK_EQUAL( 0, cells[4]);
+        CHECK_CLOSE( std::sqrt(2.0), distances[4], 1e-7 );
+
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_posX_negY ) {
@@ -702,11 +721,15 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 2, numCrossings);
-        CHECK_EQUAL( 4, cells[0]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-7 );
-        CHECK_EQUAL( 2, cells[1]);
+        CHECK_EQUAL( 4, numCrossings);
+        CHECK_EQUAL( 7, cells[0]);
+        CHECK_CLOSE( 0.0f, distances[0], 1e-7 );
+        CHECK_EQUAL( 4, cells[1]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-7 );
+        CHECK_EQUAL( 5, cells[2]);
+        CHECK_CLOSE( 0.0f, distances[2], 1e-7 );
+        CHECK_EQUAL( 2, cells[3]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[3], 1e-7 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_internal_corner_negX_posY ) {
@@ -724,11 +747,15 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 2, numCrossings);
-        CHECK_EQUAL( 4, cells[0]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-7 );
-        CHECK_EQUAL( 6, cells[1]);
+        CHECK_EQUAL( 4, numCrossings);
+        CHECK_EQUAL( 5, cells[0]);
+        CHECK_CLOSE( 0.0, distances[0], 1e-7 );
+        CHECK_EQUAL( 4, cells[1]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-7 );
+        CHECK_EQUAL( 3, cells[2]);
+        CHECK_CLOSE( 0.0, distances[2], 1e-7 );
+        CHECK_EQUAL( 6, cells[3]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[3], 1e-7 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_posX_posY ) {
@@ -746,13 +773,17 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 0, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 8, cells[2]);
+        CHECK_EQUAL( 1, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 5, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 8, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_negX_negY ) {
@@ -770,13 +801,17 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 8, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 0, cells[2]);
+        CHECK_EQUAL( 7, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 3, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 0, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_negX_posY ) {
@@ -794,13 +829,17 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 2, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 6, cells[2]);
+        CHECK_EQUAL( 1, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 3, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 6, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_on_an_external_corner_posX_negY ) {
@@ -818,13 +857,17 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 6, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 2, cells[2]);
+        CHECK_EQUAL( 7, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 5, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 2, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_3D_start_on_an_external_corner_posX_posY_posZ ) {
@@ -842,13 +885,21 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 7, numCrossings);
         CHECK_EQUAL( 0, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 13, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 26, cells[2]);
-        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 1, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
+        CHECK_CLOSE( 0.0, distances[2], 1e-6 );
+        CHECK_EQUAL( 13, cells[3]);
+        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[3], 1e-6 );
+        CHECK_EQUAL( 14, cells[4]);
+        CHECK_CLOSE( 0.0, distances[4], 1e-6 );
+        CHECK_EQUAL( 17, cells[5]);
+        CHECK_CLOSE( 0.0, distances[5], 1e-6 );
+        CHECK_EQUAL( 26, cells[6]);
+        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[6], 1e-6 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_posX_posY ) {
@@ -866,13 +917,17 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 0, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 8, cells[2]);
+        CHECK_EQUAL( 1, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 5, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 8, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_posX_negY ) {
@@ -890,13 +945,19 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 6, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 2, cells[2]);
+        CHECK_EQUAL( 7, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 5, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 2, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
+
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_negX_posY ) {
@@ -914,13 +975,18 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 2, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 6, cells[2]);
+        CHECK_EQUAL( 1, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 3, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 6, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
+
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_2D_start_outside_an_external_corner_negX_negY ) {
@@ -938,13 +1004,19 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+
+        CHECK_EQUAL( 5, numCrossings);
         CHECK_EQUAL( 8, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 4, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 0, cells[2]);
+        CHECK_EQUAL( 7, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
         CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 3, cells[3]);
+        CHECK_CLOSE( 0.0, distances[3], 1e-6 );
+        CHECK_EQUAL( 0, cells[4]);
+        CHECK_CLOSE( 1.0f*std::sqrt(2.0), distances[4], 1e-6 );
+
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_3D_start_outside_an_external_corner_posX_posY_posZ ) {
@@ -962,13 +1034,21 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 7, numCrossings);
         CHECK_EQUAL( 0, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 13, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 26, cells[2]);
-        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 1, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 4, cells[2]);
+        CHECK_CLOSE( 0.0, distances[2], 1e-6 );
+        CHECK_EQUAL( 13, cells[3]);
+        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[3], 1e-6 );
+        CHECK_EQUAL( 14, cells[4]);
+        CHECK_CLOSE( 0.0, distances[4], 1e-6 );
+        CHECK_EQUAL( 17, cells[5]);
+        CHECK_CLOSE( 0.0, distances[5], 1e-6 );
+        CHECK_EQUAL( 26, cells[6]);
+        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[6], 1e-6 );
     }
 
     TEST_FIXTURE(DistanceCalculatorGPUTest4, rayTrace_3D_start_outside_an_external_corner_negX_negY_negZ ) {
@@ -986,13 +1066,22 @@ SUITE( DistanceCalculatorGPU_Tester ) {
         auto cells = tester.getCellsFromCPU();
         unsigned numCrossings = tester.getNumCrossingsFromGPU();
 
-        CHECK_EQUAL( 3, numCrossings);
+        CHECK_EQUAL( 7, numCrossings);
         CHECK_EQUAL( 26, cells[0]);
         CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[0], 1e-6 );
-        CHECK_EQUAL( 13, cells[1]);
-        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[1], 1e-6 );
-        CHECK_EQUAL( 0, cells[2]);
-        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[2], 1e-6 );
+        CHECK_EQUAL( 25, cells[1]);
+        CHECK_CLOSE( 0.0, distances[1], 1e-6 );
+        CHECK_EQUAL( 22, cells[2]);
+        CHECK_CLOSE( 0.0, distances[2], 1e-6 );
+        CHECK_EQUAL( 13, cells[3]);
+        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[3], 1e-6 );
+        CHECK_EQUAL( 12, cells[4]);
+        CHECK_CLOSE( 0.0, distances[4], 1e-6 );
+        CHECK_EQUAL( 9, cells[5]);
+        CHECK_CLOSE( 0.0, distances[5], 1e-6 );
+        CHECK_EQUAL( 0, cells[6]);
+        CHECK_CLOSE( 1.0f*std::sqrt(1.0+2.0), distances[6], 1e-6 );
+
     }
 
     class DistanceCalculatorGPUTest5	{

@@ -5,7 +5,7 @@
 #include "MonteRayVector3D.hh"
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
-#include "MonteRayCopyMemory.t.hh"
+#include "ThirdParty/Array.hh"
 
 namespace MonteRay_CartesianGrid_crossingDistance_tests{
 
@@ -16,38 +16,31 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
     using GridBins_t = MonteRay_GridBins;
     enum coord {X,Y,Z,DIM};
 
-    class gridTestData {
+    class CartesianGridTester {
     public:
 
-        gridTestData(){
+        CartesianGridTester(){
             std::vector<gpuRayFloat_t> vertices{
                 -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
                   0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10};
 
-            pGridInfo[X] = new GridBins_t();
-            pGridInfo[Y] = new GridBins_t();
-            pGridInfo[Z] = new GridBins_t();
-
-            pGridInfo[X]->initialize( vertices );
-            pGridInfo[Y]->initialize( vertices );
-            pGridInfo[Z]->initialize( vertices );
+            pCart = std::make_unique<MonteRay_CartesianGrid>(3, 
+              std::array<MonteRay_GridBins, 3>{
+                MonteRay_GridBins{vertices},
+                MonteRay_GridBins{vertices},
+                MonteRay_GridBins{vertices}
+              }
+            );
 
         }
-        ~gridTestData(){
-            delete pGridInfo[X];
-            delete pGridInfo[Y];
-            delete pGridInfo[Z];
-        }
 
-        MonteRay_SpatialGrid::pArrayOfpGridInfo_t pGridInfo;
+        std::unique_ptr<MonteRay_CartesianGrid> pCart;
     };
 
     typedef singleDimRayTraceMap_t distances_t;
     typedef singleDimRayTraceMap_t rayTraceMap_t;
-    TEST( CrossingDistance_in_1D_PosXDir ) {
-        //CHECK(false);
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester, CrossingDistance_in_1D_PosXDir ) {
+        auto& cart = *pCart;
 
         Position_t position ( -9.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -66,9 +59,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
     }
 
 
-    TEST( CrossingDistance_in_1D_NegXDir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  CrossingDistance_in_1D_NegXDir ) {
+        auto& cart = *pCart;
 
         Position_t position ( -8.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
@@ -86,9 +78,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_CLOSE( 1.0, distances.dist(1), 1e-6 );
     }
 
-    TEST( Outside_negSide_negDir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Outside_negSide_negDir ) {
+        auto& cart = *pCart;
 
         Position_t position ( -10.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
@@ -102,9 +93,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_EQUAL(  0, distances.size() );
     }
 
-    TEST( Outside_posSide_posDir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Outside_posSide_posDir ) {
+        auto& cart = *pCart;
 
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -118,9 +108,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_EQUAL(  0, distances.size() );
     }
 
-    TEST( Outside_negSide_posDir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Outside_negSide_posDir ) {
+        auto& cart = *pCart;
 
         Position_t position ( -10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -140,9 +129,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
-    TEST( Outside_posSide_negDir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Outside_posSide_negDir ) {
+        auto& cart = *pCart;
 
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
@@ -162,9 +150,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
-    TEST( Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Crossing_entire_grid_starting_outside_finish_outside_pos_dir ) {
+        auto& cart = *pCart;
 
         Position_t position (  -10.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -193,9 +180,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
 
     }
 
-    TEST( Crossing_entire_grid_starting_outside_finish_outside_neg_dir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Crossing_entire_grid_starting_outside_finish_outside_neg_dir ) {
+        auto& cart = *pCart;
 
         Position_t position (  10.5, 0.5,  0.5 );
         Position_t direction(   -1,   0,    0 );
@@ -223,9 +209,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_CLOSE( 21.0, distances.dist(21), 1e-6 );
     }
 
-    TEST( Inside_cross_out_negDir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Inside_cross_out_negDir ) {
+        auto& cart = *pCart;
 
         Position_t position (  -8.5, 0.5,  0.5 );
         Position_t direction(    -1,   0,    0 );
@@ -245,9 +230,8 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
         CHECK_CLOSE( 2.0, distances.dist(2), 1e-6 );
     }
 
-    TEST( Inside_cross_out_posDir ) {
-        gridTestData data;
-        MonteRay_CartesianGrid cart(3,data.pGridInfo);
+    TEST_FIXTURE(CartesianGridTester,  Inside_cross_out_posDir ) {
+        auto& cart = *pCart;
 
         Position_t position (  8.5, 0.5,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -268,22 +252,15 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
     }
 
     TEST( crossingDistance_2D_internal_hit_corner_posXDir_posYDir ) {
-        GridBins_t* pGridInfo[3];
-
-        pGridInfo[X] = new GridBins_t();
-        pGridInfo[Y] = new GridBins_t();
-        pGridInfo[Z] = new GridBins_t();
-
-        pGridInfo[X]->initialize( -1, 1, 2);
-        pGridInfo[Y]->initialize( -1, 1, 2);
-        pGridInfo[Z]->initialize( -1, 1, 2);
-
         Position_t position (  -.5, -.5, -.5 );
         Position_t direction(  1.0,  1.0,  0.0 );
         direction.normalize();
         gpuRayFloat_t distance = 1.0*std::sqrt(2.0);
 
-        MonteRay_CartesianGrid cart(3,pGridInfo);
+        MonteRay_CartesianGrid cart(3, 
+            MonteRay_GridBins{-1, 1, 2},
+            MonteRay_GridBins{-1, 1, 2},
+            MonteRay_GridBins{-1, 1, 2});
 
         unsigned dim = 0;
         distances_t distances;
@@ -326,30 +303,19 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
             CHECK_EQUAL( 1, distances.id(1) );
             CHECK_CLOSE( (1.0)*std::sqrt(2.0), distances.dist(1), 1e-6 );
         }
-
-        delete pGridInfo[X];
-        delete pGridInfo[Y];
-        delete pGridInfo[Z];
     }
 
 
     TEST( crossingDistance_2D_start_on_an_external_corner_posX_posY ) {
-        GridBins_t* pGridInfo[3];
-
-        pGridInfo[X] = new GridBins_t();
-        pGridInfo[Y] = new GridBins_t();
-        pGridInfo[Z] = new GridBins_t();
-
-        pGridInfo[X]->initialize( 0, 3, 3);
-        pGridInfo[Y]->initialize( 0, 3, 3);
-        pGridInfo[Z]->initialize( 0, 3, 3);
-
         Position_t position (  0.0, 0.0, 0.5 );
         Position_t direction(  1.0,  1.0,  0.0 );
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        MonteRay_CartesianGrid cart(3,pGridInfo);
+        MonteRay_CartesianGrid cart(3, 
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3});
 
         unsigned dim = 0;
         unsigned threadID=0;
@@ -390,28 +356,18 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
             CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
         }
 
-        delete pGridInfo[X];
-        delete pGridInfo[Y];
-        delete pGridInfo[Z];
     }
 
     TEST( crossingDistance_2D_start_on_an_external_corner_negX_negY ) {
-        GridBins_t* pGridInfo[3];
-
-        pGridInfo[X] = new GridBins_t();
-        pGridInfo[Y] = new GridBins_t();
-        pGridInfo[Z] = new GridBins_t();
-
-        pGridInfo[X]->initialize( 0, 3, 3);
-        pGridInfo[Y]->initialize( 0, 3, 3);
-        pGridInfo[Z]->initialize( 0, 3, 3);
-
         Position_t position (  3.0,  3.0, 0.5 );
         Position_t direction( -1.0, -1.0, 0.0 );
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        MonteRay_CartesianGrid cart(3,pGridInfo);
+        MonteRay_CartesianGrid cart(3, 
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3});
 
         unsigned dim = 0;
 
@@ -453,28 +409,19 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
             CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
         }
 
-        delete pGridInfo[X];
-        delete pGridInfo[Y];
-        delete pGridInfo[Z];
     }
 
     TEST( crossingDistance_2D_start_outside_on_an_external_corner_posX_posY ) {
-        GridBins_t* pGridInfo[3];
-
-        pGridInfo[X] = new GridBins_t();
-        pGridInfo[Y] = new GridBins_t();
-        pGridInfo[Z] = new GridBins_t();
-
-        pGridInfo[X]->initialize( 0, 3, 3);
-        pGridInfo[Y]->initialize( 0, 3, 3);
-        pGridInfo[Z]->initialize( 0, 3, 3);
-
         Position_t position ( -1.0, -1.0, 0.5 );
         Position_t direction(  1.0,  1.0, 0.0 );
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        MonteRay_CartesianGrid cart(3,pGridInfo);
+        MonteRay_CartesianGrid cart(3, 
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3});
+
 
         unsigned dim = 0;
         unsigned threadID=0;
@@ -514,29 +461,19 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
             CHECK_EQUAL( 3, distances.id(4) );
             CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
         }
-        delete pGridInfo[X];
-        delete pGridInfo[Y];
-        delete pGridInfo[Z];
     }
 
     TEST( crossingDistance_2D_start_outside_an_external_corner_negX_negY ) {
-
-        GridBins_t* pGridInfo[3];
-
-        pGridInfo[X] = new GridBins_t();
-        pGridInfo[Y] = new GridBins_t();
-        pGridInfo[Z] = new GridBins_t();
-
-        pGridInfo[X]->initialize( 0, 3, 3);
-        pGridInfo[Y]->initialize( 0, 3, 3);
-        pGridInfo[Z]->initialize( 0, 3, 3);
-
         Position_t position (  4.0,  4.0, 0.5 );
         Position_t direction( -1.0, -1.0, 0.0 );
         direction.normalize();
         gpuRayFloat_t distance = 10.0;
 
-        MonteRay_CartesianGrid cart(3,pGridInfo);
+
+        MonteRay_CartesianGrid cart(3, 
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3},
+            MonteRay_GridBins{0, 3, 3});
 
         unsigned dim = 0;
         unsigned threadID=0;
@@ -576,9 +513,6 @@ SUITE( MonteRay_CartesianGrid_crossingDistance_Tests) {
             CHECK_CLOSE( 10.0, distances.dist(4), 1e-6 );
         }
 
-        delete pGridInfo[X];
-        delete pGridInfo[Y];
-        delete pGridInfo[Z];
     }
 
 }

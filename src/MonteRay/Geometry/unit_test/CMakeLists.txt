@@ -12,5 +12,5 @@ target_link_libraries( monteray.geometry.test PRIVATE MonteRay::testing )
 add_test(NAME monteray.geometry.test COMMAND monteray.geometry.test) 
 create_lnk3dnt_symlink(monteray.geometry.test)
 
-# add_subdirectory(Cartesian)
+add_subdirectory(Cartesian)
 # add_subdirectory(Cylindrical)
