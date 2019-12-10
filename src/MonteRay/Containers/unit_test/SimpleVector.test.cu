@@ -60,7 +60,9 @@ SUITE(SimpleVector_test) {
   }
 
   TEST(begin_end_back){
-    auto start = &vec1[0];
+    const auto start = &vec1[0];
+    CHECK(start == &(*vec1.cbegin()));
+    CHECK(start + 3 == &(*vec1.cend()));
     CHECK(start == &(*vec1.begin()));
     CHECK(start + 3 == &(*vec1.end()));
     CHECK(start + 2 == &(vec1.back()));
