@@ -5,10 +5,9 @@
 #include <cmath>
 
 #include "GPUUtilityFunctions.hh"
-#include "gpuTally.hh"
+#include "BasicTally.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
-#include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
 #include "GPUErrorCheck.hh"

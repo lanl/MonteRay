@@ -6,8 +6,7 @@
 
 #include "GPUUtilityFunctions.hh"
 
-#include "gpuTally.hh"
-
+#include "BasicTally.hh"
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
 #include "MonteRayMaterial.hh"

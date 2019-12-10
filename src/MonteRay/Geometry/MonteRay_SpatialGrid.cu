@@ -3,7 +3,6 @@
 #include "MonteRay_CylindricalGrid.t.hh"
 /* #include "MonteRay_SphericalGrid.t.hh" */
 #include "MonteRay_binaryIO.hh"
-#include "MonteRayCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "RayWorkInfo.hh"
 #include "MonteRayParallelAssistant.hh"

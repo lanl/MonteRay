@@ -6,7 +6,6 @@
 #include <memory>
 #include "MonteRayVector3D.hh"
 
-#include "MonteRayCopyMemory.hh"
 #include "RayWorkInfo.hh"
 #include "MaterialProperties.hh"
 

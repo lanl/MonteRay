@@ -1,14 +1,6 @@
-/*
- * MonteRaySphericalGrid.cc
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_SphericalGrid.t.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRayCopyMemory.t.hh"
 #include "GPUErrorCheck.hh"
 #include "MonteRayParallelAssistant.hh"

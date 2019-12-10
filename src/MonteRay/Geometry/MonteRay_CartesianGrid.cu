@@ -1,7 +1,5 @@
 #include "MonteRay_CartesianGrid.hh"
 #include "MonteRayDefinitions.hh"
-#include "MonteRay_SingleValueCopyMemory.t.hh"
-#include "MonteRayCopyMemory.t.hh"
 #include "RayWorkInfo.hh"
 #include "MonteRayParallelAssistant.hh"
 

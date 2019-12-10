@@ -2,4 +2,4 @@
 #include "MonteRay/RayTrace/ExpectedPathLength.t.hh"
 #include "MonteRay/RayTrace/RayListController.t.hh"
 #include "MonteRay/RayTrace/RayListController.hh"
-#include "MonteRay/RayTrace/gpuTally.hh"
+#include "MonteRay/RayTrace/BasicTally.hh"

@@ -6,17 +6,16 @@
 #include <memory>
 
 #include "GPUUtilityFunctions.hh"
-#include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "MaterialProperties.hh"
-#include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
 #include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "RayWorkInfo.hh"
+#include "BasicTally.hh"
 
 #include "UnitControllerBase.hh"
 namespace RayListController_w_SpatialGrid_unit_tester{
