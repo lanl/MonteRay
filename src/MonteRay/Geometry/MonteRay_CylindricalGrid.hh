@@ -7,7 +7,7 @@
 
 namespace MonteRay {
 
-class MonteRay_CylindricalGrid :public MonteRay_GridSystemInterface {
+class MonteRay_CylindricalGrid : public MonteRay_GridSystemInterface {
 public:
     using GridBins_t = MonteRay_GridBins;
     using Position_t = GridBins_t::Position_t;

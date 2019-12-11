@@ -1,6 +1,6 @@
 #include <UnitTest++.h>
 
-#include "../MonteRay_SpatialGrid_GPU_helper.hh"
+#include "../CrossingDistanceHelper.hh"
 #include "MonteRay_CylindricalGrid.hh"
 
 namespace MonteRay_CylindricalGrid_crossingDistance_GPU_tests{
@@ -51,24 +51,25 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
 
 #define checkDistances(expectedIndex, expectedDistance, distances) { checkDistances(__FILE__, __LINE__, expectedIndex, expectedDistance, distances); }
 
-    typedef singleDimRayTraceMap_t distances_t;
-    typedef singleDimRayTraceMap_t rayTraceMap_t;
-    typedef rayTraceList_t rayTrace_t;
-    typedef MonteRay_CylindricalGrid CylindricalGrid;
+    using distances_t = singleDimRayTraceMap_t;
+    using rayTraceMap_t = singleDimRayTraceMap_t;
+    using rayTrace_t = rayTraceList_t;
+    using CylindricalGrid = MonteRay_CylindricalGrid;
 
-    TEST( setup ) {
-        //gpuReset();
-    }
-
+    class CylindricalGridTester{
+      public:
+        std::unique_ptr<CylindricalGrid> pCyl;
+        CylindricalGridTester(){
+          std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
+          std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
+        
+          pCyl = std::make_unique<CylindricalGrid>(2, Rverts, Zverts);
+        }
+    };
 
     // ************************ rayTrace Testing ****************************
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_in_1D_R_inward_from_outside_to_outside ) {
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
-
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_in_1D_R_inward_from_outside_to_outside ) {
         Position_t position (  -6.5, 0.0,  0.5 );
         Position_t direction(    1,   0,    0 );
         gpuFloatType_t distance = 100.0;
@@ -83,12 +84,8 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
     }
 
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_in_1D_R_inward_from_outside_to_inside_stop_inward ) {
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_in_1D_R_inward_from_outside_to_inside_stop_inward ) {
 
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
 
         Position_t position (  -6.5, 0.0,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -102,12 +99,8 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
                 distances );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_in_1D_R_inward_from_outside_to_inside_stop_outward ) {
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_in_1D_R_inward_from_outside_to_inside_stop_outward ) {
 
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
 
         Position_t position (  -6.5, 0.0,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -121,12 +114,8 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
                 distances );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_through_a_single_cylinder_in_2D_R_inward_from_inside_to_outside ) {
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_through_a_single_cylinder_in_2D_R_inward_from_inside_to_outside ) {
 
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
 
         gpuFloatType_t y = 3.0f / std::sqrt(2.0f );
         gpuFloatType_t last_dist = std::sqrt( 25 - y*y );
@@ -143,11 +132,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
     }
 
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_tanget_to_first_inner_cylinder_posY ) {
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_tanget_to_first_inner_cylinder_posY ) {
 
         gpuFloatType_t x = -3.5;
         gpuFloatType_t y = 3.0;
@@ -171,11 +156,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
 
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_tanget_to_first_inner_cylinder_negY ) {
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_tanget_to_first_inner_cylinder_negY ) {
 
         gpuFloatType_t x = -3.5;
         gpuFloatType_t y = -3.0;
@@ -203,11 +184,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
 //                distances );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_tanget_to_first_second_cylinder_posY ) {
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_tanget_to_first_second_cylinder_posY ) {
 
         gpuFloatType_t y = 2.0;
         Position_t position (  -4.0, y,  0.5 );
@@ -231,12 +208,8 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( distance, distances.dist(5), 1e-5 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_outward_from_Origin_posX_to_outside ) {
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_outward_from_Origin_posX_to_outside ) {
         //        std::cout << "Debug: ---------------------------------------------------------" << std::endl;
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
 
         Position_t position (  0.0, 0.0,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -257,12 +230,8 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 9.0, distances.dist(4), 1e-5 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_outward_from_Origin_posX_to_inside ) {
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_outward_from_Origin_posX_to_inside ) {
         //        std::cout << "Debug: ---------------------------------------------------------" << std::endl;
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
 
         Position_t position (  0.0, 0.0,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -281,12 +250,8 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 4.5, distances.dist(3), 1e-5 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_outward_from_posX_Postion_negX_Direction ) {
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_outward_from_posX_Postion_negX_Direction ) {
         //        std::cout << "Debug: ---------------------------------------------------------" << std::endl;
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
 
         Position_t position (  3.5, 0.0,  0.5 );
         Position_t direction(   -1,   0,    0 );
@@ -300,12 +265,8 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
                 distances );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, CrossingDistance_outward_from_posX_Postion_negX_Direction_not_outside ) {
+    TEST_FIXTURE(CylindricalGridTester, CrossingDistance_outward_from_posX_Postion_negX_Direction_not_outside ) {
         // std::cout << "Debug: ---------------------------------------------------------" << std::endl;
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
 
         Position_t position (  3.5, 0.0,  0.5 );
         Position_t direction(   -1,   0,    0 );
@@ -319,11 +280,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
                 distances );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, radialCrossingDistances_inside_thru_to_outside ) {
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
+    TEST_FIXTURE(CylindricalGridTester, radialCrossingDistances_inside_thru_to_outside ) {
 
         Position_t position (  -4.5, 0.0,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -350,11 +307,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 100.0, distances.dist(7), 1e-5 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, radialCrossingDistances_inside_misses_inner_cells ) {
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
+    TEST_FIXTURE(CylindricalGridTester, radialCrossingDistances_inside_misses_inner_cells ) {
 
         Position_t position (  -3.5, 3.1,  0.5 );
         Position_t direction(    1,   0,    0 );
@@ -369,11 +322,7 @@ SUITE( MonteRay_CylindricalGrid_crossingDistance_GPU_Tests) {
         CHECK_CLOSE( 100.0, distances.dist(1), 1e-5 );
     }
 
-    TEST_FIXTURE(SpatialGridGPUTester, radialCrossingDistances_twice_through_a_single_cylinder_going_inward_single_crossing_outward  ) {
-        std::vector<gpuRayFloat_t> Rverts = { 1.0, 2.0, 3.0, 5.0 };
-        std::vector<gpuRayFloat_t> Zverts = { 0.0, 1.0, 2.0, 3.0, 5.0 };
-
-        cylindricalGrid_setup(Rverts, Zverts);
+    TEST_FIXTURE(CylindricalGridTester, radialCrossingDistances_twice_through_a_single_cylinder_going_inward_single_crossing_outward  ) {
 
         gpuFloatType_t y = 3.0 / std::sqrt(2.0 );
         Position_t position (  -4.0, y,  0.5 );

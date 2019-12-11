@@ -17,15 +17,13 @@
 
 namespace MonteRay {
 
-class MonteRay_GridSystemInterface {
+class MonteRay_GridSystemInterface: public Managed {
 public:
   using GridBins_t = MonteRay_GridBins;
   using GridBinsArray_t = Array<GridBins_t, 3>;
   using Position_t = GridBins_t::Position_t;
   using Direction_t = GridBins_t::Direction_t;
-  static constexpr unsigned OUTSIDE_GRID = UINT_MAX;
   int DIM = 0;
-  /* static constexpr unsigned MAXDIM = 3; */
 protected:
   static constexpr gpuRayFloat_t inf = std::numeric_limits<gpuRayFloat_t>::infinity();
   GridBinsArray_t gridBins;
@@ -40,7 +38,7 @@ public:
   MonteRay_GridSystemInterface(GridBinsArray otherGridBins, int otherDim) :
     gridBins( {std::move(otherGridBins[0]), std::move(otherGridBins[1]), std::move(otherGridBins[2])} ), DIM(otherDim) {}
 
-  //static const unsigned OUTSIDE = UINT_MAX;
+
   CUDA_CALLABLE_MEMBER
   unsigned getDimension() const { return DIM; }
   CUDA_CALLABLE_MEMBER
@@ -137,6 +135,7 @@ public:
 };
 
 using DimType = int;
+// This is really DistAndSurf
 struct DistAndDir : public std::tuple<gpuRayFloat_t, DimType, bool>{
   using std::tuple<gpuRayFloat_t, DimType, bool>::tuple;
   constexpr auto distance() const { return std::get<0>(*this); }
@@ -146,6 +145,14 @@ struct DistAndDir : public std::tuple<gpuRayFloat_t, DimType, bool>{
   constexpr void setDistance(gpuRayFloat_t val) { std::get<0>(*this) = val; }
   constexpr void setDimension(DimType val) { std::get<1>(*this) = val; }
   constexpr void setDir(bool val) { std::get<2>(*this) = val; }
+  // implement operator = because tuple's operator = is not constexpr until 20
+  constexpr auto& operator=(const DistAndDir& other){
+    this->setDistance(other.distance());
+    this->setDimension(other.dimension());
+    this->setDir(other.isPositiveDir());
+    return *this;
+  }
+
 };
 
 struct DirectionAndSpeed : public std::tuple<MonteRay_GridBins::Direction_t, gpuRayFloat_t>{

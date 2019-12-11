@@ -2,6 +2,7 @@
 #include "MonteRayDefinitions.hh"
 #include "RayWorkInfo.hh"
 #include "MonteRayParallelAssistant.hh"
+#include <limits>
 
 #include <float.h>
 
@@ -21,7 +22,7 @@ unsigned MonteRay_CartesianGrid::getIndex( const GridBins_t::Position_t& particl
 
     // outside the grid
     if( isIndexOutside(d, indices[d] ) ) {
-      return OUTSIDE_GRID;
+      return std::numeric_limits<unsigned>::max();
     }
   }
   return calcIndex( indices );

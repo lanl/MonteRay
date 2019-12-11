@@ -4,7 +4,7 @@
 #include "ManagedAllocator.hh"
 #include "MonteRay_TransportMeshTypeEnum.hh"
 
-#include "MonteRay_CartesianGrid.t.hh"
+#include "MonteRay_CartesianGrid.hh"
 #include "MonteRay_CylindricalGrid.t.hh"
 /* #include "MonteRay_SphericalGrid.t.hh" */
 

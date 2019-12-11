@@ -1,6 +1,7 @@
 #include <UnitTest++.h>
 
 #include "MonteRay_GridBins.hh"
+#include "UnitTestHelper.hh"
 
 using namespace MonteRay;
 
@@ -30,9 +31,14 @@ SUITE( MonteRay_GridBins_Tester ) {
         CHECK_CLOSE( -9.0, bins.vertices[1], 1e-11);
     }
 
+  class GridBinsTester{
+    public:
+      MonteRay_GridBins radialBins = MonteRay_GridBins(0, 10, 10, MonteRay_GridBins::RADIAL);
+      MonteRay_GridBins linearBins = MonteRay_GridBins(-10, 10, 20);
+  };
 
-  const auto linearBins = MonteRay_GridBins(-10, 10, 20);
-  TEST(LinearGridBins_Getters){
+
+  TEST_FIXTURE(GridBinsTester, LinearGridBins_Getters){
 
     CHECK(linearBins.isLinear());
     CHECK(not linearBins.isRadial());
@@ -56,8 +62,8 @@ SUITE( MonteRay_GridBins_Tester ) {
 
   }
 
-  const auto radialBins = MonteRay_GridBins(0, 10, 10, MonteRay_GridBins::RADIAL);
-  TEST(RadialGridBins_Getters){
+
+  TEST_FIXTURE(GridBinsTester, RadialGridBins_Getters){
 
     CHECK(radialBins.isRadial());
     CHECK(not radialBins.isLinear());
@@ -76,7 +82,7 @@ SUITE( MonteRay_GridBins_Tester ) {
   }
 
    
-  TEST(RadialGridBins_CalcIndex){
+  TEST_FIXTURE(GridBinsTester, RadialGridBins_CalcIndex){
     CHECK_EQUAL(0, radialBins.getRadialIndexFromR(0.1));
     CHECK_EQUAL(9, radialBins.getRadialIndexFromR(9.9));
     CHECK_EQUAL(10, radialBins.getRadialIndexFromR(10.1));
@@ -86,7 +92,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     CHECK_EQUAL(10, radialBins.getRadialIndexFromRSq(10.1*10.1));
   }
 
-  TEST(IsIndexOutside){
+  TEST_FIXTURE(GridBinsTester, IsIndexOutside){
     CHECK( radialBins.isIndexOutside(-1) ); // even though it doesn't make sense to have a negative radial index, a negative index is certainly not inside the grid.
     CHECK( radialBins.isIndexOutside(10) );
     CHECK( not radialBins.isIndexOutside(0) );
@@ -99,7 +105,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     CHECK( not linearBins.isIndexOutside(0) );
   }
 
-  TEST( LinearBins_DistanceToGetInsideLinearMesh ) {
+  TEST_FIXTURE(GridBinsTester, LinearBins_DistanceToGetInsideLinearMesh ) {
     CHECK_CLOSE(2.0, linearBins.distanceToGetInsideLinearMesh(-11.0, 0.5), 1E-5);
     CHECK_CLOSE(4.0, linearBins.distanceToGetInsideLinearMesh(11.0, -0.25), 1E-5);
     CHECK_CLOSE(std::numeric_limits<gpuRayFloat_t>::epsilon(), linearBins.distanceToGetInsideLinearMesh(10.0, -0.25), 1E-5);
@@ -108,7 +114,7 @@ SUITE( MonteRay_GridBins_Tester ) {
     CHECK_EQUAL( std::numeric_limits<gpuRayFloat_t>::infinity(), linearBins.distanceToGetInsideLinearMesh(11, 0.1));
   }
 
-  TEST( ReadWrite ){
+  TEST_FIXTURE(GridBinsTester, ReadWrite ){
 
     std::stringstream stream;
     const auto linearBins = MonteRay_GridBins(-1, 1, 2);
@@ -144,43 +150,44 @@ SUITE( MonteRay_GridBins_Tester ) {
 #ifdef __CUDACC__
   __global__ void testMonteRayGridBinsOnGPU(bool* testVal, MonteRay_GridBins* pRadialBins){
     *testVal = true;
-    *testVal = *testVal && (pRadialBins->isRadial());
-    *testVal = *testVal && (not pRadialBins->isLinear());
+    GPU_CHECK(pRadialBins->isRadial());
+    GPU_CHECK(not pRadialBins->isLinear());
 
-    *testVal = *testVal && (10 == pRadialBins->getNumBins());
+    GPU_CHECK(10 == pRadialBins->getNumBins());
 
-    *testVal = *testVal && (10 == pRadialBins->getNumVertices());
-    *testVal = *testVal && (10 == pRadialBins->getNumVerticesSq());
+    GPU_CHECK(10 == pRadialBins->getNumVertices());
+    GPU_CHECK(10 == pRadialBins->getNumVerticesSq());
 
     const auto pVertices = pRadialBins->getVerticesData();
-    *testVal = *testVal && (1.0 == pVertices[0]);
-    *testVal = *testVal && (10.0 == pVertices[9]);
+    GPU_CHECK(1.0 == pVertices[0]);
+    GPU_CHECK(10.0 == pVertices[9]);
 
-    *testVal = *testVal && (1 == pRadialBins->getMinVertex());
-    *testVal = *testVal && (10 == pRadialBins->getMaxVertex());
+    GPU_CHECK(1 == pRadialBins->getMinVertex());
+    GPU_CHECK(10 == pRadialBins->getMaxVertex());
 
-    *testVal = *testVal && (0 == pRadialBins->getRadialIndexFromR(0.1));
-    *testVal = *testVal && (9 == pRadialBins->getRadialIndexFromR(9.9));
-    *testVal = *testVal && (10 == pRadialBins->getRadialIndexFromR(10.1));
+    GPU_CHECK(0 == pRadialBins->getRadialIndexFromR(0.1));
+    GPU_CHECK(9 == pRadialBins->getRadialIndexFromR(9.9));
+    GPU_CHECK(10 == pRadialBins->getRadialIndexFromR(10.1));
 
-    *testVal = *testVal && (0 == pRadialBins->getRadialIndexFromRSq(0.1*0.1));
-    *testVal = *testVal && (9 == pRadialBins->getRadialIndexFromRSq(9.9*9.9));
-    *testVal = *testVal && (10 == pRadialBins->getRadialIndexFromRSq(10.1*10.1));
+    GPU_CHECK(0 == pRadialBins->getRadialIndexFromRSq(0.1*0.1));
+    GPU_CHECK(9 == pRadialBins->getRadialIndexFromRSq(9.9*9.9));
+    GPU_CHECK(10 == pRadialBins->getRadialIndexFromRSq(10.1*10.1));
 
-    *testVal = *testVal && ( pRadialBins->isIndexOutside(-1) ); // even though it doesn't make sense to have a negative radial index, a negative index is certainly not inside the grid.
-    *testVal = *testVal && ( pRadialBins->isIndexOutside(10) );
-    *testVal = *testVal && ( not pRadialBins->isIndexOutside(0) );
-    *testVal = *testVal && ( not pRadialBins->isIndexOutside(1) );
-    *testVal = *testVal && ( not pRadialBins->isIndexOutside(9) );
+    GPU_CHECK( pRadialBins->isIndexOutside(-1) ); // even though it doesn't make sense to have a negative radial index, a negative index is certainly not inside the grid.
+    GPU_CHECK( pRadialBins->isIndexOutside(10) );
+    GPU_CHECK( not pRadialBins->isIndexOutside(0) );
+    GPU_CHECK( not pRadialBins->isIndexOutside(1) );
+    GPU_CHECK( not pRadialBins->isIndexOutside(9) );
   }
 
-  TEST(GPU_RadialGridBins){
+  TEST_FIXTURE(GridBinsTester, GPU_RadialGridBins){
     auto pRadialBins = std::make_unique<MonteRay_GridBins>(radialBins);
     bool* testVal;
     cudaMallocManaged(&testVal, sizeof(bool));
     testMonteRayGridBinsOnGPU<<<1, 1>>>(testVal, pRadialBins.get());
     cudaDeviceSynchronize();
     CHECK(*testVal);
+    cudaFree(testVal);
   }
 
 #endif

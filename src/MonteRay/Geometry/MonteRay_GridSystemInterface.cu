@@ -162,7 +162,7 @@ MonteRay_GridSystemInterface::orderCrossings(
                 if( !outside ) {
                     global_index = calcIndex( indices );
                 } else {
-                    global_index = MonteRay_GridSystemInterface::OUTSIDE_GRID;
+                    global_index = std::numeric_limits<unsigned>::max();
                 }
                 rayInfo.addRayCastCell( threadID, global_index, deltaDistance );
 
