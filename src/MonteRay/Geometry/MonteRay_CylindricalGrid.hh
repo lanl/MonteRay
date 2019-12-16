@@ -18,7 +18,7 @@ public:
 private:
 
     static constexpr gpuRayFloat_t inf = std::numeric_limits<gpuRayFloat_t>::infinity();
-    static const int COORD_DIM = 2; // TODO: not static const?
+    static constexpr int COORD_DIM = 2; 
 public:
 
     MonteRay_CylindricalGrid() = default;
@@ -26,18 +26,14 @@ public:
     template <typename GridBins>
     MonteRay_CylindricalGrid(int d, GridBins gridBins) : MonteRay_CylindricalGrid(d, std::move(gridBins[0]), std::move(gridBins[1])){ }
 
-    CUDA_CALLABLE_MEMBER unsigned getNumRBins() const { return gridBins[R].getNumBins(); }
-    CUDA_CALLABLE_MEMBER unsigned getNumZBins() const { return gridBins[CZ].getNumBins(); }
-    CUDA_CALLABLE_MEMBER unsigned getNumBins(int d) const;
-
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getRVertex(unsigned i) const { return gridBins[R].vertices[i]; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getRSqVertex(unsigned i) const { return gridBins[R].verticesSq[i]; }
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getZVertex(unsigned i) const { return gridBins[CZ].vertices[i]; }
 
     CUDA_CALLABLE_MEMBER Position_t convertFromCartesian( const Position_t& pos) const;
 
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t R ) const { return gridBins[R].getRadialIndexFromR(R); }
-    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t RSq ) const { return gridBins[R].getRadialIndexFromRSq(RSq); }
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromR( gpuRayFloat_t r ) const { return gridBins[R].getRadialIndexFromR(r); }
+    CUDA_CALLABLE_MEMBER int getRadialIndexFromRSq( gpuRayFloat_t rSq ) const { return gridBins[R].getRadialIndexFromRSq(rSq); }
     CUDA_CALLABLE_MEMBER int getAxialIndex( gpuRayFloat_t z) const { return gridBins[CZ].getLinearIndex(z);}
 
     CUDA_CALLABLE_MEMBER unsigned getIndex( const GridBins_t::Position_t& particle_pos) const;

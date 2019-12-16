@@ -84,23 +84,9 @@ CUDA_CALLABLE_MEMBER
 uint3 MonteRay_CylindricalGrid::calcIJK(unsigned index ) const {
   uint3 indices;
 
-  uint3 offsets;
-  offsets.x = 1;
-
-  offsets.y = gridBins[R].getNumBins();
-  offsets.z = gridBins[CZ].getNumBins();
-
-  MONTERAY_ASSERT(offsets.z > 0 );
-  MONTERAY_ASSERT(offsets.y > 0 );
-  MONTERAY_ASSERT(offsets.x > 0 );
-
-  indices.z = index / offsets.z;
-  index -= indices.z * offsets.z;
-
-  indices.y = index / offsets.y;
-  index -= indices.y * offsets.y;
-
-  indices.x = index / offsets.x;
+  indices.z = 0; // no theta support in this grid
+  indices.y = index / gridBins[R].getNumBins();
+  indices.x = index - indices.y * gridBins[R].getNumBins(); 
 
   return indices;
 }
@@ -141,7 +127,7 @@ MonteRay_CylindricalGrid::rayTrace(
         const gpuRayFloat_t distance,
         const bool outsideDistances ) const{
 
-  int indices[COORD_DIM]; // current position indices in the grid, must be int because can be outside
+  int indices[DimMax]; // current position indices in the grid, must be int because can be outside
 
   // Crossing distance in R direction
   {
@@ -313,18 +299,6 @@ void MonteRay_CylindricalGrid::radialCrossingDistances(
     gpuRayFloat_t particleRSq = calcParticleRSq( pos );
     auto rIndex = gridBins[R].getRadialIndexFromRSq(particleRSq);
     radialCrossingDistances( dim, threadID, rayInfo, pos, dir, particleRSq, rIndex, distance );
-}
-
-CUDA_CALLABLE_MEMBER
-unsigned MonteRay_CylindricalGrid::getNumBins(int d) const {
-  MONTERAY_ASSERT( d < COORD_DIM );
-  if( d == 0 ) {
-    return getNumRBins();
-  }
-  if( d == 1 ) {
-    return getNumZBins();
-  }
-  return 0;
 }
 
 template

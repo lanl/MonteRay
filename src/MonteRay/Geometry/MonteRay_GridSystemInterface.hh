@@ -42,6 +42,8 @@ public:
   CUDA_CALLABLE_MEMBER
   unsigned getDimension() const { return DIM; }
   CUDA_CALLABLE_MEMBER
+  unsigned getNumBins(unsigned d) const { return gridBins[d].getNumBins(); }
+  CUDA_CALLABLE_MEMBER
   unsigned getNumGridBins(unsigned d) const { return gridBins[d].getNumBins(); }
   CUDA_CALLABLE_MEMBER
   gpuRayFloat_t getMinVertex(unsigned d) const { return gridBins[d].getMinVertex(); }
