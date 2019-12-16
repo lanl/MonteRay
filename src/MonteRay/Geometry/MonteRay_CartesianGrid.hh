@@ -29,10 +29,6 @@ public:
 
     CUDA_CALLABLE_MEMBER uint3 calcIJK( unsigned index ) const;
 
-    CUDA_CALLABLE_MEMBER bool isOutside(  const int i[]) const;
-
-    CUDA_CALLABLE_MEMBER bool isIndexOutside( unsigned d,  int i) const {return gridBins[d].isIndexOutside(i);}
-
     CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const;
 
     CUDA_CALLABLE_MEMBER

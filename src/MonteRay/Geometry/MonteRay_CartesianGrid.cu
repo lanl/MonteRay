@@ -72,16 +72,6 @@ MonteRay_CartesianGrid::calcIJK( unsigned index ) const {
 }
 
 CUDA_CALLABLE_MEMBER
-bool MonteRay_CartesianGrid::isOutside( const int i[] ) const {
-  for( int d=0; d<DIM; ++d){
-    if( isIndexOutside(d, i[d]) ){ 
-      return true;
-    }
-  }
-  return false;
-}
-
-CUDA_CALLABLE_MEMBER
 void
 MonteRay_CartesianGrid::rayTrace(
         const unsigned threadID,
