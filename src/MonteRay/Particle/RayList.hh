@@ -8,58 +8,41 @@
 #include <iostream>
 
 #include "Ray.hh"
-#include "MonteRayCopyMemory.hh"
+#include "ThirdParty/ManagedAllocator.hh"
+#include "SimpleVector.hh"
 
 namespace MonteRay{
 
 typedef unsigned RayListSize_t;
 
 template<unsigned N = 1>
-class RayList_t : public CopyMemoryBase<RayList_t<N>>{
+class RayList_t : public Managed {
 public:
-    using Base = CopyMemoryBase<RayList_t<N>>;
     using RAY_T = Ray_t<N>;
 
-    /// Primary RayList_t constructor.
+    SimpleVector<RAY_T> points;
+
     /// Takes the size of the list as an argument.
-    CUDAHOST_CALLABLE_MEMBER RayList_t(RayListSize_t num = 1);
-
-    /// Copy constructor
-    CUDAHOST_CALLABLE_MEMBER RayList_t(const RayList_t<N>& rhs);
-
-    CUDAHOST_CALLABLE_MEMBER ~RayList_t();
+    CUDAHOST_CALLABLE_MEMBER RayList_t(RayListSize_t num = 1){ points.reserve(num); }
 
     CUDAHOST_CALLABLE_MEMBER std::string className() { return std::string("RayList_t");}
 
-    CUDAHOST_CALLABLE_MEMBER void reallocate(size_t n);
-
-    CUDAHOST_CALLABLE_MEMBER void init() {
-        nAllocated = 0;
-        nUsed = 0;
-        points = NULL;
-    }
-
-    CUDAHOST_CALLABLE_MEMBER void copy(const RayList_t<N>* rhs);
+    CUDAHOST_CALLABLE_MEMBER void reallocate(size_t n) { points.reserve(n); }
 
     void copyToGPU(void);
 
     CUDA_CALLABLE_MEMBER RayListSize_t size(void) const {
-        return nUsed;
+        return points.size();
     }
 
-    CUDA_CALLABLE_MEMBER RayListSize_t capacity(void) const {
-        return nAllocated;
-    }
+    CUDA_CALLABLE_MEMBER RayListSize_t capacity(void) const { return points.capacity(); }
+    void clear(void) { points.clear(); }
 
-    CUDA_CALLABLE_MEMBER void clear(void) {
-        nUsed = 0;
-    }
-
-    CUDA_CALLABLE_MEMBER CollisionPosition_t getPosition(RayListSize_t i) const {
+    CUDA_CALLABLE_MEMBER const auto& getPosition(RayListSize_t i) const {
         return points[i].pos;
     }
 
-    CUDA_CALLABLE_MEMBER CollisionPosition_t getDirection(RayListSize_t i) const {
+    CUDA_CALLABLE_MEMBER const auto& getDirection(RayListSize_t i) const {
         return points[i].dir;
     }
 
@@ -87,21 +70,22 @@ public:
         return points[i].particleType;
     }
 
-    CUDA_CALLABLE_MEMBER RAY_T pop(void) {
-#if !defined( RELEASE )
-        if( nUsed == 0 ) {
+    RAY_T pop(void) {
+#ifndef NDEBUG
+        if( points.size() == 0 ) {
             printf("RayList::pop -- no points.  %s %d\n", __FILE__, __LINE__);
             ABORT( "RayList.hh -- RayList::pop" );
         }
 #endif
 
-        nUsed -= 1;
-        return points[nUsed];
+        auto ray = points.back();
+        points.pop_back();
+        return ray;
     }
 
     CUDA_CALLABLE_MEMBER RAY_T getParticle(RayListSize_t i) const {
-#if !defined( RELEASE )
-        if( i >= nUsed ) {
+#ifndef NDEBUG
+        if( i >= points.size() ) {
             printf("RayList::getParticle -- index exceeds size.  %s %d\n", __FILE__, __LINE__);
             ABORT( "RayList.hh -- RayList::getParticle" );
         }
@@ -109,49 +93,51 @@ public:
         return points[i];
     }
 
-    CUDA_CALLABLE_MEMBER void add(const RAY_T& point ) {
-#if !defined( RELEASE )
+    void add(const RAY_T& point ) {
+#ifndef NDEBUG
         if( size() >= capacity() ) {
             printf("RayList::add -- index > number of allocated points.  %s %d\n", __FILE__, __LINE__);
             ABORT( "RayList.hh -- RayList::add" );
         }
 #endif
-        points[size()] = point;
-        ++nUsed;
+        points.push_back(point);
     }
 
-    CUDA_CALLABLE_MEMBER static unsigned getN(void ) {
-        return N;
-    }
+    CUDA_CALLABLE_MEMBER static unsigned getN(void ) { return N; }
+
+    auto data() { return points.data(); }
+    const auto data() const { return points.data(); }
 
     void writeToFile( const std::string& filename) const;
     void readFromFile( const std::string& filename);
 
-    RayListSize_t nAllocated = 0 ;
-    RayListSize_t nUsed = 0;
-    RAY_T* points = NULL;
-
     template<typename IOTYPE>
     void write(IOTYPE& out) const {
-        unsigned version = 0;
-        binaryIO::write( out, version );
-        binaryIO::write( out, nAllocated );
-        binaryIO::write( out, nUsed );
-        for( unsigned i = 0; i < nUsed; ++i ) {
-            points[i].write(out);
-        }
+      unsigned version = 0;
+      binaryIO::write( out, version );
+      binaryIO::write( out, static_cast<RayListSize_t>(points.capacity()) );
+      binaryIO::write( out, static_cast<RayListSize_t>(points.size()) );
+      for (const auto& point : points){
+        point.write(out);
+      }
     }
 
     template<typename IOTYPE>
     void read(IOTYPE& in) {
-        unsigned version;
-        binaryIO::read( in, version );
-        binaryIO::read( in, nAllocated );
-        reallocate( nAllocated );
-        binaryIO::read( in, nUsed );
-        for( unsigned i = 0; i < nUsed; ++i ) {
-            points[i].read(in);
-        }
+      unsigned version;
+      binaryIO::read( in, version );
+
+      RayListSize_t nAllocated;
+      binaryIO::read( in, nAllocated );
+      points.reserve( nAllocated );
+
+      RayListSize_t nUsed;
+      binaryIO::read( in, nUsed );
+      points.resize(nUsed);
+
+      for (auto& point : points){
+        point.read(in);
+      }
     }
 
 };

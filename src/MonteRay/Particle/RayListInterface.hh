@@ -23,13 +23,12 @@ public:
     ~RayListInterface();
 
     void copyToGPU(void);
-    void copyToCPU(void);
 
     RayListSize_t capacity(void) const { return ptrPoints->capacity(); }
     RayListSize_t size(void) const { return ptrPoints->size(); }
 
-    CollisionPosition_t getPosition( unsigned i) const { return ptrPoints->getPosition(i); }
-    CollisionDirection_t getDirection( unsigned i) const { return ptrPoints->getDirection(i); }
+    const auto& getPosition( unsigned i) const { return ptrPoints->getPosition(i); }
+    const auto& getDirection( unsigned i) const { return ptrPoints->getDirection(i); }
 
     gpuFloatType_t getX(unsigned i) const { return getPosition(i)[0]; }
     gpuFloatType_t getY(unsigned i) const { return getPosition(i)[1]; }
