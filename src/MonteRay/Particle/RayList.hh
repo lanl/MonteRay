@@ -107,6 +107,10 @@ public:
 
     auto data() { return points.data(); }
     const auto data() const { return points.data(); }
+    auto begin() { return points.begin(); }
+    const auto begin() const { return points.begin(); }
+    auto end() { return points.end(); }
+    const auto end() const { return points.end(); }
 
     void writeToFile( const std::string& filename) const;
     void readFromFile( const std::string& filename);

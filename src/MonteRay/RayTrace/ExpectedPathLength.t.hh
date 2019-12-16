@@ -129,7 +129,7 @@ MonteRay::tripleTime launchRayTraceTally(
 
     rayTraceTally<<<nBlocks,nThreads,0,stream>>>(
             pGeometry,
-            pCP->getPtrPoints()->devicePtr,
+            pCP->getPtrPoints(),
             pMatList,
             pMatProps,
             pRayInfo.get(),
@@ -226,9 +226,9 @@ inline tallyCellSegment( const MaterialList* pMatList,
     return cellOpticalPathLength;
 }
 
-template<typename Geometry, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 void rayTraceOnGridWithMovingMaterials( 
-          Ray_t<1> ray,
+          Ray_t<N> ray,
           gpuRayFloat_t timeRemaining,
           const Geometry& geometry,
           const MaterialProperties& matProps,
@@ -302,26 +302,24 @@ void rayTraceOnGridWithMovingMaterials(
   return;
 }
 
-template<typename Geometry, typename MaterialList>
+template<unsigned N, typename Geometry, typename MaterialList>
 void rayTraceTallyWithMovingMaterials(
-          const RayList_t<1>* const collisionPoints,
-          gpuRayFloat_t timeRemaining,
+          const RayList_t<N>* const collisionPoints,
+          gpuFloatType_t timeRemaining,
           const Geometry* const geometry,
           const MaterialProperties* const matProps,
           const MaterialList* const matList,
-          const gpuTallyType_t* tally,
+          gpuTallyType_t* const tally,
           cudaStream_t* stream = nullptr) {
 
-  const RayList_t<1>* const begin = collisionPoints->devicePtr;
-  const RayList_t<1>* const end = collisionPoints->devicePtr + collisionPoints->size();
 #ifdef __CUDACC__
-  thrust::for_each(thrust::cuda::par.on(*stream), begin, end,
+  thrust::for_each(thrust::cuda::par.on(*stream), collisionPoints->begin(), collisionPoints->end(),
     [=] __device__ (const auto& ray){
       rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *geometry, *matProps, *matList, tally);
     }
   );
 #else 
-  std::for_each(begin, end,
+  std::for_each(collisionPoints->begin(), collisionPoints->end(),
     [=] (const auto& ray){
       rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *geometry, *matProps, *matList, tally);
     }
