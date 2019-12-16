@@ -164,6 +164,49 @@ public:
       return this->getIndex( particle_pos );
   }
 
+  // begin untested
+  CUDA_CALLABLE_MEMBER
+  gpuRayFloat_t getDistanceToInsideOfMesh(const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir) const {
+    return gridVariant.visit( [&](const auto& grid){ return grid.getDistanceToInsideOfMesh(pos, dir); } );
+  }
+
+  CUDA_CALLABLE_MEMBER 
+  auto calcIndices(const GridBins_t::Position_t& pos) const {
+    return gridVariant.visit( [&](const auto& grid){ return grid.calcIndices(pos); } );
+  }
+
+  template <typename Indices>
+  CUDA_CALLABLE_MEMBER
+  unsigned calcIndex(const Indices& indices) const {
+    return gridVariant.visit( [&](const auto& grid){ return grid.calcIndex(indices); } );
+  }
+
+  CUDA_CALLABLE_MEMBER
+  bool isIndexOutside(unsigned d, int i) const {
+    return gridVariant.visit( [&](const auto& grid){ return grid.isIndexOutside(d, i); } );
+  }
+
+  CUDA_CALLABLE_MEMBER
+  auto convertToCellReferenceFrame(
+      const Vector3D<gpuRayFloat_t>& cellVelocity,
+      const GridBins_t::Position_t& pos, // unused, exists to maintain same API as cylindrical and spherical grid
+      const GridBins_t::Direction_t& dir,
+      const gpuRayFloat_t speed) const {
+    return gridVariant.visit( [&](const auto& grid){ return grid.convertToCellReferenceFrame(cellVelocity, pos, dir, speed); } );
+  }
+
+  CUDA_CALLABLE_MEMBER 
+  DistAndDir getMinDistToSurface( 
+      const GridBins_t::Position_t& pos, 
+      const GridBins_t::Direction_t& dir, 
+      const int indices[]) const {
+    return gridVariant.visit( [&](const auto& grid){ return grid.getMinDistToSurface(pos, dir, indices); } );
+  }
+ 
+
+  // end untested
+    
+
   CUDA_CALLABLE_MEMBER
   gpuRayFloat_t returnCellVolume( unsigned index ) const { return this->getVolume( index ); }
 
