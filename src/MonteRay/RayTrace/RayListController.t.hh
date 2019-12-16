@@ -28,23 +28,25 @@ PA( MonteRayParallelAssistant::getInstance() )
 {
     initialize();
     kernel = [&, blocks, threads ] ( void ) {
-        if( PA.getWorkGroupRank() != 0 ) { return; }
+      if( PA.getWorkGroupRank() != 0 ) { return; }
 
-        auto launchBounds = setLaunchBounds( threads, blocks,  currentBank->getPtrPoints()->size() );
+      auto launchBounds = setLaunchBounds( threads, blocks,  currentBank->getPtrPoints()->size() );
 
 #ifndef NDEBUG
-        size_t freeMemory = 0;
-        size_t totalMemory = 0;
+      size_t freeMemory = 0;
+      size_t totalMemory = 0;
 #ifdef __CUDACC__
-        cudaError_t memError = cudaMemGetInfo( &freeMemory, &totalMemory);
-        freeMemory = freeMemory/1000000;
-        totalMemory = totalMemory/1000000;
+      cudaError_t memError = cudaMemGetInfo( &freeMemory, &totalMemory);
+      freeMemory = freeMemory/1000000;
+      totalMemory = totalMemory/1000000;
 #endif
-        std::cout << "Debug: RayListController -- launching kernel on " <<
-                     PA.info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
-                     " threads, to process " << currentBank->getPtrPoints()->size() << " rays," <<
-                     " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
+      std::cout << "Debug: RayListController -- launching kernel on " <<
+                   PA.info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
+                   " threads, to process " << currentBank->getPtrPoints()->size() << " rays," <<
+                   " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
+
+      /* if (pMatProps->usingMaterialMotion()){ */
         /* constexpr gpuFloatType_t timeRemaining = 10.0E6; */
         /* rayTraceTallyWithMovingMaterials( */
         /*     currentBank->getPtrPoints(), */
@@ -52,31 +54,30 @@ PA( MonteRayParallelAssistant::getInstance() )
         /*     pGeometry, */
         /*     pMatProps, */
         /*     pMatList, */
-        /*     pTally->temp->tally, */
+        /*     pTally->data(), */
         /*     stream1.get()); */
-
-        /* auto visitor = [=](auto& pGeometry){ */
-        /*   /// stuff */
-        /* }; */
-        /* mpark::visit(visitor, geometry); */
-
+      /* } else */
+      {
 #ifdef __CUDACC__
-        rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
-                pGeometry,
-                currentBank->getPtrPoints()->devicePtr,
-                pMatList,
-                pMatProps,
-                rayInfo.get(),
-                pTally->data() );
+      rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
+              pGeometry,
+              currentBank->getPtrPoints(),
+              pMatList,
+              pMatProps,
+              rayInfo.get(),
+              pTally->data() );
 #else
-        rayTraceTally( pGeometry,
-                       currentBank->getPtrPoints(),
-                       pMatList,
-                       pMatProps,
-                       rayInfo.get(),
-                       pTally->data() );
+      rayTraceTally( 
+              pGeometry,
+              currentBank->getPtrPoints(),
+              pMatList,
+              pMatProps,
+              rayInfo.get(),
+              pTally->data() );
 #endif
-    };
+
+      }
+  };
 
 }
 
@@ -211,7 +212,7 @@ RayListController<Geometry,N>::flush(bool final){
 
     if( currentBank->size() == 0 ) {
         if( final ) {
-            stopTimers();
+            cudaDeviceSynchronize();
             printTotalTime();
             currentBank->clear();
         }
