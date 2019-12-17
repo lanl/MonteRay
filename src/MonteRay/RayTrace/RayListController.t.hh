@@ -46,18 +46,17 @@ PA( MonteRayParallelAssistant::getInstance() )
                    " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
 
-      /* if (pMatProps->usingMaterialMotion()){ */
-        /* constexpr gpuFloatType_t timeRemaining = 10.0E6; */
-        /* rayTraceTallyWithMovingMaterials( */
-        /*     currentBank->getPtrPoints(), */
-        /*     timeRemaining, */
-        /*     pGeometry, */
-        /*     pMatProps, */
-        /*     pMatList, */
-        /*     pTally->data(), */
-        /*     stream1.get()); */
-      /* } else */
-      {
+      if (pMatProps->usingMaterialMotion()){
+        constexpr gpuFloatType_t timeRemaining = 10.0E6;
+        rayTraceTallyWithMovingMaterials(
+            currentBank->getPtrPoints(),
+            timeRemaining,
+            pGeometry,
+            pMatProps,
+            pMatList,
+            pTally->data(),
+            stream1.get());
+      } else {
 #ifdef __CUDACC__
       rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
               pGeometry,

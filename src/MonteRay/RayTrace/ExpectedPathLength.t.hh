@@ -227,15 +227,13 @@ inline tallyCellSegment( const MaterialList* pMatList,
 }
 
 template<unsigned N, typename Geometry, typename MaterialList>
-void rayTraceOnGridWithMovingMaterials( 
+CUDA_CALLABLE_MEMBER void rayTraceOnGridWithMovingMaterials( 
           Ray_t<N> ray,
           gpuRayFloat_t timeRemaining,
           const Geometry& geometry,
           const MaterialProperties& matProps,
           const MaterialList& matList,
           gpuTallyType_t* const tally) {
-
-  MONTERAY_ASSERT_MSG(ray.particleType == neutron, "rayTraceWithMovingMaterials is only valid for neutrons.");
 
   auto distanceToInsideOfMesh = geometry.getDistanceToInsideOfMesh(ray.position(), ray.direction());
   if (distanceToInsideOfMesh/ray.speed() > timeRemaining){
@@ -249,13 +247,13 @@ void rayTraceOnGridWithMovingMaterials(
   gpuRayFloat_t opticalPathLength = 0.0;
   while(timeRemaining > std::numeric_limits<gpuRayFloat_t>::epsilon()){
     // get "global" cell index, which is set to max if cell is outside mesh
-    auto cellIndex = geometry.calcIndex(indices.data());
+    auto cellID = geometry.calcIndex(indices.data());
 
     // adjust dir and energy if moving materials
     // TODO: remove decltype ?
-    using DirectionAndSpeed = decltype( geometry.convertToCellReferenceFrame(matProps.velocity(cellIndex), ray.position(), ray.direction(), ray.speed()) );
+    using DirectionAndSpeed = decltype( geometry.convertToCellReferenceFrame(matProps.velocity(cellID), ray.position(), ray.direction(), ray.speed()) );
     auto dirAndSpeed = matProps.usingMaterialMotion() ?
-      geometry.convertToCellReferenceFrame(matProps.velocity(cellIndex), ray.position(), ray.direction(), ray.speed()) : 
+      geometry.convertToCellReferenceFrame(matProps.velocity(cellID), ray.position(), ray.direction(), ray.speed()) : 
       DirectionAndSpeed{ray.direction(), ray.speed()};
 
     auto distAndDir = geometry.getMinDistToSurface(ray.position(), dirAndSpeed.direction(), indices.data());
@@ -269,11 +267,11 @@ void rayTraceOnGridWithMovingMaterials(
 
     auto energy = dirAndSpeed.speed()*dirAndSpeed.speed()*
       inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
-    auto matIDs = matProps.cellMaterialIDs(cellIndex);
+    auto matIDs = matProps.cellMaterialIDs(cellID);
     // TODO: make this a function call 
     gpuFloatType_t totalXS = 0.0;
-    for (auto id : matIDs){
-      totalXS += matList.material(id).getTotalXS(energy);
+    for (auto matID : matIDs){
+      totalXS += matList.material(matID).getTotalXS(energy, matProps.materialDensity(cellID, matID));
     }
 
     // calc attenuation, add score to tally, update ray's weight
@@ -286,7 +284,7 @@ void rayTraceOnGridWithMovingMaterials(
         ( static_cast<gpuRayFloat_t>(1.0) - attenuation );
     }
 
-    gpu_atomicAdd(&tally[cellIndex], score);
+    gpu_atomicAdd(&tally[cellID], score);
     // adjust ray's weight
     ray.setWeight(ray.getWeight()*attenuation);
     if (opticalPathLength > 5.0) { return; } // TODO: make this configurable, e-5 is approx 0.7%

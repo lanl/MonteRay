@@ -62,6 +62,7 @@ class MaterialProperties_t: public Managed {
   constexpr auto numMaterials( unsigned i ) const { return this->numMats(i); }
   constexpr auto numMaterialComponents() const { return densities_.size(); }
   constexpr auto getDensity( unsigned cellNum, unsigned matNum ) const { return densities_[ checkInputsAndGetIndex(cellNum, matNum) ]; }
+  constexpr auto materialDensity( unsigned cellNum, unsigned matNum ) const { return densities_[ checkInputsAndGetIndex(cellNum, matNum) ]; }
   constexpr auto getMaterialDensity( unsigned cellNum, unsigned matNum ) const { return this->getDensity(cellNum, matNum); }
   constexpr auto getMaterialID( unsigned cellNum, unsigned matNum ) const { return IDs_[ checkInputsAndGetIndex(cellNum, matNum) ]; }
   constexpr auto getMatID( unsigned cellNum, unsigned matNum ) const { return this->getMaterialID(cellNum, matNum); }
@@ -340,8 +341,8 @@ class MaterialProperties_t: public Managed {
       size_t nCells = obj.NCells(0) * obj.NCells(1) * obj.NCells(2);
 
       size_t NMaxMaterialsPerCell = obj.MaxMaterialsPerCell();
-      std::vector< double > density( nCells * NMaxMaterialsPerCell );
-      std::vector< int >   material( nCells * NMaxMaterialsPerCell );
+      std::vector<double> density( nCells * NMaxMaterialsPerCell );
+      std::vector<int>   material( nCells * NMaxMaterialsPerCell );
 
       obj.fillDensityArray ( density.data()  );
       obj.fillMaterialArray( material.data() );
@@ -352,8 +353,8 @@ class MaterialProperties_t: public Managed {
     ///Set material description from another object, like lnk3dnt with view.
     template<typename objType, typename iter>
     void setMaterialDescription( objType& obj, const iter& view ){
-      std::vector< double > density;
-      std::vector< int >    material;
+      std::vector<double> density;
+      std::vector<int>    material;
       obj.extract(material, density, view );
       initializeMaterialDescription( material, density, view.size() );
     }
