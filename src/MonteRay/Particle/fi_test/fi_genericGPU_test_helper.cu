@@ -106,7 +106,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr, pXS, tally_device);
+    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints(), pXS, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
     gpuErrchk( cudaPeekAtLastError() );
@@ -169,7 +169,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr, pMatList,
+    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints(), pMatList,
             matIndex, density, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -318,7 +318,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testTallyCrossSectionAtCollision<<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr,
+    testTallyCrossSectionAtCollision<<<nBlocks,nThreads>>>(pCP->getPtrPoints(),
             pMatList, pMatProps, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -367,7 +367,7 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testSumCrossSectionAtCollisionLocation<<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr,
+    testSumCrossSectionAtCollisionLocation<<<nBlocks,nThreads>>>(pCP->getPtrPoints(),
             pMatList, pMatProps, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);

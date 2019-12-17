@@ -1,3 +1,6 @@
+#ifndef MONTERAYNEXTEVENTESTIMATOR_T_HH_
+#define MONTERAYNEXTEVENTESTIMATOR_T_HH_
+
 #include "NextEventEstimator.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
@@ -107,4 +110,5 @@ void launch_ScoreRayList( NextEventEstimator* const pNextEventEstimator, int nBl
 #endif
 }
 
+#endif
 } // end namespace MonteRay

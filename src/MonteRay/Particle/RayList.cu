@@ -28,7 +28,7 @@ RayList_t<N>::readFromFile( const std::string& filename) {
     std::ifstream in;
     in.open( filename.c_str(), std::ios::binary | std::ios::in);
     if( ! in.good() ) {
-        throw std::runtime_error( "MonteRayNextEventEstimator::readFromFile -- can't open file for reading" );
+        throw std::runtime_error( "RayList::readFromFile -- can't open file for reading" );
     }
     read( in );
     in.close();

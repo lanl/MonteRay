@@ -84,7 +84,7 @@ public:
       cudaEventCreate(&sync);
       rayTraceTally<<<nBlocks,nThreads>>>(
               pGrid,
-              pCP->getPtrPoints()->devicePtr,
+              pCP->getPtrPoints(),
               pMatList,
               pMatProps,
               pRayInfo.get(),

@@ -2,6 +2,7 @@
 #define TALLY_GPU_TEST_HELPER_HH_
 
 #include "Tally.hh"
+#include "GPUErrorCheck.hh"
 
 namespace TallyGPUTestHelper {
 
