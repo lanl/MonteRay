@@ -121,13 +121,15 @@ MonteRay_CartesianGrid::getMinDistToSurface(
        const int indices[] 
        ) const {
  int d = 0;
- gpuRayFloat_t minDistToSurf = (gridBins[d].vertices[indices[d] + Math::signbit(-dir[d])] - pos[d])/dir[d];
+ gpuRayFloat_t minDistToSurf = std::numeric_limits<gpuRayFloat_t>::max();
  unsigned minDistIndex = 0;
- for (d=1; d<DIM; ++d){
-   auto distToSurface = (gridBins[d].vertices[indices[d] + Math::signbit(-dir[d])] - pos[d])/dir[d];
-   if (distToSurface < minDistToSurf){
-     minDistIndex = d;
-     minDistToSurf = distToSurface;
+ for (d=0; d<DIM; ++d){
+   if( Math::abs(dir[d]) >= std::numeric_limits<gpuRayFloat_t>::epsilon() ) {
+     auto distToSurface = (gridBins[d].vertices[indices[d] + Math::signbit(-dir[d])] - pos[d])/dir[d];
+     if (distToSurface < minDistToSurf){
+       minDistToSurf = distToSurface;
+       minDistIndex = d;
+     }
    }
   }
  if (minDistToSurf < 0) {

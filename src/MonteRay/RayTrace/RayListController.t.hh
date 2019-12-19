@@ -211,7 +211,7 @@ RayListController<Geometry,N>::flush(bool final){
 
     if( currentBank->size() == 0 ) {
         if( final ) {
-            cudaDeviceSynchronize();
+            defaultStreamSync();
             printTotalTime();
             currentBank->clear();
         }
@@ -219,10 +219,10 @@ RayListController<Geometry,N>::flush(bool final){
     }
 
     if( nFlushs > 0 ) {
-        /* std::cout << "Debug: flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n"; */
+        /* std::cout << "Debug: flush nFlushs = " <<nFlushs-1 << " -- stopping timers\n"; */
         stopTimers();
     }
-    /* std::cout << "Debug: flush nFlushs =" <<nFlushs << " -- starting timers\n"; */
+    /* std::cout << "Debug: flush nFlushs = " <<nFlushs << " -- starting timers\n"; */
 
     startTimers();
 
@@ -251,7 +251,7 @@ RayListController<Geometry,N>::flush(bool final){
 #endif
 
     if( final ) {
-        std::cout << "Debug: final flush nFlushs =" <<nFlushs-1 << " -- stopping timers\n";
+        std::cout << "Debug: final flush nFlushs = " <<nFlushs-1 << " -- stopping timers\n";
         stopTimers();
         printTotalTime();
         currentBank->clear();
@@ -281,7 +281,7 @@ RayListController<Geometry,N>::flushToFile(bool final){
     if( ! fileIsOpen ) {
         try {
 #ifndef NDEBUG
-            if( debug ) std::cout << "Debug: RayListController::flushToFile - opening file, filename=" << outputFileName << "\n";
+            if( debug ) std::cout << "Debug: RayListController::flushToFile - opening file, filename= " << outputFileName << "\n";
 #endif
             currentBank->openOutput( outputFileName );
         } catch ( ... ) {
@@ -443,7 +443,7 @@ RayListController<Geometry,N>::clearTally(void) {
     if( nFlushs > 0 ) {
         stopTimers();
     }
-    //	std::cout << "Debug: clearTally nFlushs =" <<nFlushs << " -- starting timers\n";
+    //	std::cout << "Debug: clearTally nFlushs = " << nFlushs << " -- starting timers\n";
     //	startTimers();
     //
     //	++nFlushs;

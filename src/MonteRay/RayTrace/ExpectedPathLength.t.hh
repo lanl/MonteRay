@@ -79,8 +79,8 @@ rayTraceTally(const Geometry* pGeometry,
 
 
     while( particleID < num ) {
-        Ray_t<N> p = pCP->getParticle(particleID);
-        pRayInfo->clear( threadID );
+       Ray_t<N> p = pCP->getParticle(particleID);
+       pRayInfo->clear( threadID );
 
        MonteRay::tallyCollision<N>(threadID, pGeometry, pMatList, pMatProps, &p, pRayInfo, tally);
 
@@ -216,7 +216,7 @@ inline tallyCellSegment( const MaterialList* pMatList,
     gpuTallyType_t cellOpticalPathLength = totalXS*distance;
 
     if( totalXS >  1e-5 ) {
-        attenuation =  exp( - cellOpticalPathLength ); // TPB: this is a double-precision exponent
+        attenuation =  exp( - cellOpticalPathLength ); // TPB: this is a double-precision exponent and this math is done in double precision
         score = ( 1.0 / totalXS ) * ( 1.0 - attenuation );
     }
     score *= exp( -opticalPathLength ) * weight;
@@ -246,7 +246,6 @@ CUDA_CALLABLE_MEMBER void rayTraceOnGridWithMovingMaterials(
 
   gpuRayFloat_t opticalPathLength = 0.0;
   while(timeRemaining > std::numeric_limits<gpuRayFloat_t>::epsilon()){
-    // get "global" cell index, which is set to max if cell is outside mesh
     auto cellID = geometry.calcIndex(indices.data());
 
     // adjust dir and energy if moving materials
@@ -270,23 +269,26 @@ CUDA_CALLABLE_MEMBER void rayTraceOnGridWithMovingMaterials(
     auto matIDs = matProps.cellMaterialIDs(cellID);
     // TODO: make this a function call 
     gpuFloatType_t totalXS = 0.0;
-    for (auto matID : matIDs){
-      totalXS += matList.material(matID).getTotalXS(energy, matProps.materialDensity(cellID, matID));
+    const int numMaterials = static_cast<int>(matProps.getNumMats(cellID));
+    for (int i = 0; i < numMaterials; i++) {
+      totalXS += matList.material(matProps.matID(cellID, i)).getTotalXS(energy, matProps.materialDensity(cellID, i));
     }
 
     // calc attenuation, add score to tally, update ray's weight
     gpuFloatType_t attenuation = 1.0;
-    auto score = distAndDir.distance();
+    auto score = ray.getWeight();
     if( totalXS > static_cast<gpuFloatType_t>(1e-5) ) {
       attenuation = Math::exp( -totalXS*distAndDir.distance() );
       opticalPathLength += distAndDir.distance() * totalXS;
-      score = ray.getWeight() / totalXS *
-        ( static_cast<gpuRayFloat_t>(1.0) - attenuation );
+      score *= ( static_cast<gpuRayFloat_t>(1.0) - attenuation )/totalXS;
+    } else {
+      score *= distAndDir.distance();
     }
 
     gpu_atomicAdd(&tally[cellID], score);
     // adjust ray's weight
     ray.setWeight(ray.getWeight()*attenuation);
+
     if (opticalPathLength > 5.0) { return; } // TODO: make this configurable, e-5 is approx 0.7%
 
     // update indices

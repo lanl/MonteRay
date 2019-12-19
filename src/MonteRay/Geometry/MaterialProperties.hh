@@ -66,6 +66,7 @@ class MaterialProperties_t: public Managed {
   constexpr auto getMaterialDensity( unsigned cellNum, unsigned matNum ) const { return this->getDensity(cellNum, matNum); }
   constexpr auto getMaterialID( unsigned cellNum, unsigned matNum ) const { return IDs_[ checkInputsAndGetIndex(cellNum, matNum) ]; }
   constexpr auto getMatID( unsigned cellNum, unsigned matNum ) const { return this->getMaterialID(cellNum, matNum); }
+  constexpr auto matID( unsigned cellNum, unsigned matNum ) const { return this->getMaterialID(cellNum, matNum); }
   constexpr auto numVelocities() { return velocities_.size(); }
   constexpr auto usingMaterialMotion() const { return usingMaterialMotion_; }
   constexpr const auto& velocity( unsigned cellNum ) const { 

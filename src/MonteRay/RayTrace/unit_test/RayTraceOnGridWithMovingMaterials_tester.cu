@@ -17,7 +17,7 @@ namespace MonteRay_CartesianGrid_rayTraceWithMovingMaterials_tests{
 using namespace MonteRay;
 
 struct MockMaterial{
-  constexpr gpuRayFloat_t getTotalXS(gpuRayFloat_t, gpuRayFloat_t) const {return 1.0; }
+  constexpr gpuRayFloat_t getTotalXS(gpuRayFloat_t, gpuRayFloat_t) const {return 2.0; }
 };
 struct MockMaterialList {
   constexpr auto material(int) const {return MockMaterial{};}
@@ -101,9 +101,9 @@ SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests ) {
     tallyData = {0.0};
     MockMaterialList matList{};
     rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCart, *pMatProps, matList, tallyData.data());
-    auto score0 = 1.0 - Math::exp(-0.5);
+    auto score0 = 1.0/2.0*(1.0 - Math::exp(-1.0));
     CHECK_CLOSE(score0, tallyData[0], 1e-6);
-    auto score1 = exp(-0.5)*(1.0 - Math::exp(-1.0));
+    auto score1 = Math::exp(-1.0)*(1.0/2.0)*(1.0 - Math::exp(-2.0));
     CHECK_CLOSE(score1, tallyData[1], 1e-6);
 
 #ifdef __CUDACC__
@@ -269,6 +269,42 @@ SUITE( MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_Tests ) {
     }
 #endif
 
+
+  }
+
+  TEST_FIXTURE( CylindricalGrid, RayTraceCylWithoutMovingMaterials){
+
+    std::unique_ptr<MaterialProperties> pMatProps;
+    auto mpb = MaterialProperties::Builder();
+    using Cell = MaterialProperties::Builder::Cell;
+    Cell cell{ {0}, {1.0} }; // set material IDs and densities
+    // velocities are (r, z, t), t is not used
+    for (int i = 0; i < 4; i++){
+      mpb.addCell(cell);
+      mpb.setCellVelocity(i, {0.0, 0.0, 0.0});
+    }
+
+    pMatProps = std::make_unique<MaterialProperties>(mpb.build());
+
+    SimpleVector<gpuTallyType_t> tallyData(4, 0.0);
+
+    Ray_t<1> ray;
+    const double speed = 1.0/sqrt(4.0/5.0);
+    auto energy = speed*speed*inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
+    ray.setEnergy(energy);
+
+    gpuFloatType_t timeRemaining = 10.0E6;
+
+    ray.position() = Position_t{ -1.5, 0, -0.5 };
+    ray.direction() = Direction_t{1.0, 0.0, 0.0};
+
+    MockVoidMaterialList voidMatList{};
+    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCyl, *pMatProps, voidMatList, tallyData.data());
+
+    CHECK_CLOSE( 1.5, tallyData[1], 1e-6 );
+    CHECK_CLOSE( 2, tallyData[0], 1e-6 );
+    CHECK_CLOSE( 0, tallyData[2], 1e-6 );
+    CHECK_CLOSE( 0, tallyData[3], 1e-6 );
 
   }
 }

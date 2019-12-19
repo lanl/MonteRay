@@ -185,23 +185,31 @@ DistAndDir MonteRay_CylindricalGrid::getMinRadialDistAndDir(
     const GridBins_t::Direction_t& dir, 
     const int radialIndex) const { 
 
+  // this algorithm avoids calculating dir dot surface normal for every interaction by occasionally taking the max root 
   const auto A = calcQuadraticA( dir );
   const auto B = calcQuadraticB( pos, dir);
   const auto pRSq = calcParticleRSq(pos);
   // recalc this every time in case the cell velocity changes the ray's radial trajectory
-  bool inwardTrajectory = (radialIndex == 0 ? false : isMovingInward(pos, dir));
+  // special treatment for radialIndex == 0
+  if (radialIndex == 0){
+    auto root = FindMaxValidRoot(A,B, pRSq - gridBins[R].verticesSq[radialIndex]);
+    return {root, R, true};
+  }
 
+  bool inwardTrajectory = isMovingInward(pos, dir);
   Roots roots = FindPositiveRoots(A,B, pRSq - gridBins[R].verticesSq[radialIndex - inwardTrajectory]);
-   // no-hit on surface, turn ray around
-  if (roots.areInf( )) {
-    // if point is outside mesh, then it just doesn't intersect the mesh
+
+  if (roots.areInf()) { // no-hit on surface, check other surface
     if (radialIndex >= gridBins[R].getNumBins()){
       return {std::numeric_limits<gpuRayFloat_t>::infinity(), R, not inwardTrajectory};
     }
+    auto root = FindMaxValidRoot(A,B, pRSq - gridBins[R].verticesSq[radialIndex]);
     inwardTrajectory = false;
-    roots = FindPositiveRoots(A,B, pRSq - gridBins[R].verticesSq[radialIndex]);
+    // guaranteed to intersect only once, point is on edge or inside circle
+    return {root, R, true};
   }
-  return {roots.min(), R, not inwardTrajectory};
+
+  return DistAndDir{roots.min(), R, not inwardTrajectory};
 }
   
 
@@ -214,6 +222,14 @@ DistAndDir MonteRay_CylindricalGrid::getMinDistToSurface(
   auto minRadialDistAndDir = getMinRadialDistAndDir(pos, dir, indices[R]);
   auto minCZDistAndDir = DistAndDir{(gridBins[CZ].vertices[indices[CZ] + Math::signbit(-dir[z])] - pos[z])/dir[z], CZ, Math::signbit(-dir[z])};
 
+  // TESTING TEST TEST
+  auto minDist = Math::min(minRadialDistAndDir.distance(), minCZDistAndDir.distance());
+  if (minDist < 0){
+    printf("neg dist pos (%f %f %f), dir (%f %f %f), indices (%d %d) \n", pos[x], pos[y], pos[z], dir[x], dir[y], dir[z], indices[R], indices[CZ]); 
+  }
+  if (Math::abs(minDist) == std::numeric_limits<gpuRayFloat_t>::infinity()) { 
+    printf("inf dist pos (%f %f %f), dir (%f %f %f), indices (%d %d) \n", pos[x], pos[y], pos[z], dir[x], dir[y], dir[z], indices[R], indices[CZ]); 
+  }
   return minRadialDistAndDir.distance() < minCZDistAndDir.distance() ? 
     minRadialDistAndDir : minCZDistAndDir;
 }

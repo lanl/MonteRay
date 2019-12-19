@@ -40,6 +40,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
 
     // Test to see if very near the surface and directed outward.
     // If so skip the surface
+    // TPB sqrt is a double-precision square root
     if( outward and Math::abs( sqrt(particle_R2) - Bins.vertices[ index ] ) < Epsilon ) {
         ++index;
     }

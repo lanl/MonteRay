@@ -44,22 +44,37 @@ Debug: total gpuTime  = 1.37924
 Debug: total cpuTime  = 0.179672
 Debug: total wallTime = 1.37927
 
+---------------------
+Dec. 17, 2019
 Feature/MovingMaterialCorrection Branch - refactored geometry, managed memory - no moving material corrections
 
-Criticality Accident:
-gpuTime  = 17.9427 - up to 18.8 depending on run - maxdiff = 0.2206
-cpuTime  = 1.48945
-wallTime = 17.9428
+Criticality Accident, maxdiff = 0.2206
+gpuTime  = 16.2802
+cpuTime  = 0.00198706 
+wallTime = 16.2803
 
-PWR Assembly:
-gpuTime  = 10.0843
-cpuTime  = 0.239491
-wallTime = 10.0844
+PWR Assembly, maxdiff = 0.337626
+gpuTime  = 9.81557
+cpuTime  = 0.000490334 
+wallTime = 9.81564
 
-Zeus2 Cylindrical:
-Debug: total gpuTime  = 0.79552 - up to 0.82 depending on run
-Debug: total cpuTime  = 0.175094
-Debug: total wallTime = 0.795558
+Zeus2 Cylindrical, maxdiff = 0.0332647
+Debug: total gpuTime  = 0.632041
+Debug: total cpuTime  = 0.000402548
+Debug: total wallTime = 0.632095
+
+---------------------
+Dec. 19, 2019
+Feature/MovingMaterialCorrection Branch - refactored geometry, managed memory, cell-by-cell moving material correction (0 velocities)
+
+Criticality Accident, maxdiff = 91.0 (large diffs, relatively small magnitude, some more concerning numbers need investigation)
+gpuTime  = 13.9273
+
+PWR Assembly, maxdiff = 0.43
+gpuTime  = 5.71791
+
+Zeus2 Cylindrical, maxdiff = 0.006
+gpuTime  = 0.57
 
 
 
