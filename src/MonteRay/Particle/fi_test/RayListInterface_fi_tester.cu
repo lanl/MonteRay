@@ -9,7 +9,7 @@
 #include "GPUUtilityFunctions.hh"
 #include "BasicTally.hh"
 #include "ExpectedPathLength.t.hh"
-#include "MonteRayMaterial.hh"
+#include "Material.hh"
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"

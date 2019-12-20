@@ -5,12 +5,13 @@
 #include <memory>
 
 #include "GPUUtilityFunctions.hh"
+#include "ReadAndWriteFiles.hh"
 
 #include "BasicTally.hh"
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
-#include "MonteRayMaterial.hh"
-#include "MonteRayMaterialList.hh"
+#include "Material.hh"
+#include "MaterialList.hh"
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
@@ -193,12 +194,6 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
               MonteRay_GridBins{zverts} }
             );
 
-            pXS = new MonteRayCrossSectionHost(1);
-
-            pMat = new MonteRayMaterialHost(1);
-
-            pMatList = new MonteRayMaterialListHost(1,1,3);
-
             auto matPropsBuilder = MaterialProperties::Builder{};
             MaterialProperties::Builder::Cell cell1, cell2;
             cell1.add( 0, 0.0); // vacuum
@@ -213,15 +208,20 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
 
         void setup(){
 
-            pXS->read( "MonteRayTestFiles/92000-04p_MonteRayCrossSection.bin");
+            CrossSectionList::Builder xsListBuilder;
+            auto pXS = std::make_unique<CrossSection>(
+              readFromFile<CrossSection>( std::string("MonteRayTestFiles/92000-04p_MonteRayCrossSection.bin") )
+            );
+
             CHECK_EQUAL( photon, pXS->getParticleType());
 
-            pMat->add(0, *pXS, 1.0);
-            pMat->copyToGPU();
+            MaterialList::Builder matListBuilder{};
 
-            pMatList->add( 0, *pMat, 0 );
-            pMatList->copyToGPU();
-            
+            auto mb = Material::make_builder(*pXsList);
+            mb.addIsotope(1.0, 0);
+            matListBuilder.addMaterial( 0, mb.build() );
+
+            pMatList = std::make_unique<MaterialList>(matListBuilder.build());
             // reconstruct matPropsBuilder since the initial constructor didn't renumber material IDs.
             auto matPropsBuilder = MaterialProperties::Builder{};
             MaterialProperties::Builder::Cell cell1, cell2;
@@ -233,22 +233,12 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
             matPropsBuilder.addCell(cell1);
             matPropsBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropsBuilder.build());
-
-            pXS->copyToGPU();
-
-        }
-
-        ~ControllerSetup(){
-            delete pMatList;
-            delete pXS;
-            delete pMat;
         }
 
         std::unique_ptr<MonteRay_SpatialGrid> pGrid;
-        MonteRayMaterialListHost* pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        MonteRayCrossSectionHost* pXS;
-        MonteRayMaterialHost* pMat;
+        std::unique_ptr<MaterialList> pMatList;
+        std::unique_ptr<CrossSectionList> pXsList;
     };
 
 #if false // TODO: update matPropsBuilder.readFromFile
@@ -360,7 +350,7 @@ SUITE( RayListController_wNextEventEstimator_UraniumSlab ) {
     /*     auto matProps = matPropsBuilder.build(); */
 
     /*     // materials */
-    /*     MonteRayMaterialListHost matlist(1); */
+    /*     MaterialListHost matlist(1); */
     /*     filename = std::string("materialList_") + baseName; */
     /*     CHECK_EQUAL( true, exists(filename) ); */
     /*     matlist.readFromFile( filename ); */

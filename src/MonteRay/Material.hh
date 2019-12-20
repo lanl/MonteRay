@@ -1,2 +1,2 @@
-#include "MonteRay/Material/MonteRayMaterial.hh"
-#include "MonteRay/Material/MonteRayMaterialList.hh"
+#include "MonteRay/Material/Material.hh"
+#include "MonteRay/Material/MaterialList.hh"

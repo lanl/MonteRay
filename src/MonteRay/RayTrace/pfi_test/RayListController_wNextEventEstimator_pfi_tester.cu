@@ -10,8 +10,8 @@
 
 #include "MonteRay_timer.hh"
 #include "RayListController.hh" 
-#include "MonteRayMaterial.hh"
-#include "MonteRayMaterialList.hh"
+#include "Material.hh"
+#include "MaterialList.hh"
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
