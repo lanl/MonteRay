@@ -16,7 +16,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "MonteRay_SpatialGrid.hh"
 

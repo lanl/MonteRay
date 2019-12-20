@@ -17,7 +17,7 @@
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 
 namespace PWR_Assembly_wCollisionFile_fi_tester{
 
@@ -317,7 +317,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
         auto benchmarkTally = readFromFile( "MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin", *pTally);
 
-        gpuTallyType_t maxAbsDiff = 0.0;
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
             if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
                 gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
@@ -348,8 +347,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         }
 
         std::cout << "Debug:  maxPercentDiff = " << maxdiff << "\n";
-        /* std::cout << "Debug:  maxAbsDiff = " << maxAbsDiff << "\n"; */
-        /* std::cout << "Debug:  maxAbsDiff/gpuRayFloat_t::epsilon = " << maxAbsDiff/std::numeric_limits<gpuRayFloat_t>::epsilon() << "\n"; */
         std::cout << "Debug:  tally size = " << benchmarkTally.size() << "\n";
         std::cout << "Debug:  tally from file size = " << pTally->size() << "\n";
         std::cout << "Debug:  numBenchmarkZeroNonMatching = " << numBenchmarkZeroNonMatching << "\n";

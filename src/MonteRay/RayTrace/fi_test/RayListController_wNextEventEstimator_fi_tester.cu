@@ -17,7 +17,7 @@
 #include "RayListInterface.hh"
 #include "MonteRayConstants.hh"
 #include "NextEventEstimator.t.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 #include "MonteRay_SpatialGrid.hh"
 
 namespace RayListController_wNextEventEstimator_fi_tester {

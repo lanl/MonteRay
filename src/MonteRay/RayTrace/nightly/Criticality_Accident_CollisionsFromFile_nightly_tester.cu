@@ -16,7 +16,7 @@
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 
 namespace Criticality_Accident_wCollisionFile_nightly_tester{
 

@@ -34,7 +34,7 @@ public:
     void launchTallyCrossSection(unsigned nBlocks, unsigned nThreads, const RayListInterface<N>* pCP, const MaterialList* pMatList, unsigned matIndex, gpuFloatType_t density );
     void launchTallyCrossSectionAtCollision(unsigned nBlocks, unsigned nThreads, const RayListInterface<N>* pCP, const MaterialList* pMatList, const MaterialProperties* pMatProps );
 
-    gpuFloatType_t getTotalXSByMatProp(const MaterialProperties* matProps, const MaterialList* pMatList, const HashLookup* pHash, unsigned HashBin, unsigned cell, gpuFloatType_t E);
+    gpuFloatType_t getTotalXSByMatProp(const MaterialProperties* matProps, const MaterialList* pMatList, unsigned HashBin, unsigned cell, gpuFloatType_t E);
     gpuFloatType_t getTotalXSByMatProp(const MaterialProperties* matProps, const MaterialList* pMatList, unsigned cell, gpuFloatType_t E);
 
     void launchSumCrossSectionAtCollisionLocation(unsigned nBlocks, unsigned nThreads, const RayListInterface<N>* pCP, const MaterialList* pMatList, const MaterialProperties* pMatProps );

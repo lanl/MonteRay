@@ -2,7 +2,6 @@
 #include "GPUErrorCheck.hh"
 #include "GPUAtomicAdd.hh"
 #include "ExpectedPathLength.t.hh"
-#include "HashLookup.hh"
 #include "RayList.hh"
 
 #include "fi_genericGPU_test_helper.hh"

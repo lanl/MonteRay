@@ -15,7 +15,7 @@
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 #include "MonteRay_SpatialGrid.hh"
 
 namespace Zeus2_Cylindrical_wCollisionFile_fi_tester{

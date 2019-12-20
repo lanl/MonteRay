@@ -13,7 +13,6 @@
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"
-#include "HashLookup.hh"
 
 #if( true )
 SUITE( RayListInterface_fi_tester ) {
