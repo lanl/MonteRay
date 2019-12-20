@@ -12,10 +12,10 @@
 #include "MaterialProperties.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
-#include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "RayWorkInfo.hh"
 #include "BasicTally.hh"
+#include "MonteRayManagedMemory.hh"
 
 #include "UnitControllerBase.hh"
 namespace RayListController_w_SpatialGrid_unit_tester{
@@ -67,23 +67,26 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 #endif
     }
 
-    template<typename T>
-    using resultClass = MonteRay_SingleValueCopyMemory<T>;
+    template <typename T>
+    class Result : public Managed {
+      public:
+      T v;
+      operator T() const {return v;}
+    };
 
-    CUDA_CALLABLE_KERNEL  kernelGetVertex(const Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index) {
+    CUDA_CALLABLE_KERNEL  kernelGetVertex(const Grid_t* pSpatialGrid, Result<gpuRayFloat_t>* pResult, unsigned d, unsigned index) {
         pResult->v = pSpatialGrid->getVertex(d,index);
     }
 
     template<typename GRID_T>
     gpuRayFloat_t getVertex(GRID_T* pGrid, unsigned d, unsigned index )  {
-        using result_t = resultClass<gpuRayFloat_t>;
+        using result_t = Result<gpuRayFloat_t>;
         std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-        pResult->copyToGPU();
-        kernelGetVertex<<<1,1>>>( pGrid, pResult->devicePtr, d, index);
+        kernelGetVertex<<<1,1>>>( pGrid, pResult.get(), d, index);
+        cudaDeviceSynchronize();
         gpuErrchk( cudaPeekAtLastError() );
-        pResult->copyToCPU();
 #else
         kernelGetVertex( pGrid, pResult.get(), d, index);
 #endif
@@ -115,20 +118,19 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     };
 
     template<typename particle>
-    CUDA_CALLABLE_KERNEL  kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
+    CUDA_CALLABLE_KERNEL  kernelGetIndexByParticle(Grid_t* pSpatialGrid, Result<unsigned>* pResult, particle p) {
         pResult->v = pSpatialGrid->getIndex(p);
     }
 
     template<typename GRID_T, typename particle>
     unsigned getIndex(GRID_T* pGridInfo, particle& p) {
-        using result_t = resultClass<unsigned>;
+        using result_t = Result<unsigned>;
         std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 #ifdef __CUDACC__
-        pResult->copyToGPU();
 
-        kernelGetIndexByParticle<<<1,1>>>( pGridInfo, pResult->devicePtr, p );
+        kernelGetIndexByParticle<<<1,1>>>( pGridInfo, pResult.get(), p );
         gpuErrchk( cudaPeekAtLastError() );
-        pResult->copyToCPU();
+        cudaDeviceSynchronize();
 #else
         kernelGetIndexByParticle( pGridInfo, pResult.get(), p );
 #endif
