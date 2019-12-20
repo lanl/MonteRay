@@ -45,19 +45,29 @@ constexpr Roots FindRoots(gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t C) {
     gpuRayFloat_t temp = (B < 0.0) ? 
         -0.5*( B - Math::sqrt(Discriminant) ) : 
         -0.5*( B + Math::sqrt(Discriminant) );
-    return {temp/A, C/temp};
+
+    return {
+      A == 0.0 ?    Roots::inf: temp/A,
+      temp == 0.0 ? Roots::inf: C/temp
+    };
 }
 
+// this is used to avoid numerical roundoff errors where one of the roots is small but non-zero in a situation where it should be zero (i.e. particle on a surface)
 CUDA_CALLABLE_MEMBER 
 constexpr auto FindMaxValidRoot(gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t C) {
   auto roots = FindRoots(A, B, C);
+
   if (roots.R1 <= 0.0){
     roots.R1 = -Roots::inf;
   }
   if (roots.R2 <= 0.0){
     roots.R2 = -Roots::inf;
   }
-  return Math::max(static_cast<gpuRayFloat_t>(0.0), roots.max());
+  
+  return (roots.R1 != -Roots::inf or roots.R2 != -Roots::inf) ?
+    Math::max(static_cast<gpuRayFloat_t>(0.0), roots.max()) :
+    Roots::inf; 
+
 }
 
 CUDA_CALLABLE_MEMBER 

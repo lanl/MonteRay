@@ -222,14 +222,6 @@ DistAndDir MonteRay_CylindricalGrid::getMinDistToSurface(
   auto minRadialDistAndDir = getMinRadialDistAndDir(pos, dir, indices[R]);
   auto minCZDistAndDir = DistAndDir{(gridBins[CZ].vertices[indices[CZ] + Math::signbit(-dir[z])] - pos[z])/dir[z], CZ, Math::signbit(-dir[z])};
 
-  // TESTING TEST TEST
-  auto minDist = Math::min(minRadialDistAndDir.distance(), minCZDistAndDir.distance());
-  if (minDist < 0){
-    printf("neg dist pos (%f %f %f), dir (%f %f %f), indices (%d %d) \n", pos[x], pos[y], pos[z], dir[x], dir[y], dir[z], indices[R], indices[CZ]); 
-  }
-  if (Math::abs(minDist) == std::numeric_limits<gpuRayFloat_t>::infinity()) { 
-    printf("inf dist pos (%f %f %f), dir (%f %f %f), indices (%d %d) \n", pos[x], pos[y], pos[z], dir[x], dir[y], dir[z], indices[R], indices[CZ]); 
-  }
   return minRadialDistAndDir.distance() < minCZDistAndDir.distance() ? 
     minRadialDistAndDir : minCZDistAndDir;
 }
