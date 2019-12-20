@@ -304,8 +304,8 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
         }
 
         std::cout << "Debug:  maxPercentDiff = " << maxdiff << "\n";
-        std::cout << "Debug:  maxAbsDiff = " << maxAbsDiff << "\n";
-        std::cout << "Debug:  maxAbsDiff/gpuRayFloat_t::epsilon = " << maxAbsDiff/std::numeric_limits<gpuRayFloat_t>::epsilon() << "\n";
+        /* std::cout << "Debug:  maxAbsDiff = " << maxAbsDiff << "\n"; */
+        /* std::cout << "Debug:  maxAbsDiff/gpuRayFloat_t::epsilon = " << maxAbsDiff/std::numeric_limits<gpuRayFloat_t>::epsilon() << "\n"; */
         std::cout << "Debug:  tally size = " << benchmarkTally.size() << "\n";
         std::cout << "Debug:  tally from file size = " << pTally->size() << "\n";
         std::cout << "Debug:  numBenchmarkZeroNonMatching = " << numBenchmarkZeroNonMatching << "\n";
