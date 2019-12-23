@@ -6,7 +6,6 @@
 #include "MonteRayVector3D.hh"
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
-#include "MonteRayCopyMemory.t.hh"
 #include "MaterialProperties.hh"
 #include "ExpectedPathLength.t.hh"
 #include "Ray.hh"

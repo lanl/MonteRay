@@ -4,6 +4,4 @@
 #include "MonteRay/GPU_Utilities/GPUErrorCheck.hh"
 #include "MonteRay/GPU_Utilities/GPUTiming.hh"
 #include "MonteRay/GPU_Utilities/GPUUtilityFunctions.hh"
-#include "MonteRay/GPU_Utilities/MonteRayCopyMemory.hh"
-#include "MonteRay/GPU_Utilities/MonteRayCopyMemory.t.hh"
 #include "MonteRay/GPU_Utilities/MonteRayManagedMemory.hh"

@@ -5,7 +5,6 @@
 #include "MonteRayVector3D.hh"
 #include "MonteRay_GridBins.hh"
 #include "MonteRayDefinitions.hh"
-#include "MonteRayCopyMemory.t.hh"
 #include "RayWorkInfo.hh"
 
 namespace MonteRay_CartesianGrid_rayTrace_tests{
