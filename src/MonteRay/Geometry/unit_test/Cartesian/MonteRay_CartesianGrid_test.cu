@@ -6,6 +6,7 @@
 
 #include "MonteRay_CartesianGrid.hh"
 #include "MonteRayVector3D.hh"
+#include "GPU_Utilities/UnitTestHelper.hh"
 
 using namespace MonteRay;
 
@@ -308,21 +309,21 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
   }
 #endif
 
+  using Position_t = Vector3D<gpuRayFloat_t>;
+  using Direction_t = Vector3D<gpuRayFloat_t>;
+  using CartesianGrid = MonteRay_CartesianGrid;
 
-  class CartesianGridTester{
+  class CartesianGridTesterTwo{
     public:
-    using Position_t = Vector3D<gpuRayFloat_t>;
-    using Direction_t = Vector3D<gpuRayFloat_t>;
-    using CartesianGrid = MonteRay_CartesianGrid;
     std::unique_ptr<CartesianGrid> pCart;
 
-    CartesianGridTester(){
+    CartesianGridTesterTwo(){
       std::vector<gpuRayFloat_t> vertices{-1, 0, 1};
       pCart = std::make_unique<CartesianGrid>(3, GridBins{vertices}, GridBins{vertices}, GridBins{vertices});
     }
   };
 
-  TEST_FIXTURE( CartesianGridTester, ConvertToCellReferenceFrame ) {
+  TEST_FIXTURE( CartesianGridTesterTwo, ConvertToCellReferenceFrame ) {
     Position_t pos(0.0,   0.0,    0.0);
     Direction_t dir(1.0,   0.0,    0.0);
     gpuRayFloat_t speed = 4.0;
@@ -334,7 +335,7 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
     CHECK_CLOSE(-3.0/newSpeed, newDirAndSpeed.direction()[2], 1e-6);
   }
 
-  TEST_FIXTURE( CartesianGridTester, CalcIndices ){
+  TEST_FIXTURE( CartesianGridTesterTwo, CalcIndices ){
     Position_t pos( -0.5, -1.5,  0.5 );
     auto indices = pCart->calcIndices(pos);
     CHECK_EQUAL(0, indices[0]);
@@ -342,7 +343,7 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
     CHECK_EQUAL(1, indices[2]);
   }
 
-  TEST_FIXTURE( CartesianGridTester, GetMinDistToSurface){
+  TEST_FIXTURE( CartesianGridTesterTwo, GetMinDistToSurface){
     Position_t pos( -0.5, 0.2,  0.3 );
     Position_t dir(1, 0, 0);
     auto indices = pCart->calcIndices(pos);
@@ -405,7 +406,7 @@ SUITE( MonteRay_CartesianGrid_basic_tests ) {
     }
   }
 
-  TEST_FIXTURE( CartesianGridTester, RayTraceWithMovingGridComponentsOnGPU ) {
+  TEST_FIXTURE( CartesianGridTesterTwo, RayTraceWithMovingGridComponentsOnGPU ) {
     bool* testVal;
     cudaMallocManaged(&testVal, sizeof(bool));
     kernelTestCartesianGrid<<<1, 1>>>(testVal, pCart.get());
