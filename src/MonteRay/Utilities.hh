@@ -1,5 +1,3 @@
 #include "MonteRay/Utilities/MonteRay_binaryIO.hh"
 #include "MonteRay/Utilities/MonteRay_timer.hh"
 #include "MonteRay/Utilities/MonteRayVersion.hh"
-#include "MonteRay/TestUtilities/MonteRay_TestReporterOstream.hh"
-#include "MonteRay/TestUtilities/MonteRay_unittest.hh"
