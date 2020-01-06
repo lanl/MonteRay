@@ -253,6 +253,10 @@ SUITE( CrossSection_tester ) {
 
     class neutronXSTester {
     public:
+
+        std::vector<double> energyBins = { 0.0, 1.0, 2.0, 3.0 };
+        std::vector<double> xsValues   = { 4.0, 3.0, 2.0, 1.0 };
+
         std::string getType() const { return "neutron"; }
 
         unsigned index( double E ) const {
@@ -262,12 +266,8 @@ SUITE( CrossSection_tester ) {
             return index;
         }
 
-        double TotalXsec( size_t i ) const {
-            return xsValues[i];
-        }
-
-        double TotalXsec( unsigned i ) const {
-            return xsValues[i];
+        const auto& getTotalXSList() const {
+          return xsValues;
         }
 
         double TotalXsec(double E, double T, unsigned i ) const {
@@ -292,9 +292,6 @@ SUITE( CrossSection_tester ) {
         grid getEnergyGrid() const { return grid(energyBins); }
         double getAWR() const { return 1.1;}
         unsigned getZAID() const { return 1001; }
-
-        std::vector<double> energyBins = { 0.0, 1.0, 2.0, 3.0 };
-        std::vector<double> xsValues   = { 4.0, 3.0, 2.0, 1.0 };
     };
 
     TEST( neutronXSTester_test ) {
