@@ -1,4 +1,4 @@
-# prepend -Xcompiler infront of -fexceptions when compiling w/ cuda
+# prepend -Xcompiler infront of -fexceptions when compiling w/ cuda - may be resolved in future CMake
 message(STATUS "config_nvcc.cmake -----------------------------------------")
 get_target_property(mpi_compile_options MPI::MPI_CXX INTERFACE_COMPILE_OPTIONS)
 string(REPLACE "-fexceptions" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-fexceptions" 
@@ -27,6 +27,7 @@ string( REPLACE ";" " " CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" )
 message(STATUS "config_nvcc.cmake -- CMAKE_CUDA_FLAGS=${CMAKE_CUDA_FLAGS}")
 set_target_properties(MonteRay PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(MonteRay PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# set_target_properties(MonteRay PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 target_link_libraries(MonteRay INTERFACE cuda)
 message(STATUS "-----------------------------------------------------------")
 
