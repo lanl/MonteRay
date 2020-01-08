@@ -34,7 +34,7 @@ class MaterialProperties_t: public Managed {
     MONTERAY_ASSERT_MSG( cellNum < this->numCells(), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested cell number exceeds number of allocated cells!" );
     MONTERAY_ASSERT_MSG( matNum < numMats(cellNum), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested material exceeds number of materials in the cell!" );
     auto index = offset_[cellNum] + matNum;
-    MONTERAY_ASSERT_MSG( index < this->numMaterialComponents(), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested material index exceeds number of total number of materials.!" );
+    MONTERAY_ASSERT_MSG( index < this->numMaterialComponents(), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested material index exceeds number of total number of materials!" );
     return index;
   }
 

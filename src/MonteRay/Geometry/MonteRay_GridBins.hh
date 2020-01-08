@@ -103,6 +103,7 @@ public:
       vertices.size() : 
       vertices.size() - 1; }
   CUDA_CALLABLE_MEMBER auto getNumBins() const { return numBins(); }
+  CUDA_CALLABLE_MEMBER auto size() const { return numBins(); }
   CUDA_CALLABLE_MEMBER Real getMinVertex() const { return vertices.front(); }
   CUDA_CALLABLE_MEMBER Real getMaxVertex() const { return vertices.back(); }
   CUDA_CALLABLE_MEMBER auto getNumVertices() const { return vertices.size(); }

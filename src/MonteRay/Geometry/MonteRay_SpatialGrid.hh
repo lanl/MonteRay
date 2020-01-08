@@ -70,13 +70,13 @@ public:
   MonteRay_SpatialGrid(TransportMeshType meshType, GridBins&& gridBins) {
     unsigned long long nBins = 1;
     for (const auto& gridBin : gridBins){
-      if( gridBin.numBins() == 0 ) {
+      if( gridBin.size() == 0 ) {
         std::stringstream msg;
         msg << "No bins found in GridBins used to construct MonteRay_SpatialGrid! \n "
             << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "MonteRay_SpatialGrid constructor \n\n";
         throw std::runtime_error( msg.str() );
       }
-      nBins *= gridBin.getNumBins();
+      nBins *= gridBin.size();
     }
     if (nBins > UINT_MAX){
       throw std::runtime_error("Number of bins created while constructing MonteRay_SpatialGrid exceeds maximum value of " + std::to_string(UINT_MAX));
@@ -202,10 +202,7 @@ public:
       const int indices[]) const {
     return gridVariant.visit( [&](const auto& grid){ return grid.getMinDistToSurface(pos, dir, indices); } );
   }
- 
-
   // end untested
-    
 
   CUDA_CALLABLE_MEMBER
   gpuRayFloat_t returnCellVolume( unsigned index ) const { return this->getVolume( index ); }

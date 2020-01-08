@@ -1,6 +1,8 @@
 #ifndef MONTERAY_CROSSINGDISTANCE_HELPER_HH_
 #define MONTERAY_CROSSINGDISTANCE_HELPER_HH_
 
+#include <memory>
+
 #include "RayWorkInfo.hh"
 #include "GPUUtilityFunctions.hh"
 #include "MonteRay_GridSystemInterface.hh"
