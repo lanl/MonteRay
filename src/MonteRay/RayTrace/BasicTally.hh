@@ -45,6 +45,8 @@ class BasicTally : public Managed {
 
   CUDA_CALLABLE_MEMBER 
   auto getTally(int index) const { return tally_[index]; }
+  CUDA_CALLABLE_MEMBER 
+  void setTally(int index, gpuTallyType_t value) { tally_[index] = value; }
 
 #define MR_BASICTALLY_VERSION 0
   void write(std::ostream& stream) {

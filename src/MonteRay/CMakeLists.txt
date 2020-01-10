@@ -1,4 +1,5 @@
 target_sources(MonteRay PUBLIC 
+  "${prefix}/MonteRay.hh"
   "${prefix}/MonteRay/Constants.hh"
   "${prefix}/MonteRay/Containers.hh"
   "${prefix}/MonteRay/CrossSection.hh"
@@ -58,4 +59,3 @@ add_subdirectory(RayTrace)
 add_subdirectory(Tally)
 add_subdirectory(ThirdParty)
 add_subdirectory(Utilities)
-
