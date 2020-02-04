@@ -38,7 +38,7 @@ tallyCollision(
     Position_t pos( p->pos[0], p->pos[1], p->pos[2] );
     Direction_t dir( p->dir[0], p->dir[1], p->dir[2] );
 
-    pGeometry->rayTrace(particleID, *pRayInfo, pos, dir, 1.0e6f, false);
+    pGeometry->rayTrace(particleID, *pRayInfo, pos, dir, static_cast<gpuRayFloat_t>(1.0e6), false);
 
     gpuFloatType_t materialXS[MAXNUMMATERIALS];
     for( unsigned i=0; i < pMatList->numMaterials(); ++i ){

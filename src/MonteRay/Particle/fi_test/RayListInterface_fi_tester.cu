@@ -14,307 +14,304 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "MonteRay_timer.hh"
 
-#if( true )
-SUITE( RayListInterface_fi_tester ) {
+/* SUITE( RayListInterface_fi_tester ) { */
 
-    TEST( setup ) {
-        std::cout << "Debug: starting - RayListInterface_fi_tester\n";
-        //CHECK(false);
-        //gpuCheck();
-    }
+/*     TEST( setup ) { */
+/*         std::cout << "Debug: starting - RayListInterface_fi_tester\n"; */
+/*         //CHECK(false); */
+/*         //gpuCheck(); */
+/*     } */
 
-#if true
-    // these tests are commented out as now only 100000 rays per batch can be processed and they are
-    // duplicated in RayTrace fi tests
-    TEST(get_total_xs_from_gpu ) {
-        RayListInterface<1>* points = new RayListInterface<1>(2);
-        points->readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
-        FIGenericGPUTestHelper<1> helper(points->size());
-        points->copyToGPU();
+/*     // these tests are commented out as now only 100000 rays per batch can be processed and they are */
+/*     // duplicated in RayTrace fi tests */
+/*     TEST(get_total_xs_from_gpu ) { */
+/*         RayListInterface<1>* points = new RayListInterface<1>(2); */
+/*         points->readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
+/*         FIGenericGPUTestHelper<1> helper(points->size()); */
+/*         points->copyToGPU(); */
 
-        CrossSectionList::Builder xsListBuilder;
-        auto xsBuilder = CrossSectionBuilder();
-        readInPlaceFromFile("MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder);
-        xsBuilder.setZAID(92235);
-        auto xsPtr = std::make_unique<CrossSection>(xsBuilder.build());
+/*         CrossSectionList::Builder xsListBuilder; */
+/*         auto xsBuilder = CrossSectionBuilder(); */
+/*         readInPlaceFromFile("MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder); */
+/*         xsBuilder.setZAID(92235); */
+/*         auto xsPtr = std::make_unique<CrossSection>(xsBuilder.build()); */
 
-        gpuFloatType_t energy = points->getEnergy(0);
-        gpuFloatType_t expected = xsPtr->getTotalXS(energy);
-        CHECK_CLOSE(  7.85419f, expected, 1e-5);
+/*         gpuFloatType_t energy = points->getEnergy(0); */
+/*         gpuFloatType_t expected = xsPtr->getTotalXS(energy); */
+/*         CHECK_CLOSE(  7.85419f, expected, 1e-5); */
 
-        helper.setupTimers();
-        helper.launchTallyCrossSection(1, 1024, points, xsPtr.get());
-        helper.stopTimers();
+/*         helper.setupTimers(); */
+/*         helper.launchTallyCrossSection(1, 1024, points, xsPtr.get()); */
+/*         helper.stopTimers(); */
 
-        CHECK_CLOSE( expected, helper.getTally(0), 1e-7 );
+/*         CHECK_CLOSE( expected, helper.getTally(0), 1e-7 ); */
 
-        delete points;
-    }
+/*         delete points; */
+/*     } */
 
-    TEST(load_godiva_metal_from_file_small_file ) {
-        RayListInterface<1> points(2);
-        points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
-        FIGenericGPUTestHelper<1> helper(points.size());
-        points.copyToGPU();
+    /* TEST(load_godiva_metal_from_file_small_file ) { */
+    /*     RayListInterface<1> points(2); */
+    /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
+    /*     FIGenericGPUTestHelper<1> helper(points.size()); */
+    /*     points.copyToGPU(); */
 
-        CrossSectionList::Builder xsListBuilder;
-        auto xsBuilder = CrossSectionBuilder();
-        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92234);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92235);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92238);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(1001);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(8016);
-        xsListBuilder.add(xsBuilder.build());
+    /*     CrossSectionList::Builder xsListBuilder; */
+    /*     auto xsBuilder = CrossSectionBuilder(); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92234); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92235); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92238); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(1001); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(8016); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
 
-        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+    /*     auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build()); */
 
-        MaterialList::Builder matListBuilder{};
-        auto mb = Material::make_builder(*pXsList);
-        mb.addIsotope(0.01, 92234);
-        mb.addIsotope(0.98, 92235);
-        mb.addIsotope(0.01, 92238);
-        matListBuilder.addMaterial(0, mb.build() );
+    /*     MaterialList::Builder matListBuilder{}; */
+    /*     auto mb = Material::make_builder(*pXsList); */
+    /*     mb.addIsotope(0.01, 92234); */
+    /*     mb.addIsotope(0.98, 92235); */
+    /*     mb.addIsotope(0.01, 92238); */
+    /*     matListBuilder.addMaterial(0, mb.build() ); */
 
-        mb.addIsotope(0.667, 1001);
-        mb.addIsotope(0.333, 8016);
-        matListBuilder.addMaterial(1, mb.build() );
-        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
+    /*     mb.addIsotope(0.667, 1001); */
+    /*     mb.addIsotope(0.333, 8016); */
+    /*     matListBuilder.addMaterial(1, mb.build() ); */
+    /*     auto pMatList = std::make_unique<MaterialList>(matListBuilder.build()); */
 
-        gpuFloatType_t energy = points.getEnergy(0);
-        gpuFloatType_t expected = pMatList->material(0).getTotalXS( energy, 18.0 );
-        CHECK_CLOSE(  0.36215, expected, 1e-5);
+    /*     gpuFloatType_t energy = points.getEnergy(0); */
+    /*     gpuFloatType_t expected = pMatList->material(0).getTotalXS( energy, 18.0 ); */
+    /*     CHECK_CLOSE(  0.36215, expected, 1e-5); */
 
-        helper.setupTimers();
-        helper.launchTallyCrossSection(1, 1024, &points, pMatList.get(), 0, 18.0);
-        helper.stopTimers();
+    /*     helper.setupTimers(); */
+    /*     helper.launchTallyCrossSection(1, 1024, &points, pMatList.get(), 0, 18.0); */
+    /*     helper.stopTimers(); */
 
-        CHECK_CLOSE( expected, helper.getTally(0), 1e-7 );
-    }
+    /*     CHECK_CLOSE( expected, helper.getTally(0), 1e-7 ); */
+    /* } */
 
-    TEST( load_godivaR_materials_godivaR_geom_and_collisions_tally_collision ) {
-        RayListInterface<1> points(2);
-        points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
-        FIGenericGPUTestHelper<1> helper(points.size());
-        points.copyToGPU();
+    /* TEST( load_godivaR_materials_godivaR_geom_and_collisions_tally_collision ) { */
+    /*     RayListInterface<1> points(2); */
+    /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
+    /*     FIGenericGPUTestHelper<1> helper(points.size()); */
+    /*     points.copyToGPU(); */
 
-        MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
-        readerObject.ReadMatData();
+    /*     MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" ); */
+    /*     readerObject.ReadMatData(); */
 
-        MaterialProperties::Builder mpb;
-        mpb.disableMemoryReduction();
-        mpb.setMaterialDescription( readerObject );
+    /*     MaterialProperties::Builder mpb; */
+    /*     mpb.disableMemoryReduction(); */
+    /*     mpb.setMaterialDescription( readerObject ); */
 
-        CrossSectionList::Builder xsListBuilder;
-        auto xsBuilder = CrossSectionBuilder();
-        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92234);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92235);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92238);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(1001);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(8016);
-        xsListBuilder.add(xsBuilder.build());
+    /*     CrossSectionList::Builder xsListBuilder; */
+    /*     auto xsBuilder = CrossSectionBuilder(); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92234); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92235); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92238); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(1001); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(8016); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
 
-        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+    /*     auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build()); */
 
-        MaterialList::Builder matListBuilder{};
-        auto mb = Material::make_builder(*pXsList);
-        mb.addIsotope(0.01, 92234);
-        mb.addIsotope(0.98, 92235);
-        mb.addIsotope(0.01, 92238);
-        matListBuilder.addMaterial(2, mb.build() );
+    /*     MaterialList::Builder matListBuilder{}; */
+    /*     auto mb = Material::make_builder(*pXsList); */
+    /*     mb.addIsotope(0.01, 92234); */
+    /*     mb.addIsotope(0.98, 92235); */
+    /*     mb.addIsotope(0.01, 92238); */
+    /*     matListBuilder.addMaterial(2, mb.build() ); */
 
-        mb.addIsotope(0.667, 1001);
-        mb.addIsotope(0.333, 8016);
-        matListBuilder.addMaterial(3, mb.build() );
-        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
+    /*     mb.addIsotope(0.667, 1001); */
+    /*     mb.addIsotope(0.333, 8016); */
+    /*     matListBuilder.addMaterial(3, mb.build() ); */
+    /*     auto pMatList = std::make_unique<MaterialList>(matListBuilder.build()); */
 
-        mpb.renumberMaterialIDs( *pMatList );
-        auto mp = std::make_unique<MaterialProperties>(mpb.build());
+    /*     mpb.renumberMaterialIDs( *pMatList ); */
+    /*     auto mp = std::make_unique<MaterialProperties>(mpb.build()); */
 
-        gpuFloatType_t energy = points.getEnergy(0);
-        unsigned cell = points.getIndex(0);
-        gpuFloatType_t expected1 = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
-        CHECK_CLOSE( 4.44875, energy, 1e-5);
-        CHECK_EQUAL( 485557, cell);
-        CHECK_CLOSE( 0.353442, expected1, 1e-6);
+    /*     gpuFloatType_t energy = points.getEnergy(0); */
+    /*     unsigned cell = points.getIndex(0); */
+    /*     gpuFloatType_t expected1 = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy ); */
+    /*     CHECK_CLOSE( 4.44875, energy, 1e-5); */
+    /*     CHECK_EQUAL( 485557, cell); */
+    /*     CHECK_CLOSE( 0.353442, expected1, 1e-6); */
 
-        helper.setupTimers();
-        helper.launchTallyCrossSectionAtCollision(1, 1024, &points, pMatList.get(), mp.get() );
-        helper.stopTimers();
+    /*     helper.setupTimers(); */
+    /*     helper.launchTallyCrossSectionAtCollision(1, 1024, &points, pMatList.get(), mp.get() ); */
+    /*     helper.stopTimers(); */
 
-        CHECK_CLOSE( expected1, helper.getTally(0), 1e-7 );
-    }
+    /*     CHECK_CLOSE( expected1, helper.getTally(0), 1e-7 ); */
+    /* } */
 
-    TEST( sum_crossSection_by_startingCell )  {
-        MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
-        readerObject.ReadMatData();
+    /* TEST( sum_crossSection_by_startingCell )  { */
+    /*     MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" ); */
+    /*     readerObject.ReadMatData(); */
 
-        MaterialProperties::Builder mpb;
-        mpb.disableMemoryReduction();
-        mpb.setMaterialDescription( readerObject );
+    /*     MaterialProperties::Builder mpb; */
+    /*     mpb.disableMemoryReduction(); */
+    /*     mpb.setMaterialDescription( readerObject ); */
 
 
-        RayListInterface<1> points(2);
-        points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
-        points.copyToGPU();
+    /*     RayListInterface<1> points(2); */
+    /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
+    /*     points.copyToGPU(); */
 
-        CrossSectionList::Builder xsListBuilder;
-        auto xsBuilder = CrossSectionBuilder();
-        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92234);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92235);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92238);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(1001);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(8016);
-        xsListBuilder.add(xsBuilder.build());
+    /*     CrossSectionList::Builder xsListBuilder; */
+    /*     auto xsBuilder = CrossSectionBuilder(); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92234); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92235); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92238); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(1001); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(8016); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
 
-        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+    /*     auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build()); */
 
-        MaterialList::Builder matListBuilder{};
-        auto mb = Material::make_builder(*pXsList);
-        mb.addIsotope(0.01, 92234);
-        mb.addIsotope(0.98, 92235);
-        mb.addIsotope(0.01, 92238);
-        matListBuilder.addMaterial(2, mb.build() );
+    /*     MaterialList::Builder matListBuilder{}; */
+    /*     auto mb = Material::make_builder(*pXsList); */
+    /*     mb.addIsotope(0.01, 92234); */
+    /*     mb.addIsotope(0.98, 92235); */
+    /*     mb.addIsotope(0.01, 92238); */
+    /*     matListBuilder.addMaterial(2, mb.build() ); */
 
-        mb.addIsotope(0.667, 1001);
-        mb.addIsotope(0.333, 8016);
-        matListBuilder.addMaterial(3, mb.build() );
-        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
+    /*     mb.addIsotope(0.667, 1001); */
+    /*     mb.addIsotope(0.333, 8016); */
+    /*     matListBuilder.addMaterial(3, mb.build() ); */
+    /*     auto pMatList = std::make_unique<MaterialList>(matListBuilder.build()); */
 
 
-        mpb.renumberMaterialIDs( *pMatList );
-        auto mp = std::make_unique<MaterialProperties>(mpb.build());
+    /*     mpb.renumberMaterialIDs( *pMatList ); */
+    /*     auto mp = std::make_unique<MaterialProperties>(mpb.build()); */
 
-        FIGenericGPUTestHelper<1> helper( mp->numCells() );
+    /*     FIGenericGPUTestHelper<1> helper( mp->numCells() ); */
 
-        gpuFloatType_t energy = points.getEnergy(0);
-        unsigned cell = points.getIndex(0);
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
-        CHECK_CLOSE( 4.44875, energy, 1e-5);
-        CHECK_EQUAL( 485557, cell);
-        CHECK_CLOSE( 0.353442, expected, 1e-6);
+    /*     gpuFloatType_t energy = points.getEnergy(0); */
+    /*     unsigned cell = points.getIndex(0); */
+    /*     gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy ); */
+    /*     CHECK_CLOSE( 4.44875, energy, 1e-5); */
+    /*     CHECK_EQUAL( 485557, cell); */
+    /*     CHECK_CLOSE( 0.353442, expected, 1e-6); */
 
-        expected=0.0;
-        for( unsigned i=0; i<points.size(); ++i){
-            if( points.getIndex(i) == cell ) {
-                energy = points.getEnergy(i);
-                expected += helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
-            }
-        }
-        CHECK_CLOSE( 16.6541, expected, 1e-3);
+    /*     expected=0.0; */
+    /*     for( unsigned i=0; i<points.size(); ++i){ */
+    /*         if( points.getIndex(i) == cell ) { */
+    /*             energy = points.getEnergy(i); */
+    /*             expected += helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy ); */
+    /*         } */
+    /*     } */
+    /*     CHECK_CLOSE( 16.6541, expected, 1e-3); */
 
-        helper.setupTimers();
-        helper.launchSumCrossSectionAtCollisionLocation(1, 1024, &points, pMatList.get(), mp.get() );
-        helper.stopTimers();
+    /*     helper.setupTimers(); */
+    /*     helper.launchSumCrossSectionAtCollisionLocation(1, 1024, &points, pMatList.get(), mp.get() ); */
+    /*     helper.stopTimers(); */
 
-        CHECK_CLOSE( expected, helper.getTally(cell), 1e-3 );
-    }
+    /*     CHECK_CLOSE( expected, helper.getTally(cell), 1e-3 ); */
+    /* } */
 
-    TEST( rayTraceTally_GodivaR )
-    {
-        auto pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, 
-          std::array<MonteRay_GridBins, 3>{
-          MonteRay_GridBins{-33.5, 33.5, 100},
-          MonteRay_GridBins{-33.5, 33.5, 100},
-          MonteRay_GridBins{-33.5, 33.5, 100} }
-          );
+    /* TEST( rayTraceTally_GodivaR ) */
+    /* { */
+    /*     auto pGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cartesian, */ 
+    /*       std::array<MonteRay_GridBins, 3>{ */
+    /*       MonteRay_GridBins{-33.5, 33.5, 100}, */
+    /*       MonteRay_GridBins{-33.5, 33.5, 100}, */
+    /*       MonteRay_GridBins{-33.5, 33.5, 100} } */
+    /*       ); */
 
-        FIGenericGPUTestHelper<1> helper( pGrid->getNumCells() );
+    /*     FIGenericGPUTestHelper<1> helper( pGrid->getNumCells() ); */
 
-        MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
-        readerObject.ReadMatData();
+    /*     MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" ); */
+    /*     readerObject.ReadMatData(); */
 
-        MaterialProperties::Builder mpb;
-        mpb.disableMemoryReduction();
-        mpb.setMaterialDescription( readerObject );
+    /*     MaterialProperties::Builder mpb; */
+    /*     mpb.disableMemoryReduction(); */
+    /*     mpb.setMaterialDescription( readerObject ); */
 
-        CrossSectionList::Builder xsListBuilder;
-        auto xsBuilder = CrossSectionBuilder();
-        readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92234);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92235);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(92238);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(1001);
-        xsListBuilder.add(xsBuilder.build());
-        readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder );
-        xsBuilder.setZAID(8016);
-        xsListBuilder.add(xsBuilder.build());
+    /*     CrossSectionList::Builder xsListBuilder; */
+    /*     auto xsBuilder = CrossSectionBuilder(); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92234-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92234); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92235-65c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92235); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/92238-69c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(92238); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/1001-66c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(1001); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
+    /*     readInPlaceFromFile( "MonteRayTestFiles/8016-70c_MonteRayCrossSection.bin", xsBuilder ); */
+    /*     xsBuilder.setZAID(8016); */
+    /*     xsListBuilder.add(xsBuilder.build()); */
 
-        auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build());
+    /*     auto pXsList = std::make_unique<CrossSectionList>(xsListBuilder.build()); */
 
-        MaterialList::Builder matListBuilder{};
-        auto mb = Material::make_builder(*pXsList);
-        mb.addIsotope(0.01, 92234);
-        mb.addIsotope(0.98, 92235);
-        mb.addIsotope(0.01, 92238);
-        matListBuilder.addMaterial(2, mb.build() );
+    /*     MaterialList::Builder matListBuilder{}; */
+    /*     auto mb = Material::make_builder(*pXsList); */
+    /*     mb.addIsotope(0.01, 92234); */
+    /*     mb.addIsotope(0.98, 92235); */
+    /*     mb.addIsotope(0.01, 92238); */
+    /*     matListBuilder.addMaterial(2, mb.build() ); */
 
-        mb.addIsotope(0.667, 1001);
-        mb.addIsotope(0.333, 8016);
-        matListBuilder.addMaterial(3, mb.build() );
-        auto pMatList = std::make_unique<MaterialList>(matListBuilder.build());
+    /*     mb.addIsotope(0.667, 1001); */
+    /*     mb.addIsotope(0.333, 8016); */
+    /*     matListBuilder.addMaterial(3, mb.build() ); */
+    /*     auto pMatList = std::make_unique<MaterialList>(matListBuilder.build()); */
 
-        mpb.renumberMaterialIDs( *pMatList );
-        auto mp = std::make_unique<MaterialProperties>(mpb.build());
+    /*     mpb.renumberMaterialIDs( *pMatList ); */
+    /*     auto mp = std::make_unique<MaterialProperties>(mpb.build()); */
 
-        RayListInterface<1> points(2);
-        points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
+    /*     RayListInterface<1> points(2); */
+    /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
 
-        points.copyToGPU();
-        CHECK_EQUAL(2568016, points.size());
+    /*     points.copyToGPU(); */
+    /*     CHECK_EQUAL(2568016, points.size()); */
 
-        gpuFloatType_t energy = points.getEnergy(0);
-        unsigned cell = points.getIndex(0);
-        gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy );
-        CHECK_CLOSE( 4.44875, energy, 1e-6);
-        CHECK_EQUAL( 485557, cell);
-        CHECK_CLOSE( 0.353442, expected, 1e-6);
+    /*     gpuFloatType_t energy = points.getEnergy(0); */
+    /*     unsigned cell = points.getIndex(0); */
+    /*     gpuFloatType_t expected = helper.getTotalXSByMatProp(mp.get(), pMatList.get(), cell, energy ); */
+    /*     CHECK_CLOSE( 4.44875, energy, 1e-6); */
+    /*     CHECK_EQUAL( 485557, cell); */
+    /*     CHECK_CLOSE( 0.353442, expected, 1e-6); */
 
-        helper.setupTimers();
-        helper.launchRayTraceTally(1, 256, &points, pMatList.get(), mp.get(), pGrid.get() );
-        helper.stopTimers();
+    /*     helper.setupTimers(); */
+    /*     helper.launchRayTraceTally(1, 256, &points, pMatList.get(), mp.get(), pGrid.get() ); */
+    /*     helper.stopTimers(); */
 
-        //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 );
-        //    	CHECK_CLOSE( 0.186005, helper.getTally(50+100*100), 1e-4 );
+    /*     //    	CHECK_CLOSE( 0.0803215, helper.getTally(0), 1e-5 ); */
+    /*     //    	CHECK_CLOSE( 0.186005, helper.getTally(50+100*100), 1e-4 ); */
 
-        CHECK_CLOSE( 0.0201584, helper.getTally(24), 1e-5 );
-        CHECK_CLOSE( 0.0504394, helper.getTally(500182), 1e-4 );
-    }
-#endif
+    /*     CHECK_CLOSE( 0.0201584, helper.getTally(24), 1e-5 ); */
+    /*     CHECK_CLOSE( 0.0504394, helper.getTally(500182), 1e-4 ); */
+    /* } */
 
-}
+/* } */
 
 SUITE( Collision_fi_looping_tester ) {
 
@@ -462,4 +459,3 @@ SUITE( Collision_fi_looping_tester ) {
     }
 
 }
-#endif

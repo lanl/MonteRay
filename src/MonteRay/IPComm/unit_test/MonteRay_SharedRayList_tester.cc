@@ -46,7 +46,6 @@ SUITE( shared_collisionPointList_tester ){
             return false;
         }
 
-        typedef float gpuFloatType_t;
         void add(const void* collision, unsigned N) {
             const ray_t* ptrCollision = (const ray_t*) collision;
             for( auto i = 0; i< N; ++i) {
@@ -202,10 +201,10 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
         rayList_t list(master, 10,0,1,false);
 
-        float pos[3];
-        float dir[3];
-        float energy;
-        float weight;
+        gpuFloatType_t pos[3];
+        gpuFloatType_t dir[3];
+        gpuFloatType_t energy;
+        gpuFloatType_t weight;
         unsigned index;
 
         pos[0] = 0.0;
