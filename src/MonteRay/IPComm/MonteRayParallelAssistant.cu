@@ -19,10 +19,8 @@ MonteRayParallelAssistant::MonteRayParallelAssistant() {
     MPI_Initialized( &mpi_initialized );
 
     if( !mpi_initialized ) {
-//        std::cout << "MonteRayParallelAssistant::MonteRayParallelAssistant() -- MPI is not initialized.\n";
         return;
     }
-//    std::cout << "MonteRayParallelAssistant::MonteRayParallelAssistant() -- MPI has been initialized.\n";
 
 
     MPI_Comm_dup(MPI_COMM_WORLD, &MONTERAY_COMM_WORLD);
