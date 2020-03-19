@@ -1,3 +1,6 @@
+#ifndef MONTERAYNEXTEVENTESTIMATOR_T_HH_
+#define MONTERAYNEXTEVENTESTIMATOR_T_HH_
+
 #include "NextEventEstimator.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
@@ -99,11 +102,13 @@ void launch_ScoreRayList( NextEventEstimator* const pNextEventEstimator, int nBl
   int nBlocks = launchBounds.first;
   int nThreads = launchBounds.second;
   cudaStream_t stream = pStream ? *pStream : 0 ;
-  kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( pNextEventEstimator, pRayList->devicePtr, pRayInfo, 
-      pGeometry->getDevicePtr(), pMatProps, pMatList );
+  kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( pNextEventEstimator, pRayList, pRayInfo, 
+  //kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( pNextEventEstimator, pRayList->devicePtr, pRayInfo, 
+      pGeometry, pMatProps, pMatList );
 #else
   cpuScoreRayList( pNextEventEstimator, pRayList, pRayInfo, pGeometry, pMatProps, pMatList );
 #endif
 }
 
+#endif
 } // end namespace MonteRay

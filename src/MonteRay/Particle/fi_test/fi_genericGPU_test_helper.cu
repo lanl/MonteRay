@@ -2,9 +2,7 @@
 #include "GPUErrorCheck.hh"
 #include "GPUAtomicAdd.hh"
 #include "ExpectedPathLength.t.hh"
-#include "HashLookup.hh"
 #include "RayList.hh"
-#include "GPUUtilityFunctions.hh"
 
 #include "fi_genericGPU_test_helper.hh"
 
@@ -107,7 +105,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr, pXS, tally_device);
+    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints(), pXS, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
     gpuErrchk( cudaPeekAtLastError() );
@@ -170,7 +168,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSection(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr, pMatList,
+    testTallyCrossSection<N><<<nBlocks,nThreads>>>(pCP->getPtrPoints(), pMatList,
             matIndex, density, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -319,7 +317,7 @@ void FIGenericGPUTestHelper<N>::launchTallyCrossSectionAtCollision(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testTallyCrossSectionAtCollision<<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr,
+    testTallyCrossSectionAtCollision<<<nBlocks,nThreads>>>(pCP->getPtrPoints(),
             pMatList, pMatProps, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -345,7 +343,7 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps )
-        {
+  {
 
     unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
     if( tally ) {
@@ -368,7 +366,7 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
 
     cudaEvent_t sync;
     cudaEventCreate(&sync);
-    testSumCrossSectionAtCollisionLocation<<<nBlocks,nThreads>>>(pCP->getPtrPoints()->devicePtr,
+    testSumCrossSectionAtCollisionLocation<<<nBlocks,nThreads>>>(pCP->getPtrPoints(),
             pMatList, pMatProps, tally_device);
     cudaEventRecord(sync, 0);
     cudaEventSynchronize(sync);
@@ -386,91 +384,8 @@ void FIGenericGPUTestHelper<N>::launchSumCrossSectionAtCollisionLocation(
 #endif
 
     return;
-        }
+  }
 
-template<unsigned N>
-void FIGenericGPUTestHelper<N>::launchRayTraceTally(
-        unsigned nBlocks,
-        unsigned nThreads,
-        const RayListInterface<N>* pCP,
-        const MaterialList* pMatList,
-        const MaterialProperties* pMatProps )
-        {
-
-#ifdef __CUDACC__
-    gpuErrchk( cudaPeekAtLastError() );
-#endif
-
-    unsigned long long allocSize = sizeof(gpuTallyType_t)*nCells;
-    tally = (gpuTallyType_t*) malloc ( allocSize );
-    for( unsigned i = 0; i < nCells; ++i ) {
-        tally[i] = 0.0;
-    }
-
-#ifdef __CUDACC__
-    gpuTallyType_t* tally_device;
-    CUDA_CHECK_RETURN( cudaMalloc( &tally_device, allocSize ));
-    CUDA_CHECK_RETURN(cudaMemcpy(tally_device, tally, allocSize, cudaMemcpyHostToDevice));
-
-    std::cout << "Debug: FIGenericGPUTestHelper::launchRayTraceTally, requesting kernel with " <<
-                    nBlocks << " blocks, " << nThreads << " threads, nBlocks*nThreads= " <<
-                    nBlocks*nThreads << ", to process " << pCP->getPtrPoints()->size() << "rays. \n";
-
-    auto launchBounds = setLaunchBounds( nThreads, nBlocks,  pCP->getPtrPoints()->size() );
-    nThreads = launchBounds.second;
-    nBlocks = launchBounds.first;
-
-    std::cout << "Debug: FIGenericGPUTestHelper::launchRayTraceTally, launching kernel with " <<
-                 nBlocks << " blocks, " << nThreads << " threads, nBlocks*nThreads= " <<
-                 nBlocks*nThreads << "\n";
-
-    RayWorkInfo rayInfo( nThreads*nBlocks );
-    auto pRayInfo = std::make_unique<RayWorkInfo>(nThreads*nBlocks);
-
-    gpuErrchk( cudaPeekAtLastError() );
-
-    cudaEvent_t sync;
-    cudaEventCreate(&sync);
-    rayTraceTally<<<nBlocks,nThreads>>>(
-            grid_device,
-            pCP->getPtrPoints()->devicePtr,
-            pMatList,
-            pMatProps,
-            pRayInfo.get(),
-            tally_device);
-    cudaEventRecord(sync, 0);
-    cudaEventSynchronize(sync);
-    gpuErrchk( cudaPeekAtLastError() );
-
-    CUDA_CHECK_RETURN(cudaMemcpy(tally, tally_device, allocSize, cudaMemcpyDeviceToHost));
-    gpuErrchk( cudaPeekAtLastError() );
-    cudaFree( tally_device );
-#else
-    RayWorkInfo rayInfo( 1 );
-
-    rayTraceTally(
-            grid_device,
-            pCP->getPtrPoints(),
-            pMatList,
-            pMatProps,
-            &rayInfo,
-            tally);
-#endif
-    return;
-        }
-
-template<unsigned N>
-void FIGenericGPUTestHelper<N>::copyGridtoGPU(GridBins* grid){
-    // copy the grid to the device
-#ifdef __CUDACC__
-    grid->copyToGPU();
-    grid_device = grid->devicePtr;
-#else
-    grid_device = grid;
-#endif
-
-    nCells = grid->getNumCells();
-}
 
 template class FIGenericGPUTestHelper<1>;
 template class FIGenericGPUTestHelper<3>;

@@ -2,4 +2,3 @@
 #include "MonteRay/Particle/RayList.hh"
 #include "MonteRay/Particle/RayListInterface.hh"
 #include "MonteRay/Particle/RayWorkInfo.hh"
-#include "MonteRay/Particle/Ray.t.hh"

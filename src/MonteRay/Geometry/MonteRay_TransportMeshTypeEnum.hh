@@ -2,10 +2,8 @@
 #define MONTERAY_TRANSPORTMESHTYPEENUM_HH_
 
 namespace MonteRay {
-    ///\brief A namespace to handle the mesh type enums for MonteRay.  Similar to MCATK
-    namespace TransportMeshTypeEnum {
-        enum TransportMeshTypeEnum_t{NONE=0, Cartesian, Cylindrical, Spherical, MAX};
-    }
+    // A namespace to handle the mesh type enums for MonteRay.  Similar to MCATK
+  enum class TransportMeshType{Cartesian, Cylindrical, Spherical, MAX};
 }
 
 #endif /* MONTERAY_TRANSPORTMESHTYPEENUM_HH_ */

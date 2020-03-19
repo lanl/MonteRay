@@ -1,10 +1,3 @@
-/*
- * MonteRayGridSystemInterface.cc
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #include "MonteRay_GridSystemInterface.t.hh"
 #include <float.h>
 
@@ -52,13 +45,13 @@ CUDA_CALLABLE_MEMBER
 rayTraceList_t::rayTraceList_t(RayWorkInfo& rayInfo, const unsigned threadID, int dim){
 
     if( dim < 0 ) {
-        for( unsigned i=0; i<rayInfo.getRayCastSize(threadID); ++i ) {
+        for ( unsigned i=0; i<rayInfo.getRayCastSize(threadID); ++i ) {
             add( rayInfo.getRayCastCell(threadID,i),  rayInfo.getRayCastDist(threadID,i));
         }
         return;
     }
 
-    for( unsigned i=0; i<rayInfo.getCrossingSize(dim,threadID); ++i ) {
+    for ( unsigned i=0; i<rayInfo.getCrossingSize(dim,threadID); ++i ) {
         add( rayInfo.getCrossingCell(dim,threadID,i),  rayInfo.getCrossingDist(dim,threadID,i));
     }
 }
@@ -164,24 +157,26 @@ MonteRay_GridSystemInterface::orderCrossings(
             MONTERAY_ASSERT_MSG( ( deltaDistance >= 0.0 ),
                     "ERROR:  MONTERAY -- MonteRay_GridSystemInterface::orderCrossings, delta distance is negative");
 
-            unsigned global_index;
-            if( !outside ) {
-                global_index = calcIndex( indices );
-            } else {
-                global_index = MonteRay_GridSystemInterface::OUTSIDE_GRID;
-            }
-            rayInfo.addRayCastCell( threadID, global_index, deltaDistance );
+            /* if (deltaDistance > 0.0){ */ // TPB Commented out - uncommenting this matches old behavior of GridBins.hh
+                unsigned global_index;
+                if( !outside ) {
+                    global_index = calcIndex( indices );
+                } else {
+                    global_index = std::numeric_limits<unsigned>::max();
+                }
+                rayInfo.addRayCastCell( threadID, global_index, deltaDistance );
 
 #ifndef NDEBUG
-            if( debug ) {
-                printf( "Debug: ****************** \n" );
-                printf( "Debug:  Entry Num    = %d\n", rayInfo.getRayCastSize(threadID) );
-                printf( "Debug:     index[0]  = %d\n", indices[0] );
-                printf( "Debug:     index[1]  = %d\n", indices[1] );
-                printf( "Debug:     index[2]  = %d\n", indices[2] );
-                printf( "Debug:     distance  = %f\n", deltaDistance );
-            }
+                if( debug ) {
+                    printf( "Debug: ****************** \n" );
+                    printf( "Debug:  Entry Num    = %d\n", rayInfo.getRayCastSize(threadID) );
+                    printf( "Debug:     index[0]  = %d\n", indices[0] );
+                    printf( "Debug:     index[1]  = %d\n", indices[1] );
+                    printf( "Debug:     index[2]  = %d\n", indices[2] );
+                    printf( "Debug:     distance  = %f\n", deltaDistance );
+                }
 #endif
+            /* } */
 
         }
 
@@ -260,22 +255,7 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
         const gpuRayFloat_t distance,
         const int start_index) const {
 
-#ifndef NDEBUG
-    const bool debug = false;
-
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance --- \n" );
-#endif
-
-    //  constexpr gpuRayFloat_t epsilon = std::numeric_limits<gpuRayFloat_t>::epsilon();
-#ifdef __CUDACC__
-    if( abs(dir) <= FLT_EPSILON ) { return; }
-#else
-    if( std::abs(dir) <= FLT_EPSILON ) { return; }
-#endif
-
-#ifndef NDEBUG
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance  -- Bins=%p \n", &Bins );
-#endif
+    if( Math::abs(dir) <= std::numeric_limits<gpuRayFloat_t>::epsilon() ) { return; }
 
     if( start_index < 0 ) {
         if( dir < 0.0 ) {
@@ -284,40 +264,19 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     }
 
     int nBins = Bins.getNumBins();
-
-#ifndef NDEBUG
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - nBins=%d\n", nBins );
-#endif
-
     if( start_index >= nBins ) {
         if( dir > 0.0 ) {
             return;
         }
     }
 
-#ifdef __CUDA_ARCH__
-    unsigned offset = int(signbit(-dir));
-#else
-    unsigned offset = int(std::signbit(-dir));
-#endif
-
-#ifndef NDEBUG
-    if( debug ) printf( "Debug: MonteRay_GridSystemInterface::planarCrossingDistance - offset=%d\n", offset );
-#endif
+    unsigned offset = unsigned(Math::signbit(-dir));
 
     int end_index = offset*(nBins-1);;
 
-#ifdef __CUDA_ARCH__
-    int dirIncrement = copysignf( 1, dir );
-#else
-    int dirIncrement = std::copysign( 1, dir );
-#endif
+    int dirIncrement = Math::signbit(dir) ? -1 : 1;
 
-#ifdef __CUDACC__
-    unsigned num_indices = abs(end_index - start_index ) + 1;
-#else
-    unsigned num_indices = std::abs(end_index - start_index ) + 1;
-#endif
+    unsigned num_indices = Math::abs(end_index - start_index ) + 1;
 
     int current_index = start_index;
 
@@ -357,6 +316,22 @@ void MonteRay_GridSystemInterface::planarCrossingDistance(
     }
 
     return;
+}
+
+void MonteRay_GridSystemInterface::write(std::ostream& outfile) const {
+  binaryIO::write(outfile, DIM);
+  for( int i = 0; i<DIM; ++i) {
+    gridBins[i].write(outfile);
+  }
+}
+
+void MonteRay_GridSystemInterface::read(std::istream& infile) {
+  unsigned dimension;
+  binaryIO::read(infile, dimension);
+  std::array<GridBins_t, 3> gridBins;
+  for( unsigned i = 0; i < DIM; i++){
+    gridBins[i].read(infile);
+  }
 }
 
 } /* namespace MonteRay */

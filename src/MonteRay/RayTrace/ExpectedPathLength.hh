@@ -8,11 +8,11 @@
 
 #include "MaterialProperties.hh"
 #include "RayListInterface.hh"
+#include "BasicTally.hh"
 
 namespace MonteRay{
 
 class gpuTimingHost;
-class gpuTallyHost;
 class tripleTime;
 class RayWorkInfo;
 
@@ -59,7 +59,7 @@ MonteRay::tripleTime launchRayTraceTally(
         const RayListInterface<N>* pCP,
         const MaterialList* pMatList,
         const MaterialProperties* pMatProps,
-        gpuTallyHost* pTally
+        BasicTally* const pTally
 );
 
 } /* end namespace */

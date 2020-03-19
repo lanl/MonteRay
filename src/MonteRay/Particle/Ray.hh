@@ -5,31 +5,29 @@
 #include "MonteRayAssert.hh"
 #include "MonteRay_binaryIO.hh"
 #include "MonteRayConstants.hh"
-#include "Array.hh"
-
-#ifndef __CUDACC_
-#include <cmath>
-#endif
+#include "ThirdParty/Array.hh"
+#include "ThirdParty/Math.hh"
+#include "MonteRayVector3D.hh"
 
 namespace MonteRay{
 
-using CollisionPosition_t = Array<gpuFloatType_t, 3>&;
-using CollisionDirection_t = Array<gpuFloatType_t, 3>&;
+using Position_t = Vector3D<gpuRayFloat_t>;
+using Direction_t = Position_t;
 using DetectorIndex_t = unsigned;
 
 template< unsigned N = 1 >
 class Ray_t{
 public:
-    Array<gpuFloatType_t, 3> pos = { 0.0 };
-    Array<gpuFloatType_t, 3> dir = { 0.0 };
-    Array<gpuFloatType_t, N> energy = { 0.0 };
-    Array<gpuFloatType_t, N> weight = { 0.0 };
-    gpuFloatType_t time = { 0.0 };
+    Position_t  pos = { 0.0 };
+    Direction_t dir = { 0.0 };
+    Array<gpuRayFloat_t, N> energy = { 0.0 };
+    Array<gpuRayFloat_t, N> weight = { 1.0 };
+    gpuRayFloat_t time = 0.0;
     unsigned index = 0; // starting position mesh index
     DetectorIndex_t detectorIndex = 0;  // for next-event estimator
     ParticleType_t particleType = 0; // particle type 0 = neutron, 1=photon
 
-    constexpr Ray_t(){}
+    constexpr Ray_t() = default;
 
     template< typename PARTICLE_T,
               unsigned N_ = N,
@@ -80,37 +78,47 @@ public:
         index = particle.getLocationIndex();
         detectorIndex = argDetectorIndex;
 
-        if( particle.getType()->isANeutron() ) {
-            particleType = neutron;
-        } else {
-            particleType = photon;
-        }
+        particleType = particle.getType()->isANeutron() ? neutron : photon;
     }
 
     constexpr unsigned static getN(void ) {
         return N;
     }
 
-    constexpr CollisionPosition_t getPosition() {
-        return pos;
-    }
+    constexpr const Position_t& getPosition() const { return pos; }
 
-    constexpr CollisionDirection_t getDirection() {
-        return dir;
-    }
+    constexpr const auto& position() const { return pos; }
+    constexpr auto& position() { return pos; }
 
-    constexpr gpuFloatType_t getEnergy(unsigned index = 0) const {
+    constexpr const auto& direction() const { return dir; }
+    constexpr auto& direction() { return dir; }
+
+    constexpr const Direction_t& getDirection() const { return dir; }
+    constexpr void setDirection(const Direction_t& posIn){ pos = posIn; }
+
+    constexpr gpuRayFloat_t getEnergy(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return energy[index];
     }
+    constexpr void setEnergy(gpuRayFloat_t val, unsigned index = 0) {
+        MONTERAY_ASSERT( index < N);
+        energy[index] = val;
+    }
 
-    constexpr gpuFloatType_t getWeight(unsigned index = 0) const {
+    constexpr gpuRayFloat_t getWeight(unsigned index = 0) const {
         MONTERAY_ASSERT( index < N);
         return weight[index];
     }
+    constexpr void setWeight(gpuRayFloat_t val, unsigned index = 0) {
+        MONTERAY_ASSERT( index < N);
+        weight[index] = val;
+    }
 
-    constexpr gpuFloatType_t getTime() {
+    constexpr gpuRayFloat_t getTime() const {
         return time;
+    }
+    constexpr void setTime(gpuRayFloat_t val) {
+        time = val;
     }
 
     constexpr unsigned getIndex() const {
@@ -125,19 +133,13 @@ public:
         return particleType;
     }
 
-    constexpr gpuFloatType_t speed(unsigned i=0) const {
-        if( particleType == photon ) {
-            return speed_of_light;
-        } else {
-            // neutron
-#ifdef __CUDACC__
-            return (neutron_speed_from_energy_const() * sqrtf( energy[i] ));
-#else
-            return neutron_speed_from_energy_const() * std::sqrt( energy[i] );
-#endif
-        }
+    constexpr gpuRayFloat_t speed(unsigned i=0) const {
+        return particleType == photon ?
+          speed_of_light : 
+          neutron_speed_from_energy_const() * Math::sqrt(energy[i]);
     }
 
+    // NOTE: ALWAYS READS AND WRITES IN SINGLE PRECISION DUE TO MONTERAY UNIT TESTS
     template<typename S>
     CUDAHOST_CALLABLE_MEMBER void read(S& inFile) {
         short unsigned version;
@@ -146,13 +148,30 @@ public:
         short unsigned num;
         binaryIO::read( inFile, num );
 
-        binaryIO::read( inFile, pos );
-        binaryIO::read( inFile, dir );
-        binaryIO::read( inFile, energy );
-        binaryIO::read( inFile, weight );
+        Vector3D<gpuFloatType_t> read_pos;
+        Vector3D<gpuFloatType_t> read_dir;
+        Array<gpuFloatType_t, N> read_energy;
+        Array<gpuFloatType_t, N> read_weight;
+
+        binaryIO::read( inFile, read_pos );
+        binaryIO::read( inFile, read_dir );
+        binaryIO::read( inFile, read_energy );
+        binaryIO::read( inFile, read_weight );
+
+        for (int i = 0; i < 3; i++){
+          pos[i] = static_cast<gpuRayFloat_t>(read_pos[i]);
+          dir[i] = static_cast<gpuRayFloat_t>(read_dir[i]);
+        }
+
+        for( int i = 0; i < N; i++){
+          energy[i] = read_energy[i];
+          weight[i] = read_weight[i];
+        }
 
         if( version > 0 ) {
-            binaryIO::read( inFile, time );
+            gpuFloatType_t read_time;
+            binaryIO::read( inFile, read_time );
+            time = static_cast<gpuRayFloat_t>(read_time);
         }
 
         binaryIO::read( inFile, index );
@@ -169,32 +188,57 @@ public:
         const short unsigned num = N;
         binaryIO::write( outFile, num );
 
-        binaryIO::write( outFile, pos );
-        binaryIO::write( outFile, dir );
-        binaryIO::write( outFile, energy );
-        binaryIO::write( outFile, weight );
-        binaryIO::write( outFile, time );
+        Vector3D<gpuFloatType_t> write_pos;
+        Vector3D<gpuFloatType_t> write_dir;
+        for (int i = 0; i < 3; i++){
+          write_pos[i] = pos[i];
+          write_dir[i] = dir[i];
+        }
+
+        Array<gpuFloatType_t, N> write_energy;
+        Array<gpuFloatType_t, N> write_weight;
+        for( int i = 0; i < N; i++){
+          write_energy[i] = energy[i];
+          write_weight[i] = weight[i];
+        }
+
+        gpuFloatType_t write_time = time;
+
+        binaryIO::write( outFile, write_pos );
+        binaryIO::write( outFile, write_dir );
+        binaryIO::write( outFile, write_energy );
+        binaryIO::write( outFile, write_weight );
+        binaryIO::write( outFile, write_time );
         binaryIO::write( outFile, index );
         binaryIO::write( outFile, detectorIndex );
         binaryIO::write( outFile, particleType );
     }
 
+    template <typename Precision>
     static unsigned filesize(unsigned version) {
-        unsigned total = 0;
-        total += 2*sizeof(short unsigned);
-        total += sizeof(pos);
-        total += sizeof(dir);
-        total += sizeof(energy);
-        total += sizeof(weight);
+      unsigned total = 0;
+      total += 2*sizeof(short unsigned);
+      Vector3D<Precision> read_pos;
+      Vector3D<Precision> read_dir;
+      Array<Precision, N> read_energy;
+      Array<Precision, N> read_weight;
+      total += sizeof(read_pos);
+      total += sizeof(read_dir);
+      total += sizeof(read_energy);
+      total += sizeof(read_weight);
 
-        if( version > 0 ) {
-            total += sizeof(time);
-        }
+      if( version > 0 ) {
+          total += sizeof(std::declval<Precision>());
+      }
 
-        total += sizeof(index);
-        total += sizeof(detectorIndex);
-        total += sizeof(particleType);
-        return total;
+      total += sizeof(index);
+      total += sizeof(detectorIndex);
+      total += sizeof(particleType);
+      return total;
+    }
+
+    static unsigned filesize(unsigned version) {
+      return filesize<gpuFloatType_t>(version);
     }
 };
 

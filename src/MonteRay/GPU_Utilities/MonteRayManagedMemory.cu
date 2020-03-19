@@ -26,6 +26,7 @@ ManagedMemoryBase::operator new[](size_t len) {
     return MONTERAYHOSTALLOC(len, isManagedMemory, std::string("ManagedMemoryBase::new[]"));
 }
 
+// TPB Does this due what we think it does?  Need to check sizeof(*this)
 CUDAHOST_CALLABLE_MEMBER
 void
 ManagedMemoryBase::copyToGPU(cudaStream_t* stream, MonteRayGPUProps device ) {

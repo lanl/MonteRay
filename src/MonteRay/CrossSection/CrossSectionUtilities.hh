@@ -12,44 +12,62 @@ namespace MonteRay {
 
 template <typename T>
 struct has_member_func_totalXS_with_energy_temp_and_index {
-    template <typename C>
-    static auto test(double x) -> decltype( std::declval<C>().TotalXsec(x, -1.0, 0), std::true_type() );
+  template <typename C>
+  static auto test(double x) -> decltype( std::declval<C>().TotalXsec(x, -1.0, 0), std::true_type() );
 
-    template <typename>
-    static std::false_type test( ... );
+  template <typename>
+  static std::false_type test( ... );
 
-    typedef decltype( test<T>(1.0) ) CheckType;
-    static const bool value = std::is_same<std::true_type,CheckType>::value;
+  typedef decltype( test<T>(1.0) ) CheckType;
+  static const bool value = std::is_same<std::true_type,CheckType>::value;
 };
 
 template <typename T>
 typename std::enable_if< !has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
 getTotal(const T& CrossSection, double& E) {
-    return CrossSection.TotalXsec(E);
+  return CrossSection.TotalXsec(E);
 }
 
 template<typename T>
 typename std::enable_if< !has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
 getTotal(const T& CrossSection, double E, size_t index) {
-    return CrossSection.TotalXsec(E, index);
+  return CrossSection.TotalXsec(E, index);
 }
 
 template <typename T>
 typename std::enable_if< has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
 getTotal(const T& CrossSection, double E ) {
-    return CrossSection.TotalXsec(E, -1.0);
+  return CrossSection.TotalXsec(E, -1.0);
 }
 
 template <typename T>
 typename std::enable_if< has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
 getTotal(const T& CrossSection, double E, size_t index) {
-    return CrossSection.TotalXsec(E, -1.0, index);
+  return CrossSection.TotalXsec(E, -1.0, index);
 }
 
 template <typename T>
-typename std::enable_if< has_member_func_totalXS_with_energy_temp_and_index<T>::value, double>::type
+struct has_member_func_TotalXsecByIndex {
+  template <typename C>
+  static auto test(double x) -> decltype( std::declval<C>().TotalXsecByIndex(0), std::true_type() );
+
+  template <typename>
+  static std::false_type test( ... );
+
+  typedef decltype( test<T>(1.0) ) CheckType;
+  static const bool value = std::is_same<std::true_type,CheckType>::value;
+};
+
+template <typename T>
+typename std::enable_if_t< has_member_func_TotalXsecByIndex<T>::value, double>
 getTotal(const T& CrossSection, size_t index) {
-    return CrossSection.TotalXsec(index);
+  return CrossSection.TotalXsecByIndex(index);
+}
+
+template <typename T>
+typename std::enable_if_t< !has_member_func_TotalXsecByIndex<T>::value, double>
+getTotal(const T& CrossSection, size_t index) {
+  return CrossSection.getTotalXSList()[index];
 }
 
 typedef std::function<double (size_t index)  > xsByIndexFunct_t;
@@ -63,15 +81,15 @@ template<typename CROSS_SECTION_T, typename CONTAINER_T>
 CONTAINER_T
 createXSGrid(const CROSS_SECTION_T& CrossSection, const toEnergyFunc_t& toEnergyFunc, const xsByIndexFunct_t& xsByIndexFunc)
 {
-    CONTAINER_T linearGrid;
+  CONTAINER_T linearGrid;
 
-    // build initial grid;
-    for( unsigned i=0; i<CrossSection.getEnergyGrid().GridSize(); ++i ){
-        double energy = toEnergyFunc( (CrossSection.getEnergyGrid())[i] );
-        double totalXS = xsByIndexFunc(i);
-        linearGrid.push_back( std::make_pair(energy, totalXS ) );
-    }
-    return linearGrid;
+  // build initial grid;
+  for( unsigned i=0; i<CrossSection.getEnergyGrid().GridSize(); ++i ){
+    double energy = toEnergyFunc( (CrossSection.getEnergyGrid())[i] );
+    double totalXS = xsByIndexFunc(i);
+    linearGrid.push_back( std::make_pair(energy, totalXS ) );
+  }
+  return linearGrid;
 }
 
 void

@@ -169,7 +169,7 @@ public:
         break;
     }
 
-    Vector3D<gpuFloatType_t> pos = getPoint(0);
+    const auto& pos = getPoint(0);
 
     // previousSecondDimPosition used to detect when to insert carriage return
     double previousSecondDimPosition = pos[dim2];
@@ -178,8 +178,8 @@ public:
         for( int j=0; j < tally_.getNumTimeBins(); ++j ) {
 
             double time = tally_.getTimeBinEdge(j);
-            Vector3D<gpuFloatType_t> pos = getPoint(i);
-            gpuFloatType_t value = getTally(i,j) / nSamples;
+            const auto& pos = getPoint(i);
+            auto value = getTally(i,j) / nSamples;
 
             if(  pos[dim2] < previousSecondDimPosition ) {
                 out << "\n";

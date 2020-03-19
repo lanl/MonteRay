@@ -1,67 +1,69 @@
-/*
- * MonteRayCartesianGrid.hh
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #ifndef MONTERAYCARTESIANGRID_HH_
 #define MONTERAYCARTESIANGRID_HH_
 
 #include "MonteRayTypes.hh"
 #include "RayWorkInfo.hh"
 #include "MonteRay_GridSystemInterface.hh"
+#include "ThirdParty/Array.hh"
 
 namespace MonteRay {
 
-class MonteRay_CartesianGrid;
-
-
 class MonteRay_CartesianGrid : public MonteRay_GridSystemInterface {
 public:
-    enum coord {X,Y,Z,DimMax};
+  enum coord {X,Y,Z,DimMax};
 
-    using GridBins_t = MonteRay_GridBins;
-    using pGridInfo_t = GridBins_t*;
-    using pArrayOfpGridInfo_t = pGridInfo_t[3];
+public:
+    MonteRay_CartesianGrid() = default;
 
-    CUDA_CALLABLE_MEMBER MonteRay_CartesianGrid(unsigned d, pArrayOfpGridInfo_t pBins);
-    CUDA_CALLABLE_MEMBER MonteRay_CartesianGrid(unsigned d, GridBins_t*, GridBins_t*, GridBins_t* );
+    MonteRay_CartesianGrid(int d, GridBins_t, GridBins_t, GridBins_t );
+    template <typename GridBinsArray>
+    MonteRay_CartesianGrid(int d, GridBinsArray bins): MonteRay_CartesianGrid(d, std::move(bins[0]), std::move(bins[1]), std::move(bins[2])) { }
 
-    CUDA_CALLABLE_MEMBER virtual ~MonteRay_CartesianGrid(void);
+    CUDA_CALLABLE_MEMBER auto dimension() const { return DIM; }
 
-    CUDAHOST_CALLABLE_MEMBER void copyToGPU(void);
+    CUDA_CALLABLE_MEMBER unsigned getIndex(const GridBins_t::Position_t& particle_pos) const;
 
-    CUDAHOST_CALLABLE_MEMBER MonteRay_CartesianGrid* getDeviceInstancePtr();
-
-    CUDA_CALLABLE_MEMBER unsigned getIndex( const GridBins_t::Position_t& particle_pos) const;
-
-    CUDA_CALLABLE_MEMBER int getDimIndex( unsigned d, gpuRayFloat_t pos) const {  return pGridBins[d]->getLinearIndex( pos ); }
+    CUDA_CALLABLE_MEMBER int getDimIndex( unsigned d, gpuRayFloat_t pos) const {return gridBins[d].getLinearIndex( pos ); }
 
     CUDA_CALLABLE_MEMBER gpuRayFloat_t getVolume( unsigned index ) const;
 
-    CUDA_CALLABLE_MEMBER unsigned calcIndex( const int[] ) const;
-
     CUDA_CALLABLE_MEMBER uint3 calcIJK( unsigned index ) const;
-
-    CUDA_CALLABLE_MEMBER bool isOutside(  const int i[]) const;
-
-    CUDA_CALLABLE_MEMBER bool isIndexOutside( unsigned d,  int i) const { return pGridBins[d]->isIndexOutside(i);}
 
     CUDA_CALLABLE_MEMBER unsigned getNumBins( unsigned d) const;
 
     CUDA_CALLABLE_MEMBER
-    void
-    rayTrace( const unsigned threadID,
+    DirectionAndSpeed convertToCellReferenceFrame(
+      const Vector3D<gpuRayFloat_t>& cellVelocity,
+      const GridBins_t::Position_t&, // unused, exists to maintain same API as cylindrical and spherical grid
+      GridBins_t::Direction_t dir,
+      gpuRayFloat_t speed) const;
+    
+    CUDA_CALLABLE_MEMBER 
+    auto calcIndices(const GridBins_t::Position_t& pos) const {
+      return Array<int, 3>{ getDimIndex(0, pos[0] ),
+                            getDimIndex(1, pos[1] ),
+                            getDimIndex(2, pos[2] ) };
+    }
+    
+    CUDA_CALLABLE_MEMBER 
+    DistAndDir getMinDistToSurface( 
+        const GridBins_t::Position_t& pos, 
+        const GridBins_t::Direction_t& dir, 
+        const int indices[]) const;
+
+    CUDA_CALLABLE_MEMBER
+    gpuRayFloat_t getDistanceToInsideOfMesh(const GridBins_t::Position_t& pos, const GridBins_t::Direction_t& dir) const;
+
+    CUDA_CALLABLE_MEMBER
+    void rayTrace( const unsigned threadID,
               RayWorkInfo& rayInfo,
               const GridBins_t::Position_t& particle_pos,
               const GridBins_t::Position_t& particle_dir,
               const gpuRayFloat_t distance,
-              const bool outsideDistances=false ) const;
+              const bool outsideDistances=false ) const ;
 
     CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(  const unsigned dim,
+    void crossingDistance(  const unsigned dim,
                        const unsigned threadID,
                        RayWorkInfo& rayInfo,
                        const GridBins_t::Position_t& pos,
@@ -70,8 +72,7 @@ public:
 
 
     CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance(  const unsigned dim,
+    void crossingDistance(  const unsigned dim,
                        const unsigned threadID,
                        RayWorkInfo& rayInfo,
                        const gpuRayFloat_t pos,
@@ -80,8 +81,7 @@ public:
 private:
 
     CUDA_CALLABLE_MEMBER
-    void
-    crossingDistance( const unsigned dim,
+    void crossingDistance( const unsigned dim,
                       const unsigned threadID,
                       RayWorkInfo& rayInfo,
                       const GridBins_t& Bins,
@@ -90,15 +90,6 @@ private:
                       const gpuRayFloat_t distance,
                       const bool equal_spacing=false) const;
 
-public:
-    MonteRay_CartesianGrid** ptrDevicePtr = nullptr;
-    MonteRay_CartesianGrid* devicePtr = nullptr;
-
-private:
-    pArrayOfpGridInfo_t pGridBins;
-    //bool regular = false;
-
-    const bool debug = false;
 };
 
 } /* namespace MonteRay */

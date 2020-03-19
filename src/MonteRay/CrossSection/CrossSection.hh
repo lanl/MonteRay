@@ -16,40 +16,64 @@
 
 namespace MonteRay {
 
-template<typename HASHFUNCTION = FasterHash >
+template<typename HashFunction = FasterHash >
 class CrossSectionBuilder_t;
 
-template< typename HASHFUNCTION = FasterHash >
+template< typename HashFunction = FasterHash >
 class CrossSection_t : public Managed {
 private:
     SimpleVector<gpuFloatType_t> energies;
     SimpleVector<gpuFloatType_t> totalXS;
     int ZA = 0;
-    ParticleType_t ParticleType = neutron;
+    ParticleType_t particleType = neutron;
     gpuFloatType_t AWR = 0.0;
-    CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION> hash;
+    CrossSectionHash_t<gpuFloatType_t, HashFunction> hash;
 
-    CrossSection_t( SimpleVector<gpuFloatType_t>&& energiesIn, 
-                    SimpleVector<gpuFloatType_t>&& totalXSIn, 
+public:
+    CrossSection_t( SimpleVector<gpuFloatType_t> energiesIn, 
+                    SimpleVector<gpuFloatType_t> totalXSIn, 
                     int ZAIn, 
-                    ParticleType_t ParticleTypeIn, 
+                    ParticleType_t particleTypeIn, 
                     gpuFloatType_t AWRIn, 
-                    CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION>&& hashIn
+                    CrossSectionHash_t<gpuFloatType_t, HashFunction> hashIn
                   ):
       energies(std::move(energiesIn)), 
       totalXS(std::move(totalXSIn)), 
       ZA(ZAIn), 
-      ParticleType(ParticleTypeIn), 
+      particleType(particleTypeIn), 
       AWR(AWRIn), 
       hash(std::move(hashIn))
     {}
 
+    CrossSection_t( int ZAIn, 
+                    SimpleVector<gpuFloatType_t> energiesIn, 
+                    SimpleVector<gpuFloatType_t> totalXSIn, 
+                    ParticleType_t particleTypeIn, 
+                    gpuFloatType_t AWRIn
+                  ): CrossSection_t(std::move(energiesIn), std::move(totalXSIn), ZAIn, particleTypeIn, AWRIn,
+                                    CrossSectionHash_t<gpuFloatType_t, HashFunction>( energies ))
+    {}
 
-public:
+    template <typename OtherContainer>
+    CrossSection_t( int ZAIn, 
+                    OtherContainer  energiesIn, 
+                    OtherContainer  totalXSIn, 
+                    ParticleType_t particleTypeIn = neutron,
+                    gpuFloatType_t AWRIn = 0.0
+                  )
+    {
+      energies.assign(energiesIn.begin(), energiesIn.end() );
+      totalXS.assign( totalXSIn.begin(), totalXSIn.end() );
+      ZA = ZAIn;
+      particleType = particleTypeIn;
+      AWR = AWR;
+      hash = CrossSectionHash_t<gpuFloatType_t, HashFunction>( energies );
+    }
+
     CrossSection_t() = default;
 
 private:
-    friend CrossSectionBuilder_t<HASHFUNCTION>;
+    friend CrossSectionBuilder_t<HashFunction>;
 
 public:
     constexpr int ZAID() const { return ZA; }
@@ -57,7 +81,7 @@ public:
     constexpr gpuFloatType_t getEnergy( size_t i ) const { return energies[i]; }
     constexpr gpuFloatType_t getTotalXSByIndex( size_t i ) const { return totalXS[i]; }
     constexpr gpuFloatType_t getAWR() const { return AWR; }
-    constexpr ParticleType_t getParticleType() const { return ParticleType; }
+    constexpr ParticleType_t getParticleType() const { return particleType; }
 
 
     constexpr size_t getIndex( gpuFloatType_t E ) const {
@@ -133,37 +157,45 @@ public:
         }
     }
 
-private:
     template<typename S>
-    void read( S& in ) {
+    static auto read( S& in ) {
         unsigned version;
         binaryIO::read(in, version );
 
-        binaryIO::read(in, ParticleType );
+        ParticleType_t particleType;
+        binaryIO::read(in, particleType );
 
         size_t numPoints;
         if( version > 0 ) {
             binaryIO::read(in, numPoints );
         } else {
-            // version 0 wrote an int
-            int N;
+            // version 0 wrote int
+            unsigned N;
             binaryIO::read(in, N );
             numPoints = N;
         }
+        gpuFloatType_t AWR = 0.0;
         binaryIO::read(in, AWR );
 
+        int ZA = 0;
         if( version > 0 ) {
             binaryIO::read(in, ZA );
         }
 
+        SimpleVector<gpuFloatType_t> energies;
+        SimpleVector<gpuFloatType_t> totalXS;
         energies.resize( numPoints);
         totalXS.resize( numPoints);
         for( size_t i=0; i< numPoints; ++i ){
             binaryIO::read(in, energies[i] );
         }
-        for( size_t i=0; i< this->numPoints; ++i ){
+        for( size_t i=0; i< numPoints; ++i ){
             binaryIO::read(in, totalXS[i] );
         }
+
+        CrossSectionHash_t<gpuFloatType_t, HashFunction> hash( energies );
+        return CrossSection_t( std::move(energies), std::move(totalXS), ZA, particleType, AWR, std::move(hash));
+
     }
 
 };
@@ -173,7 +205,7 @@ private:
 
 using CrossSection = CrossSection_t<>;
 
-template< typename HASHFUNCTION >
+template< typename HashFunction >
 class CrossSectionBuilder_t {
 public:
 
@@ -182,9 +214,9 @@ public:
     SimpleVector<gpuFloatType_t> b_energies;
     SimpleVector<gpuFloatType_t> b_totalXS;
     int b_ZA = 0;
-    ParticleType_t b_ParticleType = neutron;
+    ParticleType_t b_particleType = neutron;
     gpuFloatType_t b_AWR = 0.0;
-    CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION> b_hash;
+    CrossSectionHash_t<gpuFloatType_t, HashFunction> b_hash;
 
     template<typename Container>
     CrossSectionBuilder_t( int ZAID,
@@ -197,7 +229,7 @@ public:
       b_energies.assign(energies.begin(), energies.end() );
       b_totalXS.assign( xsec.begin(), xsec.end() );
       b_ZA = ZAID;
-      b_ParticleType = type;
+      b_particleType = type;
       b_AWR = AWR;
     }
 
@@ -246,35 +278,16 @@ public:
 
     void setZAID( int ZA ) { b_ZA = ZA; }
     void setAWR(gpuFloatType_t AWR) { b_AWR = AWR; }
-    void setParticleType( ParticleType_t ParticleTypeIn ) { b_ParticleType = ParticleTypeIn; }
+    void setParticleType( ParticleType_t particleTypeIn ) { b_particleType = particleTypeIn; }
 
-    ~CrossSectionBuilder_t(){};
 
-    CrossSection_t<HASHFUNCTION> construct(){
-        b_hash = CrossSectionHash_t<gpuFloatType_t, HASHFUNCTION>( b_energies );
-        return {std::move(b_energies), std::move(b_totalXS), b_ZA, b_ParticleType, b_AWR, std::move(b_hash)};
+    CrossSection_t<HashFunction> build() {
+      b_hash = CrossSectionHash_t<gpuFloatType_t, HashFunction>( b_energies );
+      return {std::move(b_energies), std::move(b_totalXS), b_ZA, b_particleType, b_AWR, std::move(b_hash)};
     }
 
-    auto build() {
-      return construct();
-    }
-
-    // TODO: replace w/ readFromFile
-    void read( const std::string& filename ) {
-        std::ifstream infile;
-        if( infile.is_open() ) {
-            infile.close();
-        }
-        infile.open( filename.c_str(), std::ios::binary | std::ios::in);
-
-        if( ! infile.is_open() ) {
-            fprintf(stderr, "Debug:  CrossSectionBuilder::read -- Failure to open file,  filename=%s  %s %d\n", filename.c_str(), __FILE__, __LINE__);
-            exit(1);
-        }
-        assert( infile.good() );
-        infile.exceptions(std::ios_base::failbit | std::ios_base::badbit );
-        read(infile);
-        infile.close();
+    auto construct(){
+      return this->build();
     }
 
     template<typename S>
@@ -282,7 +295,7 @@ public:
         unsigned version;
         binaryIO::read(in, version );
 
-        binaryIO::read(in, b_ParticleType );
+        binaryIO::read(in, b_particleType );
 
         size_t numPoints;
         if( version > 0 ) {
@@ -309,8 +322,9 @@ public:
         }
     }
 
+
 private:
-    CrossSection_t<HASHFUNCTION> XS;
+    CrossSection_t<HashFunction> XS;
     static constexpr double maxError = 0.1;
     static const unsigned nBinsToCheck = 1000;
 };

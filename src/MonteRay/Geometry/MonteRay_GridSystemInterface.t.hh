@@ -6,14 +6,10 @@
 #include <cmath>
 #include <limits>
 
-#ifdef __CUDACC__
-#include <float.h>
-#include <math_constants.h>
-#endif
+#include "Math.hh"
 
 #include "MonteRayTypes.hh"
 #include "GPUErrorCheck.hh"
-#include "MonteRay_QuadraticRootFinder.hh"
 #include "RayWorkInfo.hh"
 
 namespace MonteRay {
@@ -32,23 +28,11 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
             const gpuRayFloat_t distance,
             int index) const {
 
-#ifndef __CUDA_ARCH__
     const gpuRayFloat_t Epsilon = 100.0 * std::numeric_limits<gpuRayFloat_t>::epsilon();
-#else
-#if RAY_DOUBLEPRECISION < 1
-    const gpuRayFloat_t Epsilon = 100.0 * FLT_EPSILON;
-#else
-    const gpuRayFloat_t Epsilon = 100.0 * DBL_EPSILON;
-#endif
-#endif
-
     const bool outward = OUTWARD;
 
 #ifndef NDEBUG
     const bool debug = false;
-#endif
-
-#ifndef NDEBUG
     if( debug ){
         printf("Debug: MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection -- \n");
     }
@@ -56,11 +40,8 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
 
     // Test to see if very near the surface and directed outward.
     // If so skip the surface
-#ifdef __CUDACC__
-    if( outward and abs( sqrt(particle_R2) - Bins.vertices[ index ] ) < Epsilon ) {
-#else
-    if( outward and std::abs( std::sqrt(particle_R2) - Bins.vertices[ index ] ) < Epsilon ) {
-#endif
+    // TPB sqrt is a double-precision square root
+    if( outward and Math::abs( sqrt(particle_R2) - Bins.vertices[ index ] ) < Epsilon ) {
         ++index;
     }
 
@@ -88,11 +69,7 @@ MonteRay_GridSystemInterface::radialCrossingDistanceSingleDirection(
         end_index = Bins.getNumBins()-1;
     }
 
-#ifdef __CUDACC__
-    unsigned num_indices = abs(end_index - start_index ) + 1;
-#else
-    unsigned num_indices = std::abs(end_index - start_index ) + 1;
-#endif
+    unsigned num_indices = Math::abs(end_index - start_index ) + 1;
     //distances.reserve( num_indices+5 );
 
     int current_index = start_index;

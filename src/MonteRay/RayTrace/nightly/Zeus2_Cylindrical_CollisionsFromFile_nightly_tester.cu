@@ -6,16 +6,16 @@
 #include "GPUUtilityFunctions.hh"
 #include "ReadAndWriteFiles.hh"
 
-#include "gpuTally.hh"
+#include "BasicTally.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "RayListController.hh"
-#include "MonteRayMaterial.hh"
-#include "MonteRayMaterialList.hh"
+#include "Material.hh"
+#include "MaterialList.hh"
 #include "MaterialProperties.hh"
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
-#include "MonteRayCrossSection.hh"
+#include "CrossSection.hh"
 #include "MonteRay_SpatialGrid.hh"
 
 namespace Zeus2_Cylindrical_wCollisionFile_fi_tester{
@@ -101,38 +101,127 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
             matPropBuilder.disableMemoryReduction();
             matPropBuilder.setMaterialDescription( readerObject );
 
-            pGrid = new Grid_t(readerObject);
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
             CHECK_EQUAL( 952, pGrid->getNumCells() );
 
-            pTally = new gpuTallyHost( pGrid->getNumCells() );
-
-            pGrid->copyToGPU();
-
-            pTally->copyToGPU();
+            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
 
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
 
         }
 
-        ~ControllerSetup(){
-            delete pGrid;
-            delete pTally;
+        void setupWithMovingMaterials(){
+
+            MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/zeus2.lnk3dnt" );
+            readerObject.ReadMatData();
+
+            MaterialProperties::Builder matPropBuilder{};
+            matPropBuilder.disableMemoryReduction();
+            matPropBuilder.setMaterialDescription( readerObject );
+
+            pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
+            CHECK_EQUAL( 952, pGrid->getNumCells() );
+
+            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
+
+            matPropBuilder.renumberMaterialIDs(*pMatList);
+            matPropBuilder.setVelocities( SimpleVector<gpuRayFloat_t>(pGrid->getNumCells(), 0.0) );
+            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
+
         }
 
-        Grid_t* pGrid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<CrossSectionList> pXsList;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        gpuTallyHost* pTally;
+        std::unique_ptr<BasicTally> pTally;
 
     };
 
 
     TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
-        // compare with mcatk calling MonteRay -- validated against MCATK itself
+    /*     // compare with mcatk calling MonteRay -- validated against MCATK itself */
 
         setup();
+
+    /*     // 256 */
+    /*     //  64 */
+    /*     // 192 */
+        unsigned nThreadsPerBlock = 1;
+        unsigned nThreads = 256;
+        unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
+        capacity = 12118351;
+
+        auto launchBounds = setLaunchBounds( nThreads, nThreadsPerBlock, capacity);
+
+        std::cout << "Running ZEUS2 from collision file with nBlocks=" << launchBounds.first <<
+                " nThreads=" << launchBounds.second << " collision buffer capacity=" << capacity << "\n";
+
+        CollisionPointController<Grid_t> controller(
+                nThreadsPerBlock,
+                nThreads,
+                pGrid.get(),
+                pMatList.get(),
+                pMatProps.get(),
+                pTally.get() );
+
+        controller.setCapacity(capacity);
+
+        size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/Zeus2_Cylindrical_VCRE_rays.bin" );
+        CHECK_EQUAL( 12118350 , numCollisions );
+
+        controller.sync();
+
+        auto benchmarkTally = readFromFile( "MonteRayTestFiles/Zeus2_Cylindrical_cpuTally_n5_particles1000_cycles50.bin", *pTally );
+
+        for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
+
+            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+                //printf( "Tally %u, MCATK=%e, MonteRay=%e, diff=%f\n", i, benchmarkTally.getTally(i), pTally->getTally(i), relDiff  );
+                CHECK_CLOSE( 0.0, relDiff, 0.034 );
+            } else {
+                CHECK_CLOSE( 0.0, pTally->getTally(i), 1e-4);
+                CHECK_CLOSE( 0.0, benchmarkTally.getTally(i), 1e-4);
+            }
+        }
+
+        gpuTallyType_t maxdiff = 0.0;
+        unsigned numBenchmarkZeroNonMatching = 0;
+        unsigned numGPUZeroNonMatching = 0;
+        unsigned numZeroZero = 0;
+        for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
+            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+                if( std::abs(relDiff) > maxdiff ){
+                    maxdiff = std::abs(relDiff);
+                }
+            } else if( pTally->getTally(i) > 0.0) {
+                ++numBenchmarkZeroNonMatching;
+            } else if( benchmarkTally.getTally(i) > 0.0) {
+                ++numGPUZeroNonMatching;
+            } else {
+                ++numZeroZero;
+            }
+        }
+
+        std::cout << "Debug:  maxdiff=" << maxdiff << "\n";
+        std::cout << "Debug:  tally size=" << pTally->size()  << "\n";
+        std::cout << "Debug:  tally from file size=" << benchmarkTally.size() << "\n";
+        std::cout << "Debug:  numBenchmarkZeroNonMatching=" << numBenchmarkZeroNonMatching << "\n";
+        std::cout << "Debug:        numGPUZeroNonMatching=" << numGPUZeroNonMatching << "\n";
+        std::cout << "Debug:                num both zero=" << numZeroZero << "\n";
+
+    /*     // timings on GTX 1080 Ti GP102 rev a1 Pascal GPU 390x256 */
+    /*     // Debug: total gpuTime = 0.922235 */
+
+
+    }
+
+    TEST_FIXTURE(ControllerSetup, RayTraceWithMovingMaterials ){
+        // compare with mcatk calling MonteRay -- validated against MCATK itself
+        setupWithMovingMaterials();
 
         // 256
         //  64
@@ -150,10 +239,10 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
         CollisionPointController<Grid_t> controller(
                 nThreadsPerBlock,
                 nThreads,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
         controller.setCapacity(capacity);
 
@@ -161,10 +250,8 @@ SUITE(  Zeus2_Cylindrical_wCollisionFile_tester ) {
         CHECK_EQUAL( 12118350 , numCollisions );
 
         controller.sync();
-        pTally->copyToCPU();
 
-        gpuTallyHost benchmarkTally(952);
-        benchmarkTally.read( "MonteRayTestFiles/Zeus2_Cylindrical_cpuTally_n5_particles1000_cycles50.bin" );
+        auto benchmarkTally = readFromFile( "MonteRayTestFiles/Zeus2_Cylindrical_cpuTally_n5_particles1000_cycles50.bin", *pTally );
 
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
 

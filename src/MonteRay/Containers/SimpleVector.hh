@@ -30,7 +30,8 @@ class SimpleVector : public Managed
     std::copy(init.begin(), init.end(), begin_);
   }
 
-  SimpleVector(const T* const begin, const T* const end): SimpleVector(std::distance(begin,end)) {
+  template <typename InputIter>
+  SimpleVector(InputIter begin, InputIter end): SimpleVector(std::distance(begin,end)) {
     std::copy(begin, end, begin_);
   }
 
@@ -76,37 +77,20 @@ class SimpleVector : public Managed
     reservedSize_ = 0;
   }
 
-  constexpr T const * begin() const noexcept {
-    return begin_;
-  }
+  constexpr T const * cbegin() const noexcept { return begin_; }
+  constexpr T const * begin() const noexcept { return begin_; }
+  constexpr T* begin() noexcept { return begin_; }
 
-  constexpr T* begin() noexcept {
-    return begin_;
-  }
+  constexpr T* end() noexcept { return begin() + size(); }
+  constexpr T const * end() const noexcept { return begin() + size(); }
+  constexpr T const * cend() const noexcept { return end(); }
 
-  constexpr T const * end() const noexcept {
-    return begin() + size();
-  }
+  constexpr T& operator[] (size_t n)  noexcept { return *(this->begin() + n); }
+  constexpr const T& operator[] (size_t n) const noexcept { return *(this->begin() + n); }
 
-  constexpr T* end() noexcept {
-    return begin() + size();
-  }
+  constexpr auto size() const noexcept { return size_; }
 
-  constexpr T& operator[] (size_t n)  noexcept {
-    return *(this->begin() + n);
-  }
-
-  constexpr const T& operator[] (size_t n) const noexcept {
-    return *(this->begin() + n);
-  }
-
-  constexpr auto size() const noexcept { 
-    return size_;
-  }
-
-  constexpr auto capacity() const noexcept { 
-    return reservedSize_;
-  }
+  constexpr auto capacity() const noexcept { return reservedSize_; }
 
   void reserve(size_t N) {
     if (N <= this->capacity()){ return; }
