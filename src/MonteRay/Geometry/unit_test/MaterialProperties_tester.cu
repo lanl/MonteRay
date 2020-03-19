@@ -32,10 +32,10 @@ SUITE( NewMaterialProperties_tests ) {
     CHECK_EQUAL(2, matProps.numMats(1));
     CHECK_EQUAL(4, matProps.numMaterialComponents());
 
-    CHECK_EQUAL(1.1f, matProps.getDensity(0, 0));
-    CHECK_EQUAL(2.2f, matProps.getDensity(0, 1));
-    CHECK_EQUAL(3.3f, matProps.getDensity(1, 0));
-    CHECK_EQUAL(4.4f, matProps.getDensity(1, 1));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(1.1), matProps.getDensity(0, 0));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(2.2), matProps.getDensity(0, 1));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(3.3), matProps.getDensity(1, 0));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(4.4), matProps.getDensity(1, 1));
 
     CHECK_EQUAL(1, matProps.getMatID(0, 0));
     CHECK_EQUAL(2, matProps.getMatID(0, 1));
@@ -118,9 +118,9 @@ SUITE( NewMaterialProperties_tests ) {
     CHECK_EQUAL(1, matProps.numMats(1));
     CHECK_EQUAL(3, matProps.numMaterialComponents());
 
-    CHECK_EQUAL(1.1f, matProps.getDensity(0, 0));
-    CHECK_EQUAL(2.2f, matProps.getDensity(0, 1));
-    CHECK_EQUAL(3.3f, matProps.getDensity(1, 0));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(1.1), matProps.getDensity(0, 0));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(2.2), matProps.getDensity(0, 1));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(3.3), matProps.getDensity(1, 0));
 
     CHECK_EQUAL(1, matProps.getMatID(0, 0));
     CHECK_EQUAL(2, matProps.getMatID(0, 1));
@@ -137,10 +137,10 @@ SUITE( NewMaterialProperties_tests ) {
 
     mpb.addCell(cell1);
     mpb.addCell(cell2);
-    Vector3D<gpuFloatType_t> cell0Velocity = {1.0, 2.0, 3.0};
-    std::vector<Vector3D<gpuFloatType_t>> cellVelocities{ cell0Velocity, cell0Velocity };
+    Vector3D<gpuRayFloat_t> cell0Velocity = {1.0, 2.0, 3.0};
+    std::vector<Vector3D<gpuRayFloat_t>> cellVelocities{ cell0Velocity, cell0Velocity };
     mpb.setVelocities(cellVelocities);
-    Vector3D<gpuFloatType_t> cell1Velocity = {3.0, 4.0, 5.0};
+    Vector3D<gpuRayFloat_t> cell1Velocity = {3.0, 4.0, 5.0};
 
     mpb.setCellVelocity(1, cell1Velocity);
     auto matProps = mpb.build();
@@ -160,8 +160,8 @@ SUITE( NewMaterialProperties_tests ) {
 
   TEST(incorrectly_setting_velocities){
     auto mpb = MaterialProperties::Builder();
-    Vector3D<gpuFloatType_t> velocity = {1.0, 2.0, 3.0};
-    std::vector<Vector3D<gpuFloatType_t>> velocities{ velocity };
+    Vector3D<gpuRayFloat_t> velocity = {1.0, 2.0, 3.0};
+    std::vector<Vector3D<gpuRayFloat_t>> velocities{ velocity };
     CHECK_THROW(mpb.setVelocities(velocities), std::exception);
   }
 
@@ -183,9 +183,9 @@ SUITE( NewMaterialProperties_tests ) {
     CHECK_EQUAL(2, matProps.getMatID(1, 0));
     CHECK_EQUAL(3, matProps.getMatID(2, 0));
 
-    CHECK_EQUAL(1.1f, matProps.getDensity(0, 0));
-    CHECK_EQUAL(2.2f, matProps.getDensity(1, 0));
-    CHECK_EQUAL(3.3f, matProps.getDensity(2, 0));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(1.1), matProps.getDensity(0, 0));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(2.2), matProps.getDensity(1, 0));
+    CHECK_EQUAL(static_cast<gpuFloatType_t>(3.3), matProps.getDensity(2, 0));
 
     CHECK_EQUAL(false, matProps.usingMaterialMotion());
     CHECK_EQUAL(0, matProps.numVelocities());
