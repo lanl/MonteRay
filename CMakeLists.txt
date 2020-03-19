@@ -41,6 +41,7 @@ else()
   set_target_properties(MonteRay PROPERTIES LINKER_LANGUAGE CXX) 
 endif()
 
+set_target_properties(MonteRay PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -92,8 +93,6 @@ if(MonteRay.tests)
 
 endif()
 
-set(CMAKE_INSTALL_PREFIX SandBoxRelease)
-
 if(CMAKE_INSTALL_LIBDIR)
 else()
   set(CMAKE_INSTALL_LIBDIR lib)
@@ -108,8 +107,6 @@ if (CMAKE_INSTALL_INCLUDEDIR)
 else()
   set(CMAKE_INSTALL_INCLUDEDIR include)
 endif()
-
-set(MONTERAY_INSTALL_DIR ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
 
 string(CONCAT prefix
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src>"

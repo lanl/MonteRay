@@ -1,5 +1,7 @@
 #include <UnitTest++.h>
 
+#include <memory>
+
 #include "MonteRay_GridSystemInterface.hh"
 #include "UnitTestHelper.hh"
 #include <array>

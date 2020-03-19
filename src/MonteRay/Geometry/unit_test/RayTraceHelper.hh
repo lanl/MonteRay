@@ -1,6 +1,8 @@
 #ifndef MONTERAY_RAYTRACE_HELPER_HH_
 #define MONTERAY_RAYTRACE_HELPER_HH_
 
+#include <memory>
+
 #include "RayWorkInfo.hh"
 #include "GPUUtilityFunctions.hh"
 #include "MonteRay_GridSystemInterface.hh"
@@ -26,9 +28,9 @@ rayTraceList_t rayTraceOnCPU(const Grid* const pGrid, Position pos, Direction di
   return rayTraceList;
 }
 
+#ifdef __CUDACC__
 template <typename Grid, typename Position, typename Direction>
 rayTraceList_t rayTraceOnGPU(const Grid* pGrid, Position pos, Direction dir, gpuRayFloat_t distance, bool outside=false ) {
-#ifdef __CUDACC__
   auto pRayInfo = std::make_unique<RayWorkInfo>(1);
 
   cudaDeviceSynchronize();
@@ -41,9 +43,9 @@ rayTraceList_t rayTraceOnGPU(const Grid* pGrid, Position pos, Direction dir, gpu
   for( unsigned i = 0; i < pRayInfo->getRayCastSize(0); ++i ) {
       rayTraceList.add( pRayInfo->getRayCastCell(0,i), pRayInfo->getRayCastDist(0,i) );
   }
-#endif
   return rayTraceList;
 }
+#endif
 
 template <typename Grid, typename Position, typename Direction>
 rayTraceList_t rayTrace(const Grid* pGrid, Position pos, Direction dir, gpuRayFloat_t distance, bool outside=false ) {
