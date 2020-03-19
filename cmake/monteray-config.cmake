@@ -8,6 +8,3 @@ string(REPLACE "-fexceptions" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-fex
 set_target_properties(MPI::MPI_CXX PROPERTIES INTERFACE_COMPILE_OPTIONS "${mpi_compile_options}")
 
 include("${CMAKE_CURRENT_LIST_DIR}/monteray-targets.cmake")
-
-
-

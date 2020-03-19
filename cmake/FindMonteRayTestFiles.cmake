@@ -1,3 +1,5 @@
+# lnk3dntTestFiles
+# ====================================================================
 message( "-- FindMonteRayTestFiles.cmake -- Looking for geometry test files using the following ENVIRONMENT VARIABLES:"  )
 message( "-- FindMonteRayTestFiles.cmake --     MCATK_LNK3DNT " )
 if(DEFINED ENV{MCATK_LNK3DNT}) 
@@ -24,19 +26,6 @@ if( NOT EXISTS ${lnk3dnt_location} )
 endif()
 
 if( NOT EXISTS ${lnk3dnt_location} )
-    message( "-- FindMonteRayTestFiles.cmake --     MONTERAY_TESTFILES_DIR  " )
-    if(DEFINED ENV{MONTERAY_TESTFILES_DIR}) 
-        find_path( lnk3dnt_location 
-                   NAMES godiva.lnk3dnt
-                   PATHS ENV MONTERAY_TESTFILES_DIR
-                 )
-        if( lnk3dnt_location )
-            message( "-- FindMonteRayTestFiles.cmake -- MCATK LNK3DNT test directory set by environment variable. MONTERAY_TESTFILES_DIR = [ $ENV{MONTERAY_TESTFILES_DIR} ]" )
-        endif()
-   endif()
-endif()
-
-if( NOT EXISTS ${lnk3dnt_location} )
     message( "-- FindMonteRayTestFiles.cmake -- Looking for geometry test files not found using environment variables. " )
     message( "-- FindMonteRayTestFiles.cmake -- Looking for geometry test files in standard locations. " )
     find_path( lnk3dnt_location 
@@ -53,7 +42,6 @@ endif()
 
 if( lnk3dnt_location )
     message( "-- FindMonteRayTestFiles.cmake -- Found geometry test files at [ ${lnk3dnt_location} ]" )
-#    add_definitions( -DMCATK_LINK_DIR="${lnk3dnt_location}" )
 else()
     message( FATAL_ERROR "-- FindMonteRayTestFiles.cmake -- Could not locate geometry test files.  Consider setting the LNK3DNTDIR environment variable." )
 endif()

@@ -63,7 +63,11 @@ if(MonteRay.tests)
   set(CMAKE_CXX_EXTENSIONS OFF)
   add_library(MonteRay::testing IMPORTED INTERFACE)
 
-  find_package(UnitTest++ MODULE REQUIRED)
+  # find_package(UnitTest++ MODULE REQUIRED)
+  target_link_libraries(MonteRay::testing INTERFACE UnitTest++)
+  add_library(UnitTest++ STATIC IMPORTED)
+  set_target_properties(UnitTest++ PROPERTIES IMPORTED_LOCATION $ENV{UNITTEST_ROOT}/lib/libUnitTest++.a)
+  target_include_directories(UnitTest++ INTERFACE $ENV{UNITTEST_ROOT}/include)
   target_link_libraries(MonteRay::testing INTERFACE UnitTest++)
 
   set_target_properties(MonteRay::testing PROPERTIES
