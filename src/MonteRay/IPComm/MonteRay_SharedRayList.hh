@@ -45,19 +45,7 @@ public:
         unsigned rankArg = PA.getWorkGroupRank();
         unsigned numRanks = PA.getWorkGroupSize();
         bool useMPI = PA.isParallel();
-        init( controller, size, rankArg, numRanks, useMPI, numBuckets );
-    }
 
-    template<class T>
-    SharedRayList(T& controller, unsigned size, unsigned rankArg, unsigned numRanks, bool useMPI = false, unsigned numBuckets=1000) :
-        PA( MonteRayParallelAssistant::getInstance() )
-    {
-        std::cout << " MonteRay Warning: SharedRayList Constructor is deprecated! \n";
-        init( controller, size, rankArg, numRanks, useMPI, numBuckets );
-    }
-
-    template<class T>
-    void init(T& controller, unsigned size, unsigned rankArg, unsigned numRanks, bool useMPI, unsigned numBuckets) {
         nParticles = size;
         usingMPI = useMPI;
         nBuckets = numBuckets;
@@ -199,6 +187,7 @@ public:
           controller.debugPrint();
         };
     }
+public:
 
     ~SharedRayList() {
         if( ! usingMPI ) {
