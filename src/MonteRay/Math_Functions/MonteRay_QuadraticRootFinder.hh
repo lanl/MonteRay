@@ -4,29 +4,83 @@
 #include <limits>
 
 #include "MonteRayTypes.hh"
+#include "ThirdParty/Math.hh"
 
 namespace MonteRay {
 
-typedef gpuRayFloat_t Float_t;
+using Float_t = gpuRayFloat_t;
 
-class Roots {
-public:
-    static constexpr Float_t inf = std::numeric_limits<Float_t>::infinity();
-    CUDA_CALLABLE_MEMBER Roots(){}
-    CUDA_CALLABLE_MEMBER ~Roots(){}
+struct Roots {
+    static constexpr gpuRayFloat_t inf = std::numeric_limits<gpuRayFloat_t>::infinity();
 
-    Float_t R1 = inf;
-    Float_t R2 = inf;
+    gpuRayFloat_t R1 = inf;
+    gpuRayFloat_t R2 = inf;
 
-    CUDA_CALLABLE_MEMBER Float_t min(){ if( R1 < R2 ) return R1; return R2; }
+    CUDA_CALLABLE_MEMBER constexpr gpuRayFloat_t min(){ return Math::min(R1, R2); }
+    CUDA_CALLABLE_MEMBER constexpr gpuRayFloat_t max(){ return Math::max(R1, R2); }
+    CUDA_CALLABLE_MEMBER constexpr gpuRayFloat_t areInf(){ 
+      return (R1 == inf) && (R2 == inf);
+    }
 };
 
-CUDA_CALLABLE_MEMBER
-Float_t FindMinPositiveRoot(Float_t, Float_t, Float_t);
+///\brief Quadratic equation solver.
+///
+///\details We used Numerical Recipes formula from the "Quadratic and Cubic Equations" Section to \n
+/// solve this quadratic.
+CUDA_CALLABLE_MEMBER 
+constexpr Roots FindRoots(gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t C) {
+    gpuRayFloat_t Discriminant = B*B - 4.0 * A * C;
 
-CUDA_CALLABLE_MEMBER
-Roots FindPositiveRoots(Float_t, Float_t, Float_t);
+    // The roots (e.g. intersection distances for ray tracing) are separated by the
+    // square root of the discriminant.  If this separation is very small, it is
+    // best to ignore the intersection since the enter/exit points are so close that
+    // they become numerically difficult to differentiate, AND any tally contribution
+    // would be negligible.
 
+    if( Discriminant < 0.0 ){
+        return Roots{};
+    }
+
+    // TPB: this used to be just sqrt, which was double precision on the GPU probably
+    gpuRayFloat_t temp = (B < 0.0) ? 
+        -0.5*( B - Math::sqrt(Discriminant) ) : 
+        -0.5*( B + Math::sqrt(Discriminant) );
+
+    return {
+      A == 0.0 ?    Roots::inf: temp/A,
+      temp == 0.0 ? Roots::inf: C/temp
+    };
+}
+
+// this is used to avoid numerical roundoff errors where one of the roots is small but non-zero in a situation where it should be zero (i.e. particle on a surface)
+CUDA_CALLABLE_MEMBER 
+constexpr auto FindMaxValidRoot(gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t C) {
+  auto roots = FindRoots(A, B, C);
+
+  if (roots.R1 <= 0.0){
+    roots.R1 = -Roots::inf;
+  }
+  if (roots.R2 <= 0.0){
+    roots.R2 = -Roots::inf;
+  }
+  
+  return (roots.R1 != -Roots::inf or roots.R2 != -Roots::inf) ?
+    Math::max(static_cast<gpuRayFloat_t>(0.0), roots.max()) :
+    Roots::inf; 
+
+}
+
+CUDA_CALLABLE_MEMBER 
+constexpr Roots FindPositiveRoots(gpuRayFloat_t A, gpuRayFloat_t B, gpuRayFloat_t C) {
+  auto roots = FindRoots(A, B, C);
+  if (roots.R1 <= 0.0){
+    roots.R1 = Roots::inf;
+  }
+  if (roots.R2 <= 0.0){
+    roots.R2 = Roots::inf;
+  }
+  return roots;
+}
 
 } /* namespace MonteRay */
 

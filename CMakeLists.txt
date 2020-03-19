@@ -41,10 +41,12 @@ else()
   set_target_properties(MonteRay PROPERTIES LINKER_LANGUAGE CXX) 
 endif()
 
+set_target_properties(MonteRay PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include(CMakeDependentOption)
+include(CMakePackageConfigHelpers)
 include(CTest)
 CMAKE_DEPENDENT_OPTION(MonteRay.tests
   "Build the MonteRay tests and integrate with ctest" ON 
@@ -91,8 +93,6 @@ if(MonteRay.tests)
 
 endif()
 
-set(CMAKE_INSTALL_PREFIX SandBoxRelease)
-
 if(CMAKE_INSTALL_LIBDIR)
 else()
   set(CMAKE_INSTALL_LIBDIR lib)
@@ -108,16 +108,12 @@ else()
   set(CMAKE_INSTALL_INCLUDEDIR include)
 endif()
 
-target_include_directories(MonteRay PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src>
-  $<INSTALL_INTERFACE:include>
-)
-set(MONTERAY_INSTALL_DIR ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
-
 string(CONCAT prefix
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src>"
-  "$<INSTALL_INTERFACE:${MONTERAY_INSTALL_DIR}>"
+  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
+
+target_include_directories(MonteRay PUBLIC "${prefix}")
 
 install(DIRECTORY src/
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
@@ -130,33 +126,33 @@ install(FILES
   DESTINATION share/cmake/monteray
 )
 
-# install(TARGETS MonteRay EXPORT MonteRayTargets
-#   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-#   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-#   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-# )
+# use a shared library to force device code linking to occur 
+# otherwise host code will need to use NVCC during the linking stage
+add_library(monteray SHARED)
+target_link_libraries(monteray PUBLIC MonteRay)
 
-install( TARGETS MonteRay EXPORT MonteRay DESTINATION ${MONTERAY_INSTALL_DIR} )
-
-# install(EXPORT MonteRayTargets
-#   FILE monteray-targets.cmake
-#   #NAMESPACE shacl::
-#   DESTINATION share/cmake/monteray
-# )
+install(TARGETS monteray EXPORT monteray DESTINATION ${MonteRayINSTALL_DIR} )
+install(TARGETS monteray MonteRay EXPORT monterayTargets)
+install(EXPORT monterayTargets
+   FILE monteray-targets.cmake
+   DESTINATION share/cmake/monteray
+)
+write_basic_package_version_file("monteray-config-version.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
+install(FILES
+  "${PROJECT_SOURCE_DIR}/cmake/monteray-config.cmake"
+  "${PROJECT_BINARY_DIR}/monteray-config-version.cmake"
+  DESTINATION share/cmake/monteray
+)
 
 if(NOT subproject)
-  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS TRUE)
   include(InstallRequiredSystemLibraries)
   set(CPACK_PACKAGE_VENDOR "Los Alamos National Laboratory")
   set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
   set(CPACK_PACKAGE_CONTACT "jsweezy@lanl.gov")
   include(CPack)
-
-  set( CPACK_PACKAGE_NAME "MONTERAY" )
-  if( isSubversionDir )
-      set( CPACK_PACKAGE_NAME "${CPACK_PACKAGE_NAME}_${RevisionName}" )
-  endif()
-  set( CPACK_GENERATOR "TBZ2" )
 endif()
 
 # add_subdirectory( apps )

@@ -4,9 +4,8 @@ PUBLIC
   "${prefix}/MonteRay/RayTrace/ExpectedPathLength.t.hh"
   "${prefix}/MonteRay/RayTrace/RayListController.hh"
   "${prefix}/MonteRay/RayTrace/RayListController.t.hh"
-  "${prefix}/MonteRay/RayTrace/gpuTally.hh"
+  "${prefix}/MonteRay/RayTrace/BasicTally.hh"
 PRIVATE
-  "${prefix}/MonteRay/RayTrace/gpuTally.cu"
   "${prefix}/MonteRay/RayTrace/ExpectedPathLength.cu"
   "${prefix}/MonteRay/RayTrace/RayListController.cu"
 )

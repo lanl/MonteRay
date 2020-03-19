@@ -4,6 +4,9 @@
 #include "MonteRayAssert.hh"
 #include "MonteRay_binaryIO.hh"
 #include "ManagedAllocator.hh"
+#include "MonteRayVector3D.hh"
+#include "SimpleView.hh"
+
 #include <iostream>
 #include <algorithm>
 #define MATERIAL_PROPERTIES_VERSION 1
@@ -18,23 +21,27 @@ class MaterialProperties_t: public Managed {
     using MatID_t = short int;
     using Density_t = gpuFloatType_t;
     using Cell_Index_t = int;
+    using Velocity_t = Vector3D<gpuRayFloat_t>;
   private: 
-
 
   Container<Offset_t> offset_;
   Container<MatID_t> IDs_;
   Container<Density_t> densities_;
+  Container<Velocity_t> velocities_;
+  bool usingMaterialMotion_ = false;
 
   constexpr auto checkInputsAndGetIndex( unsigned cellNum, unsigned matNum ) const { 
     MONTERAY_ASSERT_MSG( cellNum < this->numCells(), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested cell number exceeds number of allocated cells!" );
     MONTERAY_ASSERT_MSG( matNum < numMats(cellNum), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested material exceeds number of materials in the cell!" );
     auto index = offset_[cellNum] + matNum;
-    MONTERAY_ASSERT_MSG( index < this->numMaterialComponents(), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested material index exceeds number of total number of materials.!" );
+    MONTERAY_ASSERT_MSG( index < this->numMaterialComponents(), "MonteRay::MaterialProperties::get...(cellNum,matNum)  -- requested material index exceeds number of total number of materials!" );
     return index;
   }
 
-  MaterialProperties_t(Container<Offset_t>&& offset, Container<MatID_t>&& ID, Container<Density_t>&& density):
-    offset_(offset), IDs_(ID), densities_(density) 
+  MaterialProperties_t(Container<Offset_t>&& offset, Container<MatID_t>&& ID, Container<Density_t>&& densities, 
+      Container<Velocity_t>&& velocities, bool usingMaterialMotion):
+    offset_(offset), IDs_(ID), densities_(densities), velocities_(velocities), 
+      usingMaterialMotion_(usingMaterialMotion)
   {} 
 
   public:
@@ -55,9 +62,24 @@ class MaterialProperties_t: public Managed {
   constexpr auto numMaterials( unsigned i ) const { return this->numMats(i); }
   constexpr auto numMaterialComponents() const { return densities_.size(); }
   constexpr auto getDensity( unsigned cellNum, unsigned matNum ) const { return densities_[ checkInputsAndGetIndex(cellNum, matNum) ]; }
+  constexpr auto materialDensity( unsigned cellNum, unsigned matNum ) const { return densities_[ checkInputsAndGetIndex(cellNum, matNum) ]; }
   constexpr auto getMaterialDensity( unsigned cellNum, unsigned matNum ) const { return this->getDensity(cellNum, matNum); }
   constexpr auto getMaterialID( unsigned cellNum, unsigned matNum ) const { return IDs_[ checkInputsAndGetIndex(cellNum, matNum) ]; }
   constexpr auto getMatID( unsigned cellNum, unsigned matNum ) const { return this->getMaterialID(cellNum, matNum); }
+  constexpr auto matID( unsigned cellNum, unsigned matNum ) const { return this->getMaterialID(cellNum, matNum); }
+  constexpr auto numVelocities() { return velocities_.size(); }
+  constexpr auto usingMaterialMotion() const { return usingMaterialMotion_; }
+  constexpr const auto& velocity( unsigned cellNum ) const { 
+    MONTERAY_ASSERT_MSG(usingMaterialMotion_, "calling MaterialProperties::getVelocity when velocities have not been set.");
+    return velocities_[cellNum]; 
+  }
+  constexpr const auto& getVelocity( unsigned cellNum ) const { return velocity(cellNum); }
+
+  constexpr SimpleView<const MatID_t> cellMaterialIDs(int cellNum) const {
+    return {&IDs_[offset_[cellNum]], &IDs_[offset_[cellNum + 1]]};
+  }
+
+
   // TPB TODO: Save these functions and see they are useful later
   /* constexpr const auto cellMaterialIDs const (unsigned cellNum) { */
   /*   return make_simple_view( &IDs_[offset_[cellNum]], &IDs_[offset_[cellNum + 1]] ); */
@@ -69,11 +91,6 @@ class MaterialProperties_t: public Managed {
 
   auto getPtr() { std::cout << " Warning: getPtr() is deprecated."; return this; }
   const auto getPtr() const { std::cout << " Warning: getPtr() is deprecated."; return this; }
-
-  // TODO: implement write/read
-  void writeToFile(const std::string&) const {
-
-  }
 
   void write(std::ostream& stream) const {
     unsigned version = MATERIAL_PROPERTIES_VERSION;
@@ -91,6 +108,13 @@ class MaterialProperties_t: public Managed {
     for (auto& val : densities_){
       binaryIO::write(stream, val);
     }
+
+    binaryIO::write(stream, usingMaterialMotion());
+    if (this->usingMaterialMotion()){
+      for (auto& val : velocities_){
+        binaryIO::write(stream, val);
+      }
+    }
   }
 
   template <typename MaterialList>
@@ -100,16 +124,16 @@ class MaterialProperties_t: public Managed {
     }
   }
 
-
-
   class Builder {
     public:
     struct Cell{
       std::vector<MatID_t> ids;
       std::vector<Density_t> densities;
+      Velocity_t velocity;
       auto getMaterialID(size_t i){ return ids[i]; }
       auto getMaterialDensity(size_t i){ return densities[i]; }
       auto getNumMaterials() { return ids.size(); }
+      auto getVelocity() { return velocity; }
       auto& add(MatID_t matID, Density_t density){
         ids.push_back(matID);
         densities.push_back(density);
@@ -119,11 +143,15 @@ class MaterialProperties_t: public Managed {
     private:
     std::vector<Cell> b_cells_;
     bool memoryReductionDisabled = false;
+    bool b_usingMaterialMotion_ = false;
 
     size_t getEqualNumMatMemorySize(Cell_Index_t nCells, size_t nMats ) const {
         size_t total = 0;
         total += sizeof(MatID_t)*nMats*nCells;
         total += sizeof(Density_t)*nMats*nCells;
+        if (b_usingMaterialMotion_){
+          total += sizeof(Velocity_t)*nCells;
+        }
         return total;
     }
 
@@ -132,20 +160,19 @@ class MaterialProperties_t: public Managed {
         total += sizeof(Offset_t)*(nCells+1);
         total += sizeof(MatID_t)*nMatComponents;
         total += sizeof(Density_t)*nMatComponents;
+        if (b_usingMaterialMotion_){
+          total += sizeof(Velocity_t)*nCells;
+        }
         return total;
     }
 
     public:
-    /* Builder (int numCells): b_cells_{numCells} {} */
     Builder() = default;
-
 
     template<typename T>
     Builder(T&& obj){
       setMaterialDescription(std::forward<T>(obj));
     }
-
-    void readFromFile(const std::string&) const {}
 
     MaterialProperties_t read(std::istream& stream){
       unsigned version;
@@ -166,20 +193,32 @@ class MaterialProperties_t: public Managed {
       size_type nComponents;
       binaryIO::read(stream, nComponents);
       Container<MatID_t> IDs(nComponents);
-      Container<Density_t> densities(nComponents);
       for (auto& val : IDs){
         binaryIO::read(stream, val);
       }
+      Container<Density_t> densities(nComponents);
       for (auto& val : densities){
         binaryIO::read(stream, val);
       }
-      return {std::move(offset), std::move(IDs), std::move(densities)};
+
+      binaryIO::read(stream, b_usingMaterialMotion_);
+
+      Container<Velocity_t> velocities;
+      if (b_usingMaterialMotion_){
+        velocities.resize(nOffsets - 1); // nCells = nOffsets - 1
+        for (auto& val : velocities){
+          binaryIO::read(stream, val);
+        }
+      }
+
+      return {std::move(offset), std::move(IDs), std::move(densities), std::move(velocities), b_usingMaterialMotion_};
     }
 
     void disableMemoryReduction() { memoryReductionDisabled = true; }
     
+    // MCATK Cell API - may not have other getters/setters, so only material properties (mat ids and densities) (mat ids and densities) (mat ids and densities) (mat ids and densities) (mat ids and densities) (mat ids and densities) (mat ids and densities) (mat ids and densities) (mat ids and densities) are set here.
     template <typename OtherCell>
-    Builder& addCell(OtherCell&& otherCell){
+    void addCell(OtherCell&& otherCell){
       Cell cell;
       auto N = otherCell.getNumMaterials();
       for (decltype(N) i = 0; i < N; i++){
@@ -187,10 +226,26 @@ class MaterialProperties_t: public Managed {
         cell.densities.push_back(otherCell.getMaterialDensity(i));
       }
       b_cells_.emplace_back(std::move(cell));
-      return *this;
     }
 
-    Builder& addCellMaterial(int cellID, MatID_t matID, Density_t density){
+    void setCellVelocity(int cellID, Velocity_t vel){
+      b_usingMaterialMotion_ = true;
+      b_cells_[cellID].velocity = vel;
+    }
+
+
+    template<typename Velocities>
+    void setVelocities(Velocities&& velocities){
+      b_usingMaterialMotion_ = true;
+      if (velocities.size() != b_cells_.size()) {
+        throw std::runtime_error("Attempting to call MaterialProperites::setVelocities but the number of velocities does not match the number of cells");
+      }
+      for (int i = 0; i < b_cells_.size(); i++){
+        b_cells_[i].velocity = velocities[i];
+      }
+    }
+    
+    void addCellMaterial(int cellID, MatID_t matID, Density_t density){
       if (cellID > b_cells_.size()) throw std::runtime_error("Error while building MaterialProperties: " 
           " Trying to set property of CellID: " + std::to_string(cellID) + 
           " which is beyond number of cells: " + std::to_string(b_cells_.size()));
@@ -204,7 +259,6 @@ class MaterialProperties_t: public Managed {
         matIDs.push_back(matID);
         densities.push_back(density);
       }
-      return *this;
     }
 
     ///Initializes the material description using vectors of matIDs and density.
@@ -252,7 +306,6 @@ class MaterialProperties_t: public Managed {
 
       size_t memorySizeForEqualNumMats = getEqualNumMatMemorySize( nCells, maxNumComponents );
       size_t memorySizeForNonEqualNumMats = getNonEqualNumMatMemorySize( nCells, nComponents );
-      std::cout << memorySizeForEqualNumMats << "  " << memorySizeForNonEqualNumMats << std::endl;
       bool singleNumComponents = ( memorySizeForEqualNumMats < memorySizeForNonEqualNumMats && !memoryReductionDisabled );
 
       Cell cell;
@@ -289,8 +342,8 @@ class MaterialProperties_t: public Managed {
       size_t nCells = obj.NCells(0) * obj.NCells(1) * obj.NCells(2);
 
       size_t NMaxMaterialsPerCell = obj.MaxMaterialsPerCell();
-      std::vector< double > density( nCells * NMaxMaterialsPerCell );
-      std::vector< int >   material( nCells * NMaxMaterialsPerCell );
+      std::vector<double> density( nCells * NMaxMaterialsPerCell );
+      std::vector<int>   material( nCells * NMaxMaterialsPerCell );
 
       obj.fillDensityArray ( density.data()  );
       obj.fillMaterialArray( material.data() );
@@ -301,8 +354,8 @@ class MaterialProperties_t: public Managed {
     ///Set material description from another object, like lnk3dnt with view.
     template<typename objType, typename iter>
     void setMaterialDescription( objType& obj, const iter& view ){
-      std::vector< double > density;
-      std::vector< int >    material;
+      std::vector<double> density;
+      std::vector<int>    material;
       obj.extract(material, density, view );
       initializeMaterialDescription( material, density, view.size() );
     }
@@ -320,19 +373,28 @@ class MaterialProperties_t: public Managed {
       Container<Offset_t> offset;
       Container<MatID_t> IDs;
       Container<Density_t> densities;
+      Container<Velocity_t> velocities;
 
       offset.reserve(b_cells_.size() + 1);
       offset.emplace_back(0);
       for (auto& cell : b_cells_){
         offset.emplace_back(offset.back() + cell.ids.size());
       }
+
       IDs.reserve(offset.back());
       densities.reserve(offset.back());
       for (auto& cell : b_cells_){
         IDs.insert(IDs.end(), cell.ids.begin(), cell.ids.end());
         densities.insert(densities.end(), cell.densities.begin(), cell.densities.end());
       }
-      return {std::move(offset), std::move(IDs), std::move(densities)};
+
+      if (b_usingMaterialMotion_){
+        for (auto& cell : b_cells_){
+          velocities.emplace_back(cell.velocity);
+        }
+      }
+
+      return {std::move(offset), std::move(IDs), std::move(densities), std::move(velocities), b_usingMaterialMotion_};
     }
   };
 };

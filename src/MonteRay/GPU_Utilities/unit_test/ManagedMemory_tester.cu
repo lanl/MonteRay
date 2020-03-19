@@ -7,9 +7,7 @@ SUITE( ManagedMemory_tester ) {
 
     TEST( ManagedMemory_ctor ) {
         testClass test;
-        //CHECK(false);
-
-        CHECK_EQUAL( 16, sizeof(testClass) );
+        CHECK_EQUAL( 8 + 2*sizeof(gpuFloatType_t), sizeof(testClass) );
     }
 
     TEST( ManagedMemory_ctor_with_new ) {

@@ -52,6 +52,7 @@ public:
     SharedRayList(T& controller, unsigned size, unsigned rankArg, unsigned numRanks, bool useMPI = false, unsigned numBuckets=1000) :
         PA( MonteRayParallelAssistant::getInstance() )
     {
+        std::cout << " MonteRay Warning: SharedRayList Constructor is deprecated! \n";
         init( controller, size, rankArg, numRanks, useMPI, numBuckets );
     }
 
@@ -62,7 +63,6 @@ public:
         nBuckets = numBuckets;
         nRanks = numRanks;
         rank = rankArg;
-
 
         if( ! usingMPI ) {
             particlesPerRank = nParticles / nRanks;
@@ -185,20 +185,18 @@ public:
             MPI_Barrier( PA.getWorkGroupCommunicator() );
         }
 
-        store = [=,&controller] (const COLLISION_T* pParticle, unsigned N ) {
+        store = [&controller] (const COLLISION_T* pParticle, unsigned N ) {
             controller.add( (const void*) pParticle,N);
         };
 
-        controllerFlush = [=,&controller] (bool final) {
-            controller.flush(final);
+        controllerFlush = [&controller] (bool final) { controller.flush(final); };
+
+        controllerClear = [&controller] () {
+          controller.clearTally();
         };
 
-        controllerClear = [=,&controller] () {
-            controller.clearTally();
-        };
-
-        controllerDebugPrint = [=,&controller] () {
-            controller.debugPrint();
+        controllerDebugPrint = [&controller] () {
+          controller.debugPrint();
         };
     }
 
@@ -382,6 +380,7 @@ public:
 
     void addCollision( unsigned targetRank, const COLLISION_T& collision) {
 
+
         MONTERAY_ASSERT( targetRank < nRanks );
 
         if( targetRank > 0 ) {
@@ -556,10 +555,7 @@ public:
     }
 
     void restart() {
-        restart( PA.getWorkGroupRank() );
-    }
-
-    void restart(unsigned targetRank) {
+        unsigned targetRank = PA.getWorkGroupRank();
         MONTERAY_ASSERT( targetRank < nRanks );
         if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
         if( targetRank == 0 ) {
@@ -575,6 +571,7 @@ public:
         }
         if ( usingMPI ) MPI_Barrier( PA.getWorkGroupCommunicator() );
     }
+
 
     void debugPrint() {
         controllerDebugPrint();

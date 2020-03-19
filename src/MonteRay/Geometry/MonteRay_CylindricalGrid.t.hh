@@ -20,7 +20,7 @@ MonteRay_CylindricalGrid::radialCrossingDistancesSingleDirection(
 
     // helper function to wrap generalized radialCrossingDistancesSingleDirection
     gpuRayFloat_t particleRSq = calcParticleRSq( pos );
-    unsigned rIndex = pRVertices->getRadialIndexFromRSq(particleRSq);
+    unsigned rIndex = gridBins[R].getRadialIndexFromRSq(particleRSq);
 
     gpuRayFloat_t A = calcQuadraticA( dir );
     gpuRayFloat_t B = calcQuadraticB( pos, dir);
@@ -30,7 +30,7 @@ MonteRay_CylindricalGrid::radialCrossingDistancesSingleDirection(
             dim,
             threadID,
             rayInfo,
-            *pRVertices,
+            gridBins[R],
             particleRSq,
             A,
             B,

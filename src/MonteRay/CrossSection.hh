@@ -1,6 +1,4 @@
-#include "MonteRay/CrossSection/MonteRayCrossSection.hh"
 #include "MonteRay/CrossSection/CrossSectionUtilities.hh"
-#include "MonteRay/CrossSection/HashLookup.hh"
 #include "MonteRay/CrossSection/FasterHash.hh"
 #include "MonteRay/CrossSection/CrossSectionHash.hh"
 #include "MonteRay/CrossSection/CrossSection.hh"

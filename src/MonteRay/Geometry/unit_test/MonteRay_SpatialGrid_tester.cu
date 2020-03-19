@@ -1,167 +1,99 @@
 #include <UnitTest++.h>
 
 #include "MonteRay_SpatialGrid.hh"
-#include "MonteRayCopyMemory.t.hh"
+#include <type_traits>
+#include "UnitTestHelper.hh"
 
 using namespace MonteRay;
 
+namespace MonteRaySpatialGridTester{
+
+
 SUITE( MonteRay_SpatialGrid_Tester ) {
-    typedef MonteRay_SpatialGrid Grid_t;
+  using Grid_t = MonteRay_SpatialGrid;
 
-    TEST( ctor ) {
-        CHECK(true);
-        Grid_t grid;
-    }
+  class SpatialGridTester{
+    public:
+      std::array<MonteRay_GridBins, 3> cartGridBins{
+        MonteRay_GridBins{-10.0, 10.0, 1},
+        MonteRay_GridBins{-10.0, 10.0, 2},
+        MonteRay_GridBins{-10.0, 10.0, 3}
+      };
 
-    TEST( ctor_ptr ) {
-        CHECK(true);
-        std::unique_ptr<Grid_t> pGridInfo = std::unique_ptr<Grid_t>( new Grid_t() );
-    }
+      std::array<MonteRay_GridBins, 3> cylGridBins{
+        MonteRay_GridBins{0.0, 10.0, 10, MonteRay_GridBins::RADIAL},
+        MonteRay_GridBins{-10.0, 10.0, 20},
+        MonteRay_GridBins{-10.0, 10.0, 30}
+      };
+  };
 
-    TEST( setgetCoordinateSystem ) {
-        Grid_t grid;
-        CHECK_EQUAL( TransportMeshTypeEnum::NONE, grid.getCoordinateSystem() );
-        grid.setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-        CHECK_EQUAL( TransportMeshTypeEnum::Cartesian, grid.getCoordinateSystem() );
-    }
+  TEST_FIXTURE(SpatialGridTester, ConstructorsAndGetters){
+    auto grid = MonteRay_SpatialGrid(TransportMeshType::Cartesian, cartGridBins);
+    CHECK(TransportMeshType::Cartesian == grid.getCoordinateSystem());
+    CHECK_EQUAL(3, grid.getDimension());
+    CHECK_EQUAL(1, grid.getNumGridBins(0));
+    CHECK_EQUAL(2, grid.getNumGridBins(1));
+    CHECK_EQUAL(3, grid.getNumGridBins(2));
 
-    TEST( checkCoordinateSystemLimit ) {
-        Grid_t grid;
+    grid = MonteRay_SpatialGrid(TransportMeshType::Cylindrical, cylGridBins);
+    CHECK(TransportMeshType::Cylindrical == grid.getCoordinateSystem());
+    CHECK_EQUAL(2, grid.getDimension());
+    CHECK_EQUAL(10, grid.getNumGridBins(0));
+    CHECK_EQUAL(20, grid.getNumGridBins(1));
 
-        bool exception=false;
-        try{
-            grid.setCoordinateSystem( TransportMeshTypeEnum::MAX );
-        }
-        catch( ... ) {
-        	exception=true;
-        }
+    CHECK_EQUAL(1, grid.getMinVertex(0));
+    CHECK_EQUAL(-10, grid.getMinVertex(1));
+    CHECK_EQUAL(10, grid.getMaxVertex(0));
+    CHECK_EQUAL(10, grid.getMaxVertex(1));
 
-        CHECK_EQUAL(true, exception );
+    CHECK_EQUAL(-4.0, grid.getVertex(1, 6));
 
-    }
+    MonteRay_SpatialGrid::Position_t pos{9.5, 0, 9.5};
+    CHECK_EQUAL(199, grid.getIndex(pos));
 
-    TEST( setgetDimension ) {
-         Grid_t grid;
-         CHECK_EQUAL( 0U, grid.getDimension() );
-         grid.setDimension( 3 );
-         CHECK_EQUAL( 3U, grid.getDimension() );
-     }
+    CHECK_CLOSE(M_PI*(10*10 - 9*9), grid.getVolume(199), 1E-5);
+    CHECK_EQUAL(10, grid.getNumVertices(0));
+    CHECK_EQUAL(10, grid.getNumVerticesSq(0));
+    CHECK_EQUAL(0, grid.getNumVerticesSq(1));
+  }
 
-     TEST( checkDimensionUpperLimit ) {
-         Grid_t grid;
-         CHECK_EQUAL( 0U, grid.getDimension() );
+#ifdef __CUDACC__
+  __global__ void testSpatialGrid(bool* testVal, MonteRay_SpatialGrid* pGrid) {
+    *testVal = true;
 
-         bool exception=false;
-         try{
-             grid.setDimension(4);
-         }
-         catch( ... ) {
-        	 exception=true;
-         }
-         CHECK_EQUAL(true, exception );
-     }
+    GPU_CHECK(2 == pGrid->getDimension());
+    GPU_CHECK(10 == pGrid->getNumGridBins(0));
+    GPU_CHECK(20 == pGrid->getNumGridBins(1));
 
-     TEST( checkDimensionLowerLimit ) {
-         Grid_t grid;
+    GPU_CHECK(1 == pGrid->getMinVertex(0));
+    GPU_CHECK(-10 == pGrid->getMinVertex(1));
+    GPU_CHECK(10 == pGrid->getMaxVertex(0));
+    GPU_CHECK(10 == pGrid->getMaxVertex(1));
 
-         bool exception=false;
-         try{
-             grid.setDimension(0);
-         }
-         catch( ... ) {
-        	 exception=true;
-         }
-         CHECK_EQUAL(true, exception );
-     }
+    GPU_CHECK(-4.0 == pGrid->getVertex(1, 6));
 
-//  Disable assignment operator until needed
-//     TEST( assignmentOperator ){
-//         Grid_t grid;
-//         grid.setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-//         grid.setDimension( 3 );
-//         grid.setGrid( MonteRay_SpatialGrid::CART_X, -10.0, 10.0, 100);
-//         grid.setGrid( MonteRay_SpatialGrid::CART_Y, -10.0, 10.0, 100);
-//         grid.setGrid( MonteRay_SpatialGrid::CART_Z, -10.0, 10.0, 100);
-//         grid.initialize();
-//
-//         Grid_t newGrid;
-//
-//         CHECK_EQUAL( 0, newGrid.getDimension() );
-//         CHECK( !newGrid.isInitialized() );
-//
-//         newGrid = grid;
-//
-//         CHECK_EQUAL( grid.getCoordinateSystem(), newGrid.getCoordinateSystem() );
-//         CHECK_EQUAL( grid.getDimension(), newGrid.getDimension() );
-//         CHECK_EQUAL( -10.0, newGrid.getVertex(0,0) );
-//         CHECK_EQUAL( -9.8, newGrid.getVertex(0,1) );
-//         CHECK_EQUAL( -10.0, newGrid.getVertex(1,0) );
-//         CHECK_EQUAL( -10.0, newGrid.getVertex(2,0) );
-//         CHECK( newGrid.isInitialized() );
-//     }
+    MonteRay_SpatialGrid::Position_t pos{9.5, 0, 9.5};
+    GPU_CHECK(199 == pGrid->getIndex(pos));
 
-     TEST( write_to_file_Cartesian ) {
-         Grid_t grid;
-         grid.setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-         grid.setDimension( 3 );
-         grid.setGrid( MonteRay_SpatialGrid::CART_X, -10.0, 10.0, 100);
-         grid.setGrid( MonteRay_SpatialGrid::CART_Y, -10.0, 10.0, 100);
-         grid.setGrid( MonteRay_SpatialGrid::CART_Z, -10.0, 10.0, 100);
-         unsigned ExpectedNumCells = 100 * 100 * 100;
-         CHECK_EQUAL(ExpectedNumCells, grid.getNumCells() );
+    GPU_CHECK(10 == pGrid->getNumVertices(0));
+    GPU_CHECK(10 == pGrid->getNumVerticesSq(0));
+    GPU_CHECK(0 == pGrid->getNumVerticesSq(1));
+  }
 
-         grid.write( "test_spatialGrid_XYZ.bin" );
+  TEST_FIXTURE(SpatialGridTester, GettersOnGPU){
+    auto upGrid = std::make_unique<MonteRay_SpatialGrid>(TransportMeshType::Cylindrical, cylGridBins);
+    auto pGrid = upGrid.get();
+    bool* pTestVal;
+    cudaMallocManaged(&pTestVal, sizeof(bool));
+    *pTestVal = false;
+    testSpatialGrid<<<1, 1>>>(pTestVal, pGrid);
+    cudaDeviceSynchronize();
+    CHECK(*pTestVal);
+    cudaFree(pTestVal);
+  }
 
-         {
-             Grid_t newGrid;
-             newGrid.read( "test_spatialGrid_XYZ.bin" );
-
-             CHECK_EQUAL( 3U, newGrid.getDimension() );
-             CHECK_EQUAL( TransportMeshTypeEnum::Cartesian, newGrid.getCoordinateSystem() );
-             CHECK_EQUAL(ExpectedNumCells, newGrid.getNumCells() );
-         }
-     }
-
-     TEST( write_to_file_Spherical ) {
-         Grid_t grid;
-         grid.setCoordinateSystem( TransportMeshTypeEnum::Spherical );
-         grid.setDimension( 1 );
-         grid.setGrid( MonteRay_SpatialGrid::SPH_R, 0.0, 10.0, 100);
-         unsigned ExpectedNumCells = 100;
-         CHECK_EQUAL(ExpectedNumCells, grid.getNumCells() );
-
-         grid.write( "test_spatialGrid_SphR.bin" );
-
-         {
-             Grid_t newGrid;
-             newGrid.read( "test_spatialGrid_SphR.bin" );
-
-             CHECK_EQUAL( 1U, newGrid.getDimension() );
-             CHECK_EQUAL( TransportMeshTypeEnum::Spherical, newGrid.getCoordinateSystem() );
-             CHECK_EQUAL(ExpectedNumCells, newGrid.getNumCells() );
-         }
-     }
-
-//     TEST( write_to_file_Cylindrical ) {
-//          const int DIM=2;
-//          unsigned NumRCells = 10;
-//          unsigned NumZCells = 100;
-//
-//          SpatialGrid gridOut;
-//          gridOut.setDimension( DIM );
-//          gridOut.setCoordinateSystem( TransportMeshTypeEnum::Spherical );
-//          gridOut.setGrid( SpatialGrid::CYLR_R, 0.0, 1.0, NumRCells);
-//          gridOut.setGrid( SpatialGrid::CYLR_Z, 0.0, 10.0, NumZCells);
-//          gridOut.initialize();
-//
-//          CHECK_EQUAL( NumRCells*NumZCells, gridOut.numCells() );
-//
-//          SpatialGrid gridIn;
-//
-//          gridOut.write("SpatialGrid_2D.xml");
-//          gridIn.read("SpatialGrid_2D.xml");
-//
-//          CHECK_EQUAL( gridOut.numCells(), gridIn.numCells() );
-//      }
+#endif
 
 }
+
+}// end namespace 

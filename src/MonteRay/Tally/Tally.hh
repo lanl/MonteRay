@@ -64,8 +64,9 @@ public:
     // TODO: test linear search (done here) vs. binary search
     // this automatically takes care of non-infinite right edges.
     int index = 0;
-    for (const auto& val : timeBinEdges_){
-      if (time < val){
+    //for (const auto& val : timeBinEdges_){
+    for (unsigned i=0; i < timeBinEdges_.size(); ++i ){
+      if (time < timeBinEdges_[i]){
         return index;
       }
       index++;

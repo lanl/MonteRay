@@ -1,10 +1,7 @@
 target_sources(MonteRay 
 PUBLIC 
-  "${prefix}/MonteRay/Material/MonteRayMaterial.hh"
-  "${prefix}/MonteRay/Material/MonteRayMaterialList.hh"
-PRIVATE
-  "${prefix}/MonteRay/Material/MonteRayMaterial.cu"
-  "${prefix}/MonteRay/Material/MonteRayMaterialList.cu"
+  "${prefix}/MonteRay/Material/Material.hh"
+  "${prefix}/MonteRay/Material/MaterialList.hh"
 )
 
 if (MonteRay.tests)

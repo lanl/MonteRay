@@ -1,15 +1,6 @@
-/*
- * MonteRaySphericalGrid.cc
- *
- *  Created on: Feb 2, 2018
- *      Author: jsweezy
- */
-
 #include "MonteRayDefinitions.hh"
 #include "MonteRay_SphericalGrid.t.hh"
 #include "MonteRayConstants.hh"
-#include "MonteRay_SingleValueCopyMemory.t.hh"
-#include "MonteRayCopyMemory.t.hh"
 #include "GPUErrorCheck.hh"
 #include "MonteRayParallelAssistant.hh"
 
@@ -17,7 +8,7 @@
 
 namespace MonteRay {
 
-using ptrSphericalGrid_result_t = MonteRay_SingleValueCopyMemory<MonteRay_SphericalGrid*>;
+/* using ptrSphericalGrid_result_t = Result<MonteRay_SphericalGrid*>; */ // fix this
 
 CUDA_CALLABLE_KERNEL  createDeviceInstance(MonteRay_SphericalGrid** pPtrInstance, ptrSphericalGrid_result_t* pResult, MonteRay_GridBins* pGridR ) {
     *pPtrInstance = new MonteRay_SphericalGrid( 1, pGridR );

@@ -5,8 +5,8 @@
 
 namespace MonteRay {
 
-CUDA_CALLABLE_KERNEL  add_double(unsigned N, int *a, int *b, int *c );
-CUDA_CALLABLE_KERNEL  add_single(unsigned N, int *a, int *b, int *c );
+CUDA_CALLABLE_KERNEL  add_double(unsigned N, double *a, double *b, double *c );
+CUDA_CALLABLE_KERNEL  add_single(unsigned N, float *a, float *b, float *c );
 
 double gpuAddTwoDoubles( double, double );
 float  gpuAddTwoFloats(  float, float );

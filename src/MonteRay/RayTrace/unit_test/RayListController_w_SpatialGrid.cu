@@ -6,17 +6,16 @@
 #include <memory>
 
 #include "GPUUtilityFunctions.hh"
-#include "gpuTally.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "MaterialProperties.hh"
-#include "gpuTally.hh"
 #include "RayListInterface.hh"
 #include "RayListController.hh"
-#include "MonteRay_SingleValueCopyMemory.t.hh"
 #include "MonteRay_GridSystemInterface.hh"
 #include "RayWorkInfo.hh"
+#include "BasicTally.hh"
+#include "MonteRayManagedMemory.hh"
 
 #include "UnitControllerBase.hh"
 namespace RayListController_w_SpatialGrid_unit_tester{
@@ -31,23 +30,17 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     public:
         UnitControllerSetup(){
 
-            pGrid = new Grid_t;
-            pGrid->setCoordinateSystem( TransportMeshTypeEnum::Cartesian );
-            pGrid->setDimension( 3 );
-            pGrid->setGrid( MonteRay_SpatialGrid::CART_X, -5.0, 5.0, 10);
-            pGrid->setGrid( MonteRay_SpatialGrid::CART_Y, -5.0, 5.0, 10);
-            pGrid->setGrid( MonteRay_SpatialGrid::CART_Z, -5.0, 5.0, 10);
-            pGrid->initialize();
+            pGrid = std::make_unique<Grid_t>(TransportMeshType::Cartesian,
+              std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{-5.0, 5.0, 10},
+              MonteRay_GridBins{-5.0, 5.0, 10},
+              MonteRay_GridBins{-5.0, 5.0, 10} }
+            );
 
-            pTally = new gpuTallyHost( pGrid->getNumCells() );
+            pTally = std::make_unique<BasicTally>(pGrid->getNumCells());
         }
 
         void setup(){
-
-            pGrid->copyToGPU();
-
-            pTally->copyToGPU();
-            pTally->clear();
 
             // Density of 1.0 for mat number 0
             MaterialProperties::Builder matPropBuilder{};
@@ -60,14 +53,10 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 #endif
         }
 
-        ~UnitControllerSetup(){
-            delete pGrid;
-            delete pTally;
-        }
 
-        Grid_t* pGrid;
+        std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<MaterialProperties> pMatProps;
-        gpuTallyHost* pTally;
+        std::unique_ptr<BasicTally> pTally;
     };
 
     TEST( Reset ) {
@@ -78,23 +67,26 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 #endif
     }
 
-    template<typename T>
-    using resultClass = MonteRay_SingleValueCopyMemory<T>;
+    template <typename T>
+    class Result : public Managed {
+      public:
+      T v;
+      operator T() const {return v;}
+    };
 
-    CUDA_CALLABLE_KERNEL  kernelGetVertex(const Grid_t* pSpatialGrid, resultClass<gpuRayFloat_t>* pResult, unsigned d, unsigned index) {
+    CUDA_CALLABLE_KERNEL  kernelGetVertex(const Grid_t* pSpatialGrid, Result<gpuRayFloat_t>* pResult, unsigned d, unsigned index) {
         pResult->v = pSpatialGrid->getVertex(d,index);
     }
 
     template<typename GRID_T>
     gpuRayFloat_t getVertex(GRID_T* pGrid, unsigned d, unsigned index )  {
-        using result_t = resultClass<gpuRayFloat_t>;
+        using result_t = Result<gpuRayFloat_t>;
         std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 
 #ifdef __CUDACC__
-        pResult->copyToGPU();
-        kernelGetVertex<<<1,1>>>( pGrid->getDevicePtr(), pResult->devicePtr, d, index);
+        kernelGetVertex<<<1,1>>>( pGrid, pResult.get(), d, index);
+        cudaDeviceSynchronize();
         gpuErrchk( cudaPeekAtLastError() );
-        pResult->copyToCPU();
 #else
         kernelGetVertex( pGrid, pResult.get(), d, index);
 #endif
@@ -108,7 +100,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         cudaDeviceSynchronize();
         gpuErrchk( cudaPeekAtLastError() );
 #endif
-        CHECK_CLOSE(-5.0, getVertex(pGrid, MonteRay_SpatialGrid::CART_X,0), 1e-11 );
+        CHECK_CLOSE(-5.0, getVertex(pGrid.get(), MonteRay_SpatialGrid::CART_X,0), 1e-11 );
     }
 
     class particle {
@@ -126,20 +118,19 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
     };
 
     template<typename particle>
-    CUDA_CALLABLE_KERNEL  kernelGetIndexByParticle(Grid_t* pSpatialGrid, resultClass<unsigned>* pResult, particle p) {
+    CUDA_CALLABLE_KERNEL  kernelGetIndexByParticle(Grid_t* pSpatialGrid, Result<unsigned>* pResult, particle p) {
         pResult->v = pSpatialGrid->getIndex(p);
     }
 
     template<typename GRID_T, typename particle>
     unsigned getIndex(GRID_T* pGridInfo, particle& p) {
-        using result_t = resultClass<unsigned>;
+        using result_t = Result<unsigned>;
         std::unique_ptr<result_t> pResult = std::unique_ptr<result_t> ( new result_t() );
 #ifdef __CUDACC__
-        pResult->copyToGPU();
 
-        kernelGetIndexByParticle<<<1,1>>>( pGridInfo->devicePtr, pResult->devicePtr, p );
+        kernelGetIndexByParticle<<<1,1>>>( pGridInfo, pResult.get(), p );
         gpuErrchk( cudaPeekAtLastError() );
-        pResult->copyToCPU();
+        cudaDeviceSynchronize();
 #else
         kernelGetIndexByParticle( pGridInfo, pResult.get(), p );
 #endif
@@ -161,15 +152,15 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         MonteRay_SpatialGrid::Position_t pos5( -3.5, -3.5, -3.5 );
 
         p.pos = pos1;
-        CHECK_EQUAL(  0, getIndex( pGrid, p ) );
+        CHECK_EQUAL(  0, getIndex( pGrid.get(), p ) );
         p.pos = pos2;
-        CHECK_EQUAL(   1, getIndex( pGrid, p ) );
+        CHECK_EQUAL(   1, getIndex( pGrid.get(), p ) );
         p.pos = pos3;
-        CHECK_EQUAL(  10, getIndex( pGrid, p ) );
+        CHECK_EQUAL(  10, getIndex( pGrid.get(), p ) );
         p.pos = pos4;
-        CHECK_EQUAL( 100, getIndex( pGrid, p ) );
+        CHECK_EQUAL( 100, getIndex( pGrid.get(), p ) );
         p.pos = pos5;
-        CHECK_EQUAL( 111, getIndex( pGrid, p ) );
+        CHECK_EQUAL( 111, getIndex( pGrid.get(), p ) );
     }
 
     CUDA_CALLABLE_KERNEL  kernelRayTrace(Grid_t* pSpatialGrid, RayWorkInfo* pRayInfo,
@@ -188,7 +179,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 #ifdef __CUDACC__
         cudaDeviceSynchronize();
         //std::cout << "Calling kernelRayTrace\n";
-        kernelRayTrace<<<1,1>>>( pGridInfo->devicePtr, pRayInfo.get(),
+        kernelRayTrace<<<1,1>>>( pGridInfo, pRayInfo.get(),
                 pos[0], pos[1], pos[2], dir[0], dir[1], dir[2], distance, outside );
         cudaDeviceSynchronize();
 
@@ -216,7 +207,7 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         direction.normalize();
         gpuRayFloat_t distance = 2.0;
 
-        rayTraceList_t distances = rayTrace( pGrid, position, direction, distance);
+        rayTraceList_t distances = rayTrace( pGrid.get(), position, direction, distance);
 
         CHECK_EQUAL( 2, distances.size() );
         CHECK_EQUAL( 0, distances.id(0) );
@@ -235,10 +226,10 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
 
         CollisionPointController<Grid_t> controller( 1,
                 1,
-                pGrid,
+                pGrid.get(),
                 pMatList.get(),
                 pMatProps.get(),
-                pTally );
+                pTally.get() );
 
 
         unsigned int matID=0;
@@ -276,8 +267,6 @@ SUITE( RayListController_w_SpatialGrid_unit_tests ) {
         controller.add(  particle );
 
         controller.flush(true);
-
-        pTally->copyToCPU();
 
         float distance = 0.5f;
         CHECK_CLOSE( (1.0f-std::exp(-testXS*distance))/testXS, pTally->getTally(i), 1e-5 );
