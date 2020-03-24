@@ -153,24 +153,10 @@ SUITE( mpi_shared_rayList_tester ){
          }
      }
 
-    TEST( ctor2_defaults ) {
-        //        printf("Debug: ctor_defaults test\n");
-        const MonteRayParallelAssistant& PA( MonteRayParallelAssistant::getInstance() );
-
-        TestMasterList master;
-        rayList_t list(master, 10, PA.getWorkGroupRank(), PA.getWorkGroupSize(), PA.isParallel(), 10);
-        CHECK_EQUAL( true, list.isUsingMPI() );
-        CHECK_EQUAL( 10, list.getNBuckets() );
-
-        if( PA.getWorkGroupRank() == 0 ) {
-            CHECK_EQUAL( 0, list.getCurrentBucket(0) );
-        }
-    }
-
     TEST_FIXTURE(setup, getBucketHeader_with_a_particle ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 10, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 10, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -193,7 +179,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, size ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200, 10);
         if( shared_memory_rank == 0 ) {
             CHECK_EQUAL( 100, list.getParticlesPerRank() );
             CHECK_EQUAL( 10, list.getParticlesPerBucket() );
@@ -202,7 +188,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, isBucketFull_empty ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200 ,10);
 
         if( shared_memory_rank == 0 ) {
             CHECK_EQUAL( false, list.isBucketFull(1,0) );
@@ -212,7 +198,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, addCollisionToRank1_not_full ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 100, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 100, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -239,7 +225,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, addCollisionToRank1_full ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 10, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 10, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -268,7 +254,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, add_a_Particle_goes_to_master_from_Rank0 ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 10, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 10, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -301,7 +287,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, copyToMaster ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -351,7 +337,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, autoCopy_nonlocalStorageRankZero ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200 ,10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -420,7 +406,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, process_1_marked_done ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -476,7 +462,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, rank0_finishhes_waits_on_rank1 ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200 ,10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -516,7 +502,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, addParticles_From_2MPIProcesses ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -553,7 +539,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, FourMPIProcesses_addLotsOfParticles ) {
         if(shared_memory_size != 4 ) { return; }
 
-        rayList_t list(master, 400, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 400, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );
@@ -587,7 +573,7 @@ SUITE( mpi_shared_rayList_tester ){
     TEST_FIXTURE(setup, clear ) {
         if(shared_memory_size != 2 ) { return; }
 
-        rayList_t list(master, 200, shared_memory_rank, shared_memory_size, true,10);
+        rayList_t list(master, 200, 10);
 
         bucket_header_t* header;
         header = list.getBucketHeader( 1, 0 );

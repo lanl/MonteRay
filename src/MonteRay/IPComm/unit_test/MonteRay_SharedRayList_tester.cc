@@ -110,7 +110,7 @@ SUITE( shared_collisionPointList_tester ){
     typedef rayList_t::store_func_t store_func_t;
     TEST( ctor_defaults ) {
         TestMasterList master;
-        rayList_t list(master, 10,0,1,false);
+        rayList_t list(master, 10);
         CHECK_EQUAL( false, list.isUsingMPI() );
         CHECK_EQUAL( 1000, list.getNBuckets() );
         CHECK_EQUAL( 1, list.getNRanks() );
@@ -119,7 +119,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST( getBucketHeader_initialized ) {
         TestMasterList master;
-        rayList_t list(master, 10,0,2,false);
+        rayList_t list(master, 10);
         bucket_header_t* header = list.getBucketHeader( 1, 0 );
         CHECK_EQUAL(0, header->size );
         CHECK_EQUAL(false, header->done );
@@ -127,7 +127,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST_FIXTURE(ParticleSetup, getBucketHeader_with_a_particle ) {
         TestMasterList master;
-        rayList_t list(master, 10,0,2,false);
+        rayList_t list(master, 10);
         bucket_header_t* header = list.getBucketHeader( 1, 0 );
         CHECK_EQUAL(0, header->size );
         CHECK_EQUAL(false, header->done );
@@ -138,26 +138,26 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST( size ) {
         TestMasterList master;
-        rayList_t list(master, 100,0,1,false,10);
+        rayList_t list(master, 100);
         CHECK_EQUAL( 100, list.size() );
         CHECK_EQUAL( 100, list.getParticlesPerRank() );
         CHECK_EQUAL( 10, list.getParticlesPerBucket() );
     }
     TEST( isBucketFull_empty ) {
         TestMasterList master;
-        rayList_t list(master, 10,0,1,false);
+        rayList_t list(master, 10);
         CHECK_EQUAL( false, list.isBucketFull(0,0) );
     }
 
     TEST( bucketSize_empty ) {
         TestMasterList master;
-        rayList_t list(master, 10,0,1,false);
+        rayList_t list(master, 10);
         CHECK_EQUAL( 0U, list.bucketSize(0,0) );
     }
 
     TEST_FIXTURE(ParticleSetup, addCollisionToRank1_not_full ){
         TestMasterList master;
-        rayList_t list(master, 100,0,2,false,10);
+        rayList_t list(master, 100);
 
         list.addCollision(1,particle);
         CHECK_EQUAL( 1U, list.bucketSize(1,0) );
@@ -168,7 +168,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST_FIXTURE(ParticleSetup, addCollisionToRank1_full ){
         TestMasterList master;
-        rayList_t list(master, 10,0,2,false);
+        rayList_t list(master, 10);
         CHECK_EQUAL( 0U, list.bucketSize(1,0) );
         CHECK_EQUAL( false, list.isBucketFull(1,0) );
         CHECK_EQUAL( false, list.isBucketDone(1,0) );
@@ -184,7 +184,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST_FIXTURE(ParticleSetup, add_a_Particle_goes_to_master_from_Rank0 ){
         TestMasterList master;
-        rayList_t list(master, 10,0,1,false);
+        rayList_t list(master, 10);
 
         particle.index = 99;
         list.addCollision(0,particle);
@@ -199,7 +199,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST( add_via_parameters ){
         TestMasterList master;
-        rayList_t list(master, 10,0,1,false);
+        rayList_t list(master, 10);
 
         gpuFloatType_t pos[3];
         gpuFloatType_t dir[3];
@@ -231,7 +231,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST_FIXTURE(ParticleSetup, fill_a_bucket ){
         TestMasterList master;
-        rayList_t list(master, 200,0,2,false,10);
+        rayList_t list(master, 200,10);
         CHECK_EQUAL( 0, list.getCurrentBucket(1) );
         for( unsigned i=0; i<15; ++i){
             list.addCollision(1,particle);
@@ -247,7 +247,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST_FIXTURE(ParticleSetup, copyToMaster ){
         TestMasterList master;
-        rayList_t list(master, 200,0,2,false,10);
+        rayList_t list(master, 200,10);
         CHECK_EQUAL( 0, list.getCurrentBucket(1) );
         for( unsigned i=0; i<20; ++i){
             particle.index = i;
@@ -281,7 +281,7 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
 
         // simulate 2 ranks
-        rayList_t list(master, 200,0,2,false,10);
+        rayList_t list(master, 200,10);
         CHECK_EQUAL( 0, list.getCurrentBucket(1) );
         for( unsigned i=0; i<20; ++i){
             particle.index = i;
@@ -335,7 +335,7 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
 
         // simulate 2 ranks
-        rayList_t list(master, 200,0,2,false,10);
+        rayList_t list(master, 200,10);
         CHECK_EQUAL( 0, list.getCurrentBucket(1) );
         for( unsigned i=0; i<15; ++i){
             particle.index = i;
@@ -371,7 +371,7 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
 
         // simulate 2 ranks
-        rayList_t list(master, 200,0,2,false,10);
+        rayList_t list(master, 200,10);
         std::thread thread1(addParticles, std::ref(list), 1U, 25U);
 
         for( unsigned i=0; i<9; ++i){
@@ -399,7 +399,7 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
 
         // simulate 2 ranks
-        rayList_t list(master, 200,0,2,false,10);
+        rayList_t list(master, 200,10);
         std::thread thread1(addParticles, std::ref(list), 1U, 2500U);
 
         for( unsigned i=0; i<1009; ++i){
@@ -420,7 +420,7 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
 
         // simulate 2 ranks
-        rayList_t list(master, 500,0,5,false,10);
+        rayList_t list(master, 500,10);
         std::thread thread1(addParticles, std::ref(list), 1U, 2500U);
         std::thread thread2(addParticles, std::ref(list), 2U, 2500U);
         std::thread thread3(addParticles, std::ref(list), 3U, 2500U);
@@ -448,7 +448,7 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
 
         // simulate 2 ranks
-        rayList_t list(master, 200,0,2,false,10);
+        rayList_t list(master, 200,10);
         std::thread thread1(addParticles, std::ref(list), 1U, 2500U);
 
         for( unsigned i=0; i<1009; ++i){
@@ -469,7 +469,7 @@ SUITE( shared_collisionPointList_tester ){
         TestMasterList master;
 
         // simulate 2 ranks
-        rayList_t list(master, 200,0,2,false);
+        rayList_t list(master, 200);
 
         for( unsigned i=0; i<9; ++i){
             particle.index = i;
@@ -505,7 +505,7 @@ SUITE( shared_collisionPointList_tester ){
 
     TEST( addDummyParticle ){
          TestMasterList master;
-         rayList_t list(master, 100,0,2,false,10);
+         rayList_t list(master, 100,10);
          dummyParticle particle;
 
          double prob = 20.0;

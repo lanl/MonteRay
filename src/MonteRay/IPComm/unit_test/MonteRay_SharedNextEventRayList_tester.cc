@@ -160,7 +160,7 @@ SUITE( shared_next_event_ray_list_tester ){
 
     TEST( addDummyNextEventRay ){
          TestMasterList master;
-         rayList_t list(master, 100,0,1,false,10);
+         rayList_t list(master, 100,10);
          dummyNextEventRay particle;
          dummuyPhotonScatteringProbabilities probs;
          unsigned detectorID = 10;
