@@ -1,49 +1,36 @@
 #ifndef GPUATOMICADD_HH_
 #define GPUATOMICADD_HH_
 
-/// DO NOT INCLUDE IN ANOTHER HEADER ONLY CALL FROM T.HH OR .CU FILE
-
-#include <stdio.h>
-
-#include "MonteRayDefinitions.hh"
-
 namespace MonteRay{
 
-CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd_single( float *address, float value ) {
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
+#else
+
+__device__ double atomicAdd(double* address, const double val)
+{
+  unsigned long long int* address_as_ull =
+                                  (unsigned long long int*)address;
+  unsigned long long int old = *address_as_ull, assumed;
+
+  do {
+       assumed = old;
+       old = atomicCAS(address_as_ull, assumed,
+                       __double_as_longlong(val +
+                       __longlong_as_double(assumed)));
+       // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+     } while (assumed != old);
+  return __longlong_as_double(old);
+}
+#endif
+
+template <typename T, typename U>
+CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd(T* address, U value) {
 #ifdef __CUDA_ARCH__
-    atomicAdd( address,value);
+    atomicAdd(address, value);
 #else
     (*address) += value;
 #endif
-}
-
-CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd_double( double *address, double value ) {
-    //	printf("Debug: MonteRay::GPUAtomicAdd.h::gpu_atomicAdd_double **************\n");
-#ifdef __CUDA_ARCH__
-    // From: https://www.sharcnet.ca/help/index.php/CUDA_tips_and_tricks
-    unsigned long long oldval, newval, readback;
-
-    oldval = __double_as_longlong(*address);
-    newval = __double_as_longlong(__longlong_as_double(oldval) + value);
-    while ((readback=atomicCAS((unsigned long long *)address, oldval, newval)) != oldval)
-    {
-        oldval = readback;
-        newval = __double_as_longlong(__longlong_as_double(oldval) + value);
-    }
-#else
-    (*address) += value;
-#endif
-}
-
-CUDA_CALLABLE_MEMBER inline void gpu_atomicAdd(gpuTallyType_t *address, gpuTallyType_t value){
-#if TALLY_DOUBLEPRECISION < 1
-    gpu_atomicAdd_single( address,value);
-#else
-    gpu_atomicAdd_double( address,value);
-#endif /* TALLY_DOUBLEPRECISION < 1 */
 }
 
 } /* namespace MonteRay*/
-
-
 #endif /* GPUATOMICADD_HH_ */
