@@ -1,6 +1,6 @@
 #ifndef GPUATOMICADD_HH_
 #define GPUATOMICADD_HH_
-
+#include "MonteRayTypes.hh"
 namespace MonteRay{
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
