@@ -36,8 +36,8 @@ struct MockVoidMaterialList {
           const Geometry* geometry,
           const MaterialProperties* pMatProps,
           const MaterialList matList,
-          gpuTallyType_t* const tallyData) {
-    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *geometry, *pMatProps, matList, tallyData);
+          ExpectedPathLengthTally* const tally) {
+    tally->rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *geometry, *pMatProps, matList);
   }
 #endif
 
@@ -49,21 +49,29 @@ SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests ) {
 
   enum coord {X,Y,Z,DIM};
 
-  class CartesianGrid{
+  class CartesianTallyFixture{
     public:
-      std::unique_ptr<MonteRay_CartesianGrid> pCart;
-      CartesianGrid() {
-        pCart = std::make_unique<MonteRay_CartesianGrid>(3, 
-            std::array<MonteRay_GridBins, 3> {
-                  MonteRay_GridBins{-1, 1, 2},
-                  MonteRay_GridBins{-1, 1, 2},
-                  MonteRay_GridBins{-1, 1, 2} 
-            }
-          );
+    std::unique_ptr<ExpectedPathLengthTally> pTally;
+    std::unique_ptr<MonteRay_CartesianGrid> pCart;
+    CartesianTallyFixture() {
+      pCart = std::make_unique<MonteRay_CartesianGrid>(3, 
+        std::array<MonteRay_GridBins, 3> {
+              MonteRay_GridBins{-1, 1, 2},
+              MonteRay_GridBins{-1, 1, 2},
+              MonteRay_GridBins{-1, 1, 2} 
         }
+      );
+      ExpectedPathLengthTally::Builder builder;
+      builder.spatialBins(pCart->size());
+      std::vector<double> energyBinEdges = {1.0, 10.0};
+      builder.energyBinEdges(energyBinEdges);
+      std::vector<double> timeBinEdges = {1.0, 10.0};
+      builder.timeBinEdges(timeBinEdges);
+      pTally = std::make_unique<ExpectedPathLengthTally>(builder.build());
+    }
   };
 
-  TEST_FIXTURE( CartesianGrid, RayTraceWithNonMovingMaterials){
+  TEST_FIXTURE( CartesianTallyFixture, RayTraceWithNonMovingMaterials){
     // set material properties
     std::unique_ptr<MaterialProperties> pMatProps;
     auto mpb = MaterialProperties::Builder();
@@ -83,51 +91,51 @@ SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests ) {
     gpuFloatType_t speed = 1.0;
     auto energy = speed*speed*inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
     ray.setEnergy(energy);
+    ray.setTime(0.0);
 
     gpuFloatType_t timeRemaining = 10.0E6;
-    SimpleVector<gpuTallyType_t> tallyData(8, 0.0);
 
     ray.position() = {-0.5, -0.5, -0.5};
     gpuFloatType_t inv_sqrt_2 = Math::sqrt(2.0)/2.0;
     ray.direction() = {0.0, inv_sqrt_2, inv_sqrt_2};
     MockVoidMaterialList voidMatList{};
-    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCart, *pMatProps, voidMatList, tallyData.data());
-    CHECK_CLOSE(Math::sqrt(2.0)/2.0, tallyData[0], 1e-6);
-    CHECK_CLOSE(Math::sqrt(2.0), tallyData[6], 1e-6);
+    pTally->rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCart, *pMatProps, voidMatList);
+    CHECK_CLOSE(Math::sqrt(2.0)/2.0, pTally->contribution(0), 1e-6);
+    CHECK_CLOSE(Math::sqrt(2.0), pTally->contribution(6), 1e-6);
 
     ray.position() = {-0.5, -0.5, -0.5};
     ray.direction() = {1.0, 0.0, 0.0};
-    tallyData = {0.0};
+    pTally->clear();
     MockMaterialList matList{};
-    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCart, *pMatProps, matList, tallyData.data());
+    pTally->rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCart, *pMatProps, matList);
     auto score0 = 1.0/2.0*(1.0 - Math::exp(-1.0));
-    CHECK_CLOSE(score0, tallyData[0], 1e-6);
+    CHECK_CLOSE(score0, pTally->contribution(0), 1e-6);
     auto score1 = Math::exp(-1.0)*(1.0/2.0)*(1.0 - Math::exp(-2.0));
-    CHECK_CLOSE(score1, tallyData[1], 1e-6);
+    CHECK_CLOSE(score1, pTally->contribution(1), 1e-6);
 
 #ifdef __CUDACC__
     {
-      SimpleVector<gpuTallyType_t> gpuTallyData(8, 0.0);
       ray.position() = {-0.5, -0.5, -0.5};
       ray.direction() = {0.0, inv_sqrt_2, inv_sqrt_2};
-      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCart.get(), pMatProps.get(), voidMatList, gpuTallyData.data());
+      pTally->clear();
+      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCart.get(), pMatProps.get(), voidMatList, pTally.get());
       cudaDeviceSynchronize();
-      CHECK_CLOSE(Math::sqrt(2.0)/2.0, gpuTallyData[0], 1e-6);
-      CHECK_CLOSE(Math::sqrt(2.0), gpuTallyData[6], 1e-6);
+      CHECK_CLOSE(Math::sqrt(2.0)/2.0, pTally->contribution(0), 1e-6);
+      CHECK_CLOSE(Math::sqrt(2.0), pTally->contribution(6), 1e-6);
 
       ray.position() = {-0.5, -0.5, -0.5};
       ray.direction() = {1.0, 0.0, 0.0};
-      gpuTallyData = {0.0};
-      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCart.get(), pMatProps.get(), matList, gpuTallyData.data());
+      pTally->clear();
+      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCart.get(), pMatProps.get(), matList, pTally.get());
       cudaDeviceSynchronize();
-      CHECK_CLOSE(score0, gpuTallyData[0], 1e-6);
-      CHECK_CLOSE(score1, gpuTallyData[1], 1e-6);
+      CHECK_CLOSE(score0, pTally->contribution(0), 1e-6);
+      CHECK_CLOSE(score1, pTally->contribution(1), 1e-6);
     }
 
 #endif
   }
 
-  TEST_FIXTURE( CartesianGrid, RayTraceWithMovingMaterials){
+  TEST_FIXTURE( CartesianTallyFixture, RayTraceWithMovingMaterials){
     auto mpb = MaterialProperties::Builder();
     using Cell = MaterialProperties::Builder::Cell;
 
@@ -154,37 +162,36 @@ SUITE( MonteRay_CartesianGrid_rayTraceWithMovingMaterials_Tests ) {
     gpuFloatType_t speed = 1.0;
     auto energy = speed*speed*inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
     ray.setEnergy(energy);
+    ray.setTime(0.0);
 
     gpuFloatType_t timeRemaining = 10.0E6;
-    SimpleVector<gpuTallyType_t> tallyData(8, 0.0);
-
     ray.position() = { -0.000001, -0.5,  -0.5 };
     ray.direction() = { 1.0, 0.0, 0.0 };
     MockVoidMaterialList voidMatList{};
-    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCart, *pMatProps, voidMatList, tallyData.data());
+    pTally->rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCart, *pMatProps, voidMatList);
 
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[0], 1e-5 );
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[2], 1e-5 );
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[3], 1e-5 );
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[7], 1e-5 );
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[6], 1e-5 );
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[4], 1e-5 );
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[5], 1e-5 );
-    CHECK_CLOSE( 0.5*std::sqrt(2.0), tallyData[1], 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(0), 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(2), 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(3), 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(7), 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(6), 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(4), 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(5), 1e-5 );
+    CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(1), 1e-5 );
 
 #ifdef __CUDACC__
     {
-      SimpleVector<gpuTallyType_t> gpuTallyData(8, 0.0);
-      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCart.get(), pMatProps.get(), voidMatList, gpuTallyData.data());
+      pTally->clear();
+      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCart.get(), pMatProps.get(), voidMatList, pTally.get());
       cudaDeviceSynchronize();
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[0], 1e-5 );
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[2], 1e-5 );
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[3], 1e-5 );
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[7], 1e-5 );
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[6], 1e-5 );
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[4], 1e-5 );
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[5], 1e-5 );
-      CHECK_CLOSE( 0.5*std::sqrt(2.0), gpuTallyData[1], 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(0), 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(2), 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(3), 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(7), 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(6), 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(4), 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(5), 1e-5 );
+      CHECK_CLOSE( 0.5*std::sqrt(2.0), pTally->contribution(1), 1e-5 );
     }
 #endif
   }
@@ -199,25 +206,34 @@ SUITE( MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_Tests ) {
   enum cartesian_coord {x=0,y=1,z=2};
   enum cylindrical_coord {R=0,CZ=1,Theta=2,DIM=2};
 
-  class CylindricalGrid{
+  class CylindricalTallyFixture{
     public:
-      gpuRayFloat_t two = 2.0;
-      gpuRayFloat_t one = 1.0;
-      std::unique_ptr<MonteRay_CylindricalGrid> pCyl;
-      CylindricalGrid(){
-        pCyl = std::make_unique<MonteRay_CylindricalGrid>(2, 
-            std::array<MonteRay_GridBins, 3>{
-                  MonteRay_GridBins{0.0, 2.0, 2, MonteRay_GridBins::RADIAL},
-                  MonteRay_GridBins{-1.0, 1.0, 2},
-                  MonteRay_GridBins{-1, 0, 1} 
-             }
-        );
-        int size = pCyl->getNumBins(0)*pCyl->getNumBins(1);
-        CHECK_EQUAL(4, size);
-      }
+    gpuRayFloat_t two = 2.0;
+    gpuRayFloat_t one = 1.0;
+
+    std::unique_ptr<ExpectedPathLengthTally> pTally;
+    std::unique_ptr<MonteRay_CylindricalGrid> pCyl;
+    CylindricalTallyFixture() {
+      pCyl = std::make_unique<MonteRay_CylindricalGrid>(2, 
+        std::array<MonteRay_GridBins, 3>{
+              MonteRay_GridBins{0.0, 2.0, 2, MonteRay_GridBins::RADIAL},
+              MonteRay_GridBins{-1.0, 1.0, 2},
+              MonteRay_GridBins{-1, 0, 1} 
+         }
+      );
+      CHECK_EQUAL(4, pCyl->size());
+
+      ExpectedPathLengthTally::Builder builder;
+      builder.spatialBins(pCyl->size());
+      std::vector<double> energyBinEdges = {1.0, 10.0};
+      builder.energyBinEdges(energyBinEdges);
+      std::vector<double> timeBinEdges = {1.0, 10.0};
+      builder.timeBinEdges(timeBinEdges);
+      pTally = std::make_unique<ExpectedPathLengthTally>(builder.build());
+    }
   };
 
-  TEST_FIXTURE( CylindricalGrid, RayTraceWithMovingMaterials){
+  TEST_FIXTURE( CylindricalTallyFixture, RayTraceWithMovingMaterials){
 
     std::unique_ptr<MaterialProperties> pMatProps;
     auto mpb = MaterialProperties::Builder();
@@ -235,12 +251,11 @@ SUITE( MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_Tests ) {
 
     pMatProps = std::make_unique<MaterialProperties>(mpb.build());
 
-    SimpleVector<gpuTallyType_t> tallyData(4, 0.0);
-
     Ray_t<1> ray;
     const double speed = 1.0/sqrt(4.0/5.0);
     auto energy = speed*speed*inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
     ray.setEnergy(energy);
+    ray.setTime(0.0);
 
     gpuFloatType_t timeRemaining = 10.0E6;
 
@@ -249,29 +264,29 @@ SUITE( MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_Tests ) {
     ray.direction() = Direction_t{Math::sqrt(two), Math::sqrt(two), one}.normalize();
 
     MockVoidMaterialList voidMatList{};
-    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCyl, *pMatProps, voidMatList, tallyData.data());
+    pTally->rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCyl, *pMatProps, voidMatList);
 
-    CHECK_CLOSE( 1.0, tallyData[1], 1e-6 );
-    CHECK_CLOSE( 0.75*sqrt(2.0), tallyData[0], 1e-6 );
-    CHECK_CLOSE( 0.75*sqrt(2.0), tallyData[2], 1e-6 );
-    CHECK_CLOSE( 1.0, tallyData[3], 1e-6 );
+    CHECK_CLOSE( 1.0, pTally->contribution(1), 1e-6 );
+    CHECK_CLOSE( 0.75*sqrt(2.0), pTally->contribution(0), 1e-6 );
+    CHECK_CLOSE( 0.75*sqrt(2.0), pTally->contribution(2), 1e-6 );
+    CHECK_CLOSE( 1.0, pTally->contribution(3), 1e-6 );
 
 #ifdef __CUDACC__
     {
-      SimpleVector<gpuTallyType_t> gpuTallyData(4, 0.0);
-      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCyl.get(), pMatProps.get(), voidMatList, gpuTallyData.data());
+      pTally->clear();
+      kernelRayTraceOnGridWithMovingMaterials<<<1, 1>>>(ray, timeRemaining, pCyl.get(), pMatProps.get(), voidMatList, pTally.get());
       cudaDeviceSynchronize();
-      CHECK_CLOSE( 1.0, gpuTallyData[1], 1e-6 );
-      CHECK_CLOSE( 0.75*sqrt(2.0), gpuTallyData[0], 1e-6 );
-      CHECK_CLOSE( 0.75*sqrt(2.0), gpuTallyData[2], 1e-6 );
-      CHECK_CLOSE( 1.0, gpuTallyData[3], 1e-6 );
+      CHECK_CLOSE( 1.0, pTally->contribution(1), 1e-6 );
+      CHECK_CLOSE( 0.75*sqrt(2.0), pTally->contribution(0), 1e-6 );
+      CHECK_CLOSE( 0.75*sqrt(2.0), pTally->contribution(2), 1e-6 );
+      CHECK_CLOSE( 1.0, pTally->contribution(3), 1e-6 );
     }
 #endif
 
 
   }
 
-  TEST_FIXTURE( CylindricalGrid, RayTraceCylWithoutMovingMaterials){
+  TEST_FIXTURE( CylindricalTallyFixture, RayTraceCylWithoutMovingMaterials){
 
     std::unique_ptr<MaterialProperties> pMatProps;
     auto mpb = MaterialProperties::Builder();
@@ -285,12 +300,11 @@ SUITE( MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_Tests ) {
 
     pMatProps = std::make_unique<MaterialProperties>(mpb.build());
 
-    SimpleVector<gpuTallyType_t> tallyData(4, 0.0);
-
     Ray_t<1> ray;
     const double speed = 1.0/sqrt(4.0/5.0);
     auto energy = speed*speed*inv_neutron_speed_from_energy_const()*inv_neutron_speed_from_energy_const();
     ray.setEnergy(energy);
+    ray.setTime(0.0);
 
     gpuFloatType_t timeRemaining = 10.0E6;
 
@@ -298,12 +312,12 @@ SUITE( MonteRay_CylindricalGrid_rayTraceWithMovingMaterials_Tests ) {
     ray.direction() = Direction_t{1.0, 0.0, 0.0};
 
     MockVoidMaterialList voidMatList{};
-    rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCyl, *pMatProps, voidMatList, tallyData.data());
+    pTally->rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *pCyl, *pMatProps, voidMatList);
 
-    CHECK_CLOSE( 1.5, tallyData[1], 1e-6 );
-    CHECK_CLOSE( 2, tallyData[0], 1e-6 );
-    CHECK_CLOSE( 0, tallyData[2], 1e-6 );
-    CHECK_CLOSE( 0, tallyData[3], 1e-6 );
+    CHECK_CLOSE( 1.5, pTally->contribution(1), 1e-6 );
+    CHECK_CLOSE( 2, pTally->contribution(0), 1e-6 );
+    CHECK_CLOSE( 0, pTally->contribution(2), 1e-6 );
+    CHECK_CLOSE( 0, pTally->contribution(3), 1e-6 );
 
   }
 }
