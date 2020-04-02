@@ -1,11 +1,84 @@
 #include "Tally.hh"
-#include "GPUAtomicAdd.hh"
+#ifdef __CUDACC__
+#include <thrust/transform.h>
+#endif
+
 namespace MonteRay{
 
-CUDA_CALLABLE_MEMBER
-void Tally::scoreByIndex(gpuTallyType_t value, int spatial_index, int time_index){
-  int index = getIndex( spatial_index, time_index );
-  gpu_atomicAdd( &( data_[index]), value);
+ 
+
+void Tally::clear() {
+  auto clearFunc = [] (auto&&) { return 0; };
+#ifdef __CUDACC__
+    thrust::transform(thrust::device, contributions_.begin(), contributions_.end(), contributions_.begin(), clearFunc);
+#else
+    std::transform(contributions_.begin(), contributions_.end(), contributions_.begin(), clearFunc);
+#endif
+}
+
+void Tally::accumulate() {
+  nSamples_++;
+  auto accumulateFunc = [] (auto&& contribution, auto&& sumAndSumSq) { 
+    return MeanAndStdDev{sumAndSumSq.sum() + contribution, sumAndSumSq.sumSq() + contribution*contribution};
+  }; 
+  if (not this->useStats()){
+    return; 
+  } else {
+#ifdef __CUDACC__
+    thrust::transform(thrust::device, contributions_.begin(), contributions_.end(), stats_.begin(), stats_.begin(), accumulateFunc);
+    thrust::transform(thrust::device, contributions_.begin(), contributions_.end(), contributions_.begin(), [] (auto&&) { return 0; } );
+#else
+    std::transform(contributions_.begin(), contributions_.end(), stats_.begin(), stats_.begin(), accumulateFunc);
+    std::transform(contributions_.begin(), contributions_.end(), contributions_.begin(), [] (auto&&) { return 0; } );
+#endif
+  }
+}
+
+void Tally::computeStats() { 
+  if (this->useStats()){
+    auto statsFunc = [nSamples_ = this->nSamples_] (auto&& meanAndSqMean){
+      auto mean = std::get<0>(meanAndSqMean)/nSamples_;
+      auto stdDev = nSamples_ > 1 ? Math::sqrt( (std::get<1>(meanAndSqMean)/nSamples_ - mean*mean)/(nSamples_ - 1) ) : 0;
+      return MeanAndStdDev{mean, stdDev};
+    };
+#ifdef __CUDACC__
+    thrust::transform(thrust::device, stats_.begin(), stats_.end(), stats_.begin(), statsFunc);
+#else
+    std::transform(stats_.begin(), stats_.end(), stats_.begin(), statsFunc);
+#endif
+  } else {
+    auto statsFunc = [nSamples_ = this->nSamples_] (auto&& contribution){
+      return contribution/nSamples_;
+    };
+#ifdef __CUDACC__
+    thrust::transform(thrust::device, contributions_.begin(), contributions_.end(), contributions_.begin(), statsFunc);
+#else
+    std::transform(contributions_.begin(), contributions_.end(), contributions_.begin(), statsFunc);
+#endif
+  }
+}
+
+void Tally::gatherImpl(){
+  if( MonteRayParallelAssistant::getInstance().getInterWorkGroupRank() == 0 ) {
+    MPI_Reduce(MPI_IN_PLACE, contributions_.data(), contributions_.size(), MPI_DOUBLE, MPI_SUM, 0, MonteRayParallelAssistant::getInstance().getInterWorkGroupCommunicator());
+  } else {
+    if( MonteRayParallelAssistant::getInstance().getInterWorkGroupCommunicator() != MPI_COMM_NULL ) {
+      MPI_Reduce( contributions_.data(), nullptr, contributions_.size(), MPI_DOUBLE, MPI_SUM, 0, MonteRayParallelAssistant::getInstance().getInterWorkGroupCommunicator());
+      std::memset( contributions_.data(), 0, contributions_.size()*sizeof( TallyFloat ) );
+    }
+  }
+}
+  
+void Tally::gather() {
+  if( ! MonteRay::isWorkGroupMaster() ) return;
+  this->gatherImpl();
+}
+
+// Used mainly for testing
+void Tally::gatherWorkGroup() {
+  // For testing - setup like gather but allows direct scoring on all ranks of the work group
+  if( ! MonteRayParallelAssistant::getInstance().isParallel() ) return;
+  this->gatherImpl();
 }
 
 }

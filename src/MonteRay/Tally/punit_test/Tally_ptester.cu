@@ -6,127 +6,77 @@
 #include "MonteRayDefinitions.hh"
 #include "GPUUtilityFunctions.hh"
 #include "Tally.hh"
-#include "../unit_test/Tally_GPU_test_helper.hh"
 
-namespace Tally_ptester_namespace {
+#ifdef __CUDACC__
+CUDA_CALLABLE_KERNEL  kernelScore(MonteRay::Tally* const pTally, MonteRay::Tally::TallyFloat value) {
+  if (threadIdx.x < pTally->size()){
+    pTally->score(value*threadIdx.x, threadIdx.x, time);
+  }
+}
+#endif
 
 SUITE( Tally_ptester ) {
 
   class Tally_Fixture {
-  public:
-    const MonteRay::MonteRayParallelAssistant& PA;
+    private:
+    using DataFloat = MonteRay::Tally::DataFloat;
+    public:
+    std::unique_ptr<MonteRay::Tally> pTally;
+    Tally_Fixture() {
+      int nSpatialBins = 10;
+      MonteRay::Vector<DataFloat> energyBins = {2.5e-5, 1.0, 10.0};
+      MonteRay::Vector<DataFloat> timeBins = {1.5, 10.0};
+      bool useStats = true;
 
-    Tally_Fixture() :
-      PA( MonteRay::MonteRayParallelAssistant::getInstance() )
-    {
-
+      MonteRay::Tally::Builder builder;
+      builder.timeBinEdges(timeBins);
+      builder.energyBinEdges(energyBins);
+      builder.spatialBins(nSpatialBins);
+      builder.useStats(useStats);
+      pTally = std::make_unique<MonteRay::Tally>(builder.build());
     }
-
-  private:
   };
 
   TEST_FIXTURE(Tally_Fixture, score_and_gather ) {
-      std::vector<MonteRay::gpuFloatType_t> timeEdges= { 1.0, 2.0, 10.0, 99.0, 100.0 };
-      int nSpatialBins = 1;
-      MonteRay::Tally tally(nSpatialBins, timeEdges);
-
-      tally.scoreByIndex(1.0f, 0, 0);
-
-      tally.gatherWorkGroup(); // used for testing only
-      tally.gather();
+      pTally->score(1.0, 0);
+      pTally->score(1.0, 9);
+      pTally->gather();
+      const auto& PA = MonteRay::MonteRayParallelAssistant::getInstance();
 
       if( PA.getWorldRank() == 0 ) {
-          CHECK_CLOSE( 1.0*PA.getWorldSize(), tally.getTally(0,0), 1e-6);
+          CHECK_CLOSE( 1.0*PA.getWorldSize(), pTally->contribution(0), 1e-6);
+          CHECK_CLOSE( 1.0*PA.getWorldSize(), pTally->contribution(9), 1e-6);
       }
 
-      tally.scoreByIndex(1.0f, 0, 0);
-      tally.gatherWorkGroup(); // used for testing only
-      tally.gather();
+      pTally->score(1.0, 0);
+      pTally->gather();
 
       if( PA.getWorldRank() == 0 ) {
-        CHECK_CLOSE( 2.0*PA.getWorldSize(), tally.getTally(0,0), 1e-6);
+        CHECK_CLOSE( 2.0*PA.getWorldSize(), pTally->contribution(0), 1e-6);
+        CHECK_CLOSE( 1.0*PA.getWorldSize(), pTally->contribution(9), 1e-6);
       } else {
-        CHECK_CLOSE( 0.0, tally.getTally(0,0), 1e-6);
+        CHECK_CLOSE( 0.0, pTally->contribution(0,0), 1e-6);
       }
   }
 
-  TEST_FIXTURE(Tally_Fixture, score ) {
-      std::vector<MonteRay::gpuFloatType_t> timeEdges= { 1.0, 2.0, 10.0, 99.0, 100.0 };
-      MonteRay::Tally tally(1, timeEdges);
-
-      MonteRay::gpuFloatType_t time = 1.5;
-      tally.score(1.0f, 0, time);
-      tally.gatherWorkGroup(); // used for testing only
-      tally.gather();
-
-      if( PA.getWorldRank() == 0 ) {
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,0), 1e-6);
-        CHECK_CLOSE( 1.0*PA.getWorldSize(), tally.getTally(0,1), 1e-6);
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,2), 1e-6);
-      } else {
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,0), 1e-6);
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,1), 1e-6);
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,2), 1e-6);
-      }
-
-      time = 2.5;
-      tally.score(2.0f, 0, time);
-      tally.gatherWorkGroup(); // used for testing only
-      tally.gather();
-
-      if( PA.getWorldRank() == 0 ) {
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,0), 1e-6);
-        CHECK_CLOSE( 1.0*PA.getWorldSize(), tally.getTally(0,1), 1e-6);
-        CHECK_CLOSE( 2.0*PA.getWorldSize(), tally.getTally(0,2), 1e-6);
-      } else {
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,0), 1e-6);
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,1), 1e-6);
-        CHECK_CLOSE( 0.0*PA.getWorldSize(), tally.getTally(0,2), 1e-6);
-      }
-
-  }
-
-  TEST_FIXTURE(Tally_Fixture, score_device ) {
-    // std::vector doesn't work here for timeEdges as Tally holds a view
-    // to the time bin data and doesn't copy the data into a
-    // MonteRay::SimpleVector. Do we want to change that? J. Sweezy
-
-    MonteRay::SimpleVector<MonteRay::gpuFloatType_t> timeEdges= { 1.0, 2.0, 10.0, 99.0, 100.0 };
-    TallyGPUTestHelper::TallyGPUTester tally(1,timeEdges);
+#ifdef __CUDACC__
+  TEST(scoreOnGPUThenGather) {
+    constexpr int nBlocks = 100;
+    constexpr int nThreadsPerBlock = 256;
+    auto pTally = std::make_unique<MonteRay::Tally>(nThreadsPerBlock, true);
 
     MonteRay::gpuFloatType_t time = 1.5;
-    tally.score(1.0f, 0, time);
+    kernelScore<<<nBlocks, nThreadsPerBlock>>>(pTally.get(), 1.0);
 
-    tally.gatherWorkGroup(); // used for testing only
-    tally.gather();
+    pTally->gather();
 
+    const auto& PA = MonteRay::MonteRayParallelAssistant::getInstance();
     if( PA.getWorldRank() == 0 ) {
-      CHECK_CLOSE( 0.0, tally.getTally(0,0), 1e-6);
-      CHECK_CLOSE( 1.0*PA.getWorldSize(), tally.getTally(0,1), 1e-6);
-      CHECK_CLOSE( 0.0, tally.getTally(0,2), 1e-6);
-    } else {
-      CHECK_CLOSE( 0.0, tally.getTally(0,0), 1e-6);
-      CHECK_CLOSE( 0.0, tally.getTally(0,1), 1e-6);
-      CHECK_CLOSE( 0.0, tally.getTally(0,2), 1e-6);
-    }
-
-    time = 2.5;
-    tally.score(2.0f, 0, time);
-
-    tally.gatherWorkGroup(); // used for testing only
-    tally.gather();
-
-    if( PA.getWorldRank() == 0 ) {
-      CHECK_CLOSE( 0.0, tally.getTally(0,0), 1e-6);
-      CHECK_CLOSE( 1.0*PA.getWorldSize(), tally.getTally(0,1), 1e-6);
-      CHECK_CLOSE( 2.0*PA.getWorldSize(), tally.getTally(0,2), 1e-6);
-    } else {
-      CHECK_CLOSE( 0.0, tally.getTally(0,0), 1e-6);
-      CHECK_CLOSE( 0.0, tally.getTally(0,1), 1e-6);
-      CHECK_CLOSE( 0.0, tally.getTally(0,2), 1e-6);
+      for (size_t i = 0; i < pTally->size(); i++){
+        CHECK_CLOSE(static_cast<MonteRay::Tally::TallyFloat>(nBlocks), pTally->contribution(i), 1e-6);
+      }
     }
   }
-
-}
+#endif
 
 } // end namespace
