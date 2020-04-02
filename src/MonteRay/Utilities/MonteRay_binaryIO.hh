@@ -6,6 +6,8 @@
 #include <cassert>
 #include <vector>
 
+#include "MonteRayTypes.hh"
+
 namespace MonteRay{
 
 namespace binaryIO{
@@ -67,6 +69,18 @@ write( S& outFile, const std::string& value)
 template<typename S, typename T>
 void
 write( S& outFile, const std::vector<T>& value)
+{
+    size_t num = value.size();
+    write( outFile, num );
+    for( unsigned i = 0; i < num; ++i ) {
+        write( outFile, value[i] );
+    }
+}
+
+// Write vector
+template<typename S, typename T>
+void
+write( S& outFile, const Vector<T>& value)
 {
     size_t num = value.size();
     write( outFile, num );
@@ -145,14 +159,34 @@ read( S& inFile, std::string& value)
 
 // Read vector
 template<typename S, typename T>
-void
-read( S& inFile, std::vector<T>& value)
+void read( S& inFile, std::vector<T>& value)
 {
     if( !inFile.eof() ) {
         size_t num;
         read( inFile, num );
 
         std::vector<T> temp(num);
+        for( unsigned i = 0; i < num; ++i ) {
+            read( inFile, temp[i] );
+        }
+        value.swap(temp);
+
+    } else {
+        throw std::logic_error("binaryIO::read -- End of file reached");
+    }
+    if( inFile.fail() ) {
+        throw std::logic_error("binaryIO::read -- Failed to read Value");
+    }
+}
+
+template<typename S, typename T>
+void read( S& inFile, Vector<T>& value)
+{
+    if( !inFile.eof() ) {
+        size_t num;
+        read( inFile, num );
+
+        Vector<T> temp(num);
         for( unsigned i = 0; i < num; ++i ) {
             read( inFile, temp[i] );
         }
