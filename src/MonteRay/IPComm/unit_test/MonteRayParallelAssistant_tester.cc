@@ -14,13 +14,13 @@ SUITE( MonteRayParallelAssistant_tester ){
         CHECK_EQUAL( false, PA.isParallel() );
         CHECK_EQUAL( false, PA.usingSingleProcWorkGroup() );
         CHECK_EQUAL(     0, PA.getWorldRank() );
-        CHECK_EQUAL(     0, PA.getWorldSize() );
+        CHECK_EQUAL(     1, PA.getWorldSize() );
         CHECK_EQUAL(     0, PA.getSharedMemoryRank() );
-        CHECK_EQUAL(     0, PA.getSharedMemorySize() );
+        CHECK_EQUAL(     1, PA.getSharedMemorySize() );
         CHECK_EQUAL(     0, PA.getWorkGroupRank() );
-        CHECK_EQUAL(     0, PA.getWorkGroupSize() );
+        CHECK_EQUAL(     1, PA.getWorkGroupSize() );
         CHECK_EQUAL(     0, PA.getInterWorkGroupRank() );
-        CHECK_EQUAL(     0, PA.getInterWorkGroupSize() );
+        CHECK_EQUAL(     1, PA.getInterWorkGroupSize() );
     }
 
     TEST( getDeviceAssignmentMapping_1GPU ) {

@@ -369,7 +369,6 @@ public:
 
     void addCollision( unsigned targetRank, const COLLISION_T& collision) {
 
-
         MONTERAY_ASSERT( targetRank < nRanks );
 
         if( targetRank > 0 ) {
