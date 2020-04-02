@@ -1,6 +1,7 @@
 #ifndef MONTERAYTYPES_HH_
 #define MONTERAYTYPES_HH_
 
+#include "Containers.hh"
 
 #define TALLY_DOUBLEPRECISION 1 // turn on (1) and off (0) for double precision tally array and compute
 #define RAY_DOUBLEPRECISION 0 // turn on (1) and off (0) for double precision tally array and compute
@@ -15,6 +16,11 @@ namespace MonteRay{
 typedef float float_t;
 typedef float gpuFloatType_t;
 typedef short int ParticleType_t;
+
+template <typename T>
+using Vector = SimpleVector<T>;
+template <typename T>
+using View = SimpleView<T>;
 
 #if RAY_DOUBLEPRECISION < 1
 typedef float gpuRayFloat_t;
