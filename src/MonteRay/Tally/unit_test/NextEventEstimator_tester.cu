@@ -50,10 +50,11 @@ class NEE_Fixture{
   NEE_Fixture() {
     MonteRay::NextEventEstimator::Builder nee_builder(1);
     nee_builder.addTallyPoint(1.0, 2.0, 3.0);
-    nee_builder.addTallyPoint(2.0, 2.0, 3.0);
-    nee_builder.setExclusionRadius(0.0);
+    nee_builder.addTallyPoint(2.0, 2.0, 3.0, 10.0);
     std::vector<double> timeEdges{1.0, 2.0};
-    nee_builder.setTimeBinEdges( timeEdges );
+    nee_builder.timeBinEdges( std::move(timeEdges) );
+    std::vector<double> energyEdges{5E-6, 2.0, 10.0};
+    nee_builder.energyBinEdges( std::move(energyEdges) );
     pNee = std::make_unique<MonteRay::NextEventEstimator>(nee_builder.build());
 
     ray.dir = {1.0, 0.0, 0.0};
@@ -61,6 +62,7 @@ class NEE_Fixture{
     ray.particleType = 1;
     ray.weight = {0.34, 0.33, 0.33};
     ray.energy = {1.0, 1.0, 1.0};
+    ray.time = 0.0;
   }
 };
 
@@ -71,10 +73,15 @@ SUITE( NextEventEstimator_Tester ) {
     CHECK_CLOSE(1.0, nee.getPoint(0)[0], 1e-6);
     CHECK_CLOSE(2.0, nee.getPoint(0)[1], 1e-6);
     CHECK_CLOSE(3.0, nee.getPoint(0)[2], 1e-6);
-    CHECK_CLOSE(0.0, nee.getExclusionRadius(), 1e-6);
-    const auto& testTimeEdges = nee.getTimeBinEdges();
-    CHECK_CLOSE(1.0, testTimeEdges[0], 1e-6);
-    CHECK_CLOSE(2.0, testTimeEdges[1], 1e-6);
+    CHECK_CLOSE(0.0, nee.getExclusionRadius(0), 1e-6);
+    CHECK_CLOSE(10.0, nee.getExclusionRadius(1), 1e-6);
+    const auto& timeEdges = nee.timeBinEdges();
+    CHECK_CLOSE(1.0, timeEdges[0], 1e-6);
+    CHECK_CLOSE(2.0, timeEdges[1], 1e-6);
+    const auto& energyEdges = nee.energyBinEdges();
+    CHECK_CLOSE(5E-6, energyEdges[0], 1e-8);
+    CHECK_CLOSE(2.0, energyEdges[1], 1e-6);
+    CHECK_CLOSE(10.0, energyEdges[2], 1e-6);
   }
 
   TEST_FIXTURE( NEE_Fixture, Builder ) {
@@ -90,45 +97,57 @@ SUITE( NextEventEstimator_Tester ) {
     auto& matList = *pMatList;
     auto& rayWorkInfo = *pRayWorkInfo;
 
-    auto score = pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
     // test to ensure test ray tracer operates as expected
     CHECK_CLOSE(1.0, rayWorkInfo.getCrossingDist(0, 0, 0), 1E-6);
 
     // check basic score
-    CHECK_CLOSE(1.0/(2.0*M_PI)*std::exp(-1.0), pNee->getTally(0, 0), 1E-6); 
-    CHECK_CLOSE(score, pNee->getTally(0, 0), 1E-6); 
+    auto score = 1.0/(2.0*M_PI)*std::exp(-1.0);
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 0), 1E-6); 
 
     // check basic score in second time bin
     ray.time = 1.0;
     rayWorkInfo.clear();
-    score = pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
-    CHECK_CLOSE(1.0/(2.0*M_PI)*std::exp(-1.0), pNee->getTally(0, 1), 1E-6); 
-    CHECK_CLOSE(score, pNee->getTally(0, 0), 1E-6); 
+    pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 1), 1E-6); 
+    // make sure original contribution didn't change
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 0), 1E-6); 
+    CHECK_CLOSE(0.0, pNee->contribution(0, 1, 2), 1E-6); 
 
     // check basic score in overflow time bin
     ray.time = 100.0;
     rayWorkInfo.clear();
-    score = pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
-    CHECK_CLOSE(1.0/(2.0*M_PI)*std::exp(-1.0), pNee->getTally(0, 2), 1E-6); 
-    CHECK_CLOSE(score, pNee->getTally(0, 0), 1E-6); 
+    pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 2), 1E-6); 
+    // make sure other scores didn't change
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 2), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 0), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 1), 1E-6); 
     
+    // NOTE: following tests make sure score didn't change (aka 0 contribution)
     // check rejection of neutrons
     rayWorkInfo.clear();
     ray.particleType = 0;
-    score = pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
-    CHECK_CLOSE(0.0, score, 1E-6);
+    pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 2), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 0), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 1), 1E-6); 
 
-    // check rejection of for zero weights
+    // check rejection of zero weights
     ray.particleType = 1;
     ray.weight = {0.0, 0.0, 0.0};
-    score = pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
-    CHECK_CLOSE(0.0, score, 1E-6);
+    pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 2), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 0), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 1), 1E-6); 
 
     // check rejection of for zero energies
     ray.weight = {1.0, 1.0, 1.0};
     ray.energy = {0.0, 0.0, 0};
-    score = pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
-    CHECK_CLOSE(0.0, score, 1E-6);
+    pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 2), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 0), 1E-6); 
+    CHECK_CLOSE(score, pNee->contribution(0, 1, 1), 1E-6); 
   }
 
   TEST_FIXTURE(NEE_Fixture, cpuScoreRayList){
@@ -150,7 +169,7 @@ SUITE( NextEventEstimator_Tester ) {
     *stream = 0; // default stream
     launch_ScoreRayList(pNee.get(), 1, 1, pBank.get(), pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get(), stream.get() );
     cudaDeviceSynchronize();
-    CHECK_CLOSE(max_n_rays*1.0/(2.0*M_PI)*std::exp(-1.0), pNee->getTally(0, 0), 1E-6); 
+    CHECK_CLOSE(max_n_rays*1.0/(2.0*M_PI)*std::exp(-1.0), pNee->contribution(0, 1, 0), 1E-6); 
 #endif
   }
 

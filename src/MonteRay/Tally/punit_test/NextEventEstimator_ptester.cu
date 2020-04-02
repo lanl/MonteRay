@@ -9,6 +9,8 @@
 #include "RayList.hh"
 #include "MonteRayParallelAssistant.hh"
 
+#include <unistd.h>
+
 namespace NextEventEsimator_punit_tests{
 using Managed = MonteRay::Managed;
 
@@ -19,7 +21,6 @@ struct Geometry : public Managed {
       rayInfo.addCrossingCell(0, threadID, 0, distance);
       rayInfo.addRayCastCell(threadID, 0, distance);
   }
-  const auto getDevicePtr() const { return this; }
 };
 
 struct MaterialList : public Managed {
@@ -54,11 +55,10 @@ class NEE_Fixture{
       PA( MonteRay::MonteRayParallelAssistant::getInstance() )
   {
     MonteRay::NextEventEstimator::Builder nee_builder(1);
-    nee_builder.addTallyPoint(1.0, 2.0, 3.0);
-    nee_builder.addTallyPoint(2.0, 2.0, 3.0);
-    nee_builder.setExclusionRadius(0.0);
+    nee_builder.addTallyPoint(1.0, 2.0, 3.0, 0.0);
+    nee_builder.addTallyPoint(2.0, 2.0, 3.0, 0.0);
     std::vector<double> timeEdges{1.0, 2.0};
-    nee_builder.setTimeBinEdges( timeEdges );
+    nee_builder.timeBinEdges( timeEdges );
     pNee = std::make_unique<MonteRay::NextEventEstimator>(nee_builder.build());
 
     ray.dir = {1.0, 0.0, 0.0};
@@ -76,8 +76,8 @@ SUITE( NextEventEstimator_pTester ) {
     CHECK_CLOSE(1.0, nee.getPoint(0)[0], 1e-6);
     CHECK_CLOSE(2.0, nee.getPoint(0)[1], 1e-6);
     CHECK_CLOSE(3.0, nee.getPoint(0)[2], 1e-6);
-    CHECK_CLOSE(0.0, nee.getExclusionRadius(), 1e-6);
-    const auto& testTimeEdges = nee.getTimeBinEdges();
+    CHECK_CLOSE(0.0, nee.getExclusionRadius(0), 1e-6);
+    const auto& testTimeEdges = nee.timeBinEdges();
     CHECK_CLOSE(1.0, testTimeEdges[0], 1e-6);
     CHECK_CLOSE(2.0, testTimeEdges[1], 1e-6);
   }
@@ -108,16 +108,15 @@ SUITE( NextEventEstimator_pTester ) {
     auto& matList = *pMatList;
     auto& rayWorkInfo = *pRayWorkInfo;
 
-    auto score = pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    pNee->calcScore(threadID, ray, rayWorkInfo, geometry, matProps, matList);
+    double expected = 1.0/(2.0*M_PI)*std::exp(-1.0);
+    CHECK_CLOSE( expected, pNee->contribution(0), 1E-6);
 
-    pNee->gatherWorkGroup(); // used for testing only
     pNee->gather();
 
     if( PA.getWorldRank() == 0 ) {
     // check basic score in parallel
-        double expected = 1.0/(2.0*M_PI)*std::exp(-1.0);
-        CHECK_CLOSE( expected, score, 1E-6);
-        CHECK_CLOSE( expected*PA.getWorldSize(), pNee->getTally(0, 0), 1E-6);
+        CHECK_CLOSE( expected*PA.getWorldSize(), pNee->contribution(0), 1E-6);
     }
 
   }
@@ -135,7 +134,7 @@ SUITE( NextEventEstimator_pTester ) {
     if( PA.getWorldRank() == 0 ) {
         // check basic score in parallel
         double expected = 1.0/(2.0*M_PI)*std::exp(-1.0)*max_n_rays;
-        CHECK_CLOSE( expected*PA.getWorldSize(), pNee->getTally(0, 0), 1E-6);
+        CHECK_CLOSE( expected*PA.getWorldSize(), pNee->contribution(0, 0, 0), 1E-6);
     }
   }
 
@@ -174,9 +173,9 @@ SUITE( NextEventEstimator_pTester ) {
     if( PA.getWorldRank() == 0 ) {
         // check basic score in parallel
         double expected = 1.0/(2.0*M_PI)*std::exp(-1.0)*max_n_rays;
-        CHECK_CLOSE( expected * PA.getInterWorkGroupSize(), pNee->getTally(0, 0), 1E-6);
+        CHECK_CLOSE( expected * PA.getInterWorkGroupSize(), pNee->contribution(0, 0, 0), 1E-6);
     } else {
-        CHECK_CLOSE( 0.0, pNee->getTally(0, 0), 1E-6);
+        CHECK_CLOSE( 0.0, pNee->contribution(0, 0, 0), 1E-6);
     }
 #endif
   }

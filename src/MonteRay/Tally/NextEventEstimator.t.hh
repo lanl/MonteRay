@@ -9,25 +9,26 @@ namespace MonteRay{
 // TPB: consider breaking this up into multiple functions.
 template<unsigned N, typename Geometry, typename MaterialProperties, typename MaterialList>
 CUDA_CALLABLE_MEMBER
-typename NextEventEstimator::tally_t
-NextEventEstimator::calcScore( const int threadID, const Ray_t<N>& ray, RayWorkInfo& rayInfo, 
+void NextEventEstimator::calcScore( const int threadID, const Ray_t<N>& ray, RayWorkInfo& rayInfo, 
                                const Geometry& geometry, const MaterialProperties& matProps, 
                                const MaterialList& matList){
   // Neutrons are not yet supported 
   // TPB: but this algorithm doesn't care what particle we're ray tracing.  This should be a filter somewhere.
-  if( ray.particleType == neutron ) return static_cast<NextEventEstimator::tally_t>(0.0);
-  MONTERAY_ASSERT( ray.detectorIndex < tallyPoints_.size());
-  tally_t score = 0.0;
+  if( ray.particleType == neutron ) {
+#ifndef NDEBUG
+    printf("MonteRay::NextEventEstimator::calcScore - neutrons not supported.\n");
+#endif
+    return;
+  }
 
-  // TODO: remove construction of Vector3D and just have ray be a Vector3D
-  MonteRay::Vector3D<gpuRayFloat_t> pos( ray.pos[0], ray.pos[1], ray.pos[2]);
-  auto distAndDir = getDistanceDirection(pos, tallyPoints_[ray.detectorIndex]);
+  MONTERAY_ASSERT( ray.detectorIndex < tallyPoints_.size());
+
+  auto distAndDir = getDistanceDirection(ray.pos, tallyPoints_[ray.detectorIndex]);
   auto& dist = std::get<0>(distAndDir);
   auto& dir = std::get<1>(distAndDir);
 
-  gpuFloatType_t time = ray.time + dist / ray.speed();
 
-  geometry.rayTrace( threadID, rayInfo, pos, dir, dist, false);
+  geometry.rayTrace( threadID, rayInfo, ray.pos, dir, dist, false);
 
   for( int energyIndex=0; energyIndex < N; ++energyIndex) {
     gpuFloatType_t weight = ray.weight[energyIndex];
@@ -36,7 +37,7 @@ NextEventEstimator::calcScore( const int threadID, const Ray_t<N>& ray, RayWorkI
     gpuFloatType_t energy = ray.energy[energyIndex];
     if( energy <  1.0e-11 ) continue;
 
-    tally_t partialScore = 0.0;
+    TallyFloat partialScore = 0.0;
 
     gpuFloatType_t materialXS[MAXNUMMATERIALS]; // TPB TODO: investigate this - could be replaced by something like rayWorkInfo or done on-the-fly.
     // TPB: this could be removed entirely and done in a different kernel, then this function could take a list of XS
@@ -45,7 +46,7 @@ NextEventEstimator::calcScore( const int threadID, const Ray_t<N>& ray, RayWorkI
       materialXS[i] = matList.material(i).getTotalXS(energy, 1.0);
     }
 
-    tally_t opticalThickness = 0.0;
+    TallyFloat opticalThickness = 0.0;
     for( int i=0; i < rayInfo.getRayCastSize( threadID ); ++i ){
       int cell = rayInfo.getRayCastCell( threadID, i);
       gpuRayFloat_t cellDistance = rayInfo.getRayCastDist( threadID, i);
@@ -62,12 +63,9 @@ NextEventEstimator::calcScore( const int threadID, const Ray_t<N>& ray, RayWorkI
       }
       opticalThickness += totalXS * cellDistance;
     }
-    partialScore = ( weight / (2.0 * MonteRay::pi * dist*dist)  ) * exp( - opticalThickness);
-    score += partialScore;
+    this->score( ( weight / (2.0 * MonteRay::pi * dist*dist)  ) * exp( - opticalThickness),
+      ray.detectorIndex, ray.energy[energyIndex], ray.time + dist / ray.speed() );
   }
-  tally_.score(score, ray.detectorIndex, time);
-
-  return score;
 }
 
 #ifdef __CUDACC__
