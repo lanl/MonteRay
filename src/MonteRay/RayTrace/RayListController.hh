@@ -61,9 +61,6 @@ private:
   bool fileIsOpen_ = false;
   std::string outputFileName_;
 
-  using kernel_t = std::function<void (void)>;
-  kernel_t kernel_;
-
   std::unique_ptr<cudaStream_t> stream1_;
   std::unique_ptr<cudaEvent_t> startGPU_;
   std::unique_ptr<cudaEvent_t> stopGPU_;
@@ -87,6 +84,8 @@ private:
   void startTimers(void);
   void printCycleTime(float_t cpu, float_t gpu, float_t wall) const;
   void swapBanks(void);
+
+  void kernel();
 
 public:
   using Ray = Ray_t<N>;

@@ -60,42 +60,43 @@ RayListController<Geometry,N>::RayListController(
   currentCopySync_ = copySync1_.get();
 #endif
 
-  if (isSendingToFile()) {
-    kernel_ = [&] (void) {
-        // do nothing
-        return;
-    };
-  } else if (isUsingExpectedPathLengthTally()){
-    kernel_ = [&] (void) {
-      if(PA_.get().getWorkGroupRank() != 0) { return; }
+} 
 
-      auto launchBounds = setLaunchBounds(nThreads_, nBlocks_, currentBank_->getPtrPoints()->size());
+template<typename Geometry, unsigned N>
+void RayListController<Geometry,N>::kernel(){
+
+  if (isSendingToFile()) {
+    return; // do nothing
+  } else if (isUsingExpectedPathLengthTally()){
+    if(PA_.get().getWorkGroupRank() != 0) { return; }
+
+    auto launchBounds = setLaunchBounds(nThreads_, nBlocks_, currentBank_->getPtrPoints()->size());
 
 #ifndef NDEBUG
-      size_t freeMemory = 0;
-      size_t totalMemory = 0;
+    size_t freeMemory = 0;
+    size_t totalMemory = 0;
 #ifdef __CUDACC__
-      cudaError_t memError = cudaMemGetInfo(&freeMemory, &totalMemory);
-      freeMemory = freeMemory/1000000;
-      totalMemory = totalMemory/1000000;
+    cudaError_t memError = cudaMemGetInfo(&freeMemory, &totalMemory);
+    freeMemory = freeMemory/1000000;
+    totalMemory = totalMemory/1000000;
 #endif
-      std::cout << "MonteRay::RayListController -- launching kernel on " <<
-                   PA_.get().info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
-                   " threads, to process " << currentBank_->getPtrPoints()->size() << " rays," <<
-                   " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
+    std::cout << "MonteRay::RayListController -- launching kernel on " <<
+                 PA_.get().info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
+                 " threads, to process " << currentBank_->getPtrPoints()->size() << " rays," <<
+                 " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
 
-      auto& pExpectedPathLengthTally = mpark::get<ExpectedPathLengthTallyPointer>(pTally_);
-      if (pMatProps_->usingMaterialMotion()){
-        constexpr gpuFloatType_t timeRemaining = 10.0E6;
-        pExpectedPathLengthTally->rayTraceTallyWithMovingMaterials(
-            currentBank_->getPtrPoints(),
-            timeRemaining,
-            pGeometry_,
-            pMatProps_,
-            pMatList_,
-            stream1_.get());
-      } else {
+    auto& pExpectedPathLengthTally = mpark::get<ExpectedPathLengthTallyPointer>(pTally_);
+    if (pMatProps_->usingMaterialMotion()){
+      constexpr gpuFloatType_t timeRemaining = 10.0E6;
+      pExpectedPathLengthTally->rayTraceTallyWithMovingMaterials(
+          currentBank_->getPtrPoints(),
+          timeRemaining,
+          pGeometry_,
+          pMatProps_,
+          pMatList_,
+          stream1_.get());
+    } else {
 #ifdef __CUDACC__
       rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1_>>>(
               pGeometry_,
@@ -113,19 +114,15 @@ RayListController<Geometry,N>::RayListController(
               rayInfo_.get(),
               pExpectedPathLengthTally.get());
 #endif
-      }
-    };
-  } 
-    else if (isUsingNextEventEstimator()){
-      auto& pNextEventEstimator = mpark::get<NextEventEstimatorPointer>(pTally_);
-    kernel_ = [&] (void) {
-      if(currentBank_->size() > 0) {
-        launch_ScoreRayList(pNextEventEstimator.get(), nBlocks, nThreads, currentBank_->getPtrPoints(), rayInfo_.get(), 
-            pGeometry_, pMatProps_, pMatList_, stream1_.get());
-      }
-    };
+    }
+  } else if (isUsingNextEventEstimator()){
+    auto& pNextEventEstimator = mpark::get<NextEventEstimatorPointer>(pTally_);
+    if(currentBank_->size() > 0) {
+      launch_ScoreRayList(pNextEventEstimator.get(), nBlocks_, nThreads_, currentBank_->getPtrPoints(), rayInfo_.get(), 
+          pGeometry_, pMatProps_, pMatList_, stream1_.get());
+    }
   }
-} 
+}
 
 template<typename Geometry, unsigned N>
 unsigned
@@ -179,7 +176,7 @@ RayListController<Geometry,N>::flush(bool final){
 #endif
 
   // launch kernel
-  kernel_();
+  kernel();
 
   // only uncomment for testing, forces the cpu and gpu to sync
 #ifndef NDEBUG

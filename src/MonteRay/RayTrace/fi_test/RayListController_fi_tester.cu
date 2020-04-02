@@ -85,6 +85,7 @@ SUITE( Ray_bank_controller_fi_tester ) {
                              .materialList(pMatList.get())
                              .materialProperties(pMatProps.get())
                              .expectedPathLengthTally(tallyBuilder.build());
+            
             pController = std::make_unique<CollisionPointController>(controllerBuilder.build());
         }
 
