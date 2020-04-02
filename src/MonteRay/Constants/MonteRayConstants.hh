@@ -34,8 +34,9 @@ constexpr gpuFloatType_t neutron_rest_mass_MeV = 939.565346; // [MeV]
 
 /// Returns the velocity of a neutron in cm/shake from neutron's energy in [MeV]
 CUDA_CALLABLE_MEMBER
-constexpr gpuFloatType_t neutron_speed_from_energy_const(){ return speed_of_light * Math::sqrt( static_cast<gpuFloatType_t>(2.0) / neutron_rest_mass_MeV );} // [MeV]
-constexpr gpuFloatType_t inv_neutron_speed_from_energy_const(){ return static_cast<gpuFloatType_t>(1.0)/neutron_speed_from_energy_const(); }
+inline gpuFloatType_t neutron_speed_from_energy_const(){ return speed_of_light * Math::sqrt( static_cast<gpuFloatType_t>(2.0) / neutron_rest_mass_MeV );} // [MeV]
+CUDA_CALLABLE_MEMBER
+inline gpuFloatType_t inv_neutron_speed_from_energy_const(){ return static_cast<gpuFloatType_t>(1.0)/neutron_speed_from_energy_const(); }
 
 }
 
