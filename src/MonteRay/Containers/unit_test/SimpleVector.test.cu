@@ -6,19 +6,15 @@
 #include "SimpleVector.hh"
 #include "GPUUtilityFunctions.hh"
 
-
-namespace SimpleVectorTest{
-
-using namespace MonteRay;
 template <typename T>
-using simple_vector = MonteRay::SimpleVector<T, std::allocator<T> >;
+using SimpleVector = MonteRay::SimpleVector<T, std::allocator<T> >;
 
 SUITE(SimpleVector_test) {
 
-  simple_vector<double> vec1(3);
+  SimpleVector<double> vec1(3);
   TEST(Constructing_SimpleVector){
-    simple_vector<double> vec2(3, 5.0);
-    simple_vector<double> vec3{0.0, 1.0, 2.0};
+    SimpleVector<double> vec2(3, 5.0);
+    SimpleVector<double> vec3{0.0, 1.0, 2.0};
 
     CHECK(vec1.size() == 3);
     CHECK(vec2.size() == 3);
@@ -32,27 +28,35 @@ SUITE(SimpleVector_test) {
     CHECK(vec3[1] == 1.0);
     CHECK(vec3[2] == 2.0);
 
-    simple_vector<int> vec{1, 2, 3};
-    simple_vector<int> anotherVec(vec);
+    SimpleVector<int> vec{1, 2, 3};
+    SimpleVector<int> anotherVec(vec);
     CHECK(anotherVec[0] == 1);
     CHECK(anotherVec[1] == 2);
     CHECK(anotherVec[2] == 3);
 
-    simple_vector<int> yetAnotherVec(std::move(anotherVec));
+    SimpleVector<int> yetAnotherVec(std::move(anotherVec));
     CHECK(yetAnotherVec[0] == 1);
     CHECK(yetAnotherVec[1] == 2);
     CHECK(yetAnotherVec[2] == 3);
   }
 
+  TEST(ConstructingSimpleVectorFromVector){
+    SimpleVector<int> vector(std::vector<int>{0, 1, 2});
+    CHECK_EQUAL(3, vector.size());
+    CHECK_EQUAL(0, vector[0]);
+    CHECK_EQUAL(1, vector[1]);
+    CHECK_EQUAL(2, vector[2]);
+  }
+
   TEST(assignment){
-    simple_vector<int> vec{1, 2, 3};
-    simple_vector<int> anotherVec;
+    SimpleVector<int> vec{1, 2, 3};
+    SimpleVector<int> anotherVec;
     anotherVec = vec;
     CHECK(anotherVec[0] == 1);
     CHECK(anotherVec[1] == 2);
     CHECK(anotherVec[2] == 3);
 
-    simple_vector<int> yetAnotherVec;
+    SimpleVector<int> yetAnotherVec;
     yetAnotherVec = std::move(anotherVec);
     CHECK(yetAnotherVec[0] == 1);
     CHECK(yetAnotherVec[1] == 2);
@@ -73,7 +77,7 @@ SUITE(SimpleVector_test) {
       double bar = 1;
       foo(){ bar = 10; }
     };
-    simple_vector<foo> vec;
+    SimpleVector<foo> vec;
     vec.resize(10);
     CHECK(vec.size() == 10);
     CHECK(vec.capacity() == 10);
@@ -91,7 +95,7 @@ SUITE(SimpleVector_test) {
       foo(){ bar = -10; }
     };
 
-    simple_vector<foo> vec;
+    SimpleVector<foo> vec;
     vec.resizeWithoutConstructing(10);
     for (auto& val : vec){
       CHECK(val.bar != -10);
@@ -104,8 +108,8 @@ SUITE(SimpleVector_test) {
   }
 
   TEST(swap){
-    simple_vector<double> vec1(3, 5.0);
-    simple_vector<double> vec2{0.0, 1.0, 2.0, 3.0};
+    SimpleVector<double> vec1(3, 5.0);
+    SimpleVector<double> vec2{0.0, 1.0, 2.0, 3.0};
     vec1.swap(vec2);
     CHECK(vec1.size() == 4);
     CHECK(vec1.capacity() == 4);
@@ -116,7 +120,7 @@ SUITE(SimpleVector_test) {
   }
 
   TEST(erase){
-    simple_vector<int> vec{0, 1, 2, 3, 4, 5};
+    SimpleVector<int> vec{0, 1, 2, 3, 4, 5};
     vec.erase(vec.begin(), vec.begin() + 3);
     CHECK(vec.size() == 3);
     CHECK(vec.capacity() == 6);
@@ -126,7 +130,7 @@ SUITE(SimpleVector_test) {
   }
 
   TEST(assign){
-    simple_vector<int> vec;
+    SimpleVector<int> vec;
     std::vector<int> another_vec{0, 1, 2, 3};
     vec.assign(another_vec.begin(), another_vec.end());
     int i = 0;
@@ -144,7 +148,7 @@ SUITE(SimpleVector_test) {
 
   TEST(adding_to_vector){
     using T = std::tuple<double, int>;
-    simple_vector<T> vec;
+    SimpleVector<T> vec;
     T tup(1.5, 5);
     vec.push_back(tup);
     CHECK(vec.size() == 1);
@@ -183,7 +187,7 @@ SUITE(SimpleVector_test) {
 #endif
 
   TEST(inserting_into_vector){
-    simple_vector<int> vecA{0, 1, 2};
+    SimpleVector<int> vecA{0, 1, 2};
     std::vector<int> vecB{3, 4, 5};
     vecA.insert(vecA.begin() + 1, vecB.begin(), vecB.end());
 
@@ -196,10 +200,4 @@ SUITE(SimpleVector_test) {
     CHECK_EQUAL(1, vecA[4]);
     CHECK_EQUAL(2, vecA[5]);
   }
-
-
 }
-
-} // end namespace SimpleVectorTest
-
-

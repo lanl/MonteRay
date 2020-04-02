@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include "ManagedAllocator.hh"
+#include "detail/HasResize.hpp"
 
 namespace MonteRay{
 
@@ -64,6 +65,11 @@ class SimpleVector : public Managed
     other.size_ = 0;
     other.reservedSize_ = 0;
   }
+
+  // generic constructor given another container that has the .resize() method isn't the same container as this one
+  template <typename OtherContainer, typename = has_resize_e<OtherContainer>,
+            std::enable_if_t< !std::is_same<OtherContainer, SimpleVector<T> >::value, bool > = true >
+  SimpleVector(OtherContainer&& other): SimpleVector(other.begin(), other.end()) {}
 
   ~SimpleVector(){
     if (begin_ != nullptr) {
