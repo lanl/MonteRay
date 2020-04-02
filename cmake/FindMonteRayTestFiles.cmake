@@ -43,7 +43,7 @@ endif()
 if( lnk3dnt_location )
     message( "-- FindMonteRayTestFiles.cmake -- Found geometry test files at [ ${lnk3dnt_location} ]" )
 else()
-    message( FATAL_ERROR "-- FindMonteRayTestFiles.cmake -- Could not locate geometry test files.  Consider setting the LNK3DNTDIR environment variable." )
+  message( WARNING "-- FindMonteRayTestFiles.cmake -- Could not locate geometry test files.  Consider setting the LNK3DNTDIR environment variable." )
 endif()
 
 
@@ -81,7 +81,7 @@ if( MonteRayTestFiles_location )
     message( "-- FindMonteRayTestFiles.cmake -- Found MonteRay test files at [ ${MonteRayTestFiles_location} ]" )
 #    add_definitions( -DMONTERAY_TESTFILES_DIR="${MonteRayTestFiles_location}" )
 else()
-    message( FATAL_ERROR "-- FindMonteRayTestFiles.cmake -- Could not locate MonteRay test files." )
+  message( WARNING "-- FindMonteRayTestFiles.cmake -- Could not locate MonteRay test files." )
 endif()
 
 macro(create_lnk3dnt_symlink target)
