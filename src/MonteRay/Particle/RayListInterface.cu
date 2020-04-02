@@ -290,19 +290,21 @@ RayListInterface<N>::readToBank( const std::string& file, unsigned start ){
 
     clear();
     unsigned nRead = 0;
+    bool end = false;
     for( unsigned i=0; i< capacity(); ++i ) {
         add( readParticle() );
         ++nRead;
         if( numCollisionOnFile == nRead + start) {
-            break;
+          end = true;
+          break;
         }
     }
     closeInput();
 
     if( nRead < capacity() ) {
-        return true; // return end = true
+        end = true;
     }
-    return false; // return end = false
+    return end;
 }
 
 template< unsigned N>

@@ -7,7 +7,6 @@
 
 #include "ReadAndWriteFiles.hh"
 #include "GPUUtilityFunctions.hh"
-#include "BasicTally.hh"
 #include "ExpectedPathLength.t.hh"
 #include "Material.hh"
 #include "MaterialProperties.hh"
@@ -313,6 +312,97 @@
 
 /* } */
 
+template<unsigned N, typename Geometry, typename MaterialList>
+MonteRay::tripleTime launchRayTraceTally(
+        std::function<void (void)> cpuWork,
+        int nBlocks,
+        int nThreads,
+        const Geometry* const pGeometry,
+        const RayListInterface<N>* const pCP,
+        const MaterialList* const pMatList,
+        const MaterialProperties* const pMatProps,
+        ExpectedPathLengthTally* const pTally
+) {
+    MonteRay::tripleTime time;
+
+    auto launchParams = setLaunchBounds( nThreads, nBlocks, pCP->getPtrPoints()->size() );
+    nBlocks = launchParams.first;
+    nThreads = launchParams.second;
+
+#ifdef __CUDACC__
+    auto pRayInfo = std::make_unique<RayWorkInfo>(nBlocks*nThreads);
+
+    cudaEvent_t startGPU, stopGPU, start, stop;
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventCreate(&startGPU);
+    cudaEventCreate(&stopGPU);
+
+    cudaStream_t stream;
+    cudaStreamCreate( &stream );
+
+    cudaEventRecord(start,0);
+    cudaEventRecord(startGPU,stream);
+
+    rayTraceTally<<<nBlocks,nThreads,0,stream>>>(
+            pGeometry,
+            pCP->getPtrPoints(),
+            pMatList,
+            pMatProps,
+            pRayInfo.get(),
+            pTally);
+
+    cudaEventRecord(stopGPU,stream);
+    cudaStreamWaitEvent(stream, stopGPU, 0);
+
+    {
+        MonteRay::cpuTimer timer;
+        timer.start();
+        cpuWork();
+        timer.stop();
+        time.cpuTime = timer.getTime();
+    }
+
+    cudaStreamSynchronize( stream );
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+    cudaStreamDestroy(stream);
+
+    float_t gpuTime;
+    cudaEventElapsedTime(&gpuTime, startGPU, stopGPU );
+    time.gpuTime = gpuTime / 1000.0;
+
+    float_t totalTime;
+    cudaEventElapsedTime(&totalTime, start, stop );
+    time.totalTime = totalTime/1000.0;
+#else
+    auto pRayInfo = std::make_unique<RayWorkInfo>(1);
+
+    MonteRay::cpuTimer timer1, timer2;
+    timer1.start();
+
+    rayTraceTally( pGeometry,
+            pCP->getPtrPoints(),
+            pMatList,
+            pMatProps,
+            pRayInfo.get(),
+            pTally);
+    timer1.stop();
+    timer2.start();
+    cpuWork();
+    timer2.stop();
+
+    time.gpuTime = timer1.getTime();
+    time.cpuTime = timer2.getTime();
+    time.totalTime = timer1.getTime() + timer2.getTime();
+#endif
+
+    return time;
+}
+
+
+
 SUITE( Collision_fi_looping_tester ) {
 
     TEST( rayTraceTally_GodivaR_wGlobalLauncher )
@@ -328,7 +418,9 @@ SUITE( Collision_fi_looping_tester ) {
           MonteRay_GridBins{-33.5, 33.5, 100} }
         );
 
-        auto pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
+        ExpectedPathLengthTally::Builder tallyBuilder;
+        tallyBuilder.spatialBins(pGrid->size());
+        auto pTally = std::make_unique<ExpectedPathLengthTally>(tallyBuilder.build());
 
         MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" );
         readerObject.ReadMatData();
@@ -454,8 +546,8 @@ SUITE( Collision_fi_looping_tester ) {
 
         helper.stopTimers();
 
-        CHECK_CLOSE( 0.0201584, pTally->getTally(24), 1e-5 );
-        CHECK_CLOSE( 0.0504394, pTally->getTally(500182), 1e-4 );
+        CHECK_CLOSE( 0.0201584, pTally->contribution(24), 1e-5 );
+        CHECK_CLOSE( 0.0504394, pTally->contribution(500182), 1e-4 );
     }
 
 }
