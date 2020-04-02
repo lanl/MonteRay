@@ -1,4 +1,5 @@
 add_executable( monteray.raytrace_assembly.nightly.test )
+setCudaFilesToCppFiles()
 target_sources( monteray.raytrace_assembly.nightly.test  PRIVATE
                ${CMAKE_CURRENT_LIST_DIR}/main.cc
                ${CMAKE_CURRENT_LIST_DIR}/PWR_Assembly_CollisionsFromFile_nightly_tester.cu

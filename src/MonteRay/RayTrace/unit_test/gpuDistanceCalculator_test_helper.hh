@@ -68,10 +68,6 @@ public:
 
 }
 
-
-
-
-
     auto getDistancesFromGPU( ) {
       std::vector<gpuRayFloat_t> distances(pRayInfo->getRayCastSize(0));
       for( unsigned i = 0; i < pRayInfo->getRayCastSize(0); ++i ){

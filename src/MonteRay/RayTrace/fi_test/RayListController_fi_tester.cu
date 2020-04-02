@@ -6,7 +6,6 @@
 #include "GPUUtilityFunctions.hh"
 #include "ReadAndWriteFiles.hh"
 
-#include "BasicTally.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
@@ -75,69 +74,31 @@ SUITE( Ray_bank_controller_fi_tester ) {
 
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
-            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
+
+            ExpectedPathLengthTally::Builder tallyBuilder;
+            tallyBuilder.spatialBins(pGrid->size());
+
+            CollisionPointController::Builder controllerBuilder;
+            controllerBuilder.nBlocks(256)
+                             .nThreads(256)
+                             .geometry(pGrid.get())
+                             .materialList(pMatList.get())
+                             .materialProperties(pMatProps.get())
+                             .expectedPathLengthTally(tallyBuilder.build());
+            pController = std::make_unique<CollisionPointController>(controllerBuilder.build());
         }
 
         std::unique_ptr<Grid_t> pGrid;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
         std::unique_ptr<CrossSectionList> pXsList;
-        std::unique_ptr<BasicTally> pTally;
+        std::unique_ptr<CollisionPointController> pController;
     };
-
-#if false
-
-    TEST_FIXTURE(ControllerSetup, ctor ){
-        CollisionPointController<Grid_t> controller( 1024,
-                1024,
-                pGrid.get(),
-                pMatList.get(),
-                pMatProps.get(),
-                pTally.get() );
-
-        CHECK_EQUAL(1000000, controller.capacity());
-        CHECK_EQUAL(0, controller.size());
-    }
-
-    TEST_FIXTURE(ControllerSetup, setCapacity ){
-        CollisionPointController<Grid_t> controller( 1024,
-                1024,
-                pGrid.get(),
-                pMatList.get(),
-                pMatProps.get(),
-                pTally.get() );
-
-        CHECK_EQUAL(1000000, controller.capacity());
-        controller.setCapacity(10);
-        CHECK_EQUAL(10, controller.capacity());
-    }
-
-    TEST_FIXTURE(ControllerSetup, add_a_particle ){
-        CollisionPointController<Grid_t> controller( 1024,
-                1024,
-                pGrid.get(),
-                pMatList.get(),
-                pMatProps.get(),
-                pTally.get() );
-
-        unsigned i = pGrid->getIndex( 0.0, 0.0, 0.0 );
-        controller.add( 0.0, 0.0, 0.0,
-                1.0, 0.0, 0.0,
-                1.0, 1.0, i);
-
-        CHECK_EQUAL(1, controller.size());
-    }
-#endif
 
 TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
     // exact numbers from expected path length tally in mcatk
 
-    CollisionPointController<Grid_t> controller( 256,
-            256,
-            pGrid.get(),
-            pMatList.get(),
-            pMatProps.get(),
-            pTally.get() );
+    auto& controller = *pController;
 
     RayListInterface<1> bank1(500000);
 
@@ -177,22 +138,15 @@ TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
     CHECK_EQUAL( 0, controller.size() );
     controller.flush(true);
 
-    CHECK_CLOSE( 0.601248*nI*nJ, pTally->getTally(index), 5e-6*nI*nJ );
-    CHECK_CLOSE( 0.482442*nI*nJ, pTally->getTally(index+1), 5e-6*nI*nJ );
+    CHECK_CLOSE( 0.601248*nI*nJ, controller.contribution(index), 5e-6*nI*nJ );
+    CHECK_CLOSE( 0.482442*nI*nJ, controller.contribution(index+1), 5e-6*nI*nJ );
 
 }
 
-#if( true )
 TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
     std::cout << "Debug: ********************************************* \n";
     std::cout << "Debug: Starting rayTrace tester with single looping bank \n";
-    CollisionPointController<Grid_t> controller( 1,
-            256,
-            pGrid.get(),
-            pMatList.get(),
-            pMatProps.get(),
-            pTally.get() );
-    controller.setCapacity( 1000000 );
+    auto& controller = *pController;
 
     RayListInterface<1> bank1(50000);
     bool end = false;
@@ -214,11 +168,10 @@ TEST_FIXTURE(ControllerSetup, launch_with_collisions_From_file ){
     }
 
     // TODO - find the discrepancy
-    CHECK_CLOSE( 0.0201738, pTally->getTally(24), 1e-5 );  // 0.0201584 is benchmark value - not sure why the slight difference
-    CHECK_CLOSE( 0.0504394, pTally->getTally(500182), 1e-4 );
+    CHECK_CLOSE( 0.0201738, controller.contribution(24), 1e-5 );  // 0.0201584 is benchmark value - not sure why the slight difference - likely precision issues
+    CHECK_CLOSE( 0.0504394, controller.contribution(500182), 1e-4 );
 
 }
-#endif
 
 }
 

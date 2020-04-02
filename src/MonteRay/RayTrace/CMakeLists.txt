@@ -1,12 +1,8 @@
 target_sources(MonteRay 
 PUBLIC 
-  "${prefix}/MonteRay/RayTrace/ExpectedPathLength.hh"
-  "${prefix}/MonteRay/RayTrace/ExpectedPathLength.t.hh"
   "${prefix}/MonteRay/RayTrace/RayListController.hh"
   "${prefix}/MonteRay/RayTrace/RayListController.t.hh"
-  "${prefix}/MonteRay/RayTrace/BasicTally.hh"
 PRIVATE
-  "${prefix}/MonteRay/RayTrace/ExpectedPathLength.cu"
   "${prefix}/MonteRay/RayTrace/RayListController.cu"
 )
 

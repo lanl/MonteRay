@@ -7,7 +7,6 @@
 #include "GPUUtilityFunctions.hh"
 #include "ReadAndWriteFiles.hh"
 
-#include "BasicTally.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "ExpectedPathLength.hh"
 #include "RayListController.hh"
@@ -17,6 +16,8 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "CrossSection.hh"
+
+#include "BenchmarkTally.hh"
 
 namespace Criticality_Accident_wCollisionFile_nightly_tester{
 
@@ -127,7 +128,6 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
             CHECK_CLOSE(  600.0, pGrid->getMaxVertex(1), 1e-2 );
             CHECK_CLOSE(  250.0, pGrid->getMaxVertex(2), 1e-2 );
 
-            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
 
             matPropBuilder.renumberMaterialIDs(*pMatList);
             pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
@@ -137,7 +137,6 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
         std::unique_ptr<CrossSectionList> pXsList;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        std::unique_ptr<BasicTally> pTally;
     };
 
 
@@ -153,39 +152,43 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
         std::cout << "Running Criticality_Accident from collision file with nBlocks = " << launchBounds.first <<
                 " nThreads = " << launchBounds.second << " collision buffer capacity = " << capacity << "\n";
 
-        CollisionPointController<MonteRay_SpatialGrid> controller(
-                nThreadsPerBlock,
-                nThreads,
-                pGrid.get(),
-                pMatList.get(),
-                pMatProps.get(),
-                pTally.get() );
-        controller.setCapacity(capacity);
+        ExpectedPathLengthTally::Builder tallyBuilder;
+        tallyBuilder.spatialBins(pGrid->size());
+
+        auto controller = CollisionPointController::Builder()
+                .nThreads(launchBounds.second)
+                .nBlocks(launchBounds.first)
+                .geometry(pGrid.get())
+                .materialList(pMatList.get())
+                .materialProperties(pMatProps.get())
+                .expectedPathLengthTally(tallyBuilder.build())
+                .capacity(capacity)
+                .build();
 
         size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/Criticality_accident_collisions.bin" );
 
         controller.sync();
         CHECK_EQUAL( 56592340 , numCollisions );
 
-        auto benchmarkTally = readFromFile( "MonteRayTestFiles/Criticality_Accident_gpuTally_n20_particles40000_cycles1.bin", *pTally);
+        auto benchmarkTally = readFromFile<BenchmarkTally>( "MonteRayTestFiles/Criticality_Accident_gpuTally_n20_particles40000_cycles1.bin");
 
         gpuTallyType_t maxdiff = 0.0;
         unsigned numBenchmarkZeroNonMatching = 0;
         unsigned numGPUZeroNonMatching = 0;
         unsigned numZeroZero = 0;
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
-            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
-                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
                 if (relDiff > 0.221){
-                  printf( "Tally %u, MCATK=%e, MonteRay=%e, diff=%f\n", i, benchmarkTally.getTally(i), pTally->getTally(i), relDiff  );
+                  printf( "Tally %u, MCATK=%e, MonteRay=%e, diff=%f\n", i, benchmarkTally[i], controller.contribution(i), relDiff  );
                 }
                 CHECK_CLOSE( 0.0, relDiff, 0.221 );
                 if( std::abs(relDiff) > maxdiff ){
                     maxdiff = std::abs(relDiff);
                 }
-            } else if( pTally->getTally(i) > 0.0) {
+            } else if( controller.contribution(i) > 0.0) {
                 ++numBenchmarkZeroNonMatching;
-            } else if( benchmarkTally.getTally(i) > 0.0) {
+            } else if( benchmarkTally[i] > 0.0) {
                 ++numGPUZeroNonMatching;
             } else {
                 ++numZeroZero;
@@ -194,7 +197,6 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
 
         std::cout << "Debug:  maxdiff = " << maxdiff << "\n";
         std::cout << "Debug:  tally size = " << benchmarkTally.size() << "\n";
-        //    	std::cout << "Debug:  tally from file size = " << pTally->size() << "\n";
         //    	std::cout << "Debug:  numBenchmarkZeroNonMatching = " << numBenchmarkZeroNonMatching << "\n";
         //    	std::cout << "Debug:        numGPUZeroNonMatching = " << numGPUZeroNonMatching << "\n";
         //    	std::cout << "Debug:                num both zero = " << numZeroZero << "\n";
@@ -257,21 +259,25 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
                 " nThreads = " << launchBounds.second << " collision buffer capacity = " << capacity << " \n using"
                 " algorithm with the potential for moving materials. \n";
 
-        CollisionPointController<MonteRay_SpatialGrid> controller(
-                nThreadsPerBlock,
-                nThreads,
-                pGrid.get(),
-                pMatList.get(),
-                pMatProps.get(),
-                pTally.get() );
-        controller.setCapacity(capacity);
+        ExpectedPathLengthTally::Builder tallyBuilder;
+        tallyBuilder.spatialBins(pGrid->size());
+
+        auto controller = CollisionPointController::Builder()
+                .nThreads(launchBounds.second)
+                .nBlocks(launchBounds.first)
+                .geometry(pGrid.get())
+                .materialList(pMatList.get())
+                .materialProperties(pMatProps.get())
+                .expectedPathLengthTally(tallyBuilder.build())
+                .capacity(capacity)
+                .build();
 
         size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/Criticality_accident_collisions.bin" );
 
         controller.sync();
         CHECK_EQUAL( 56592340 , numCollisions );
 
-        auto benchmarkTally = readFromFile( "MonteRayTestFiles/Criticality_Accident_gpuTally_n20_particles40000_cycles1.bin", *pTally );
+        auto benchmarkTally = readFromFile<BenchmarkTally>( "MonteRayTestFiles/Criticality_Accident_gpuTally_n20_particles40000_cycles1.bin");
 
         gpuTallyType_t maxdiff = 0.0;
         gpuTallyType_t maxAbsDiff = 0.0;
@@ -279,9 +285,9 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
         unsigned numGPUZeroNonMatching = 0;
         unsigned numZeroZero = 0;
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
-            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
-                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
-                auto diff = (benchmarkTally.getTally(i) - pTally->getTally(i));
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
+                auto diff = (benchmarkTally[i] - controller.contribution(i));
                 // three bins exhibit more than half a percent differnce, with greatest being 2.5% with 0.05 absolute difference (2.5 instead of 2.45)
                 // this discrepancy needs to be further investigated, but preliminary investigation indicates it is likely due to numerical roundoff in single-precision.
                 bool check = (std::abs(relDiff) < 0.5 or diff < 500*std::numeric_limits<gpuRayFloat_t>::epsilon() 
@@ -289,14 +295,14 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
                 CHECK(check);
                 if (not check){
                   maxAbsDiff = std::max(maxAbsDiff, std::abs(diff));
-                  printf( "Tally %u, MCATK=%e, MonteRay=%e, percentDiff=%e, absDiff=%e\n", i, benchmarkTally.getTally(i), pTally->getTally(i), relDiff, diff  );
+                  printf( "Tally %u, MCATK=%e, MonteRay=%e, percentDiff=%e, absDiff=%e\n", i, benchmarkTally[i], controller.contribution(i), relDiff, diff  );
                 }
                 if( std::abs(relDiff) > maxdiff ){
                     maxdiff = std::abs(relDiff);
                 }
-            } else if( pTally->getTally(i) > 0.0) {
+            } else if( controller.contribution(i) > 0.0) {
                 ++numBenchmarkZeroNonMatching;
-            } else if( benchmarkTally.getTally(i) > 0.0) {
+            } else if( benchmarkTally[i] > 0.0) {
                 ++numGPUZeroNonMatching;
             } else {
                 ++numZeroZero;
@@ -307,7 +313,6 @@ SUITE( Criticality_Accident_wCollisionFile_tester ) {
         /* std::cout << "Debug:  maxAbsDiff = " << maxAbsDiff << "\n"; */
         /* std::cout << "Debug:  maxAbsDiff/gpuRayFloat_t::epsilon = " << maxAbsDiff/std::numeric_limits<gpuRayFloat_t>::epsilon() << "\n"; */
         std::cout << "Debug:  tally size = " << benchmarkTally.size() << "\n";
-        std::cout << "Debug:  tally from file size = " << pTally->size() << "\n";
         std::cout << "Debug:  numBenchmarkZeroNonMatching = " << numBenchmarkZeroNonMatching << "\n";
         std::cout << "Debug:        numGPUZeroNonMatching = " << numGPUZeroNonMatching << "\n";
         std::cout << "Debug:                num both zero = " << numZeroZero << "\n";

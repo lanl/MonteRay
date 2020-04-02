@@ -11,580 +11,449 @@ namespace MonteRay {
 
 template<typename Geometry, unsigned N>
 RayListController<Geometry,N>::RayListController(
-        int blocks,
-        int threads,
-        Geometry* pGB,
-        MaterialList* pML,
-        MaterialProperties* pMP,
-        BasicTally* pT
-) :
-nBlocks(blocks),
-nThreads(threads),
-pGeometry( pGB ),
-pMatList( pML ),
-pMatProps( pMP ),
-pTally(pT),
-PA( MonteRayParallelAssistant::getInstance() )
-{
-    initialize();
-    kernel = [&, blocks, threads ] ( void ) {
-      if( PA.getWorkGroupRank() != 0 ) { return; }
+  int nBlocks,
+  int nThreads,
+  const Geometry* const pGeometry,
+  const MaterialList* const pMatList,
+  MaterialProperties* const pMatProps,
+  TallyPointerVariant pTally,
+  std::string outputFileName,
+  size_t capacity):
+    nBlocks_(nBlocks), 
+    nThreads_(nThreads), 
+    pGeometry_(pGeometry), 
+    pMatList_(pMatList), 
+    pMatProps_(pMatProps), 
+    pTally_(std::move(pTally)),
+    outputFileName_(std::move(outputFileName)),
+    PA_(MonteRayParallelAssistant::getInstance()) { 
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-      auto launchBounds = setLaunchBounds( threads, blocks,  currentBank->getPtrPoints()->size() );
+  // init banks
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
+  bank1_ = std::make_unique<RayListInterface<N>>(capacity);
+  bank2_ = std::make_unique<RayListInterface<N>>(capacity);
+  currentBank_ = bank1_.get();
+
+  // init RayWorkInfo
+  auto launchBounds = setLaunchBounds(nThreads_, nBlocks_, capacity);
+  unsigned totalNumThreads  = launchBounds.first * launchBounds.second;
+  rayInfo_ = std::make_unique<RayWorkInfo>(totalNumThreads);
+
+  pTimer_.reset(new cpuTimer);
+#ifdef __CUDACC__
+  stream1_.reset(new cudaStream_t);
+  startGPU_.reset(new cudaEvent_t);
+  stopGPU_.reset(new cudaEvent_t);
+  start_.reset(new cudaEvent_t);
+  stop_.reset(new cudaEvent_t);
+  copySync1_.reset(new cudaEvent_t);
+  copySync2_.reset(new cudaEvent_t);
+
+  cudaStreamCreate(stream1_.get());
+  cudaEventCreate(start_.get());
+  cudaEventCreate(stop_.get());
+  cudaEventCreate(startGPU_.get());
+  cudaEventCreate(stopGPU_.get());
+  cudaEventCreate(copySync1_.get());
+  cudaEventCreate(copySync2_.get());
+  currentCopySync_ = copySync1_.get();
+#endif
+
+  if (isSendingToFile()) {
+    kernel_ = [&] (void) {
+        // do nothing
+        return;
+    };
+  } else if (isUsingExpectedPathLengthTally()){
+    kernel_ = [&] (void) {
+      if(PA_.get().getWorkGroupRank() != 0) { return; }
+
+      auto launchBounds = setLaunchBounds(nThreads_, nBlocks_, currentBank_->getPtrPoints()->size());
 
 #ifndef NDEBUG
       size_t freeMemory = 0;
       size_t totalMemory = 0;
 #ifdef __CUDACC__
-      cudaError_t memError = cudaMemGetInfo( &freeMemory, &totalMemory);
+      cudaError_t memError = cudaMemGetInfo(&freeMemory, &totalMemory);
       freeMemory = freeMemory/1000000;
       totalMemory = totalMemory/1000000;
 #endif
-      std::cout << "Debug: RayListController -- launching kernel on " <<
-                   PA.info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
-                   " threads, to process " << currentBank->getPtrPoints()->size() << " rays," <<
+      std::cout << "MonteRay::RayListController -- launching kernel on " <<
+                   PA_.get().info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
+                   " threads, to process " << currentBank_->getPtrPoints()->size() << " rays," <<
                    " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
 
-      if (pMatProps->usingMaterialMotion()){
+      auto& pExpectedPathLengthTally = mpark::get<ExpectedPathLengthTallyPointer>(pTally_);
+      if (pMatProps_->usingMaterialMotion()){
         constexpr gpuFloatType_t timeRemaining = 10.0E6;
-        rayTraceTallyWithMovingMaterials(
-            currentBank->getPtrPoints(),
+        pExpectedPathLengthTally->rayTraceTallyWithMovingMaterials(
+            currentBank_->getPtrPoints(),
             timeRemaining,
-            pGeometry,
-            pMatProps,
-            pMatList,
-            pTally->data(),
-            stream1.get());
+            pGeometry_,
+            pMatProps_,
+            pMatList_,
+            stream1_.get());
       } else {
 #ifdef __CUDACC__
-      rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1>>>(
-              pGeometry,
-              currentBank->getPtrPoints(),
-              pMatList,
-              pMatProps,
-              rayInfo.get(),
-              pTally->data() );
+      rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1_>>>(
+              pGeometry_,
+              currentBank_->getPtrPoints(),
+              pMatList_,
+              pMatProps_,
+              rayInfo_.get(),
+              pExpectedPathLengthTally.get());
 #else
-      rayTraceTally( 
-              pGeometry,
-              currentBank->getPtrPoints(),
-              pMatList,
-              pMatProps,
-              rayInfo.get(),
-              pTally->data() );
+      rayTraceTally(
+              pGeometry_,
+              currentBank_->getPtrPoints(),
+              pMatList_,
+              pMatProps_,
+              rayInfo_.get(),
+              pExpectedPathLengthTally.get());
 #endif
-
-      }
-  };
-
-}
-
-template<typename Geometry, unsigned N>
-RayListController<Geometry,N>::RayListController(
-        int blocks,
-        int threads,
-        Geometry* pGB,
-        MaterialList* pML,
-        MaterialProperties* pMP,
-        unsigned numPointDets
-) :
-nBlocks(blocks),
-nThreads(threads),
-pGeometry( pGB ),
-pMatList( pML ),
-pMatProps( pMP ),
-pTally(NULL),
-PA( MonteRayParallelAssistant::getInstance() )
-{
-    pNextEventEstimatorBuilder = std::make_unique<NextEventEstimator::Builder>();
-    pNextEventEstimator = std::make_unique<NextEventEstimator>( );
-    usingNextEventEstimator = true;
-    initialize();
-    kernel = [&, blocks, threads] ( void ) {
-      if( currentBank->size() > 0 ) {
-        launch_ScoreRayList(pNextEventEstimator.get(), blocks,threads, currentBank->getPtrPoints(), rayInfo.get(), 
-            pGeometry, pMatProps, pMatList, stream1.get() );
       }
     };
-}
-
-template<typename Geometry, unsigned N>
-RayListController<Geometry,N>::RayListController( unsigned numPointDets, const std::string& filename ) :
-PA( MonteRayParallelAssistant::getInstance() )
-{
-    initialize();
-    pNextEventEstimatorBuilder = std::make_unique<NextEventEstimator::Builder>();
-    pNextEventEstimator = std::make_unique<NextEventEstimator>( );
-    setOutputFileName( filename );
-    usingNextEventEstimator = true;
-    kernel = [&] ( void ) {
-        // do nothing
-        return;
+  } 
+    else if (isUsingNextEventEstimator()){
+      auto& pNextEventEstimator = mpark::get<NextEventEstimatorPointer>(pTally_);
+    kernel_ = [&] (void) {
+      if(currentBank_->size() > 0) {
+        launch_ScoreRayList(pNextEventEstimator.get(), nBlocks, nThreads, currentBank_->getPtrPoints(), rayInfo_.get(), 
+            pGeometry_, pMatProps_, pMatList_, stream1_.get());
+      }
     };
-}
-
-template<typename Geometry, unsigned N>
-void
-RayListController<Geometry, N>::initialize(){
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-
-    setCapacity( 100000 ); // default buffer capacity to 0.1 million.
-
-    pTimer.reset( new cpuTimer );
-
-#ifdef __CUDACC__
-    stream1.reset( new cudaStream_t);
-    startGPU.reset( new cudaEvent_t);
-    stopGPU.reset( new cudaEvent_t);
-    start.reset( new cudaEvent_t);
-    stop.reset( new cudaEvent_t);
-    copySync1.reset( new cudaEvent_t);
-    copySync2.reset( new cudaEvent_t);
-
-    cudaStreamCreate( stream1.get() );
-    cudaEventCreate(start.get());
-    cudaEventCreate(stop.get());
-    cudaEventCreate(startGPU.get());
-    cudaEventCreate(stopGPU.get());
-    cudaEventCreate(copySync1.get());
-    cudaEventCreate(copySync2.get());
-    currentCopySync = copySync1.get();
-#endif
-}
-
-template<typename Geometry, unsigned N>
-RayListController<Geometry,N>::~RayListController(){
-
-#ifdef __CUDACC__
-    cudaDeviceSynchronize();
-    if( stream1 ) cudaStreamDestroy( *stream1 );
-#endif
-}
+  }
+} 
 
 template<typename Geometry, unsigned N>
 unsigned
 RayListController<Geometry,N>::capacity(void) const {
-    if(currentBank) return currentBank->capacity();
-    return 0;
+  return currentBank_ ? currentBank_->capacity() : 0;
 }
 
 template<typename Geometry, unsigned N>
 unsigned
 RayListController<Geometry,N>::size(void) const {
-    if(currentBank) return currentBank->size();
-    return 0;
-}
-
-template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::setCapacity(unsigned n) {
-//    if( n > 100000 ) {
-//        std::cout << "Debug: WARNING: MonteRay -- RayListController::setCapacity, limiting capacity to 100000\n";
-//        n = 100000;
-//    }
-
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-    bank1.reset( new RayListInterface<N>(n) );
-    bank2.reset( new RayListInterface<N>(n) );
-    currentBank = bank1.get();
-
-    auto launchBounds = setLaunchBounds( nThreads, nBlocks, n );
-    unsigned totalNumThreads  = launchBounds.first * launchBounds.second;
-
-    // size rayInfo to total number of threads
-    rayInfo.reset( new RayWorkInfo( totalNumThreads ) );
+  return currentBank_ ? currentBank_->size() : 0;
 }
 
 template<typename Geometry, unsigned N>
 unsigned
 RayListController<Geometry,N>::getWorldRank() {
-    return PA.getWorldRank();
+    return PA_.get().getWorldRank();
 }
 
 template<typename Geometry, unsigned N>
 void
 RayListController<Geometry,N>::flush(bool final){
-    if( PA.getWorkGroupRank() != 0 ) { return; }
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-    if( isSendingToFile() ) { flushToFile(final); }
+  if(isSendingToFile()) { 
+    flushToFile(final); }
 
-    if( currentBank->size() == 0 ) {
-        if( final ) {
-            defaultStreamSync();
-            printTotalTime();
-            currentBank->clear();
-        }
-        return;
+  if(currentBank_->size() == 0) {
+    if(final) {
+      deviceSynchronize();
+      printTotalTime();
+      deviceSynchronize();
     }
+    return;
+  }
 
-    if( nFlushs > 0 ) {
-        /* std::cout << "Debug: flush nFlushs = " <<nFlushs-1 << " -- stopping timers\n"; */
-        stopTimers();
-    }
-    /* std::cout << "Debug: flush nFlushs = " <<nFlushs << " -- starting timers\n"; */
+  if(nFlushs_ > 0) {
+    stopTimers();
+  }
 
-    startTimers();
+  startTimers();
 
-    ++nFlushs;
+  ++nFlushs_;
 
 #ifdef __CUDACC__
-    gpuErrchk( cudaPeekAtLastError() );
-    currentBank->copyToGPU();
-    gpuErrchk( cudaEventRecord(*currentCopySync, 0) );
-    gpuErrchk( cudaEventSynchronize(*currentCopySync) );
+  gpuErrchk(cudaPeekAtLastError());
+  currentBank_->copyToGPU();
+  /* gpuErrchk(cudaEventRecord(*currentCopySync_, 0)); */
+  /* gpuErrchk(cudaEventSynchronize(*currentCopySync_)); */
+  gpuErrchk(defaultStreamSync());
 #endif
 
-    // launch kernel
-    kernel();
+  // launch kernel
+  kernel_();
 
-    // only uncomment for testing, forces the cpu and gpu to sync
+  // only uncomment for testing, forces the cpu and gpu to sync
 #ifndef NDEBUG
 #ifdef __CUDACC__
-    gpuErrchk( cudaPeekAtLastError() );
+  gpuErrchk(cudaPeekAtLastError());
 #endif
 #endif
 
 #ifdef __CUDACC__
-    gpuErrchk( cudaEventRecord( *stopGPU, *stream1) );
-    gpuErrchk( cudaStreamWaitEvent( *stream1, *stopGPU, 0) );
+  gpuErrchk(cudaEventRecord(*stopGPU_, *stream1_));
+  gpuErrchk(cudaStreamWaitEvent(*stream1_, *stopGPU_, 0));
 #endif
 
-    if( final ) {
-        std::cout << "Debug: final flush nFlushs = " <<nFlushs-1 << " -- stopping timers\n";
-        stopTimers();
-        printTotalTime();
-        currentBank->clear();
-        return;
-    }
-
-    swapBanks();
+  if(final) {
+    std::cout << "MonteRay::RayListController: final flush nFlushs_ = " <<nFlushs_-1 << " -- stopping timers\n";
+    stopTimers();
+    printTotalTime();
+    currentBank_->clear();
+    return;
+  }
+  swapBanks();
 }
 
 template<typename Geometry, unsigned N>
 void
 RayListController<Geometry,N>::flushToFile(bool final){
-    if( PA.getWorldRank() != 0 ) { return; }
+  if(PA_.get().getWorldRank() != 0) { return; }
 
-#ifndef NDEBUG
-    const bool debug = false;
-
-    if( debug ) {
-        if( final ) {
-            std::cout << "Debug: RayListController::flushToFile - starting -- final = true \n";
-        } else {
-            std::cout << "Debug: RayListController::flushToFile - starting -- final = false \n";
-        }
-    }
-#endif
-
-    if( ! fileIsOpen ) {
-        try {
-#ifndef NDEBUG
-            if( debug ) std::cout << "Debug: RayListController::flushToFile - opening file, filename= " << outputFileName << "\n";
-#endif
-            currentBank->openOutput( outputFileName );
-        } catch ( ... ) {
-            std::stringstream msg;
-            msg << "Failure opening file for collision writing!\n";
-            msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "RayListController::flushToFile" << "\n\n";
-            std::cout << "MonteRay Error: " << msg.str();
-            throw std::runtime_error( msg.str() );
-        }
-
-        fileIsOpen = true;
-    }
-
+  if(! fileIsOpen_) {
     try {
-#ifndef NDEBUG
-        if( debug )  std::cout << "Debug: RayListController::flushToFile - writing bank -- bank size = "<< currentBank->size() << "\n";
-#endif
-        currentBank->writeBank();
-    } catch ( ... ) {
-        std::stringstream msg;
-        msg << "Failure writing collisions to file!\n";
-        msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "RayListController::flushToFile" << "\n\n";
-        std::cout << "MonteRay Error: " << msg.str();
-        throw std::runtime_error( msg.str() );
+      currentBank_->openOutput(outputFileName_);
+    } catch (...) {
+      std::stringstream msg;
+      msg << "Failure opening file for collision writing!\n";
+      msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "RayListController::flushToFile" << "\n\n";
+      std::cout << "MonteRay Error: " << msg.str();
+      throw std::runtime_error(msg.str());
     }
+    fileIsOpen_ = true;
+  }
 
-    currentBank->clear();
+  try {
+    currentBank_->writeBank();
+  } catch (...) {
+    std::stringstream msg;
+    msg << "Failure writing collisions to file!\n";
+    msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " << "RayListController::flushToFile" << "\n\n";
+    std::cout << "MonteRay Error: " << msg.str();
+    throw std::runtime_error(msg.str());
+  }
+  currentBank_->clear();
 
-    if( final ) {
-        try {
-#ifndef NDEBUG
-            if( debug ) std::cout << "Debug: RayListController::flushToFile - file flush, closing collision file\n";
-#endif
-            currentBank->closeOutput();
-        } catch ( ... ) {
-            std::stringstream msg;
-            msg << "Failure closing collision file!\n";
-            msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " <<"RayListController::flushToFile" << "\n\n";
-            std::cout << "MonteRay Error: " << msg.str();
-            throw std::runtime_error( msg.str() );
-        }
-
-        fileIsOpen = false;
+  if(final) {
+    try {
+      currentBank_->closeOutput();
+    } catch (...) {
+      std::stringstream msg;
+      msg << "Failure closing collision file!\n";
+      msg << "Called from : " << __FILE__ << "[" << __LINE__ << "] : " <<"RayListController::flushToFile" << "\n\n";
+      std::cout << "MonteRay Error: " << msg.str();
+      throw std::runtime_error(msg.str());
     }
+    fileIsOpen_ = false;
+  }
 }
 
 template<typename Geometry, unsigned N>
 size_t
 RayListController<Geometry,N>::readCollisionsFromFile(std::string name) {
-    if( PA.getWorldRank() != 0 ) { return 0; }
+  if(PA_.get().getWorldRank() != 0) { return 0; }
 
-    bool end = false;
-    unsigned numParticles = 0;
+  bool end = false;
+  unsigned numParticles = 0;
 
-    do  {
-        end = currentBank->readToBank(name, numParticles);
-        numParticles += currentBank->size();
-        flush(end);
-    } while ( ! end );
-    return numParticles;
+  do  {
+    end = currentBank_->readToBank(name, numParticles);
+    numParticles += currentBank_->size();
+    flush(end);
+  } while (! end);
+  return numParticles;
 }
 
 template<typename Geometry, unsigned N>
 size_t
 RayListController<Geometry,N>::readCollisionsFromFileToBuffer(std::string name){
-    if( PA.getWorldRank() != 0 ) { return 0; }
+  if(PA_.get().getWorldRank() != 0) { return 0; }
 
-    unsigned numParticles = 0;
-    currentBank->readToBank(name, numParticles);
-    numParticles += currentBank->size();
-    return numParticles;
+  unsigned numParticles = 0;
+  currentBank_->readToBank(name, numParticles);
+  numParticles += currentBank_->size();
+  return numParticles;
 }
 
 template<typename Geometry, unsigned N>
 void
 RayListController<Geometry,N>::startTimers(){
-    // start timers
-    if( PA.getWorkGroupRank() != 0 ) { return; }
+  // start timers
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-    pTimer->start();
+  pTimer_->start();
 #ifdef __CUDACC__
-    gpuErrchk( cudaEventRecord( *start,0) );
-    gpuErrchk( cudaEventRecord( *startGPU, *stream1) );
+  gpuErrchk(cudaEventRecord(*start_,0));
+  gpuErrchk(cudaEventRecord(*startGPU_, *stream1_));
 #endif
 }
 
 template<typename Geometry, unsigned N>
 void
 RayListController<Geometry,N>::stopTimers(){
-    // stop timers and sync
-    if( PA.getWorkGroupRank() != 0 ) { return; }
+  // stop timers and sync
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-    pTimer->stop();
-    float_t cpuCycleTime = pTimer->getTime();
-    cpuTime += cpuCycleTime;
+  pTimer_->stop();
+  float_t cpuCycleTime = pTimer_->getTime();
+  cpuTime_ += cpuCycleTime;
 
 #ifdef __CUDACC__
-    gpuErrchk( cudaStreamSynchronize( *stream1 ) );
-    gpuErrchk( cudaEventRecord(*stop, 0) );
-    gpuErrchk( cudaEventSynchronize( *stop ) );
+  gpuErrchk(cudaStreamSynchronize(*stream1_));
+  gpuErrchk(cudaEventRecord(*stop_, 0));
+  gpuErrchk(cudaEventSynchronize(*stop_));
 
-    float_t gpuCycleTime;
-    gpuErrchk( cudaEventElapsedTime(&gpuCycleTime, *startGPU, *stopGPU ) );
-    gpuCycleTime /= 1000.0;
-    if( gpuCycleTime < 0.0 ) {
-        gpuCycleTime = 0.0;
-    }
-    gpuTime += gpuCycleTime;
+  float_t gpuCycleTime;
+  gpuErrchk(cudaEventElapsedTime(&gpuCycleTime, *startGPU_, *stopGPU_));
+  gpuCycleTime /= 1000.0;
+  if(gpuCycleTime < 0.0) {
+      gpuCycleTime = 0.0;
+  }
+  gpuTime_ += gpuCycleTime;
 
-    float totalCycleTime;
-    gpuErrchk( cudaEventElapsedTime(&totalCycleTime, *start, *stop ) );
-    totalCycleTime /= 1000.0;
-    wallTime += totalCycleTime;
-    printCycleTime(cpuCycleTime, gpuCycleTime , totalCycleTime);
+  float totalCycleTime;
+  gpuErrchk(cudaEventElapsedTime(&totalCycleTime, *start_, *stop_));
+  totalCycleTime /= 1000.0;
+  wallTime_ += totalCycleTime;
+  printCycleTime(cpuCycleTime, gpuCycleTime , totalCycleTime);
 #else
-    printCycleTime(cpuCycleTime, cpuCycleTime , cpuCycleTime);
+  printCycleTime(cpuCycleTime, cpuCycleTime , cpuCycleTime);
 #endif
 
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::swapBanks(){
-    if( PA.getWorkGroupRank() != 0 ) { return; }
+void RayListController<Geometry,N>::swapBanks(){
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-    // Swap banks
-    if( currentBank == bank1.get() ) {
-        currentBank = bank2.get();
+  // Swap banks
+  if(currentBank_ == bank1_.get()) {
+      currentBank_ = bank2_.get();
 #ifdef __CUDACC__
-        currentCopySync = copySync2.get();
+      currentCopySync_ = copySync2_.get();
 #endif
-    } else {
-        currentBank = bank1.get();
+  } else {
+      currentBank_ = bank1_.get();
 #ifdef __CUDACC__
-        currentCopySync = copySync1.get();
+      currentCopySync_ = copySync1_.get();
 #endif
-    }
+  }
 
 #ifdef __CUDACC__
-    cudaEventSynchronize( *currentCopySync );
+  cudaEventSynchronize(*currentCopySync_);
 #endif
-    currentBank->clear();
+  currentBank_->clear();
 }
 
 template<typename Geometry, unsigned N>
 void
 RayListController<Geometry,N>::sync(void){
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-    defaultStreamSync();
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
+  deviceSynchronize();
 }
 
 template<typename Geometry, unsigned N>
 void
 RayListController<Geometry,N>::clearTally(void) {
-    if( PA.getWorkGroupRank() != 0 ) { return; }
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-    std::cout << "Debug: clearTally called \n";
+  if(nFlushs_ > 0) {
+      stopTimers();
+  }
+  //	std::cout << "MonteRay::clearTally nFlushs_ = " << nFlushs_ << " -- starting timers\n";
+  //	startTimers();
+  //
+  //	++nFlushs_;
 
-    if( nFlushs > 0 ) {
-        stopTimers();
-    }
-    //	std::cout << "Debug: clearTally nFlushs = " << nFlushs << " -- starting timers\n";
-    //	startTimers();
-    //
-    //	++nFlushs;
-    //
-    //	cudaEventRecord( stopGPU.get(), stream1.get());
-    //	cudaStreamWaitEvent(stream1.get(), stopGPU.get(), 0);
-
-    defaultStreamSync();
-    if( pTally ) pTally->clear();
-    if( bank1 ) bank1->clear();
-    if( bank2) bank2->clear();
-    defaultStreamSync();
+  deviceSynchronize();
+  mpark::visit([] (auto& pTally) { pTally->clear(); }, pTally_);
+  if(bank1_) bank1_->clear();
+  if(bank2_) bank2_->clear();
+  deviceSynchronize();
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::printTotalTime() const{
-    std::cout << "Debug: \n";
-    std::cout << "Debug: total gpuTime = " << gpuTime << "\n";
-    std::cout << "Debug: total cpuTime = " << cpuTime << "\n";
-    std::cout << "Debug: total wallTime = " << wallTime << "\n";
+void RayListController<Geometry,N>::printTotalTime() const{
+  std::cout << "\n";
+  std::cout << "MonteRay::RayListController: total gpuTime = " << gpuTime_ << "\n";
+  std::cout << "MonteRay::RayListController: total cpuTime = " << cpuTime_ << "\n";
+  std::cout << "MonteRay::RayListController: total wallTime = " << wallTime_ << "\n";
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::printCycleTime(float_t cpu, float_t gpu, float_t wall) const{
-    std::cout << "Debug: \n";
-    std::cout << "Debug: cycle gpuTime = " << gpu << "\n";
-    std::cout << "Debug: cycle cpuTime = " << cpu << "\n";
-    std::cout << "Debug: cycle wallTime = " << wall << "\n";
+void RayListController<Geometry,N>::printCycleTime(float_t cpu, float_t gpu, float_t wall) const{
+  std::cout << "\n";
+  std::cout << "MonteRay::RayListController: cycle gpuTime = " << gpu << "\n";
+  std::cout << "MonteRay::RayListController: cycle cpuTime = " << cpu << "\n";
+  std::cout << "MonteRay::RayListController: cycle wallTime = " << wall << "\n";
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::printPointDets( const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
-    if( PA.getWorldRank() != 0 ) { return; }
-
-    if( ! usingNextEventEstimator ) {
-        throw std::runtime_error( "RayListController::printPointDets  -- only supports printing of Next-Event Estimators." );
-    }
-
-    pNextEventEstimator->printPointDets(outputFile, nSamples, constantDimension );
+void RayListController<Geometry,N>::printPointDets(const std::string& outputFile, unsigned nSamples, unsigned constantDimension) {
+  if(PA_.get().getWorldRank() != 0) { return; }
+  if (isUsingNextEventEstimator()){
+    auto& pNextEventEstimator = mpark::get<NextEventEstimatorPointer>(pTally_);
+    pNextEventEstimator->printPointDets(outputFile, nSamples, constantDimension);
+  } else {
+    throw std::runtime_error("MonteRay::RayListController::printPointDets - controller does not control a NextEventEstimator.");
+  }
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::outputTimeBinnedTotal(std::ostream& out,unsigned nSamples, unsigned constantDimension){
-    if( PA.getWorldRank() != 0 ) { return; }
-
-    if( ! usingNextEventEstimator ) {
-        throw std::runtime_error( "RayListController::outputTimeBinnedTotal  -- only supports outputting Next-Event Estimator results." );
-    }
-    pNextEventEstimator->outputTimeBinnedTotal(out, nSamples, constantDimension );
+void RayListController<Geometry,N>::outputTimeBinnedTotal(std::ostream& outputFile, unsigned nSamples, unsigned constantDimension){
+  if(PA_.get().getWorldRank() != 0) { return; }
+  if (isUsingNextEventEstimator()){
+    auto& pNextEventEstimator = mpark::get<NextEventEstimatorPointer>(pTally_);
+    pNextEventEstimator->outputTimeBinnedTotal(outputFile, nSamples, constantDimension);
+  } else {
+    throw std::runtime_error("MonteRay::RayListController::outputTimeBinnedTotal - controller does not control a NextEventEstimator.");
+  }
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::updateMaterialProperties( MaterialProperties* pMPs) {
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-
-    pMatProps = pMPs;
+void RayListController<Geometry,N>::updateMaterialProperties(MaterialProperties* pMPs) {
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
+  pMatProps_ = pMPs;
 }
 
 template<typename Geometry, unsigned N>
-unsigned
-RayListController<Geometry,N>::addPointDet( gpuFloatType_t x, gpuFloatType_t y, gpuFloatType_t z ){
-    if( PA.getWorkGroupRank() != 0 ) { return 0; }
-    if( ! isUsingNextEventEstimator() ) {
-        throw std::runtime_error( "RayListController::addPointDet - Next-Event Estimator not enabled." );
-    }
-    return pNextEventEstimatorBuilder->add( x, y, z );
-}
-
-template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::setPointDetExclusionRadius(gpuFloatType_t r){
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-    if( ! isUsingNextEventEstimator() ) {
-        throw std::runtime_error( "RayListController::setPointDetExclusionRadius - Next-Event Estimator not enabled." );
-    }
-    pNextEventEstimatorBuilder->setExclusionRadius( r );
-}
-
-template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::copyPointDetTallyToCPU(void) {
-    if( PA.getWorkGroupRank() != 0 ) { return; }
-
-    if( ! isUsingNextEventEstimator() ) {
-        throw std::runtime_error( "RayListController::copyPointDetTallyToCPU - Next-Event Estimator not enabled." );
-    }
+void RayListController<Geometry,N>::copyPointDetTallyToCPU(void) {
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
+  if(! isUsingNextEventEstimator()) {
+    throw std::runtime_error("RayListController::copyPointDetTallyToCPU - Next-Event Estimator not enabled.");
+  }
 #ifdef __CUDACC__
-    cudaDeviceSynchronize();
+  deviceSynchronize();
 #endif
 }
 
 template<typename Geometry, unsigned N>
-gpuTallyType_t
-RayListController<Geometry,N>::getPointDetTally(unsigned spatialIndex, unsigned timeIndex ) const {
-    if( PA.getWorldRank() != 0 ) { return 0.0; }
-
-    if( ! isUsingNextEventEstimator() ) {
-        throw std::runtime_error( "RayListController::getPointDetTally - Next-Event Estimator not enabled." );
-    }
-    return pNextEventEstimator->getTally(spatialIndex, timeIndex);
+void RayListController<Geometry,N>::writeTalliesToFile(const std::string& fileName) {
+  std::ofstream out(fileName, std::ios::out);
+  if (isUsingNextEventEstimator()){
+    binaryIO::write(out, "NEE");
+  } else if (isUsingExpectedPathLengthTally()) {
+    binaryIO::write(out, "EPL");
+  } else {
+    binaryIO::write(out, "None");
+  }
+  mpark::visit([&] (auto& pTally) { pTally->write(out); }, pTally_);
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::copyPointDetToGPU(void) {
-
-    if( ! isUsingNextEventEstimator() ) {
-        throw std::runtime_error( "RayListController::getPointDetTally - Next-Event Estimator not enabled." );
-    }
-
-    if( ! tallyInitialized ) {
-        tallyInitialized = true;
-    } else {
-        return;
-    }
-
-    pNextEventEstimatorBuilder->setTimeBinEdges( TallyTimeBinEdges );
-    pNextEventEstimator = std::make_unique<NextEventEstimator>(pNextEventEstimatorBuilder->build());
-#ifdef __CUDACC__
-    cudaDeviceSynchronize();
-#endif
+void RayListController<Geometry,N>::gather() {
+  if(PA_.get().getWorkGroupRank() != 0) { return; }
+  mpark::visit([] (auto& pTally) { pTally->gather(); }, pTally_);
 }
 
 template<typename Geometry, unsigned N>
-void RayListController<Geometry,N>::dumpPointDetForDebug(const std::string& fileName ) {
-    // ensures setup - the copy to the GPU is not used
-    copyPointDetToGPU();
-    writeToFile(fileName, *pNextEventEstimator);
+void RayListController<Geometry,N>::accumulate() {
+  if(PA_.get().getWorldRank() != 0) { return; }
+  mpark::visit([] (auto& pTally) { pTally->accumulate(); }, pTally_);
 }
 
 template<typename Geometry, unsigned N>
-void
-RayListController<Geometry,N>::gather() {
-    if( pNextEventEstimator ) {
-        pNextEventEstimator->gather();
-    }
+void RayListController<Geometry,N>::computeStats() {
+  if(PA_.get().getWorldRank() != 0) { return; }
+  mpark::visit([] (auto& pTally) { pTally->computeStats(); }, pTally_);
 }
 
 } // end namespace MonteRay

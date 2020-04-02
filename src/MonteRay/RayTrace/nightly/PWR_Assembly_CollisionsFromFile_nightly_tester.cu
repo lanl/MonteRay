@@ -7,7 +7,6 @@
 #include "GPUUtilityFunctions.hh"
 #include "ReadAndWriteFiles.hh"
 
-#include "BasicTally.hh"
 #include "MonteRay_SpatialGrid.hh"
 #include "ExpectedPathLength.hh"
 #include "MonteRay_timer.hh"
@@ -18,6 +17,7 @@
 #include "MonteRay_ReadLnk3dnt.hh"
 #include "RayListInterface.hh"
 #include "CrossSection.hh"
+#include "BenchmarkTally.hh"
 
 namespace PWR_Assembly_wCollisionFile_fi_tester{
 
@@ -112,71 +112,62 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
             matListBuilder.addMaterial( SOLN_ID, mb.build() );
 
             pMatList = std::make_unique<MaterialList>(matListBuilder.build());
+
+
         }
 
         void setup(){
-
-            MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/pwr16x16_assembly_fine.lnk3dnt" );
-            readerObject.ReadMatData();
-
-
-            pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
-            CHECK_EQUAL( 584820, pGrid->getNumCells() );
-
-            CHECK_CLOSE( -40.26, pGrid->getMinVertex(0), 1e-2 );
-            CHECK_CLOSE( -40.26, pGrid->getMinVertex(1), 1e-2 );
-            CHECK_CLOSE( -80.00, pGrid->getMinVertex(2), 1e-2 );
-            CHECK_CLOSE(  40.26, pGrid->getMaxVertex(0), 1e-2 );
-            CHECK_CLOSE(  40.26, pGrid->getMaxVertex(1), 1e-2 );
-            CHECK_CLOSE(  80.00, pGrid->getMaxVertex(2), 1e-2 );
-
-            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
-
-            MaterialProperties::Builder matPropBuilder{};
-            matPropBuilder.disableMemoryReduction();
-            matPropBuilder.setMaterialDescription( readerObject );
+          MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/pwr16x16_assembly_fine.lnk3dnt" );
+          readerObject.ReadMatData();
 
 
-            matPropBuilder.renumberMaterialIDs(*pMatList);
-            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
+          pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
+          CHECK_EQUAL( 584820, pGrid->getNumCells() );
+
+          CHECK_CLOSE( -40.26, pGrid->getMinVertex(0), 1e-2 );
+          CHECK_CLOSE( -40.26, pGrid->getMinVertex(1), 1e-2 );
+          CHECK_CLOSE( -80.00, pGrid->getMinVertex(2), 1e-2 );
+          CHECK_CLOSE(  40.26, pGrid->getMaxVertex(0), 1e-2 );
+          CHECK_CLOSE(  40.26, pGrid->getMaxVertex(1), 1e-2 );
+          CHECK_CLOSE(  80.00, pGrid->getMaxVertex(2), 1e-2 );
+
+          MaterialProperties::Builder matPropBuilder{};
+          matPropBuilder.disableMemoryReduction();
+          matPropBuilder.setMaterialDescription( readerObject );
+
+          matPropBuilder.renumberMaterialIDs(*pMatList);
+          pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
         }
 
         void setupWithMovingMaterials(){
-
-            MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/pwr16x16_assembly_fine.lnk3dnt" );
-            readerObject.ReadMatData();
-
-
-            pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
-            CHECK_EQUAL( 584820, pGrid->getNumCells() );
-
-            CHECK_CLOSE( -40.26, pGrid->getMinVertex(0), 1e-2 );
-            CHECK_CLOSE( -40.26, pGrid->getMinVertex(1), 1e-2 );
-            CHECK_CLOSE( -80.00, pGrid->getMinVertex(2), 1e-2 );
-            CHECK_CLOSE(  40.26, pGrid->getMaxVertex(0), 1e-2 );
-            CHECK_CLOSE(  40.26, pGrid->getMaxVertex(1), 1e-2 );
-            CHECK_CLOSE(  80.00, pGrid->getMaxVertex(2), 1e-2 );
-
-            pTally = std::make_unique<BasicTally>( pGrid->getNumCells() );
-
-            MaterialProperties::Builder matPropBuilder{};
-            matPropBuilder.disableMemoryReduction();
-            matPropBuilder.setMaterialDescription( readerObject );
+          MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/pwr16x16_assembly_fine.lnk3dnt" );
+          readerObject.ReadMatData();
 
 
-            matPropBuilder.renumberMaterialIDs(*pMatList);
-            matPropBuilder.setVelocities( SimpleVector<gpuRayFloat_t>(pGrid->getNumCells(), 0.0) );
-            pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
+          pGrid = std::make_unique<MonteRay_SpatialGrid>(readerObject);
+          CHECK_EQUAL( 584820, pGrid->getNumCells() );
+
+          CHECK_CLOSE( -40.26, pGrid->getMinVertex(0), 1e-2 );
+          CHECK_CLOSE( -40.26, pGrid->getMinVertex(1), 1e-2 );
+          CHECK_CLOSE( -80.00, pGrid->getMinVertex(2), 1e-2 );
+          CHECK_CLOSE(  40.26, pGrid->getMaxVertex(0), 1e-2 );
+          CHECK_CLOSE(  40.26, pGrid->getMaxVertex(1), 1e-2 );
+          CHECK_CLOSE(  80.00, pGrid->getMaxVertex(2), 1e-2 );
+
+          MaterialProperties::Builder matPropBuilder{};
+          matPropBuilder.disableMemoryReduction();
+          matPropBuilder.setMaterialDescription( readerObject );
+
+          matPropBuilder.renumberMaterialIDs(*pMatList);
+          matPropBuilder.setVelocities( SimpleVector<gpuRayFloat_t>(pGrid->getNumCells(), 0.0) );
+          pMatProps = std::make_unique<MaterialProperties>(matPropBuilder.build());
         }
 
         std::unique_ptr<MonteRay_SpatialGrid> pGrid;
         std::unique_ptr<CrossSectionList> pXsList;
         std::unique_ptr<MaterialList> pMatList;
         std::unique_ptr<MaterialProperties> pMatProps;
-        std::unique_ptr<BasicTally> pTally;
-
     };
-
 
     TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
         // compare with mcatk calling MonteRay -- validated against MCATK itself
@@ -187,39 +178,42 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         //  64
         // 192
         unsigned nThreadsPerBlock = 1;
-        unsigned nThreads = 256;
-        unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
-        capacity = 16698849;
+        unsigned nThreads= 256;
+        unsigned capacity = 16698849;
 
         auto launchBounds = setLaunchBounds( nThreads, nThreadsPerBlock, capacity);
 
         std::cout << "Running PWR_Assembly from collision file with nBlocks = " << launchBounds.first <<
                 " nThreads = " << launchBounds.second << " collision buffer capacity = " << capacity << "\n";
 
-        CollisionPointController<MonteRay_SpatialGrid> controller(
-                nThreadsPerBlock,
-                nThreads,
-                pGrid.get(),
-                pMatList.get(),
-                pMatProps.get(),
-                pTally.get() );
+        ExpectedPathLengthTally::Builder tallyBuilder;
+        tallyBuilder.spatialBins(pGrid->size());
 
-        controller.setCapacity(capacity);
+        auto controller = CollisionPointController::Builder()
+                .nThreads(launchBounds.second)
+                .nBlocks(launchBounds.first)
+                .geometry(pGrid.get())
+                .materialList(pMatList.get())
+                .materialProperties(pMatProps.get())
+                .expectedPathLengthTally(tallyBuilder.build())
+                .capacity(capacity)
+                .build();
+
 
         size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/PWR_assembly_collisions.bin" );
         CHECK_EQUAL( 16698848 , numCollisions );
 
         controller.sync();
 
-        auto benchmarkTally = readFromFile( "MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin", *pTally);
+        auto benchmarkTally = readFromFile<BenchmarkTally>( "MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin");
 
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
-            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
-                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
                 CHECK_CLOSE( 0.0, relDiff, 0.34 );
             } else {
-                CHECK_CLOSE( 0.0, pTally->getTally(i), 1e-4);
-                CHECK_CLOSE( 0.0, benchmarkTally.getTally(i), 1e-4);
+                CHECK_CLOSE( 0.0, controller.contribution(i), 1e-4);
+                CHECK_CLOSE( 0.0, benchmarkTally[i], 1e-4);
             }
         }
 
@@ -228,14 +222,14 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         unsigned numGPUZeroNonMatching = 0;
         unsigned numZeroZero = 0;
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
-            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
-                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
                 if( std::abs(relDiff) > maxdiff ){
                     maxdiff = std::abs(relDiff);
                 }
-            } else if( pTally->getTally(i) > 0.0) {
+            } else if( controller.contribution(i) > 0.0) {
                 ++numBenchmarkZeroNonMatching;
-            } else if( benchmarkTally.getTally(i) > 0.0) {
+            } else if( benchmarkTally[i] > 0.0) {
                 ++numGPUZeroNonMatching;
             } else {
                 ++numZeroZero;
@@ -244,7 +238,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
         std::cout << "Debug:  maxPercentDiff = " << maxdiff << "\n";
         std::cout << "Debug:  tally size = " << benchmarkTally.size() << "\n";
-        std::cout << "Debug:  tally from file size = " << pTally->size() << "\n";
         std::cout << "Debug:  numBenchmarkZeroNonMatching = " << numBenchmarkZeroNonMatching << "\n";
         std::cout << "Debug:        numGPUZeroNonMatching = " << numGPUZeroNonMatching << "\n";
         std::cout << "Debug:                num both zero = " << numZeroZero << "\n";
@@ -292,38 +285,40 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         // 192
         unsigned nThreadsPerBlock = 1;
         unsigned nThreads = 256;
-        unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
-        capacity = 16698849;
+        unsigned capacity = 16698849;
 
         auto launchBounds = setLaunchBounds( nThreads, nThreadsPerBlock, capacity);
 
         std::cout << "Running PWR_Assembly from collision file with nBlocks = " << launchBounds.first <<
                 " nThreads = " << launchBounds.second << " collision buffer capacity = " << capacity << "\n";
 
-        CollisionPointController<MonteRay_SpatialGrid> controller(
-                nThreadsPerBlock,
-                nThreads,
-                pGrid.get(),
-                pMatList.get(),
-                pMatProps.get(),
-                pTally.get() );
+        ExpectedPathLengthTally::Builder tallyBuilder;
+        tallyBuilder.spatialBins(pGrid->size());
 
-        controller.setCapacity(capacity);
+        auto controller = CollisionPointController::Builder()
+                .nThreads(launchBounds.second)
+                .nBlocks(launchBounds.first)
+                .geometry(pGrid.get())
+                .materialList(pMatList.get())
+                .materialProperties(pMatProps.get())
+                .expectedPathLengthTally(tallyBuilder.build())
+                .capacity(capacity)
+                .build();
 
         size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/PWR_assembly_collisions.bin" );
-        CHECK_EQUAL( 16698848 , numCollisions );
+        CHECK_EQUAL(16698848, numCollisions);
 
         controller.sync();
 
-        auto benchmarkTally = readFromFile( "MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin", *pTally);
+        auto benchmarkTally = readFromFile<BenchmarkTally>("MonteRayTestFiles/PWR_Assembly_gpuTally_n8_particles40000_cycles1.bin");
 
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
-            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
-                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
                 CHECK_CLOSE( 0.0, relDiff, 0.44 );
             } else {
-                CHECK_CLOSE( 0.0, pTally->getTally(i), 1e-4);
-                CHECK_CLOSE( 0.0, benchmarkTally.getTally(i), 1e-4);
+                CHECK_CLOSE( 0.0, controller.contribution(i), 1e-4);
+                CHECK_CLOSE( 0.0, benchmarkTally[i], 1e-4);
             }
         }
 
@@ -332,14 +327,14 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         unsigned numGPUZeroNonMatching = 0;
         unsigned numZeroZero = 0;
         for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
-            if( pTally->getTally(i) > 0.0 &&  benchmarkTally.getTally(i) > 0.0 ){
-                gpuTallyType_t relDiff = 100.0*( benchmarkTally.getTally(i) - pTally->getTally(i) ) / benchmarkTally.getTally(i);
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
                 if( std::abs(relDiff) > maxdiff ){
                     maxdiff = std::abs(relDiff);
                 }
-            } else if( pTally->getTally(i) > 0.0) {
+            } else if( controller.contribution(i) > 0.0) {
                 ++numBenchmarkZeroNonMatching;
-            } else if( benchmarkTally.getTally(i) > 0.0) {
+            } else if( benchmarkTally[i] > 0.0) {
                 ++numGPUZeroNonMatching;
             } else {
                 ++numZeroZero;
@@ -348,7 +343,6 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
 
         std::cout << "Debug:  maxPercentDiff = " << maxdiff << "\n";
         std::cout << "Debug:  tally size = " << benchmarkTally.size() << "\n";
-        std::cout << "Debug:  tally from file size = " << pTally->size() << "\n";
         std::cout << "Debug:  numBenchmarkZeroNonMatching = " << numBenchmarkZeroNonMatching << "\n";
         std::cout << "Debug:        numGPUZeroNonMatching = " << numGPUZeroNonMatching << "\n";
         std::cout << "Debug:                num both zero = " << numZeroZero << "\n";

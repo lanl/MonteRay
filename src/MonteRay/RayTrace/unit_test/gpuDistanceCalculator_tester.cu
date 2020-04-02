@@ -11,7 +11,6 @@
 #include "RayWorkInfo.hh"
 #include "MonteRay_SpatialGrid.hh"
 
-
 namespace MonteRay_DistanceCalculatorTester {
 
 using namespace MonteRay;
