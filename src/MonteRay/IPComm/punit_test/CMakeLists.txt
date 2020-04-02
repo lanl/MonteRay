@@ -6,4 +6,5 @@ target_sources( monteray.ipcomm.parallel.test  PRIVATE
               )
 target_link_libraries( monteray.ipcomm.parallel.test PRIVATE MonteRay::testing )
 add_test(NAME monteray.ipcomm.parallel.test.1 COMMAND mpirun --map-by node -np 1 monteray.ipcomm.parallel.test) 
+add_test(NAME monteray.ipcomm.parallel.test.2 COMMAND mpirun --map-by node -np 2 monteray.ipcomm.parallel.test) 
 add_test(NAME monteray.ipcomm.parallel.test.4 COMMAND mpirun --map-by node -np 4 monteray.ipcomm.parallel.test) 
