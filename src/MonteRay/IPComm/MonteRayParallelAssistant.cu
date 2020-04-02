@@ -19,6 +19,14 @@ MonteRayParallelAssistant::MonteRayParallelAssistant() {
     MPI_Initialized( &mpi_initialized );
 
     if( !mpi_initialized ) {
+        world_size = 1; 
+        world_rank = 0;
+        shared_memory_size = 1;
+        shared_memory_rank = 0;
+        WORK_GROUP_COMM_SIZE = 1;
+        WORK_GROUP_COMM_RANK = 0;
+        INTER_WORK_GROUP_COMM_SIZE = 1;
+        INTER_WORK_GROUP_COMM_RANK = 0;
         return;
     }
 
