@@ -37,8 +37,6 @@ void NextEventEstimator::calcScore( const int threadID, const Ray_t<N>& ray, Ray
     gpuFloatType_t energy = ray.energy[energyIndex];
     if( energy <  1.0e-11 ) continue;
 
-    TallyFloat partialScore = 0.0;
-
     gpuFloatType_t materialXS[MAXNUMMATERIALS]; // TPB TODO: investigate this - could be replaced by something like rayWorkInfo or done on-the-fly.
     // TPB: this could be removed entirely and done in a different kernel, then this function could take a list of XS
     // this could relieve register pressure, potentially.  Reduce monolithic kernels into smaller ones.  Also better for determining kernel timing.

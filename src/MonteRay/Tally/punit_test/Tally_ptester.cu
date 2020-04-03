@@ -10,45 +10,48 @@
 #ifdef __CUDACC__
 CUDA_CALLABLE_KERNEL  kernelScore(MonteRay::Tally* const pTally, MonteRay::Tally::TallyFloat value) {
   if (threadIdx.x < pTally->size()){
-    pTally->score(value*threadIdx.x, threadIdx.x, time);
+    for (int i = 0; i < pTally->nTimeBins(); i++){
+      for (int j = 0; j < pTally->nEnergyBins(); j++){
+        pTally->score(value, threadIdx.x, j, i);
+      }
+    }
   }
 }
 #endif
 
 SUITE( Tally_ptester ) {
 
-  class Tally_Fixture {
-    private:
+  struct TallyFixture {
     using DataFloat = MonteRay::Tally::DataFloat;
-    public:
-    std::unique_ptr<MonteRay::Tally> pTally;
-    Tally_Fixture() {
+    MonteRay::Tally::Builder tallyBuilder;
+    TallyFixture() {
       int nSpatialBins = 10;
       MonteRay::Vector<DataFloat> energyBins = {2.5e-5, 1.0, 10.0};
       MonteRay::Vector<DataFloat> timeBins = {1.5, 10.0};
       bool useStats = true;
 
-      MonteRay::Tally::Builder builder;
-      builder.timeBinEdges(timeBins);
-      builder.energyBinEdges(energyBins);
-      builder.spatialBins(nSpatialBins);
-      builder.useStats(useStats);
-      pTally = std::make_unique<MonteRay::Tally>(builder.build());
+      tallyBuilder.timeBinEdges(timeBins);
+      tallyBuilder.energyBinEdges(energyBins);
+      tallyBuilder.spatialBins(nSpatialBins);
+      tallyBuilder.useStats(useStats);
     }
   };
 
-  TEST_FIXTURE(Tally_Fixture, score_and_gather ) {
+  TEST_FIXTURE(TallyFixture, score_and_gather ) {
+      auto pTally = std::make_unique<MonteRay::Tally>(tallyBuilder.build());
       pTally->score(1.0, 0);
       pTally->score(1.0, 9);
+      pTally->gatherWorkGroup();
       pTally->gather();
       const auto& PA = MonteRay::MonteRayParallelAssistant::getInstance();
-
+      std::cout << " world Size " << PA.getWorldSize() << " world rank " << PA.getWorldRank() << std::endl;
       if( PA.getWorldRank() == 0 ) {
           CHECK_CLOSE( 1.0*PA.getWorldSize(), pTally->contribution(0), 1e-6);
           CHECK_CLOSE( 1.0*PA.getWorldSize(), pTally->contribution(9), 1e-6);
       }
 
       pTally->score(1.0, 0);
+      pTally->gatherWorkGroup();
       pTally->gather();
 
       if( PA.getWorldRank() == 0 ) {
@@ -60,20 +63,26 @@ SUITE( Tally_ptester ) {
   }
 
 #ifdef __CUDACC__
-  TEST(scoreOnGPUThenGather) {
+  TEST_FIXTURE(TallyFixture, scoreOnGPUThenGather) {
     constexpr int nBlocks = 100;
-    constexpr int nThreadsPerBlock = 256;
-    auto pTally = std::make_unique<MonteRay::Tally>(nThreadsPerBlock, true);
+    constexpr int nThreadsPerBlock = 32;
+    MonteRay::Vector<DataFloat> binEdges = {0.5, 1.5};
+    tallyBuilder.energyBinEdges( binEdges );
+    tallyBuilder.timeBinEdges( binEdges );
+    tallyBuilder.spatialBins(nThreadsPerBlock);
+    auto pTally = std::make_unique<MonteRay::Tally>(tallyBuilder.build());
+    CHECK_EQUAL(9*nThreadsPerBlock, pTally->size());
 
-    MonteRay::gpuFloatType_t time = 1.5;
     kernelScore<<<nBlocks, nThreadsPerBlock>>>(pTally.get(), 1.0);
-
-    pTally->gather();
+    cudaDeviceSynchronize();
+    pTally->gatherWorkGroup(); // first gather all work-group ranks
+    pTally->gather();  // now gather between masters of work groups
 
     const auto& PA = MonteRay::MonteRayParallelAssistant::getInstance();
     if( PA.getWorldRank() == 0 ) {
       for (size_t i = 0; i < pTally->size(); i++){
-        CHECK_CLOSE(static_cast<MonteRay::Tally::TallyFloat>(nBlocks), pTally->contribution(i), 1e-6);
+        if (static_cast<double>(nBlocks) - pTally->contribution(i) > 1.0e-6) std::cout << i << " test \n";
+        CHECK_CLOSE(PA.getWorldSize()*static_cast<MonteRay::Tally::TallyFloat>(nBlocks), pTally->contribution(i), 1e-6);
       }
     }
   }

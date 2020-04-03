@@ -112,6 +112,7 @@ SUITE( NextEventEstimator_pTester ) {
     double expected = 1.0/(2.0*M_PI)*std::exp(-1.0);
     CHECK_CLOSE( expected, pNee->contribution(0), 1E-6);
 
+    pNee->gatherWorkGroup();
     pNee->gather();
 
     if( PA.getWorldRank() == 0 ) {

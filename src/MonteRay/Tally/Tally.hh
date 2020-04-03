@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #include <memory>
+#include <mpi.h>
 
 #define MR_TALLY_VERSION static_cast<unsigned>(2)
 
@@ -27,16 +28,20 @@ public:
   using TallyFloat = gpuTallyType_t;
   using Filter = BinEdgeFilter<Vector<DataFloat>>;
 
-  struct MeanAndStdDev : public std::tuple<TallyFloat, TallyFloat> {
-    using std::tuple<TallyFloat, TallyFloat>::tuple;
-    MeanAndStdDev() : std::tuple<TallyFloat, TallyFloat>(0.0, 0.0) {}
-    auto sum() const { return std::get<0>(*this); }
-    auto sumSq() const { return std::get<1>(*this); }
+  class MeanAndStdDev {
+    private:
+    TallyFloat sum_;
+    TallyFloat sumSq_;
+    public:
+    CUDA_CALLABLE_MEMBER MeanAndStdDev() : sum_(0.0), sumSq_(0.0) {}
+    CUDA_CALLABLE_MEMBER MeanAndStdDev(TallyFloat sum, TallyFloat sumSq) : sum_(sum), sumSq_(sumSq) {}
+    constexpr auto sum() const { return sum_; }
+    constexpr auto sumSq() const { return sumSq_; }
 
-    auto average() const { return std::get<0>(*this); }
-    auto mean() const { return average(); }
-    auto stdDev() const { return std::get<1>(*this); }
-    auto variance() const { return std::get<1>(*this)*std::get<1>(*this); }
+    constexpr auto average() const { return sum_; }
+    constexpr auto mean() const { return sum_; }
+    constexpr auto stdDev() const { return sumSq_; }
+    constexpr auto variance() const { return sumSq_*sumSq_; }
   };
 
   Tally() = delete;
@@ -74,7 +79,6 @@ public:
   CUDA_CALLABLE_MEMBER
   int getIndex(int spatialIndex, int energyIndex = 0, int timeIndex = 0) const {
     // layout is first by spatial index, then by energy, then by time index
-
     MONTERAY_ASSERT(spatialIndex < nSpatialBins_);
     MONTERAY_ASSERT(energyIndex < nEnergyBins());
     MONTERAY_ASSERT(timeIndex < nTimeBins());
@@ -137,9 +141,9 @@ public:
     public:
     Builder() = default;
     template <typename Container>
-    void energyBinEdges(Container&& edges){ b_energyFilter_ = Filter{std::move(edges)}; }
+    void energyBinEdges(Container edges){ b_energyFilter_ = Filter{std::move(edges)}; }
     template <typename Container>
-    void timeBinEdges(Container&& edges){ b_timeFilter_ = Filter{std::move(edges)}; }
+    void timeBinEdges(Container edges){ b_timeFilter_ = Filter{std::move(edges)}; }
     void spatialBins(size_t val) { b_nSpatialBins_ = val; }
     void useStats(bool val) { b_useStats_ = val; }
 
@@ -185,7 +189,7 @@ public:
   };
 
 private:
-  void gatherImpl();
+  void gatherImpl(int mpiRank, const MPI_Comm& mpiComm);
 };
 
 } // end namespace
