@@ -78,7 +78,6 @@ SUITE(RayListController_wNextEventEstimator_pfi_tester_suite) {
 
     TEST_FIXTURE(ControllerSetup, testOnGPU){
         const MonteRayParallelAssistant& PA(MonteRayParallelAssistant::getInstance());
-        unsigned numPointDets = 1;
         const bool debug = true;
 
         if(debug) {

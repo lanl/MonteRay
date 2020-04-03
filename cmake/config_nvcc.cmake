@@ -17,8 +17,12 @@ cuda_select_nvcc_arch_flags(cuda_arch_flags ${cuda_arch})
 message(STATUS "config_nvcc.cmake -- cuda_arch_flags=${cuda_arch_flags}")
 
 list(APPEND CMAKE_CUDA_FLAGS "--relocatable-device-code=true" )
-list(APPEND CMAKE_CUDA_FLAGS "--expt-extended-lambda" )
 list(APPEND CMAKE_CUDA_FLAGS "--expt-relaxed-constexpr" ) 
+if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 10.2)
+list(APPEND CMAKE_CUDA_FLAGS "--expt-extended-lambda" )
+else()
+  list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda" )
+endif()
 list(APPEND CMAKE_CUDA_FLAGS "-cudart static" ) 
 list(APPEND CMAKE_CUDA_FLAGS "${cuda_arch_flags}" ) 
 

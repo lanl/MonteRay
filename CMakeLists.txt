@@ -67,7 +67,8 @@ if(MonteRay.tests)
 
   add_library(UnitTest++ STATIC IMPORTED)
   set_target_properties(UnitTest++ PROPERTIES IMPORTED_LOCATION $ENV{UNITTEST_ROOT}/lib/libUnitTest++.a)
-  target_include_directories(UnitTest++ INTERFACE $ENV{UNITTEST_ROOT}/include/UnitTest++) # UnitTest version 1.61
+  #  target_include_directories(UnitTest++ INTERFACE $ENV{UNITTEST_ROOT}/include/UnitTest++) # UnitTest version 1.61
+  target_include_directories(UnitTest++ INTERFACE $ENV{UNITTEST_ROOT}/include)# UnitTest version 1.4
   target_link_libraries(MonteRay::testing INTERFACE UnitTest++)
 
   set_target_properties(MonteRay::testing PROPERTIES
