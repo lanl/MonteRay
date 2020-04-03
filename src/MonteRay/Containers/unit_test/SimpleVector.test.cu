@@ -8,6 +8,8 @@
 
 template <typename T>
 using SimpleVector = MonteRay::SimpleVector<T, std::allocator<T> >;
+template <typename T>
+using CudaSimpleVector = MonteRay::SimpleVector<T>;
 
 SUITE(SimpleVector_test) {
 
@@ -168,21 +170,24 @@ SUITE(SimpleVector_test) {
 
 
 #ifdef __CUDACC__
-  __global__ void vecKernel(SimpleVector<int>* vec){
+  __global__ void vecKernel(CudaSimpleVector<int>* vec){
     for (auto& val : *vec){
       val *= 2;
     }
   }
 
   TEST(accessing_cuda_data_on_gpu){
-    auto vec = std::make_unique<SimpleVector<int>>(3);
-    *vec = SimpleVector<int>{1, 2, 3};
+    auto vec = std::make_unique<CudaSimpleVector<int>>(3);
+    *vec = CudaSimpleVector<int>{1, 2, 3};
+    CudaSimpleVector<int>* pVec;
+    cudaMallocManaged(&pVec, sizeof(pVec));
+    *pVec = CudaSimpleVector<int>{1, 2, 3};
 
-    vecKernel<<<1, 1>>>(vec.get());
+    vecKernel<<<1, 1>>>(pVec);
     cudaDeviceSynchronize();
-    CHECK_EQUAL((*vec)[0], 2);
-    CHECK_EQUAL((*vec)[1], 4);
-    CHECK_EQUAL((*vec)[2], 6);
+    CHECK_EQUAL(2, (*pVec)[0]);
+    CHECK_EQUAL(4, (*pVec)[1]);
+    CHECK_EQUAL(6, (*pVec)[2]);
   }
 #endif
 
