@@ -15,17 +15,17 @@ class BenchmarkTally {
 
   auto size() const { return tally_.size(); }
 
-  auto operator[](size_t i) {return tally_[i];}
-  const auto& data() {return tally_;}
+  auto operator[](size_t i) const {return tally_[i];}
+  const auto& data() const {return tally_;}
 
-#define MR_BASICTALLY_VERSION 0
+#define MR_BENCHMARKTALLY_VERSION 0
   static BenchmarkTally read(std::istream& stream) {
     unsigned version;
     binaryIO::read(stream,version);
-    if (version != MR_BASICTALLY_VERSION) {
+    if (version != MR_BENCHMARKTALLY_VERSION) {
       throw std::runtime_error("BasicTally::read is attempting to read a binary file with "
           " version " + std::to_string(version) + " but is expecting version " + 
-          std::to_string(MR_BASICTALLY_VERSION));
+          std::to_string(MR_BENCHMARKTALLY_VERSION));
     }
 
     unsigned size;
@@ -38,7 +38,7 @@ class BenchmarkTally {
     }
     return {std::move(tallyData)};
   }
-#undef MR_BASICTALLY_VERSION
+#undef MR_BENCHMARKTALLY_VERSION
 
 };
 

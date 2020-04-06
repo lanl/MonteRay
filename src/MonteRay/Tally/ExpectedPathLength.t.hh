@@ -29,7 +29,7 @@ void ExpectedPathLengthTally::tallyCollision(
         RayWorkInfo& rayInfo) {
   gpuTallyType_t opticalPathLength = 0.0;
 
-  if( p.energy[0] < 1e-20 ) {
+  if( p.energy[0] < 1e-20 ) { // TODO: remove this condition
     return;
   }
 
@@ -103,10 +103,11 @@ CUDA_CALLABLE_MEMBER void ExpectedPathLengthTally::rayTraceOnGridWithMovingMater
           const MaterialProperties& matProps,
           const MaterialList& matList){
 
-  if( ray.energy[0] < std::numeric_limits<gpuRayFloat_t>::epsilon() ) {
+  if( ray.energy[0] < 1e-20 ) { // TODO: remove this condition
     return;
   }
   auto distanceToInsideOfMesh = geometry.getDistanceToInsideOfMesh(ray.position(), ray.direction());
+  // TODO: fewer divisions - division by speed twice
   if (distanceToInsideOfMesh/ray.speed() > timeRemaining){
     return;
   }
