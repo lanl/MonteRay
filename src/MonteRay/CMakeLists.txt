@@ -15,6 +15,7 @@ target_sources(MonteRay PUBLIC
   "${prefix}/MonteRay/Tally.hh"
   "${prefix}/MonteRay/ThirdParty.hh"
   "${prefix}/MonteRay/Utilities.hh"
+  "${prefix}/MonteRay/CudaWrappers.hh"
 )
 
 target_include_directories(MonteRay PUBLIC
@@ -34,6 +35,7 @@ target_include_directories(MonteRay PUBLIC
   "${prefix}/MonteRay/Tally"
   "${prefix}/MonteRay/ThirdParty"
   "${prefix}/MonteRay/Utilities"
+  "${prefix}/MonteRay/CudaWrappers"
 )
 
 target_sources(MonteRay::testing INTERFACE
@@ -59,3 +61,4 @@ add_subdirectory(RayTrace)
 add_subdirectory(Tally)
 add_subdirectory(ThirdParty)
 add_subdirectory(Utilities)
+add_subdirectory(CudaWrappers)

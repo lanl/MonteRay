@@ -20,6 +20,7 @@
 #include "MonteRayParallelAssistant.hh"
 #include "RayWorkInfo.hh"
 #include "NextEventEstimator.hh"
+#include "CudaWrappers.hh"
 
 namespace MonteRay {
 
@@ -61,14 +62,15 @@ private:
   bool fileIsOpen_ = false;
   std::string outputFileName_;
 
-  std::unique_ptr<cudaStream_t> stream1_;
-  std::unique_ptr<cudaEvent_t> startGPU_;
-  std::unique_ptr<cudaEvent_t> stopGPU_;
-  std::unique_ptr<cudaEvent_t> start_;
-  std::unique_ptr<cudaEvent_t> stop_;
-  std::unique_ptr<cudaEvent_t> copySync1_;
-  std::unique_ptr<cudaEvent_t> copySync2_;
-  cudaEvent_t* currentCopySync_ = nullptr;
+  cuda::StreamPointer stream1_;
+  cuda::StreamPointer stream2_;
+  cuda::EventPointer startGPU_;
+  cuda::EventPointer stopGPU_;
+  cuda::EventPointer start_;
+  cuda::EventPointer stop_;
+  cuda::EventPointer copySync1_;
+  cuda::EventPointer copySync2_;
+  std::reference_wrapper<cuda::EventPointer> currentCopySync_;
 
   RayListController(
           int nBlocks,

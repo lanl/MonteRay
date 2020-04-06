@@ -26,7 +26,8 @@ RayListController<Geometry,N>::RayListController(
     pMatProps_(pMatProps), 
     pTally_(std::move(pTally)),
     outputFileName_(std::move(outputFileName)),
-    PA_(MonteRayParallelAssistant::getInstance()) { 
+    PA_(MonteRayParallelAssistant::getInstance()),
+    currentCopySync_(copySync1_) { 
   if(PA_.get().getWorkGroupRank() != 0) { return; }
 
   // init banks
@@ -41,25 +42,6 @@ RayListController<Geometry,N>::RayListController(
   rayInfo_ = std::make_unique<RayWorkInfo>(totalNumThreads);
 
   pTimer_.reset(new cpuTimer);
-#ifdef __CUDACC__
-  stream1_.reset(new cudaStream_t);
-  startGPU_.reset(new cudaEvent_t);
-  stopGPU_.reset(new cudaEvent_t);
-  start_.reset(new cudaEvent_t);
-  stop_.reset(new cudaEvent_t);
-  copySync1_.reset(new cudaEvent_t);
-  copySync2_.reset(new cudaEvent_t);
-
-  cudaStreamCreate(stream1_.get());
-  cudaEventCreate(start_.get());
-  cudaEventCreate(stop_.get());
-  cudaEventCreate(startGPU_.get());
-  cudaEventCreate(stopGPU_.get());
-  cudaEventCreate(copySync1_.get());
-  cudaEventCreate(copySync2_.get());
-  currentCopySync_ = copySync1_.get();
-#endif
-
 } 
 
 template<typename Geometry, unsigned N>
@@ -325,17 +307,17 @@ void RayListController<Geometry,N>::swapBanks(){
   if(currentBank_ == bank1_.get()) {
       currentBank_ = bank2_.get();
 #ifdef __CUDACC__
-      currentCopySync_ = copySync2_.get();
+      currentCopySync_ = copySync2_;
 #endif
   } else {
       currentBank_ = bank1_.get();
 #ifdef __CUDACC__
-      currentCopySync_ = copySync1_.get();
+      currentCopySync_ = copySync1_;
 #endif
   }
 
 #ifdef __CUDACC__
-  cudaEventSynchronize(*currentCopySync_);
+  cudaEventSynchronize(*(currentCopySync_.get()));
 #endif
   currentBank_->clear();
 }
