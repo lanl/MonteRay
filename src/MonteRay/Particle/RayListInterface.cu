@@ -33,12 +33,6 @@ RayListInterface<N>::~RayListInterface() {
 
 template< unsigned N>
 void
-RayListInterface<N>::copyToGPU(void) {
-    ptrPoints->copyToGPU();
-}
-
-template< unsigned N>
-void
 RayListInterface<N>::add( const void* ptrRay, unsigned num ) {
     add( (const ParticleRay_t*) ptrRay, num);
 }

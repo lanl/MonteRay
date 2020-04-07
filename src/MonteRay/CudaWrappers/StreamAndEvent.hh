@@ -23,6 +23,7 @@ namespace cuda{
     ~StreamPointer();
     auto get() { return pStream_.get(); }
     auto get() const { return pStream_.get(); }
+    void swap(StreamPointer& other) { pStream_.swap(other.pStream_); }
     auto& operator*() { return *pStream_; }
     const auto& operator*() const { return *pStream_; }
   };
@@ -39,6 +40,7 @@ namespace cuda{
     EventPointer(EventPointer&& other): pEvent_(std::move(other.pEvent_)) {}
     auto get() { return pEvent_.get(); }
     auto get() const { return pEvent_.get(); }
+    void swap(EventPointer& other) { pEvent_.swap(other.pEvent_); }
     auto& operator*() { return *pEvent_; }
     const auto& operator*() const { return *pEvent_; }
     ~EventPointer();

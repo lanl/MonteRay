@@ -26,15 +26,13 @@ RayListController<Geometry,N>::RayListController(
     pMatProps_(pMatProps), 
     pTally_(std::move(pTally)),
     outputFileName_(std::move(outputFileName)),
-    PA_(MonteRayParallelAssistant::getInstance()),
-    currentCopySync_(copySync1_) { 
+    PA_(MonteRayParallelAssistant::getInstance()){
   if(PA_.get().getWorkGroupRank() != 0) { return; }
 
   // init banks
-  if(PA_.get().getWorkGroupRank() != 0) { return; }
-  bank1_ = std::make_unique<RayListInterface<N>>(capacity);
-  bank2_ = std::make_unique<RayListInterface<N>>(capacity);
-  currentBank_ = bank1_.get();
+  if (PA_.get().getWorkGroupRank() != 0) { return; }
+  activeBank_ = std::make_unique<RayListInterface<N>>(capacity);
+  inactiveBank_ = std::make_unique<RayListInterface<N>>(capacity);
 
   // init RayWorkInfo
   auto launchBounds = setLaunchBounds(nThreads_, nBlocks_, capacity);
@@ -52,7 +50,7 @@ void RayListController<Geometry,N>::kernel(){
   } else if (isUsingExpectedPathLengthTally()){
     if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-    auto launchBounds = setLaunchBounds(nThreads_, nBlocks_, currentBank_->getPtrPoints()->size());
+    auto launchBounds = setLaunchBounds(nThreads_, nBlocks_, activeBank_->getPtrPoints()->size());
 
 #ifndef NDEBUG
     size_t freeMemory = 0;
@@ -64,7 +62,7 @@ void RayListController<Geometry,N>::kernel(){
 #endif
     std::cout << "MonteRay::RayListController -- launching kernel on " <<
                  PA_.get().info() << " with " << launchBounds.first << " blocks, " << launchBounds.second  <<
-                 " threads, to process " << currentBank_->getPtrPoints()->size() << " rays," <<
+                 " threads, to process " << activeBank_->getPtrPoints()->size() << " rays," <<
                  " free GPU memory= " << freeMemory << "MB, total GPU memory= " << totalMemory << "MB \n";
 #endif
 
@@ -72,17 +70,17 @@ void RayListController<Geometry,N>::kernel(){
     if (pMatProps_->usingMaterialMotion()){
       constexpr gpuFloatType_t timeRemaining = 10.0E6;
       pExpectedPathLengthTally->rayTraceTallyWithMovingMaterials(
-          currentBank_->getPtrPoints(),
+          activeBank_->getPtrPoints(),
           timeRemaining,
           pGeometry_,
           pMatProps_,
           pMatList_,
-          stream1_.get());
+          activeStream_.get());
     } else {
 #ifdef __CUDACC__
-      rayTraceTally<<<launchBounds.first,launchBounds.second,0, *stream1_>>>(
+      rayTraceTally<<<launchBounds.first,launchBounds.second,0, *activeStream_>>>(
               pGeometry_,
-              currentBank_->getPtrPoints(),
+              activeBank_->getPtrPoints(),
               pMatList_,
               pMatProps_,
               rayInfo_.get(),
@@ -90,7 +88,7 @@ void RayListController<Geometry,N>::kernel(){
 #else
       rayTraceTally(
               pGeometry_,
-              currentBank_->getPtrPoints(),
+              activeBank_->getPtrPoints(),
               pMatList_,
               pMatProps_,
               rayInfo_.get(),
@@ -99,9 +97,9 @@ void RayListController<Geometry,N>::kernel(){
     }
   } else if (isUsingNextEventEstimator()){
     auto& pNextEventEstimator = mpark::get<NextEventEstimatorPointer>(pTally_);
-    if(currentBank_->size() > 0) {
-      launch_ScoreRayList(pNextEventEstimator.get(), nBlocks_, nThreads_, currentBank_->getPtrPoints(), rayInfo_.get(), 
-          pGeometry_, pMatProps_, pMatList_, stream1_.get());
+    if(activeBank_->size() > 0) {
+      launch_ScoreRayList(pNextEventEstimator.get(), nBlocks_, nThreads_, activeBank_->getPtrPoints(), rayInfo_.get(), 
+          pGeometry_, pMatProps_, pMatList_, activeStream_.get());
     }
   }
 }
@@ -109,13 +107,13 @@ void RayListController<Geometry,N>::kernel(){
 template<typename Geometry, unsigned N>
 unsigned
 RayListController<Geometry,N>::capacity(void) const {
-  return currentBank_ ? currentBank_->capacity() : 0;
+  return activeBank_ ? activeBank_->capacity() : 0;
 }
 
 template<typename Geometry, unsigned N>
 unsigned
 RayListController<Geometry,N>::size(void) const {
-  return currentBank_ ? currentBank_->size() : 0;
+  return activeBank_ ? activeBank_->size() : 0;
 }
 
 template<typename Geometry, unsigned N>
@@ -132,7 +130,7 @@ RayListController<Geometry,N>::flush(bool final){
   if(isSendingToFile()) { 
     flushToFile(final); }
 
-  if(currentBank_->size() == 0) {
+  if(activeBank_->size() == 0) {
     if(final) {
       deviceSynchronize();
       printTotalTime();
@@ -151,10 +149,7 @@ RayListController<Geometry,N>::flush(bool final){
 
 #ifdef __CUDACC__
   gpuErrchk(cudaPeekAtLastError());
-  currentBank_->copyToGPU();
-  /* gpuErrchk(cudaEventRecord(*currentCopySync_, 0)); */
-  /* gpuErrchk(cudaEventSynchronize(*currentCopySync_)); */
-  gpuErrchk(defaultStreamSync());
+  cudaMemPrefetchAsync(activeBank_->data(), activeBank_->size()*sizeof(Ray), PA_.get().getDeviceID(), *activeStream_);
 #endif
 
   // launch kernel
@@ -168,15 +163,15 @@ RayListController<Geometry,N>::flush(bool final){
 #endif
 
 #ifdef __CUDACC__
-  gpuErrchk(cudaEventRecord(*stopGPU_, *stream1_));
-  gpuErrchk(cudaStreamWaitEvent(*stream1_, *stopGPU_, 0));
+  gpuErrchk(cudaEventRecord(*stopGPU_, *activeStream_));
+  gpuErrchk(cudaStreamWaitEvent(*activeStream_, *stopGPU_, 0));
 #endif
 
   if(final) {
     std::cout << "MonteRay::RayListController: final flush nFlushs_ = " <<nFlushs_-1 << " -- stopping timers\n";
     stopTimers();
     printTotalTime();
-    currentBank_->clear();
+    activeBank_->clear();
     return;
   }
   swapBanks();
@@ -189,7 +184,7 @@ RayListController<Geometry,N>::flushToFile(bool final){
 
   if(! fileIsOpen_) {
     try {
-      currentBank_->openOutput(outputFileName_);
+      activeBank_->openOutput(outputFileName_);
     } catch (...) {
       std::stringstream msg;
       msg << "Failure opening file for collision writing!\n";
@@ -201,7 +196,7 @@ RayListController<Geometry,N>::flushToFile(bool final){
   }
 
   try {
-    currentBank_->writeBank();
+    activeBank_->writeBank();
   } catch (...) {
     std::stringstream msg;
     msg << "Failure writing collisions to file!\n";
@@ -209,11 +204,11 @@ RayListController<Geometry,N>::flushToFile(bool final){
     std::cout << "MonteRay Error: " << msg.str();
     throw std::runtime_error(msg.str());
   }
-  currentBank_->clear();
+  activeBank_->clear();
 
   if(final) {
     try {
-      currentBank_->closeOutput();
+      activeBank_->closeOutput();
     } catch (...) {
       std::stringstream msg;
       msg << "Failure closing collision file!\n";
@@ -234,8 +229,8 @@ RayListController<Geometry,N>::readCollisionsFromFile(std::string name) {
   unsigned numParticles = 0;
 
   do  {
-    end = currentBank_->readToBank(name, numParticles);
-    numParticles += currentBank_->size();
+    end = activeBank_->readToBank(name, numParticles);
+    numParticles += activeBank_->size();
     flush(end);
   } while (! end);
   return numParticles;
@@ -247,8 +242,8 @@ RayListController<Geometry,N>::readCollisionsFromFileToBuffer(std::string name){
   if(PA_.get().getWorldRank() != 0) { return 0; }
 
   unsigned numParticles = 0;
-  currentBank_->readToBank(name, numParticles);
-  numParticles += currentBank_->size();
+  activeBank_->readToBank(name, numParticles);
+  numParticles += activeBank_->size();
   return numParticles;
 }
 
@@ -261,7 +256,7 @@ RayListController<Geometry,N>::startTimers(){
   pTimer_->start();
 #ifdef __CUDACC__
   gpuErrchk(cudaEventRecord(*start_,0));
-  gpuErrchk(cudaEventRecord(*startGPU_, *stream1_));
+  gpuErrchk(cudaEventRecord(*startGPU_, *activeStream_));
 #endif
 }
 
@@ -276,7 +271,6 @@ RayListController<Geometry,N>::stopTimers(){
   cpuTime_ += cpuCycleTime;
 
 #ifdef __CUDACC__
-  gpuErrchk(cudaStreamSynchronize(*stream1_));
   gpuErrchk(cudaEventRecord(*stop_, 0));
   gpuErrchk(cudaEventSynchronize(*stop_));
 
@@ -303,23 +297,13 @@ template<typename Geometry, unsigned N>
 void RayListController<Geometry,N>::swapBanks(){
   if(PA_.get().getWorkGroupRank() != 0) { return; }
 
-  // Swap banks
-  if(currentBank_ == bank1_.get()) {
-      currentBank_ = bank2_.get();
+  // Swap banks - no need to swap in CPU mode
 #ifdef __CUDACC__
-      currentCopySync_ = copySync2_;
+  activeBank_.swap(inactiveBank_);
+  activeStream_.swap(inactiveStream_);
+  cudaStreamSynchronize(*activeStream_); // wait for this stream's bank to be processed before filling it again
 #endif
-  } else {
-      currentBank_ = bank1_.get();
-#ifdef __CUDACC__
-      currentCopySync_ = copySync1_;
-#endif
-  }
-
-#ifdef __CUDACC__
-  cudaEventSynchronize(*(currentCopySync_.get()));
-#endif
-  currentBank_->clear();
+  activeBank_->clear();
 }
 
 template<typename Geometry, unsigned N>
@@ -344,8 +328,8 @@ RayListController<Geometry,N>::clearTally(void) {
 
   deviceSynchronize();
   mpark::visit([] (auto& pTally) { pTally->clear(); }, pTally_);
-  if(bank1_) bank1_->clear();
-  if(bank2_) bank2_->clear();
+  if(activeBank_) activeBank_->clear();
+  if(inactiveBank_) inactiveBank_->clear();
   deviceSynchronize();
 }
 

@@ -15,6 +15,7 @@ namespace MonteRay{
 
 typedef unsigned RayListSize_t;
 
+// Note: this could effectively be replaced by a MonteRay::Vector
 template<unsigned N = 1>
 class RayList_t : public Managed {
 public:
@@ -28,8 +29,6 @@ public:
     CUDAHOST_CALLABLE_MEMBER std::string className() { return std::string("RayList_t");}
 
     CUDAHOST_CALLABLE_MEMBER void reallocate(size_t n) { points.reserve(n); }
-
-    void copyToGPU(void);
 
     CUDA_CALLABLE_MEMBER RayListSize_t size(void) const {
         return points.size();

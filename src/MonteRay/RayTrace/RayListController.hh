@@ -21,6 +21,7 @@
 #include "RayWorkInfo.hh"
 #include "NextEventEstimator.hh"
 #include "CudaWrappers.hh"
+#include "Particle.hh"
 
 namespace MonteRay {
 
@@ -28,9 +29,6 @@ class cpuTimer;
 
 template< unsigned N >
 class RayListInterface;
-
-template< unsigned N >
-class Ray_t;
 
 template<typename Geometry, unsigned N = 1>
 class RayListController {
@@ -47,9 +45,8 @@ private:
   TallyPointerVariant pTally_;
   std::reference_wrapper<const MonteRayParallelAssistant> PA_;
 
-  RayListInterface<N>* currentBank_ = nullptr;
-  std::unique_ptr<RayListInterface<N>> bank1_;
-  std::unique_ptr<RayListInterface<N>> bank2_;
+  std::unique_ptr<RayListInterface<N>> activeBank_;
+  std::unique_ptr<RayListInterface<N>> inactiveBank_;
 
   std::unique_ptr<RayWorkInfo> rayInfo_;
 
@@ -62,15 +59,12 @@ private:
   bool fileIsOpen_ = false;
   std::string outputFileName_;
 
-  cuda::StreamPointer stream1_;
-  cuda::StreamPointer stream2_;
+  cuda::StreamPointer activeStream_;
+  cuda::StreamPointer inactiveStream_;
   cuda::EventPointer startGPU_;
   cuda::EventPointer stopGPU_;
   cuda::EventPointer start_;
   cuda::EventPointer stop_;
-  cuda::EventPointer copySync1_;
-  cuda::EventPointer copySync2_;
-  std::reference_wrapper<cuda::EventPointer> currentCopySync_;
 
   RayListController(
           int nBlocks,
@@ -97,7 +91,7 @@ public:
 
   void addRay(const Ray& ray){
     if(MonteRayParallelAssistant::getInstance().getWorkGroupRank() != 0) { return; }
-    currentBank_->add(ray);
+    activeBank_->add(ray);
     if(size() == capacity()) {
       flush();
     }
@@ -146,7 +140,7 @@ public:
 
   void flushToFile(bool final=false);
 
-  void debugPrint() { currentBank_->debugPrint(); }
+  void debugPrint() { activeBank_->debugPrint(); }
 
   bool isSendingToFile(void) { return outputFileName_.size() > 0; }
   bool isUsingNextEventEstimator(void) const { 
@@ -230,7 +224,7 @@ public:
   };
 };
 
-}
+} /* namespace MonteRay */
 
 #include "Geometry.hh"
 namespace MonteRay{

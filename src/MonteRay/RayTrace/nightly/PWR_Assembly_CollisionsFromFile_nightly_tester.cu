@@ -171,6 +171,116 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         std::unique_ptr<MaterialProperties> pMatProps;
     };
 
+    TEST_FIXTURE(ControllerSetup, compare_with_mcatk1 ){
+        // compare with mcatk calling MonteRay -- validated against MCATK itself
+
+        setup();
+
+        // 256
+        //  64
+        // 192
+        unsigned nThreadsPerBlock = 1;
+        unsigned nThreads= 256;
+        /* unsigned capacity = std::min( 64000000U, 40000*8U*8*10U ); */
+        unsigned capacity = 5000000;
+
+        auto launchBounds = setLaunchBounds( nThreads, nThreadsPerBlock, capacity);
+
+        std::cout << "Running PWR_Assembly from collision file with nBlocks = " << launchBounds.first <<
+                " nThreads = " << launchBounds.second << " collision buffer capacity = " << capacity << "\n";
+
+        ExpectedPathLengthTally::Builder tallyBuilder;
+        tallyBuilder.spatialBins(pGrid->size());
+
+        auto controller = CollisionPointController::Builder()
+                .nThreads(launchBounds.second)
+                .nBlocks(launchBounds.first)
+                .geometry(pGrid.get())
+                .materialList(pMatList.get())
+                .materialProperties(pMatProps.get())
+                .expectedPathLengthTally(tallyBuilder.build())
+                .capacity(capacity)
+                .build();
+
+
+        size_t numCollisions = controller.readCollisionsFromFile( "MonteRayTestFiles/PWR_assembly_collisions.bin" );
+        CHECK_EQUAL( 16698848 , numCollisions );
+
+        controller.sync();
+
+        for( unsigned i=0; i<benchmarkTally.size(); ++i ) {
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
+                CHECK_CLOSE( 0.0, relDiff, 0.34 );
+            } else {
+                CHECK_CLOSE( 0.0, controller.contribution(i), 1e-4);
+                CHECK_CLOSE( 0.0, benchmarkTally[i], 1e-4);
+            }
+        }
+
+        gpuTallyType_t maxdiff = 0.0;
+        int numBenchmarkZeroNonMatching = 0;
+        int numGPUZeroNonMatching = 0;
+        int numZeroZero = 0;
+        int numNonMatching = 0;
+        for( size_t i=0; i<benchmarkTally.size(); ++i ) {
+            if( controller.contribution(i) > 0.0 &&  benchmarkTally[i] > 0.0 ){
+                gpuTallyType_t relDiff = 100.0*( benchmarkTally[i] - controller.contribution(i) ) / benchmarkTally[i];
+                if (std::abs(relDiff) > 0.34){
+                  numNonMatching++;
+                }
+                if( std::abs(relDiff) > maxdiff ){
+                    maxdiff = std::abs(relDiff);
+                }
+            } else if( controller.contribution(i) > 0.0) {
+                ++numBenchmarkZeroNonMatching;
+            } else if( benchmarkTally[i] > 0.0) {
+                ++numGPUZeroNonMatching;
+            } else {
+                ++numZeroZero;
+            }
+        }
+
+        std::cout << "Debug:  maxPercentDiff = " << maxdiff << "\n";
+        std::cout << "Debug:  tally size = " << benchmarkTally.size() << "\n";
+        std::cout << "Debug:  numNonMatching = " << numNonMatching << "\n";
+        std::cout << "Debug:  numBenchmarkZeroNonMatching = " << numBenchmarkZeroNonMatching << "\n";
+        std::cout << "Debug:        numGPUZeroNonMatching = " << numGPUZeroNonMatching << "\n";
+        std::cout << "Debug:                num both zero = " << numZeroZero << "\n";
+
+        // timings on GTX TitanX GPU 256x256
+        // Debug: total gpuTime = 6.4024
+        // Debug: total cpuTime = 0.0860779
+        // Debug: total wallTime = 6.40247
+
+        // timings on GTX TitanX GPU 1024x1024
+        // Debug: total gpuTime = 6.37461
+        // Debug: total cpuTime = 0.084251
+        // Debug: total wallTime = 6.37465
+
+        // timings on GTX TitanX GPU 16384x1024
+        // Debug: total gpuTime = 6.1284
+        // Debug: total cpuTime = 0.0829004
+        // Debug: total wallTime = 6.12846
+
+        // timings on GTX TitanX GPU 16384x416
+        // Debug: total gpuTime = 5.68947
+        // Debug: total cpuTime = 0.0825951
+        // Debug: total wallTime = 5.68952
+
+        // timings on Tesla K40c GPU 10036x416
+        // Debug: total gpuTime = 12.709
+        // Debug: total cpuTime = 0.118516
+        // Debug: total wallTime = 12.7091
+
+        // timing on Nvidia Quandro K420 128x128'
+        // total gpuTime = 101.266
+        // total cpuTime = 0.904188
+        // ntotal wallTime = 101.267
+
+
+    }
+
     TEST_FIXTURE(ControllerSetup, compare_with_mcatk ){
         // compare with mcatk calling MonteRay -- validated against MCATK itself
 
@@ -181,8 +291,8 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         // 192
         unsigned nThreadsPerBlock = 1;
         unsigned nThreads= 256;
-        unsigned capacity = std::min( 64000000U, 40000*8U*8*10U );
-        /* unsigned capacity = 1000000; */
+        /* unsigned capacity = std::min( 64000000U, 40000*8U*8*10U ); */
+        unsigned capacity = 5000000;
 
         auto launchBounds = setLaunchBounds( nThreads, nThreadsPerBlock, capacity);
 
@@ -292,7 +402,8 @@ SUITE( PWR_Assembly_wCollisionFile_tester ) {
         unsigned nThreadsPerBlock = 1;
         unsigned nThreads = 256;
         /* unsigned capacity = std::min( 64000000U, 40000*8U*8*10U ); */
-        unsigned capacity = 16698849;
+        /* unsigned capacity = 16698849; */
+        unsigned capacity = 5000000;
 
         auto launchBounds = setLaunchBounds( nThreads, nThreadsPerBlock, capacity);
 

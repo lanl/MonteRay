@@ -5,16 +5,6 @@ namespace MonteRay {
 
 template<unsigned N>
 void
-RayList_t<N>::copyToGPU(void) {
-    if( ! MonteRay::isWorkGroupMaster() ) return;
-#ifdef __CUDACC__
-    /* constexpr int dstDevice = 0; // TPB move this prefetch elsewhere (raylist manager) */
-    /* cudaMemPrefetchAsync(&points.data(), points.size(), dstDevice); */ 
-#endif
-}
-
-template<unsigned N>
-void
 RayList_t<N>::writeToFile( const std::string& filename) const {
     std::ofstream out;
     out.open( filename.c_str(), std::ios::binary | std::ios::out);

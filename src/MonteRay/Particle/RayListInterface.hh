@@ -22,10 +22,10 @@ public:
 
     ~RayListInterface();
 
-    void copyToGPU(void);
-
     RayListSize_t capacity(void) const { return ptrPoints->capacity(); }
     RayListSize_t size(void) const { return ptrPoints->size(); }
+    auto data(void) { return ptrPoints->data(); }
+    auto data(void) const { return ptrPoints->data(); }
 
     const auto& getPosition( unsigned i) const { return ptrPoints->getPosition(i); }
     const auto& getDirection( unsigned i) const { return ptrPoints->getDirection(i); }
