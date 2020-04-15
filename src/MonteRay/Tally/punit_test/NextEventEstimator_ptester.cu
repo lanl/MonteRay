@@ -159,12 +159,8 @@ SUITE( NextEventEstimator_pTester ) {
     }
 
 #ifdef __CUDACC__
-    pBank->copyToGPU();
-    auto stream = std::make_unique<cudaStream_t>();
-    *stream = 0; // default stream
-
     if( PA.getWorkGroupRank() == 0 ) {
-        launch_ScoreRayList(pNee.get(), 1, 1, pBank.get(), pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get(), stream.get() );
+        launch_ScoreRayList(pNee.get(), 1, 1, pBank.get(), pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get());
         cudaDeviceSynchronize();
     }
 

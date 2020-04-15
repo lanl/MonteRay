@@ -37,6 +37,13 @@ __global__ void testKernel(int* val){
   atomicAdd(val, 1);
 }
 
+__global__ void testWhileKernel(volatile int* checkVal, int* val){
+  while (*checkVal == 0){
+    // do nothing
+  }
+  atomicAdd(val, 1);
+}
+
 SUITE(CudaStreamAndEventGPU_test){
   TEST(StreamAndEventUsage){
     MonteRay::cuda::StreamPointer pStream1;
@@ -47,16 +54,26 @@ SUITE(CudaStreamAndEventGPU_test){
     int* val;
     cudaMallocManaged(&val, sizeof(int));
     *val = 0;
-    testKernel<<<1, 1, 0, *pStream1>>>(val);
+    testWhileKernel<<<1, 1, 0, *pStream1>>>(val, val);
+    testKernel<<<1, 1, 0, *pStream2>>>(val);
     cudaEventRecord(*pEvent1, *pStream1);
     cudaEventSynchronize(*pEvent1);
-    CHECK_EQUAL(1, *val);
+    CHECK_EQUAL(2, *val);
     testKernel<<<1, 1, 0, *pStream2>>>(val);
     cudaEventRecord(*pEvent2, *pStream2);
     cudaEventSynchronize(*pEvent2);
     cudaStreamWaitEvent(*pStream2, *pEvent2, 0);
     cudaDeviceSynchronize();
-    CHECK_EQUAL(2, *val);
+    CHECK_EQUAL(3, *val);
+
+    // check default stream
+    cudaStream_t defaultStream = 0;
+    MonteRay::cuda::StreamPointer pDefaultStream{MonteRay::cuda::StreamPointer::DefaultStream{}};
+    CHECK_EQUAL(defaultStream, *pDefaultStream);
+    testKernel<<<1, 1, 0, *pDefaultStream>>>(val);
+    cudaDeviceSynchronize();
+    CHECK_EQUAL(4, *val);
+
     cudaFree(val);
     CHECK(pEvent1.get() != pEvent2.get());
     CHECK(pStream1.get() != pStream2.get());

@@ -10,9 +10,13 @@ StreamPointer::StreamPointer(): pStream_(std::make_shared<cudaStream_t>()) {
 #endif
 }
 
+StreamPointer::StreamPointer(DefaultStream): pStream_(std::make_shared<cudaStream_t>()) {
+  *pStream_ = 0; // 0 is the default cuda stream
+}
+
 StreamPointer::~StreamPointer() {
 #ifdef __CUDACC__
-  if (pStream_.use_count() == 1) {
+  if (pStream_.use_count() == 1 && *pStream_ != 0) {
     cudaStreamDestroy(*pStream_);
   }
 #endif

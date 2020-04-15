@@ -4,6 +4,7 @@
 #include "NextEventEstimator.hh"
 #include "MonteRayParallelAssistant.hh"
 #include "GPUUtilityFunctions.hh"
+#include "StreamAndEvent.hh"
 
 namespace MonteRay{
 // TPB: consider breaking this up into multiple functions.
@@ -86,7 +87,7 @@ CUDA_CALLABLE_KERNEL  kernel_ScoreRayList(NextEventEstimator* ptr, const RayList
 template<unsigned N, typename Geometry, typename MaterialProperties, typename MaterialList>
 void launch_ScoreRayList( NextEventEstimator* const pNextEventEstimator, int nBlocksArg, int nThreadsArg, const RayList_t<N>* pRayList, 
   RayWorkInfo* pRayInfo, const Geometry* const pGeometry, const MaterialProperties* const pMatProps, 
-  const MaterialList* const pMatList, const cudaStream_t* const pStream = nullptr){
+  const MaterialList* const pMatList, const cuda::StreamPointer& pStream = {}){
   // negative nBlocks and nThreads forces to specified value,
   // otherwise reasonable values are used based on the specified ones
 
@@ -97,9 +98,7 @@ void launch_ScoreRayList( NextEventEstimator* const pNextEventEstimator, int nBl
   auto launchBounds = setLaunchBounds( nThreadsArg, nBlocksArg, pRayList->size() );
   int nBlocks = launchBounds.first;
   int nThreads = launchBounds.second;
-  cudaStream_t stream = pStream ? *pStream : 0 ;
-  kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( pNextEventEstimator, pRayList, pRayInfo, 
-  //kernel_ScoreRayList<<<nBlocks, nThreads, 0, stream>>>( pNextEventEstimator, pRayList->devicePtr, pRayInfo, 
+  kernel_ScoreRayList<<<nBlocks, nThreads, 0, *pStream>>>( pNextEventEstimator, pRayList, pRayInfo, 
       pGeometry, pMatProps, pMatList );
 #else
   cpuScoreRayList( pNextEventEstimator, pRayList, pRayInfo, pGeometry, pMatProps, pMatList );

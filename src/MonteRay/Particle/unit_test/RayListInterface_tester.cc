@@ -171,7 +171,6 @@ SUITE( RayListInterface_simple_tests ) {
         CHECK_EQUAL(2, points.capacity() );
 
         CHECK_EQUAL( false, points.isCudaCopyMade() );
-        points.copyToGPU();
     }
 
     TEST( send_to_gpu_getCapacity) {
@@ -193,8 +192,6 @@ SUITE( RayListInterface_simple_tests ) {
         CHECK_EQUAL(2, points.capacity() );
 
         CHECK_EQUAL( false, points.isCudaCopyMade() );
-        points.copyToGPU();
-        tester.setupTimers();
         RayListSize_t result = tester.launchGetCapacity(1,1,points);
         tester.stopTimers();
         CHECK_EQUAL( 2, unsigned(result) );
@@ -215,7 +212,6 @@ SUITE( RayListInterface_simple_tests ) {
                 99, 199, 0);
         CHECK_EQUAL(2, points.size() );
 
-        points.copyToGPU();
         tester.setupTimers();
         gpuFloatType_t result = tester.launchTestSumEnergy(1,1,points);
         tester.stopTimers();
@@ -306,7 +302,6 @@ SUITE( RayListInterface_simple_tests ) {
         points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  );
         CHECK_EQUAL(2568016, points.size() );
 
-        points.copyToGPU();
         tester.setupTimers();
         RayListSize_t result = tester.launchGetCapacity(1,1,points);
         tester.stopTimers();
@@ -360,7 +355,6 @@ SUITE( RayListInterface_simple_tests ) {
         points.readToMemory( "MonteRayTestFiles/U-04p_slab_single_source_ray_collisionFile.bin"  );
         CHECK_EQUAL(1, points.size() );
 
-        points.copyToGPU();
         tester.setupTimers();
         RayListSize_t result = tester.launchGetCapacity(1,1,points);
         tester.stopTimers();

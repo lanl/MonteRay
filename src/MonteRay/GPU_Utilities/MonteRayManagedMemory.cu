@@ -29,28 +29,20 @@ ManagedMemoryBase::operator new[](size_t len) {
 // TPB Does this due what we think it does?  Need to check sizeof(*this)
 CUDAHOST_CALLABLE_MEMBER
 void
-ManagedMemoryBase::copyToGPU(cudaStream_t* stream, MonteRayGPUProps device ) {
+ManagedMemoryBase::copyToGPU(const cuda::StreamPointer& stream, MonteRayGPUProps device ) {
 #ifdef __CUDACC__
     cudaMemAdvise(this, sizeof(*this), cudaMemAdviseSetReadMostly, device.deviceID);
     if( device.deviceProps->concurrentManagedAccess ) {
-        if( stream ) {
-            cudaMemPrefetchAsync(this, sizeof(*this), device.deviceID, *stream );
-        } else {
-            cudaMemPrefetchAsync(this, sizeof(*this), device.deviceID, NULL );
-        }
+        cudaMemPrefetchAsync(this, sizeof(*this), device.deviceID, *stream );
     }
 #endif
 }
 
 CUDAHOST_CALLABLE_MEMBER
 void
-ManagedMemoryBase::copyToCPU(cudaStream_t* stream) {
+ManagedMemoryBase::copyToCPU(const cuda::StreamPointer& stream) {
 #ifdef __CUDACC__
-    if( stream ) {
-        cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, *stream );
-    } else {
-        cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, NULL );
-    }
+    cudaMemPrefetchAsync(this, sizeof(*this), cudaCpuDeviceId, *stream );
 #endif
 }
 

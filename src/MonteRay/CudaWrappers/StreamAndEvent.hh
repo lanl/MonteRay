@@ -3,19 +3,20 @@
 
 #include <memory>
 
-#ifndef __CUDACC__
-typedef int cudaStream_t;
-typedef int cudaEvent_t;
-#endif
-
 namespace MonteRay{
 namespace cuda{
+#ifndef __CUDACC__
+  using cudaStream_t = int;
+  using cudaEvent_t = int;
+#endif
   class StreamPointer{
     private: 
     std::shared_ptr<cudaStream_t> pStream_;
 
     public:
+    class DefaultStream{}; // used to indicate this stream should use default stream
     StreamPointer();
+    StreamPointer(DefaultStream);
     auto& operator=(const StreamPointer& other) {pStream_ = other.pStream_; return *this;}
     auto& operator=(StreamPointer&& other) {pStream_ = std::move(other.pStream_); return *this;}
     StreamPointer(const StreamPointer& other): pStream_(other.pStream_) {}

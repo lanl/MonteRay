@@ -75,7 +75,7 @@ void RayListController<Geometry,N>::kernel(){
           pGeometry_,
           pMatProps_,
           pMatList_,
-          activeStream_.get());
+          activeStream_);
     } else {
 #ifdef __CUDACC__
       rayTraceTally<<<launchBounds.first,launchBounds.second,0, *activeStream_>>>(
@@ -99,7 +99,7 @@ void RayListController<Geometry,N>::kernel(){
     auto& pNextEventEstimator = mpark::get<NextEventEstimatorPointer>(pTally_);
     if(activeBank_->size() > 0) {
       launch_ScoreRayList(pNextEventEstimator.get(), nBlocks_, nThreads_, activeBank_->getPtrPoints(), rayInfo_.get(), 
-          pGeometry_, pMatProps_, pMatList_, activeStream_.get());
+          pGeometry_, pMatProps_, pMatList_, activeStream_);
     }
   }
 }

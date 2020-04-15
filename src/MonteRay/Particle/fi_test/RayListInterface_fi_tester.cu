@@ -27,7 +27,6 @@
 /*         RayListInterface<1>* points = new RayListInterface<1>(2); */
 /*         points->readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
 /*         FIGenericGPUTestHelper<1> helper(points->size()); */
-/*         points->copyToGPU(); */
 
 /*         CrossSectionList::Builder xsListBuilder; */
 /*         auto xsBuilder = CrossSectionBuilder(); */
@@ -52,7 +51,6 @@
     /*     RayListInterface<1> points(2); */
     /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
     /*     FIGenericGPUTestHelper<1> helper(points.size()); */
-    /*     points.copyToGPU(); */
 
     /*     CrossSectionList::Builder xsListBuilder; */
     /*     auto xsBuilder = CrossSectionBuilder(); */
@@ -101,7 +99,6 @@
     /*     RayListInterface<1> points(2); */
     /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
     /*     FIGenericGPUTestHelper<1> helper(points.size()); */
-    /*     points.copyToGPU(); */
 
     /*     MonteRay_ReadLnk3dnt readerObject( "lnk3dnt/godivaR_lnk3dnt_cartesian_100x100x100.lnk3dnt" ); */
     /*     readerObject.ReadMatData(); */
@@ -170,7 +167,6 @@
 
     /*     RayListInterface<1> points(2); */
     /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
-    /*     points.copyToGPU(); */
 
     /*     CrossSectionList::Builder xsListBuilder; */
     /*     auto xsBuilder = CrossSectionBuilder(); */
@@ -289,7 +285,6 @@
     /*     RayListInterface<1> points(2); */
     /*     points.readToMemory( "MonteRayTestFiles/collisionsGodivaRCart100x100x100InWater_2568016Rays.bin"  ); */
 
-    /*     points.copyToGPU(); */
     /*     CHECK_EQUAL(2568016, points.size()); */
 
     /*     gpuFloatType_t energy = points.getEnergy(0); */
@@ -500,7 +495,6 @@ SUITE( Collision_fi_looping_tester ) {
         helper.setupTimers();
 
         while(true){
-            bank1.copyToGPU();
             if( end ) { last = true; }
             MonteRay::tripleTime time = launchRayTraceTally(
                     cpuWork1,
@@ -521,7 +515,6 @@ SUITE( Collision_fi_looping_tester ) {
             std::cout << "Debug: Time total time =" << time.totalTime << " secs.\n\n";
             if( last ) { break; }
 
-            bank2.copyToGPU();
             if( end ) { last = true; }
             time = launchRayTraceTally(
                     cpuWork2,

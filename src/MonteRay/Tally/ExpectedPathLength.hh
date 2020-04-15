@@ -10,6 +10,7 @@
 #include "RayListInterface.hh"
 #include "RayWorkInfo.hh"
 #include "Tally.hh"
+#include "StreamAndEvent.hh"
 
 namespace MonteRay{
 
@@ -57,7 +58,7 @@ class ExpectedPathLengthTally: public Tally {
             const Geometry* const geometry,
             const MaterialProperties* const matProps,
             const MaterialList* const matList,
-            cudaStream_t* stream = nullptr);
+            const cuda::StreamPointer& pStream = {});
 
   class Builder: public Tally::Builder {
     public:

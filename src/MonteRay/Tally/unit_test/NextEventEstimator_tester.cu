@@ -164,10 +164,7 @@ SUITE( NextEventEstimator_Tester ) {
       pBank->add(ray);
     }
 #ifdef __CUDACC__
-    pBank->copyToGPU();
-    auto stream = std::make_unique<cudaStream_t>();
-    *stream = 0; // default stream
-    launch_ScoreRayList(pNee.get(), 1, 1, pBank.get(), pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get(), stream.get() );
+    launch_ScoreRayList(pNee.get(), 1, 1, pBank.get(), pRayWorkInfo.get(), pGeometry.get(), pMatProps.get(), pMatList.get());
     cudaDeviceSynchronize();
     CHECK_CLOSE(max_n_rays*1.0/(2.0*M_PI)*std::exp(-1.0), pNee->contribution(0, 1, 0), 1E-6); 
 #endif

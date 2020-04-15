@@ -181,10 +181,10 @@ void ExpectedPathLengthTally::rayTraceTallyWithMovingMaterials(
           const Geometry* const geometry,
           const MaterialProperties* const matProps,
           const MaterialList* const matList,
-          cudaStream_t* stream) {
+          const cuda::StreamPointer& pStream){
 
 #ifdef __CUDACC__
-  thrust::for_each(thrust::cuda::par.on(*stream), collisionPoints->begin(), collisionPoints->end(),
+  thrust::for_each(thrust::cuda::par.on(*pStream), collisionPoints->begin(), collisionPoints->end(),
     [=] __device__ (const auto& ray){
       this->rayTraceOnGridWithMovingMaterials(ray, timeRemaining, *geometry, *matProps, *matList);
     }
