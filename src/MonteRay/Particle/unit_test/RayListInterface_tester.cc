@@ -192,6 +192,7 @@ SUITE( RayListInterface_simple_tests ) {
         CHECK_EQUAL(2, points.capacity() );
 
         CHECK_EQUAL( false, points.isCudaCopyMade() );
+        tester.setupTimers();
         RayListSize_t result = tester.launchGetCapacity(1,1,points);
         tester.stopTimers();
         CHECK_EQUAL( 2, unsigned(result) );
